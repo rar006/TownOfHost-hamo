@@ -1252,6 +1252,7 @@
 "CanseeVoteresult","Can See Voteresult","投票結果を名前の下に表示する"
 "CommnTaskResetAssing","Common Task Reset Assing","通常タスクを共通にしない"
 "TeamHideChat","Team Hide Chat","秘匿チャット"
+"GameDisplayHideChat","Game Display Hide Chat","タスクターン中秘匿チャットを許可"
 "ImpostorHideChat","Impostor Hide Chat (/ic)","インポスター秘匿チャット(/ic)"
 "JackalHideChat","Jackal Hide Chat (/jc)","ジャッカル秘匿チャット(/jc)"
 "LoversHideChat","Lovers Hide Chat (/lc)","ラバーズ秘匿チャット(/lc)"

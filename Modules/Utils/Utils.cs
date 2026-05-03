@@ -448,6 +448,87 @@ namespace TownOfHost
             Main.MessagesToSend.Add((text, byte.MaxValue, name));
         }
 
+        /// <summary>
+        /// バニラサーバーのUIを偽装し、強制的にチャットボタンを出現させる（EHR完全移植）
+        /// </summary>
+        public static void SetChatVisible(this PlayerControl pc, bool visible = true)
+        {
+            if (!AmongUsClient.Instance.AmHost) return;
+
+            if (pc.AmOwner)
+            {
+                // ホスト自身（ローカル）の場合は直接UIをアクティブにする
+                var hud = DestroyableSingleton<HudManager>.Instance;
+                if (hud != null && hud.Chat != null)
+                {
+                    hud.Chat.SetVisible(visible);
+                    hud.Chat.HideBanButton();
+                }
+                return;
+            }
+
+            // --- ここからEHRのバニラ向けUI偽装パケット送信 ---
+            bool dead = pc.Data.IsDead;
+            MessageWriter writer = MessageWriter.Get(SendOption.Reliable);
+            writer.StartMessage(6);
+            writer.Write(AmongUsClient.Instance.GameId);
+            writer.WritePacked(pc.OwnerId);
+            writer.StartMessage(4);
+            writer.WritePacked(HudManager.Instance.MeetingPrefab.SpawnId);
+            writer.WritePacked(-2);
+            writer.Write((byte)SpawnFlags.None);
+            writer.WritePacked(1);
+            uint netIdCnt = AmongUsClient.Instance.NetIdCnt;
+            AmongUsClient.Instance.NetIdCnt = netIdCnt + 1U;
+            writer.WritePacked(netIdCnt);
+            writer.StartMessage(1);
+            writer.WritePacked(0);
+            writer.EndMessage();
+            writer.EndMessage();
+
+            // 一瞬だけプレイヤーを死んでいる（チャット可能）と偽装して同期
+            pc.Data.IsDead = visible;
+            writer.StartMessage(1);
+            writer.WritePacked(pc.Data.NetId);
+            pc.Data.Serialize(writer, true);
+            writer.EndMessage();
+
+            // 偽の会議終了パケットを送り、UIを更新させる
+            writer.StartMessage(2);
+            writer.WritePacked(netIdCnt);
+            writer.Write((byte)RpcCalls.CloseMeeting);
+            writer.EndMessage();
+
+            // 元の生死状態に戻して同期
+            pc.Data.IsDead = dead;
+            writer.StartMessage(1);
+            writer.WritePacked(pc.Data.NetId);
+            pc.Data.Serialize(writer, true);
+            writer.EndMessage();
+
+            writer.StartMessage(5);
+            writer.WritePacked(netIdCnt);
+            writer.EndMessage();
+            writer.EndMessage();
+            AmongUsClient.Instance.SendOrDisconnect(writer);
+            writer.Recycle();
+
+            AmongUsClient.Instance.timer -= AmongUsClient.Instance.MinSendInterval;
+        }
+
+        /// <summary>
+        /// 生存者全員のチャットを強制解放する
+        /// </summary>
+        public static void SetChatVisibleForAll()
+        {
+            if (!AmongUsClient.Instance.AmHost) return;
+
+            foreach (var pc in PlayerCatch.AllAlivePlayerControls)
+            {
+                pc.SetChatVisible(true);
+            }
+        }
+
         /// <param name="pc">seer</param>
         /// <param name="force">強制かつ全員に送信</param>
         public static void ApplySuffix(PlayerControl pc, bool force = false, bool countdown = false)
@@ -746,6 +827,9 @@ namespace TownOfHost
                 }
                 GuessManager.Reset();//会議後にリセット入れる
                 GameStates.ExiledAnimate = false;
+
+                // 画面切り替えの暗転が終わる頃にチャットを強制表示
+                _ = new LateTask(() => SetChatVisibleForAll(), 0.5f, "ShowChatAfterMeeting");
             }
         }
         #endregion
@@ -977,6 +1061,18 @@ namespace TownOfHost
 
             if (Options.CantUseVentMode.GetBool() && (Options.CantUseVentTrueCount.GetFloat() >= PlayerCatch.AllAlivePlayerControls.Count())) CantUseVent = true;
             else CantUseVent = false;
+        }
+        [HarmonyPatch(typeof(IntroCutscene), nameof(IntroCutscene.OnDestroy))]
+        public static class IntroCutsceneOnDestroyPatchForChat
+        {
+            public static void Postfix()
+            {
+                if (AmongUsClient.Instance.AmHost)
+                {
+                    // イントロが終わってマップに降り立った直後にチャットを強制表示
+                    _ = new LateTask(() => Utils.SetChatVisibleForAll(), 0.5f, "ShowChatOnGameStart");
+                }
+            }
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using AmongUs.GameOptions;
 using Hazel;
 using TownOfHost.Modules;
@@ -63,22 +64,32 @@ public sealed class Sage : RoleBase
 
     public override void Add()
     {
-        // ★ PetActionManager登録
         PetActionManager.Register(Player.PlayerId, ActivateBarrier);
 
-        // ★ ペットがない場合は自動付与
-        if (AmongUsClient.Instance.AmHost)
+        if (!AmongUsClient.Instance.AmHost) return;
+
+        // ★ 複数回リトライして確実に付与する
+        for (int i = 1; i <= 3; i++)
         {
+            int delay = i;
             _ = new LateTask(() =>
             {
-                if (Player == null || !Player.IsAlive()) return;
-                string currentPet = Player.Data?.DefaultOutfit?.PetId ?? "";
-                if (string.IsNullOrEmpty(currentPet))
+                try
                 {
+                    if (Player == null) return;
+
+                    // ★ CurrentOutfit で現在の装備を確認
+                    string currentPet = Player.CurrentOutfit?.PetId ?? "";
+                    if (!string.IsNullOrEmpty(currentPet)) return; // 既にペットあり
+
                     PetsHelper.SetPet(Player, DefaultPetId);
-                    Logger.Info($"{Player.Data.GetLogPlayerName()} にデフォルトペット付与: {DefaultPetId}", "Sage");
+                    Logger.Info($"{Player.Data.GetLogPlayerName()} にペット付与: {DefaultPetId} (試行{delay}回目)", "Sage");
                 }
-            }, 1.5f, "Sage.SetDefaultPet", true);
+                catch (Exception e)
+                {
+                    Logger.Error(e.ToString(), "Sage.SetPet");
+                }
+            }, delay * 1.5f, $"Sage.SetDefaultPet_{i}", true);
         }
     }
 

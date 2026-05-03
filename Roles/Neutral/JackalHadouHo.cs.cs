@@ -175,10 +175,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
     public override void ApplyGameOptions(IGameOptions opt)
     {
         opt.SetVision(HasImpostorVision);
-        if (PlayerControl.LocalPlayer != null && Is(PlayerControl.LocalPlayer))
-        {
-            AURoleOptions.PhantomCooldown = Cooldown;
-        }
+        AURoleOptions.PhantomCooldown = Cooldown;
     }
 
     public override bool CanUseAbilityButton() => true;

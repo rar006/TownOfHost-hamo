@@ -521,6 +521,13 @@ namespace TownOfHost
         public static OptionItem OptionNotModeJoinKick;
         public static OptionItem OptionDrawJoinKick;
         public static OptionItem OptionManualJoinKick;
+        public static OptionItem OptionGameChatSetting;
+        public static OptionItem OptionGameChatNormalChat;
+        public static OptionItem OptionGameChatNormalNearChat;
+        public static OptionItem OptionGameChatNormalNearChatRange;
+        public static OptionItem OptionGameChatHideChat;
+        public static OptionItem OptionGameChatHideNearChat;
+        public static OptionItem OptionGameChatHideNearChatRange;
         public static OptionItem ConvenientOptions;
         public static OptionItem FirstTurnMeeting;
         public static bool firstturnmeeting;
@@ -1345,6 +1352,45 @@ namespace TownOfHost
                 .SetParent(OptionJoinKick)
                 .SetColorcode("#00c1ff")
                 .SetOptionName(() => "自動キックではなくコマンド(手動)で\n連続参加のプレイヤーを一括キックする");
+
+            OptionGameChatSetting = BooleanOptionItem.Create(1_300_350, "GameChatSetting", false, TabGroup.MainSettings, true)
+                      .SetHeader(true)
+                      .SetColorcode("#00c1ff")
+                      .SetOptionName(() => "タスクターン中のチャットを表示");
+
+            OptionGameChatNormalChat = BooleanOptionItem.Create(1_300_360, "GameChatNormalChat", false, TabGroup.MainSettings, true)
+                　　　.SetParent(OptionGameChatSetting)
+                      .SetHeader(true)
+                      .SetColorcode("#00c1ff")
+                      .SetOptionName(() => "通常チャットを有効にする");
+
+            OptionGameChatNormalNearChat = BooleanOptionItem.Create(1_300_370, "GameChatNormalNearChat", false, TabGroup.MainSettings, true)
+                .SetParent(OptionGameChatNormalChat)
+                      .SetHeader(true)
+                      .SetColorcode("#00c1ff")
+                      .SetOptionName(() => "近チャを有効にする");
+
+            OptionGameChatNormalNearChatRange = IntegerOptionItem.Create(1_300_380, "GameChatNormalNearChatRange", new(1, 100, 1), 10, TabGroup.MainSettings, true)
+                .SetParent(OptionGameChatNormalNearChat)
+                .SetColorcode("#00c1ff")
+                .SetOptionName(() => "近チャの範囲");
+
+            OptionGameChatHideChat = BooleanOptionItem.Create(1_300_390, "GameChatHideChat", false, TabGroup.MainSettings, true)
+                .SetParent(OptionGameChatSetting)
+                      .SetHeader(true)
+                      .SetColorcode("#00c1ff")
+                      .SetOptionName(() => "秘匿チャットを有効にする");
+
+            OptionGameChatHideNearChat = BooleanOptionItem.Create(1_300_400, "GameChatHideNearChat", false, TabGroup.MainSettings, true)
+                .SetParent(OptionGameChatHideChat)
+                      .SetHeader(true)
+                      .SetColorcode("#00c1ff")
+                      .SetOptionName(() => "近チャを有効にする");
+
+            OptionGameChatHideNearChatRange = IntegerOptionItem.Create(1_300_410, "GameChatHideNearChatRange", new(1, 100, 1), 10, TabGroup.MainSettings, true)
+                .SetParent(OptionGameChatHideNearChat)
+                .SetColorcode("#00c1ff")
+                .SetOptionName(() => "近チャの範囲");
 
 
             ApplyDenyNameList = BooleanOptionItem.Create(1_000_100, "ApplyDenyNameList", true, TabGroup.MainSettings, true)

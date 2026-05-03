@@ -20,7 +20,6 @@ namespace TownOfHost.Roles.Crewmate
                 (7, 0)
             );
 
-        // ★ オプション
         private static OptionItem ModeOption;
         private static OptionItem OptionGuardCount;
         private static OptionItem OptionNotifyOnGuard;
@@ -28,8 +27,12 @@ namespace TownOfHost.Roles.Crewmate
         private static OptionItem OptionPostDeathRevengeTurnLimit;
 
         private enum AbilityMode { Off, Guard, Reflect, Revenge }
+        private enum OptionName
+        {
+            PukupukuGuardCount,
+            PukupukuPostDeathTurnLimit,
+        }
 
-        // ★ 状態
         private bool tasksCompleted = false;
         private bool completedWhileAlive = false;
         private bool revengeDone = false;
@@ -53,21 +56,30 @@ namespace TownOfHost.Roles.Crewmate
 
         private static void SetupOptionItem()
         {
-            // ★ 能力モード
             ModeOption = StringOptionItem.Create(
                 RoleInfo, 10, "PukupukuAliveMode",
                 new string[] { "Off", "Guard", "Reflect", "Revenge" },
                 1, false);
+
+            OptionGuardCount = IntegerOptionItem.Create(
+                RoleInfo, 11, OptionName.PukupukuGuardCount,
+                new(1, 10, 1), 1, false)
+                .SetParent(ModeOption);
 
             OptionNotifyOnGuard = BooleanOptionItem.Create(
                 RoleInfo, 12, "PukupukuNotifyOnGuard",
                 true, false)
                 .SetParent(ModeOption);
 
-            // ★ 死後道連れオプション
             OptionPostDeathRevengeEnabled = BooleanOptionItem.Create(
                 RoleInfo, 20, "PukupukuPostDeathRevenge",
                 false, false);
+
+            OptionPostDeathRevengeTurnLimit = IntegerOptionItem.Create(
+                RoleInfo, 21, OptionName.PukupukuPostDeathTurnLimit,
+                new(1, 10, 1), 1, false)
+                .SetParent(OptionPostDeathRevengeEnabled)
+                .SetValueFormat(OptionFormat.day);
         }
 
         private AbilityMode GetMode() => (AbilityMode)ModeOption.GetValue();
@@ -75,28 +87,22 @@ namespace TownOfHost.Roles.Crewmate
         public override bool OnCompleteTask(uint taskid)
         {
             if (tasksCompleted) return true;
-
             if (!MyTaskState.IsTaskFinished) return true;
 
             if (!Player.Data.IsDead)
             {
-                // ★ 生存中にタスク完了
                 tasksCompleted = true;
                 completedWhileAlive = true;
-
                 Utils.SendMessage(
                     $"<color=#55ccff>【プクプク】タスクを完了しました！能力が解放されました。</color>",
                     Player.PlayerId);
             }
             else
             {
-                // ★ 死後タスク完了 → 道連れ判定
                 if (!completedWhileAlive && postDeathRevenge && killerRef != null)
                 {
                     if (postDeathTurnLimit <= 0 || meetingCountAfterDeath <= postDeathTurnLimit)
-                    {
                         TryRevenge();
-                    }
                 }
             }
 
@@ -131,7 +137,6 @@ namespace TownOfHost.Roles.Crewmate
                     return false;
 
                 case AbilityMode.Reflect:
-                    // ★ キルをキャンセルして攻撃者をキル（NekoKabocha方式）
                     info.DoKill = false;
                     Logger.Info($"{Player.Data.GetLogPlayerName()} キルを反射 → {killer.Data.GetLogPlayerName()}", "Pukupuku");
 
@@ -149,7 +154,6 @@ namespace TownOfHost.Roles.Crewmate
                     return false;
 
                 case AbilityMode.Revenge:
-                    // ★ キルされたら道連れ（OnMurderPlayerAsTargetで処理）
                     killerRef = killer;
                     return true;
 
@@ -163,14 +167,10 @@ namespace TownOfHost.Roles.Crewmate
             isDead = true;
             killerRef = info.AttemptKiller;
 
-            // ★ 道連れモードで生存タスク完了済み
             if (tasksCompleted && completedWhileAlive && GetMode() == AbilityMode.Revenge)
-            {
                 TryRevenge();
-            }
         }
 
-        // ★ 会議ごとにカウント（死後道連れの有効ターン数管理）
         public override void OnStartMeeting()
         {
             if (isDead) meetingCountAfterDeath++;
@@ -206,12 +206,9 @@ namespace TownOfHost.Roles.Crewmate
 
             return GetMode() switch
             {
-                AbilityMode.Guard =>
-                    $"{size}<color={color}>ガード: {guardUsedCount}/{guardMaxCount}回使用済み</color>",
-                AbilityMode.Reflect =>
-                    $"{size}<color={color}>キル反射：有効</color>",
-                AbilityMode.Revenge =>
-                    $"{size}<color={color}>道連れ：有効</color>",
+                AbilityMode.Guard => $"{size}<color={color}>ガード: {guardUsedCount}/{guardMaxCount}回使用済み</color>",
+                AbilityMode.Reflect => $"{size}<color={color}>キル反射：有効</color>",
+                AbilityMode.Revenge => $"{size}<color={color}>道連れ：有効</color>",
                 _ => ""
             };
         }
