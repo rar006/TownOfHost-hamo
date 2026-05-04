@@ -1,4 +1,4 @@
-using System.Linq;
+/*using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
 using UnityEngine;
@@ -266,4 +266,4 @@ public sealed class StandMaster : RoleBase, IImpostor, IUsePhantomButton
         text = "StandMaster_Ability";
         return true;
     }
-}
+}*/

@@ -59,6 +59,9 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
         IsFiring = false;
         IsLoaded = false;
         IsSuperBeam = false;
+        _prevCharging = false;
+        _prevSuperCharging = false;
+        _prevBeamMark = false;
 
         CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
 
@@ -83,6 +86,9 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
     public bool IsLoaded;
     public bool IsSuperBeam;
     public static bool NextNoSideKick = false;
+    bool _prevCharging;
+    bool _prevSuperCharging;
+    bool _prevBeamMark;
 
     byte skCandidateId;
     float skNearTimer;
@@ -287,7 +293,6 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
             Utils.AllPlayerKillFlash();
         }
 
-        // ★ボタンを押した時に「1回だけ」移動速度を最低にする
         Main.AllPlayerSpeed[Player.PlayerId] = Main.MinSpeed;
         Player.MarkDirtySettings();
 
@@ -298,8 +303,11 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         Main.AllPlayerKillCooldown[Player.PlayerId] = 60f;
         Player.SyncSettings();
-        UtilsNotifyRoles.NotifyRoles(OnlyMeName: true);
-        UtilsNotifyRoles.NotifyRoles(OnlyMeName: true);
+        _prevCharging = IsCharging;
+        _prevSuperCharging = IsSuperCharging;
+        _prevBeamMark = ShowBeamMark;
+        UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
+
         SendRpc();
     }
 
@@ -351,10 +359,12 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
         IsFiring = false;
         IsSuperBeam = false;
 
-        // ★ 足の速度を戻す
+        _prevCharging = false;
+        _prevSuperCharging = false;
+        _prevBeamMark = false;
+
         Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
         Player.MarkDirtySettings();
-
         Player.SyncSettings();
         Player.RpcSetColor((byte)PlayerColor);
         SetRoleTextHeight(false);
@@ -435,13 +445,14 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
             SendRpc();
             return;
         }
-
-        if ((IsCharging || IsSuperCharging || ShowBeamMark) && !IsDead && player.IsAlive())
+        bool changed = (IsCharging != _prevCharging) || (IsSuperCharging != _prevSuperCharging) || (ShowBeamMark != _prevBeamMark);
+        if (changed)
         {
+            _prevCharging = IsCharging;
+            _prevSuperCharging = IsSuperCharging;
+            _prevBeamMark = ShowBeamMark;
             UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
         }
-
-        // ★ 激重だった移動速度の毎フレーム更新処理だけを完全に削除しています
 
         if (ShowBeamMark && Player.IsAlive())
             ApplyBeamHit();
@@ -469,7 +480,10 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
         IsSuperBeam = false;
 
         SetRoleTextHeight(true);
+        _prevCharging = false;
+        _prevBeamMark = true;
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
+
         SendRpc();
         ApplyBeamHit();
 
@@ -478,6 +492,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
             if (IsDead || !Player.IsAlive())
             {
                 ShowBeamMark = false;
+                _prevBeamMark = false;
                 IsSuperBeam = false;
                 SetRoleTextHeight(false);
                 IsFiring = false;
@@ -490,6 +505,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
             }
 
             ShowBeamMark = false;
+            _prevBeamMark = false;
             IsSuperBeam = false;
             SetRoleTextHeight(false);
             UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
@@ -555,7 +571,10 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
         }
 
         SetRoleTextHeight(true);
+        _prevSuperCharging = false;
+        _prevBeamMark = true;
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
+
         SendRpc();
         ApplySuperBeamHit();
 
@@ -564,6 +583,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
             if (IsDead || !Player.IsAlive())
             {
                 ShowBeamMark = false;
+                _prevBeamMark = false;
                 IsSuperBeam = false;
                 SetRoleTextHeight(false);
                 IsFiring = false;
@@ -576,6 +596,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
             }
 
             ShowBeamMark = false;
+            _prevBeamMark = false;
             IsSuperBeam = false;
             SetRoleTextHeight(false);
             UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
@@ -958,9 +979,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
     public string GetLowerTextOthers(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
     {
         seen ??= seer;
-        if (seen != seer) return "";
-        if (isForMeeting) return "";
-        if (!Player.IsAlive()) return "";
+        if (seen != seer || isForMeeting || !Player.IsAlive()) return "";
 
         if (IsSuperCharging && seer.PlayerId != Player.PlayerId)
         {

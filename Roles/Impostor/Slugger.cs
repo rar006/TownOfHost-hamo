@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+/*using AmongUs.GameOptions;
 using Hazel;
 using TownOfHost.Modules;
 using TownOfHost.Roles.Core;
@@ -390,4 +390,4 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
         IsSwinging = reader.ReadBoolean();
         SwingFacingLeft = reader.ReadBoolean();
     }
-}
+}*/

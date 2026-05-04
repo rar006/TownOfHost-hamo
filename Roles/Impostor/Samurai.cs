@@ -93,7 +93,7 @@ public sealed class Samurai : RoleBase, IImpostor, IUsePhantomButton
 
     int KillTargetsInFront()
     {
-        var origin = Player.GetTruePosition();
+        var origin = (Vector2)Player.transform.position;
         var forward = Player.cosmetics.FlipX ? Vector2.left : Vector2.right;
 
         var targets =
@@ -111,11 +111,48 @@ public sealed class Samurai : RoleBase, IImpostor, IUsePhantomButton
             if (!target.IsAlive()) continue;
             if (target.GetCustomRole().IsImpostor() && !SuddenDeathMode.NowSuddenDeathMode) continue;
             if (SuddenDeathMode.NowSuddenDeathTemeMode && SuddenDeathMode.IsSameteam(target.PlayerId, Player.PlayerId)) continue;
-            CustomRoleManager.OnCheckMurder(Player, target, target, target, true, true, 1, CustomDeathReason.Kill);
-            killCount++;
+            if (CustomRoleManager.OnCheckMurder(Player, target, target, target, true, true, 1, CustomDeathReason.Kill))
+            {
+                killCount++;
+            }
+        }
+
+        if (killCount > 0)
+        {
+            ForceResetKillCooldown();
+            RestorePositionWithoutWarp(origin);
         }
 
         return killCount;
+    }
+
+    void RestorePositionWithoutWarp(Vector2 origin)
+    {
+        if (!Player.IsAlive()) return;
+
+        Player.RpcSnapToForced(origin);
+        _ = new LateTask(() =>
+        {
+            if (!Player.IsAlive()) return;
+            Player.RpcSnapToForced(origin);
+        }, 0.12f, "SamuraiRestorePosition", true);
+    }
+
+    void ForceResetKillCooldown()
+    {
+        if (!Player.IsAlive()) return;
+
+        Player.ResetKillCooldown();
+        Player.SyncSettings();
+        Player.RpcResetAbilityCooldown(Sync: true);
+
+        _ = new LateTask(() =>
+        {
+            if (!Player.IsAlive()) return;
+            Player.ResetKillCooldown();
+            Player.SyncSettings();
+            Player.RpcResetAbilityCooldown(Sync: true);
+        }, 0.15f, "SamuraiForceResetKillCooldown", true);
     }
 
     bool IsTargetInSlashArea(PlayerControl target, Vector2 origin, Vector2 forward)

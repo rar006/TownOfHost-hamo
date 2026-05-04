@@ -34,6 +34,39 @@ namespace TownOfHost
         public static List<string> ChatHistory = new();
         public static string RuleText = "";
         public static Dictionary<CustomRoles, string> roleCommands;
+
+        // ★ ルール保存用のファイルパス (Among Usのインストールフォルダ直下に保存されます)
+        private static readonly string RuleFilePath = System.IO.Path.Combine(System.Environment.CurrentDirectory, "TOHP_Rule.txt");
+
+        // ★ ゲーム起動時にファイルからルールを復元する処理
+        static ChatCommands()
+        {
+            try
+            {
+                if (System.IO.File.Exists(RuleFilePath))
+                {
+                    RuleText = System.IO.File.ReadAllText(RuleFilePath);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"ルールの読み込みに失敗しました: {e.Message}", "ChatCommands");
+            }
+        }
+
+        // ★ ルールをファイルに書き込んで保存するメソッド
+        public static void SaveRule()
+        {
+            try
+            {
+                System.IO.File.WriteAllText(RuleFilePath, RuleText);
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"ルールの保存に失敗しました: {e.Message}", "ChatCommands");
+            }
+        }
+
         public static bool Prefix(ChatController __instance)
         {
             __instance.timeSinceLastMessage = 3f;
@@ -305,11 +338,13 @@ namespace TownOfHost
                             if (RuleText == "")
                             {
                                 RuleText = newRule;
+                                SaveRule(); // ★ セーブを実行
                                 SendMessage($"<size=90%><color=#ff0000>📋 ルールを設定しました！</color>\n{RuleText}</size>");
                             }
                             else
                             {
                                 RuleText = newRule;
+                                SaveRule(); // ★ セーブを実行
                                 SendMessage($"<size=90%><color=#ff0000>📋 ルールを変更しました！</color>\n{RuleText}</size>");
                             }
                         }
@@ -327,6 +362,7 @@ namespace TownOfHost
                             else
                             {
                                 RuleText = "";
+                                SaveRule(); // ★ セーブを実行
                                 SendMessage("<color=#ff0000>📋 ルールを削除しました！</color>");
                             }
                         }
@@ -349,11 +385,25 @@ namespace TownOfHost
                             int result = new System.Random().Next(min, max + 1);
                             string colorName = PlayerControl.LocalPlayer.Data.DefaultOutfit.ColorId switch
                             {
-                                0 => "レッド", 1 => "ブルー", 2 => "グリーン", 3 => "ピンク",
-                                4 => "オレンジ", 5 => "イエロー", 6 => "ブラック", 7 => "ホワイト",
-                                8 => "パープル", 9 => "ブラウン", 10 => "シアン", 11 => "ライム",
-                                12 => "マルーン", 13 => "ローズ", 14 => "バナナ", 15 => "グレー",
-                                16 => "タン", 17 => "コーラル", _ => "不明な色"
+                                0 => "レッド",
+                                1 => "ブルー",
+                                2 => "グリーン",
+                                3 => "ピンク",
+                                4 => "オレンジ",
+                                5 => "イエロー",
+                                6 => "ブラック",
+                                7 => "ホワイト",
+                                8 => "パープル",
+                                9 => "ブラウン",
+                                10 => "シアン",
+                                11 => "ライム",
+                                12 => "マルーン",
+                                13 => "ローズ",
+                                14 => "バナナ",
+                                15 => "グレー",
+                                16 => "タン",
+                                17 => "コーラル",
+                                _ => "不明な色"
                             };
                             SendMessage($" {PlayerControl.LocalPlayer.Data.PlayerName} ({colorName})が{min}〜{max}でサイコロを振りました → {result}");
                         }
@@ -1656,11 +1706,25 @@ namespace TownOfHost
                         int result = new System.Random().Next(min, max + 1);
                         string colorName = player.Data.DefaultOutfit.ColorId switch
                         {
-                            0 => "レッド", 1 => "ブルー", 2 => "グリーン", 3 => "ピンク",
-                            4 => "オレンジ", 5 => "イエロー", 6 => "ブラック", 7 => "ホワイト",
-                            8 => "パープル", 9 => "ブラウン", 10 => "シアン", 11 => "ライム",
-                            12 => "マルーン", 13 => "ローズ", 14 => "バナナ", 15 => "グレー",
-                            16 => "タン", 17 => "コーラル", _ => "不明な色"
+                            0 => "レッド",
+                            1 => "ブルー",
+                            2 => "グリーン",
+                            3 => "ピンク",
+                            4 => "オレンジ",
+                            5 => "イエロー",
+                            6 => "ブラック",
+                            7 => "ホワイト",
+                            8 => "パープル",
+                            9 => "ブラウン",
+                            10 => "シアン",
+                            11 => "ライム",
+                            12 => "マルーン",
+                            13 => "ローズ",
+                            14 => "バナナ",
+                            15 => "グレー",
+                            16 => "タン",
+                            17 => "コーラル",
+                            _ => "不明な色"
                         };
                         if (!player.IsAlive())
                         {
@@ -1714,6 +1778,7 @@ namespace TownOfHost
                     break;
                 case "/MeeginInfo":
                 case "/mi":
+                case "/day":
                     canceled = true;
                     if (args.Length < 2)
                     {
@@ -1788,6 +1853,7 @@ namespace TownOfHost
                 case "/jacct":
                 case "/jc":
                     if (Assassin.NowUse) break;
+                    canceled = true;
                     if (GameStates.InGame && Options.JackalHideChat.GetBool() && player.IsAlive() && player.GetCustomRole() is CustomRoles.Jackal or CustomRoles.Jackaldoll or CustomRoles.JackalMafia or CustomRoles.JackalAlien or CustomRoles.JackalHadouHo or CustomRoles.Tama)
                     {
                         string send = "";
@@ -1816,6 +1882,7 @@ namespace TownOfHost
                 case "/loverchat":
                 case "/lc":
                     if (Assassin.NowUse) break;
+                    canceled = true;
                     if (GameStates.InGame && Options.LoversHideChat.GetBool() && player.IsAlive() && player.IsLovers())
                     {
                         var loverrole = player.GetLoverRole();
@@ -1853,8 +1920,17 @@ namespace TownOfHost
                     if (Assassin.NowUse) break;
                     if (GameStates.InGame && Options.TwinsHideChat.GetBool() && player.IsAlive() && Twins.TwinsList.TryGetValue(player.PlayerId, out var twinsid))
                     {
-                        string send = "";
-                        if (GetHideSendText(ref canceled, ref send) is false) return;
+                        if (GameStates.ExiledAnimate)
+                        {
+                            canceled = true;
+                            break;
+                        }
+                        var send = "";
+                        foreach (var ag in args)
+                        {
+                            if (ag.StartsWith("/")) continue;
+                            send += ag;
+                        }
                         Logger.Info($"{player.Data.GetLogPlayerName()} : {send}", "TwinsChat");
                         foreach (var twins in AllPlayerControls)
                         {
@@ -1880,6 +1956,11 @@ namespace TownOfHost
                     if (Assassin.NowUse) break;
                     if (GameStates.InGame && Options.ConnectingHideChat.GetBool() && player.IsAlive() && player.Is(CustomRoles.Connecting) && !player.Is(CustomRoles.WolfBoy))
                     {
+                        if (GameStates.ExiledAnimate || player.GetCustomRole() is CustomRoles.WolfBoy)
+                        {
+                            canceled = true;
+                            break;
+                        }
                         string send = "";
                         if (GetHideSendText(ref canceled, ref send) is false) return;
                         Logger.Info($"{player.Data.GetLogPlayerName()} : {send}", "Connectingchat");

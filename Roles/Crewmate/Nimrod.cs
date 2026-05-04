@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+/*using System.Collections.Generic;
 using AmongUs.GameOptions;
 using Hazel;
 using TownOfHost.Modules;
@@ -135,4 +135,4 @@ public sealed class Nimrod : RoleBase
             return $"{(isForHud ? "" : "<size=60%>")}<color={RoleInfo.RoleColorCode}>道連れ会議中！誰かに投票して道連れにしよう</color>";
         return "";
     }
-}
+}*/

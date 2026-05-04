@@ -829,8 +829,11 @@ namespace TownOfHost
                 GuessManager.Reset();//会議後にリセット入れる
                 GameStates.ExiledAnimate = false;
 
-                // 画面切り替えの暗転が終わる頃にチャットを強制表示
-                _ = new LateTask(() => SetChatVisibleForAll(), 0.5f, "ShowChatAfterMeeting");
+                // 画面切り替えの暗転が終わる頃にチャットを強制表示 (オプションがオンの場合のみ)
+                if (Options.OptionGameChatSetting.GetBool())
+                {
+                    _ = new LateTask(() => SetChatVisibleForAll(), 0.5f, "ShowChatAfterMeeting");
+                }
             }
         }
         #endregion
@@ -1063,6 +1066,7 @@ namespace TownOfHost
             if (Options.CantUseVentMode.GetBool() && (Options.CantUseVentTrueCount.GetFloat() >= PlayerCatch.AllAlivePlayerControls.Count())) CantUseVent = true;
             else CantUseVent = false;
         }
+
         [HarmonyPatch(typeof(IntroCutscene), nameof(IntroCutscene.OnDestroy))]
         public static class IntroCutsceneOnDestroyPatchForChat
         {
@@ -1070,8 +1074,10 @@ namespace TownOfHost
             {
                 if (AmongUsClient.Instance.AmHost)
                 {
-                    // イントロが終わってマップに降り立った直後にチャットを強制表示
-                    _ = new LateTask(() => Utils.SetChatVisibleForAll(), 0.5f, "ShowChatOnGameStart");
+                    if (Options.OptionGameChatSetting.GetBool())
+                    {
+                        _ = new LateTask(() => Utils.SetChatVisibleForAll(), 0.5f, "ShowChatOnGameStart");
+                    }
                 }
             }
         }

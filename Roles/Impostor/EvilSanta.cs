@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+/*using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
 using TownOfHost.Roles.Core;
@@ -267,3 +267,4 @@ public sealed class EvilSanta : RoleBase, IImpostor, IUsePhantomButton
         return true;
     }
 }
+*/

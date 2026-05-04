@@ -120,11 +120,10 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         Player.SyncSettings();
         Main.AllPlayerKillCooldown[Player.PlayerId] = 60f;
         Player.SyncSettings();
-
-        // ★ チャージ開始時に1回だけ
+        UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
         _prevCharging = true;
         _prevBeamMark = false;
-        UtilsNotifyRoles.NotifyRoles(OnlyMeName: true);
+
         SendRpc();
     }
 
@@ -134,7 +133,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         if (t == null) return;
         var rt = t.GetComponent<TMPro.TextMeshPro>();
         if (rt == null) return;
-        if (beaming) { rt.text = "<alpha=#00>縲€</alpha>"; t.SetLocalY(0.35f); }
+        if (beaming) { rt.text = "<alpha=#00>　</alpha>"; t.SetLocalY(0.35f); }
         else { rt.enabled = true; t.SetLocalY(0.35f); }
     }
 
@@ -150,7 +149,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
 
         if (MeetingHud.Instance != null)
         {
-            if (IsCharging || ShowBeamMark)
+            if (IsCharging || ShowBeamMark || IsFiring)
             {
                 IsCharging = false; ShowBeamMark = false; IsFiring = false;
                 _prevCharging = false; _prevBeamMark = false;
@@ -158,6 +157,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
                 Player.MarkDirtySettings();
                 SetRoleTextHeight(false);
                 UtilsNotifyRoles.NotifyRoles();
+                SendRpc();
             }
             return;
         }
@@ -174,8 +174,6 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
             SendRpc();
             return;
         }
-
-        // ★ 状態変化時のみNotify
         bool changed = (IsCharging != _prevCharging) || (ShowBeamMark != _prevBeamMark);
         if (changed)
         {
@@ -196,10 +194,10 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         Utils.AllPlayerKillFlash();
         IsCharging = false; chargeTimer = 0f; HasHit = false; ShowBeamMark = true;
         SetRoleTextHeight(true);
-
-        // ★ ビーム開始時に1回
-        _prevCharging = false; _prevBeamMark = true;
+        _prevCharging = false;
+        _prevBeamMark = true;
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
+
         SendRpc();
         ApplyBeamHit();
 
@@ -252,7 +250,11 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
             var toTarget = target.GetTruePosition() - myPos;
             float dot = Vector2.Dot(toTarget, dir);
             if (dot <= 0) continue;
-            if ((toTarget - dir * dot).magnitude > 1.3f) continue;
+
+            var proj = dir * dot;
+            var perp = toTarget - proj;
+            if (perp.magnitude > 1.3f) continue;
+
             CustomRoleManager.OnCheckMurder(Player, target, target, target, true, deathReason: CustomDeathReason.Hit);
             HasHit = true;
         }

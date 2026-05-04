@@ -653,7 +653,7 @@ namespace TownOfHost
             //最初のオプションのみここ
             SuddenDeathMode.CreateOption();
             MurderMystery.SetUpMurderMysteryOption();
-            DummyBattleRoyaleManager.SetupOptionItem();
+            //DummyBattleRoyaleManager.SetupOptionItem();
             ObjectOptionitem.Create(1_000_121, "StandardHAS", true, null, TabGroup.MainSettings).SetOptionName(() => "Standard HAS").SetColorcode("#ecff41ff").SetTag(CustomOptionTags.StandardHAS);
             StandardHASWaitingTime = FloatOptionItem.Create(100007, "StandardHASWaitingTime", new(0f, 180f, 2.5f), 10f, TabGroup.MainSettings, false)
                 .SetValueFormat(OptionFormat.Seconds).SetTag(CustomOptionTags.StandardHAS).SetHeader(true);

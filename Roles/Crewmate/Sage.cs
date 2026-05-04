@@ -33,6 +33,7 @@ public sealed class Sage : RoleBase
         BarrierCooldown = OptionBarrierCooldown.GetFloat();
         isBarrierActive = false;
         barrierTimer = 0f;
+        cooldownTimer = OptionBarrierCooldown.GetFloat();
         savedPosition = Vector2.zero;
     }
 
@@ -43,10 +44,11 @@ public sealed class Sage : RoleBase
 
     bool isBarrierActive;
     float barrierTimer;
+    float cooldownTimer;
     Vector2 savedPosition;
 
-    // ★ デフォルトペットID（ペットがない人に付与）
-    private const string DefaultPetId = "pet_Crewmate";
+    // ★ ミニクルーメイトのペットID
+    private const string DefaultPetId = "pet_crewmate";
 
     enum OptionName
     {
@@ -68,7 +70,7 @@ public sealed class Sage : RoleBase
 
         if (!AmongUsClient.Instance.AmHost) return;
 
-        // ★ 複数回リトライして確実に付与する
+        // ★ ペットがついていない場合の自動付与処理を強化
         for (int i = 1; i <= 3; i++)
         {
             int delay = i;
@@ -78,11 +80,15 @@ public sealed class Sage : RoleBase
                 {
                     if (Player == null) return;
 
-                    // ★ CurrentOutfit で現在の装備を確認
-                    string currentPet = Player.CurrentOutfit?.PetId ?? "";
-                    if (!string.IsNullOrEmpty(currentPet)) return; // 既にペットあり
+                    // Data.DefaultOutfit もしくは CurrentOutfit から確認
+                    string currentPet = Player.Data?.DefaultOutfit?.PetId ?? Player.CurrentOutfit?.PetId ?? "";
 
-                    PetsHelper.SetPet(Player, DefaultPetId);
+                    // "pet_none" や "None" も「ペットなし」として判定する
+                    bool hasPet = !string.IsNullOrEmpty(currentPet) && currentPet.ToLower() != "pet_none" && currentPet.ToLower() != "none";
+                    if (hasPet) return; // 既に何かしらのペットをつけているならスキップ
+
+                    // 確実に付与するためにRpcSetPetを使用
+                    Player.RpcSetPet(DefaultPetId);
                     Logger.Info($"{Player.Data.GetLogPlayerName()} にペット付与: {DefaultPetId} (試行{delay}回目)", "Sage");
                 }
                 catch (Exception e)
@@ -111,17 +117,16 @@ public sealed class Sage : RoleBase
     {
         if (!Player.IsAlive()) return;
         if (isBarrierActive) return;
+        if (cooldownTimer > 0f) return;
 
         isBarrierActive = true;
         barrierTimer = 0f;
         savedPosition = Player.GetTruePosition();
 
-        // ★ 速度を0にしてアニメを止める
         Main.AllPlayerSpeed[Player.PlayerId] = Main.MinSpeed;
         Player.MarkDirtySettings();
         Player.SyncSettings();
 
-        // ★ 念のため即座に位置をスナップ
         SnapPlayerToSaved();
 
         Utils.SendMessage(
@@ -139,7 +144,6 @@ public sealed class Sage : RoleBase
         isBarrierActive = false;
         barrierTimer = 0f;
 
-        // ★ 速度を元に戻す
         Main.AllPlayerSpeed[Player.PlayerId] =
             Main.RealOptionsData?.GetFloat(FloatOptionNames.PlayerSpeedMod) ?? 1f;
         Player.MarkDirtySettings();
@@ -149,13 +153,13 @@ public sealed class Sage : RoleBase
         {
             AURoleOptions.EngineerCooldown = BarrierCooldown;
             Player.RpcResetAbilityCooldown();
+            cooldownTimer = BarrierCooldown;
         }
 
         SendRpc();
         UtilsNotifyRoles.NotifyRoles(OnlyMeName: true);
     }
 
-    // ★ 位置スナップをまとめたヘルパー
     private void SnapPlayerToSaved()
     {
         if (Player == null) return;
@@ -171,27 +175,30 @@ public sealed class Sage : RoleBase
 
     public override void OnFixedUpdate(PlayerControl player)
     {
+        if (!isBarrierActive && cooldownTimer > 0f)
+        {
+            cooldownTimer -= Time.fixedDeltaTime;
+            if (cooldownTimer < 0f) cooldownTimer = 0f;
+        }
+
         if (!isBarrierActive) return;
         if (!AmongUsClient.Instance.AmHost) return;
         if (!Player.IsAlive()) { DeactivateBarrier(false); return; }
 
         barrierTimer += Time.fixedDeltaTime;
 
-        // ★ バリア中は毎フレーム位置を固定（走りアニメ抑制）
         var currentPos = Player.GetTruePosition();
         if (Vector2.Distance(currentPos, savedPosition) > 0.02f)
         {
             SnapPlayerToSaved();
         }
 
-        // ★ 速度が戻っていたら再度0にする（他MODとの競合対策）
         if (Main.AllPlayerSpeed.TryGetValue(Player.PlayerId, out float spd) && spd > Main.MinSpeed)
         {
             Main.AllPlayerSpeed[Player.PlayerId] = Main.MinSpeed;
             Player.MarkDirtySettings();
         }
 
-        // ★ 時間切れで解除
         if (barrierTimer >= BarrierDuration)
         {
             Utils.SendMessage(
@@ -242,6 +249,7 @@ public sealed class Sage : RoleBase
 
         AURoleOptions.EngineerCooldown = BarrierCooldown;
         Player.RpcResetAbilityCooldown();
+        cooldownTimer = BarrierCooldown;
     }
 
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null,
@@ -259,6 +267,7 @@ public sealed class Sage : RoleBase
             float remaining = Mathf.Max(0f, BarrierDuration - barrierTimer);
             return $"{size}<color={color}>【バリア発動中】{remaining:F1}s | 動けません</color>";
         }
+
         return $"{size}<color={color}>ペットなで → 聖なるバリア発動</color>";
     }
 
@@ -278,6 +287,7 @@ public sealed class Sage : RoleBase
         using var sender = CreateSender();
         sender.Writer.Write(isBarrierActive);
         sender.Writer.Write(barrierTimer);
+        sender.Writer.Write(cooldownTimer);
         sender.Writer.Write(savedPosition.x);
         sender.Writer.Write(savedPosition.y);
     }
@@ -286,6 +296,7 @@ public sealed class Sage : RoleBase
     {
         isBarrierActive = reader.ReadBoolean();
         barrierTimer = reader.ReadSingle();
+        cooldownTimer = reader.ReadSingle();
         float x = reader.ReadSingle();
         float y = reader.ReadSingle();
         savedPosition = new Vector2(x, y);

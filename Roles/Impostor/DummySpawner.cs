@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+/*using System.Collections.Generic;
 using AmongUs.GameOptions;
 using UnityEngine;
 using TownOfHost.Modules;
@@ -167,4 +167,4 @@ public sealed class RandomDummy : CustomNetObject, IKillableDummy
     {
         Despawn();
     }
-}
+}*/
