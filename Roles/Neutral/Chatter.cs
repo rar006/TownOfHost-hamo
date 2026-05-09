@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+/*using AmongUs.GameOptions;
 using HarmonyLib;
 using Hazel;
 using TownOfHost.Modules;
@@ -154,4 +154,4 @@ public static class Chatter_MeetingHud_Update_Patch
             }
         }
     }
-}
+}*/

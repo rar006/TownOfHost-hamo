@@ -50,6 +50,38 @@ public class ModNewsHistory
             {
                 var news = new ModNews
                 {
+                    Number = 100070,
+                    Title = "波動砲シェリフ？なんだそりゃ　まだ完成してねえよ!!!",
+                    SubTitle = "<color=#FF9631>Town Of Host-Pko v3.27.13.51</color>",
+                    ShortTitle = "<color=#FF9631>●TOH-Pko v3.27.13.51</color>",
+                    Text = "・New役職　ヒッチハイカーの追加\n"
+                    + "・New属性　ジャンボの追加\n"
+                    + "・ロケットの追加 From:SuperNewRoles\n"
+                    + "・ニムロッドの追加 From:TownOfHOst-Y\n"
+                    + "・爆ぜ師の追加 From:SuperNewRoles\n"
+                    + "・自殺願望者の追加 From:SuperNewRoles\n"
+                    + "・神がタスク終わってなくても勝利できたバグの修正\n"
+                    + "・賢者のクールタイムがおかしかったバグの修正\n"
+                    + "・波動砲、波動砲ジャッカル、波動砲シェリフのロワーテクストの改行\n"
+                    + "・シーアの霊魂が2個以上になると正しく表示されないバグの修正\n"
+                    + "・ペットがつかなかったバグの修正\n"
+                    + "・忘却者のバグ修正\n"
+                    + "・シーアの霊魂数表示を削除\n"
+                    + "・弾の軽量化\n"
+                    + "・弾のワープをちょい修正\n"
+                    + "・タイムリーパーのワープをちょい修正\n"
+                    + "・ヒッチハイカーのワープをちょい修正\n"
+                    + "・賢者、ニムロッド、爆ぜ師、ヒッチハイカー翻訳\n"
+                    + "・ジェスタータスクできないバグの修正\n"
+                    + "・ニムロッド修正\n"
+                    ,
+                    Date = "2026-5-09"
+                };
+                AllModNews.Add(news);
+            }
+            {
+                var news = new ModNews
+                {
                     Number = 100069,
                     Title = "なんか皆使ってくれてるから4週間後に一気にアプデしようかと思ったけどあげちゃうわ",
                     SubTitle = "<color=#FF9631>Town Of Host-Pko v3.26.13.50</color>",
