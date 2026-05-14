@@ -328,6 +328,7 @@ namespace TownOfHost
             if (Options.LoversHideChat.GetBool()) text += $"\n/cmd lc - {GetString("Command.LoverChat")}";
             if (Options.ConnectingHideChat.GetBool()) text += $"\n/cmd cc - {GetString("Command.ConnectingChat")}";
             if (Options.TwinsHideChat.GetBool()) text += $"\n/cmd tc - {GetString("Command.TwinsChat")}";
+            if (Options.OnmyojiHideChat.GetBool()) text += $"\n/cmd oc - {GetString("Command.OnmyojiChat")}";
             if (GameStates.IsLobby)
             {
                 text += $"\n/cmd lastresult(l) - {GetString("Command.lastresult")}"
@@ -352,7 +353,7 @@ namespace TownOfHost
         }
 
         static readonly Regex UnderlineRegex = new(@"<u>(.*?)</u>", RegexOptions.Singleline | RegexOptions.Compiled);
-        public static void SendMessage(string text, byte sendTo = byte.MaxValue, string title = "", bool checkl = false, bool isTowSend = false)
+        public static void SendMessage(string text, byte sendTo = byte.MaxValue, string title = "", bool checkl = true, bool isTowSend = false)
         {
             if (!AmongUsClient.Instance.AmHost) return;
             if (text.RemoveHtmlTags() == "") return;
@@ -360,16 +361,16 @@ namespace TownOfHost
             if (IsRestriction() && isTowSend && title == "NonTitle") title = "";
 
             var towsend = "";
-            if (checkl && text.Length > 500)
+            if (checkl && text.Length > 400)
             {
                 var sendtext = "";
                 var alltext = text.Split("\n");
                 (string size, string color, string hi, string b) tag = ("", "", "", "");
                 var oldtext = text;
                 var i = 0;
-                for (i = 0; sendtext.Length < 350; i++)
+                for (i = 0; sendtext.Length < 350 || ((sendtext.Split("\n")?.Count() ?? 0) < 10); i++)
                 {
-                    if (sendtext.Length + alltext[i].Length > 350 && i > 0)
+                    if ((sendtext.Length + alltext[i].Length > 350 || ((sendtext.Split("\n")?.Count() ?? 0) > 10)) && i > 0)
                     {
                         i--;
                         break;

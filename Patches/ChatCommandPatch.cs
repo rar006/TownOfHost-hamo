@@ -67,6 +67,15 @@ namespace TownOfHost
             }
         }
 
+        static bool IsOnmyojiChatRole(PlayerControl player)
+            => player != null && (player.Is(CustomRoles.Onmyoji) || player.Is(CustomRoles.Shikigami));
+
+        static string GetHideChatDisplayName(PlayerControl player)
+        {
+            if (player == null) return "";
+            return player.GetClient()?.PlayerName ?? player.Data?.PlayerName ?? "";
+        }
+
         public static bool Prefix(ChatController __instance)
         {
             __instance.timeSinceLastMessage = 3f;
@@ -902,6 +911,32 @@ namespace TownOfHost
                             }
                         }
                         canceled = true;
+                        break;
+                    case "/onmyojichat":
+                    case "/onmychat":
+                    case "/oc":
+                        if (Assassin.NowUse) break;
+                        canceled = true;
+                        if (GameStates.InGame && Options.OnmyojiHideChat.GetBool() && PlayerControl.LocalPlayer.IsAlive() && IsOnmyojiChatRole(PlayerControl.LocalPlayer))
+                        {
+                            var send = "";
+                            foreach (var ag in args)
+                            {
+                                if (ag.StartsWith("/")) continue;
+                                send += ag;
+                            }
+                            Logger.Info($"{PlayerControl.LocalPlayer.Data.GetLogPlayerName()} : {send}", "OnmyojiChat");
+                            foreach (var target in AllPlayerControls)
+                            {
+                                if (target == null) continue;
+                                if (!(IsOnmyojiChatRole(target) || !target.IsAlive())) continue;
+                                var clientid = target.GetClientId();
+                                if (clientid == -1) continue;
+                                var senderName = ColorString(Main.PlayerColors[PlayerControl.LocalPlayer.PlayerId], GetHideChatDisplayName(PlayerControl.LocalPlayer));
+                                SendMessage(send.Mark(GetRoleColor(CustomRoles.Onmyoji)), target.PlayerId,
+                                    ColorString(GetRoleColor(CustomRoles.Onmyoji), $"O{senderName}O"));
+                            }
+                        }
                         break;
 
                     case "/t":
@@ -2001,6 +2036,34 @@ namespace TownOfHost
                                     string sendtext = send.Mark(GetRoleColor(CustomRoles.Connecting));
                                     SendMessage(sendtext, connect.PlayerId, title);
                                 }
+                            }
+                        }
+                        player.RpcProtectedMurderPlayer();
+                    }
+                    canceled = true;
+                    break;
+                case "/onmyojichat":
+                case "/onmychat":
+                case "/oc":
+                    if (Assassin.NowUse) break;
+                    if (GameStates.InGame && Options.OnmyojiHideChat.GetBool() && player.IsAlive() && IsOnmyojiChatRole(player))
+                    {
+                        string send = "";
+                        if (GetHideSendText(ref canceled, ref send) is false) return;
+                        Logger.Info($"{player.Data.GetLogPlayerName()} : {send}", "OnmyojiChat");
+                        foreach (var target in AllPlayerControls)
+                        {
+                            if (target == null) continue;
+                            if (!(IsOnmyojiChatRole(target) || !target.IsAlive())) continue;
+                            if (target.PlayerId == player.PlayerId && !Isclient) continue;
+                            if (AmongUsClient.Instance.AmHost)
+                            {
+                                var clientid = target.GetClientId();
+                                if (clientid == -1) continue;
+                                var senderName = ColorString(Main.PlayerColors[player.PlayerId], GetHideChatDisplayName(player));
+                                string title = ColorString(GetRoleColor(CustomRoles.Onmyoji), $"O{senderName}O</line-height>");
+                                string sendtext = send.Mark(GetRoleColor(CustomRoles.Onmyoji));
+                                SendMessage(sendtext, target.PlayerId, title);
                             }
                         }
                         player.RpcProtectedMurderPlayer();

@@ -403,19 +403,51 @@ namespace TownOfHost
         private static string BuildPayload(string action, string hostName, string roomCode, string state, int players, int maxPlayers, string messageId, string reason)
         {
             var nowUtc = DateTime.UtcNow.ToString("o");
+            var stateLabel = GetStateLabel(state);
+            var content = BuildRecruitmentContent(hostName, roomCode, stateLabel, players, maxPlayers);
             return "{"
                 + $"\"action\":\"{EscapeJson(action ?? "upsert")}\","
                 + $"\"hostName\":\"{EscapeJson(hostName)}\","
                 + $"\"roomCode\":\"{EscapeJson(roomCode)}\","
                 + $"\"state\":\"{EscapeJson(state ?? "Unknown")}\","
+                + $"\"stateLabel\":\"{EscapeJson(stateLabel)}\","
                 + $"\"players\":{players},"
                 + $"\"maxPlayers\":{maxPlayers},"
+                + $"\"content\":\"{EscapeJson(content)}\","
                 + $"\"messageId\":\"{EscapeJson(messageId ?? "")}\","
                 + $"\"reason\":\"{EscapeJson(reason ?? "")}\","
                 + $"\"mod\":\"{EscapeJson(Main.ModName)}\","
                 + $"\"forkId\":\"{EscapeJson(Main.ForkId)}\","
                 + $"\"sentAtUtc\":\"{EscapeJson(nowUtc)}\""
                 + "}";
+        }
+
+        private static string BuildRecruitmentContent(string hostName, string roomCode, string stateLabel, int players, int maxPlayers)
+        {
+            var host = string.IsNullOrWhiteSpace(hostName) ? "Unknown Host" : hostName;
+            var code = string.IsNullOrWhiteSpace(roomCode) ? "------" : roomCode;
+            var state = string.IsNullOrWhiteSpace(stateLabel) ? "不明" : stateLabel;
+            var playersText = $"{Math.Max(players, 0)}/{Math.Max(maxPlayers, 0)}";
+
+            return "⠀⠀⠀【募集情報】\n"
+                + $"★ホスト★:  **{host}**\n"
+                + $"▲コード▲: **{code}**\n"
+                + $"♦現在♦: **{state}**\n"
+                + $"♠人数♠: **{playersText}**\n"
+                + "ーーーーーーーーーーーーー";
+        }
+
+        private static string GetStateLabel(string state)
+        {
+            if (string.IsNullOrWhiteSpace(state)) return "不明";
+
+            return state switch
+            {
+                "Lobby" => "ロビー",
+                "InGame" => "ゲーム中",
+                "Closed" => "終了",
+                _ => state
+            };
         }
 
         private static string TryReadJsonString(string json, string propName)

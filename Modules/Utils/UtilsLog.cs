@@ -315,6 +315,17 @@ namespace TownOfHost
                 {
                     AdditionalWinnerText.Append('＆').Append(ColorString(GetRoleColor(role), GetRoleName(role)));
                 }
+            // バットガールの追加勝利表示は「バットガール＆王子様」に置き換える
+            if (CustomWinnerHolder.WinnerTeam == CustomWinner.BatGirl && CustomWinnerHolder.AdditionalWinnerRoles.Contains(CustomRoles.BatGirl))
+            {
+                var batGirlName = GetRoleName(CustomRoles.BatGirl);
+                CustomWinnerText = CustomWinnerText
+                    .Replace($"{batGirlName}&{batGirlName}", $"{batGirlName}&王子様")
+                    .Replace($"{batGirlName}＆{batGirlName}", $"{batGirlName}＆王子様")
+                    .Replace("BatGirl&BatGirl", "BatGirl&Prince")
+                    .Replace("BatGirl＆BatGirl", "BatGirl＆Prince");
+            }
+
             if (CustomWinnerHolder.WinnerTeam is not CustomWinner.Draw and not CustomWinner.None and not CustomWinner.OneLove && !SuddenDeathMode.NowSuddenDeathMode)
             {
                 CustomWinnerText = $"<{CustomWinnerColor}>{CustomWinnerText}{AdditionalWinnerText}{GetString("Win")}</color>";

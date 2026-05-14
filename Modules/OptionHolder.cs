@@ -543,6 +543,7 @@ namespace TownOfHost
         public static OptionItem JackalHideChat;
         public static OptionItem TwinsHideChat;
         public static OptionItem ConnectingHideChat;
+        public static OptionItem OnmyojiHideChat;
 
         public static OptionItem DisableTaskWin;
 
@@ -710,6 +711,9 @@ namespace TownOfHost
             ConnectingHideChat = BooleanOptionItem.Create(105008, "ConnectingHideChat", false, TabGroup.MainSettings, false)
                 .SetTag(CustomOptionTags.Standard)
                 .SetColor(UtilsRoleText.GetRoleColor(CustomRoles.Connecting)).SetParent(TeamHideChat);
+            OnmyojiHideChat = BooleanOptionItem.Create(105013, "OnmyojiHideChat", false, TabGroup.MainSettings, false)
+                .SetTag(CustomOptionTags.Standard)
+                .SetColor(UtilsRoleText.GetRoleColor(CustomRoles.Onmyoji)).SetParent(TeamHideChat);
             ExRpcWeightR = BooleanOptionItem.Create(105009, "ExRpcWeightR", false, TabGroup.MainSettings, false).SetParent(ExperimentalMode);
             ExCallMeetingBlackout = BooleanOptionItem.Create(105012, "ExCallMeetingBlackout", false, TabGroup.MainSettings, false)
                 .SetParent(ExperimentalMode)

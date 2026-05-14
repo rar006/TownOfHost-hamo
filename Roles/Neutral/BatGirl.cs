@@ -27,7 +27,8 @@ public sealed class BatGirl : RoleBase, ISelfVoter, IUsePhantomButton, IAddition
             "#ff4f8f",
             (8, 1),
             true,
-            introSound: () => GetIntroSound(RoleTypes.Impostor)
+            introSound: () => GetIntroSound(RoleTypes.Impostor),
+            Desc: () => GetString((OptionAddWin?.GetBool() ?? true) ? "BatGirlInfoLongAddWin" : "BatGirlInfoLongSoloOnly")
         );
 
     static OptionItem OptionSuicideCooldown;
@@ -171,8 +172,7 @@ public sealed class BatGirl : RoleBase, ISelfVoter, IUsePhantomButton, IAddition
     {
         if (!AmongUsClient.Instance.AmHost) return;
 
-        // 会議後遅延死キューに入った時点で同ターン死亡として先取り
-        if (princeId != byte.MaxValue && Main.AfterMeetingDeathPlayers.ContainsKey(princeId))
+        // 莨夊ｭｰ蠕碁≦蟒ｶ豁ｻ繧ｭ繝･繝ｼ縺ｫ蜈･縺｣縺滓凾轤ｹ縺ｧ蜷後ち繝ｼ繝ｳ豁ｻ莠｡縺ｨ縺励※蜈亥叙繧・        if (princeId != byte.MaxValue && Main.AfterMeetingDeathPlayers.ContainsKey(princeId))
             MarkPrinceDeathThisTurn();
         if (Main.AfterMeetingDeathPlayers.ContainsKey(Player.PlayerId))
             MarkBatGirlDeathThisTurn();
@@ -307,7 +307,7 @@ public sealed class BatGirl : RoleBase, ISelfVoter, IUsePhantomButton, IAddition
         MeetingHudPatch.TryAddAfterMeetingDeathPlayers(CustomDeathReason.FollowingSuicide, Player.PlayerId);
         followQueued = true;
 
-        // 王子様がこのターンで死んでいる場合、後追い死を同ターン扱いとして先に成立させる
+        // 邇句ｭ先ｧ倥′縺薙・繧ｿ繝ｼ繝ｳ縺ｧ豁ｻ繧薙〒縺・ｋ蝣ｴ蜷医∝ｾ瑚ｿｽ縺・ｭｻ繧貞酔繧ｿ繝ｼ繝ｳ謇ｱ縺・→縺励※蜈医↓謌千ｫ九＆縺帙ｋ
         if (princeDiedThisTurn)
         {
             batGirlDiedThisTurn = true;
@@ -357,7 +357,6 @@ public sealed class BatGirl : RoleBase, ISelfVoter, IUsePhantomButton, IAddition
         foreach (var role in Instances.ToArray())
         {
             if (role == null) continue;
-            Logger.Info($"TryTakeOverSoloWin state: {role.Player.GetNameWithRole().RemoveHtmlTags()} prince={role.princeId} pDead={role.princeDiedThisTurn} bgDead={role.batGirlDiedThisTurn} sat={role.soloDeathSatisfied}", "BatGirl");
             if (!role.CanSoloWinNow()) continue;
 
             Logger.Info($"TryTakeOverSoloWin candidate: {role.Player.GetNameWithRole().RemoveHtmlTags()} winner={CustomWinnerHolder.WinnerTeam}", "BatGirl");
@@ -370,6 +369,7 @@ public sealed class BatGirl : RoleBase, ISelfVoter, IUsePhantomButton, IAddition
 
             CustomWinnerHolder.NeutralWinnerIds.Add(role.Player.PlayerId);
             CustomWinnerHolder.WinnerIds.Add(role.Player.PlayerId);
+            role.AddPrinceAsWinner(addDisplayTag: true);
             reason = GameOverReason.ImpostorsByKill;
             Logger.Info($"TryTakeOverSoloWin success: {role.Player.GetNameWithRole().RemoveHtmlTags()}", "BatGirl");
             return true;
@@ -394,6 +394,15 @@ public sealed class BatGirl : RoleBase, ISelfVoter, IUsePhantomButton, IAddition
 
     PlayerControl GetPrince() => princeId == byte.MaxValue ? null : PlayerCatch.GetPlayerById(princeId);
 
+    void AddPrinceAsWinner(bool addDisplayTag)
+    {
+        if (princeId == byte.MaxValue) return;
+        CustomWinnerHolder.WinnerIds.Add(princeId);
+        CustomWinnerHolder.CantWinPlayerIds.Remove(princeId);
+        if (addDisplayTag)
+            CustomWinnerHolder.AdditionalWinnerRoles.Add(CustomRoles.BatGirl);
+    }
+
     public override void CheckWinner(GameOverReason reason)
     {
         if (!AmongUsClient.Instance.AmHost) return;
@@ -404,6 +413,7 @@ public sealed class BatGirl : RoleBase, ISelfVoter, IUsePhantomButton, IAddition
         {
             CustomWinnerHolder.NeutralWinnerIds.Add(Player.PlayerId);
             CustomWinnerHolder.WinnerIds.Add(Player.PlayerId);
+            AddPrinceAsWinner(addDisplayTag: true);
         }
     }
 
@@ -414,9 +424,7 @@ public sealed class BatGirl : RoleBase, ISelfVoter, IUsePhantomButton, IAddition
         var prince = GetPrince();
         if (prince == null || !prince.IsAlive()) return false;
 
-        // 追加勝利時は王子様にも勝利を付与する
-        CustomWinnerHolder.WinnerIds.Add(prince.PlayerId);
-        CustomWinnerHolder.CantWinPlayerIds.Remove(prince.PlayerId);
+        AddPrinceAsWinner(addDisplayTag: true);
 
         winnerRole = CustomRoles.BatGirl;
         return true;
@@ -430,7 +438,6 @@ public sealed class BatGirl : RoleBase, ISelfVoter, IUsePhantomButton, IAddition
         ResetCooldown = false;
         MyState.DeathReason = CustomDeathReason.Suicide;
         Player.SetRealKiller(Player);
-        // 自決は保護の影響を受けず必ず死亡させる
         Player.RpcMurderPlayer(Player, true);
     }
 
@@ -489,3 +496,5 @@ public sealed class BatGirl : RoleBase, ISelfVoter, IUsePhantomButton, IAddition
         followQueued = reader.ReadBoolean();
     }
 }
+
+
