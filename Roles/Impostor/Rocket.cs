@@ -77,6 +77,7 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
     public bool CanUseSabotageButton() => true;
     public bool CanUseImpostorVentButton() => true;
     public override bool CanClickUseVentButton => true;
+    public override bool CanUseAbilityButton() => GrabbedPlayers.Count > 0;
 
     bool IUsePhantomButton.IsPhantomRole => true;
     bool IUsePhantomButton.IsresetAfterKill => false;
@@ -121,7 +122,9 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
 
         killCDOverride = SubsequentGrabCooldown;
         Main.AllPlayerKillCooldown[Player.PlayerId] = killCDOverride;
-        Player.SetKillCooldown(killCDOverride);
+        var grabState = PlayerState.GetByPlayerId(Player.PlayerId);
+        if (grabState != null) grabState.Is10secKillButton = false;
+        Player.SetKillCooldown(killCDOverride, force: false);
         Player.KillFlash();
 
         SendRpc();
@@ -173,7 +176,7 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
     {
         if (GrabbedPlayers.Count == 0)
         {
-            AdjustKillCooldown = false;
+            AdjustKillCooldown = true;
             ResetCooldown = false;
             return;
         }
@@ -187,7 +190,9 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
 
         killCDOverride = InitialGrabCooldown;
         Main.AllPlayerKillCooldown[Player.PlayerId] = killCDOverride;
-        Player.SetKillCooldown(killCDOverride);
+        var launchState = PlayerState.GetByPlayerId(Player.PlayerId);
+        if (launchState != null) launchState.Is10secKillButton = false;
+        Player.SetKillCooldown(killCDOverride, force: false);
 
         _ = new LateTask(() =>
         {
@@ -352,7 +357,9 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
                 LaunchAll(pos);
                 killCDOverride = InitialGrabCooldown;
                 Main.AllPlayerKillCooldown[Player.PlayerId] = killCDOverride;
-                Player.SetKillCooldown(killCDOverride);
+                var afterMeetingState = PlayerState.GetByPlayerId(Player.PlayerId);
+                if (afterMeetingState != null) afterMeetingState.Is10secKillButton = false;
+                Player.SetKillCooldown(killCDOverride, force: false);
                 SendRpc();
             }, 1.5f, "Rocket.LaunchAfterMeeting", true);
         }
