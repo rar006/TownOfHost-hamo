@@ -85,6 +85,7 @@ public sealed class PavlovDog : PavlovDogBase
         HideRoleOptions(CustomRoles.PavlovDogImprint);
     }
 
+
     public static void HideRoleOptions(CustomRoles role)
     {
         if (Options.CustomRoleSpawnChances != null &&
@@ -414,7 +415,6 @@ public abstract class PavlovDogBase : RoleBase, IKiller, IAdditionalWinner, ISch
     {
         if (!AmongUsClient.Instance.AmHost) return;
 
-        // がんばってリセットして
         Player.MarkDirtySettings();
         Player.SyncSettings();
         Player.RpcResetAbilityCooldown();

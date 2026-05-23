@@ -192,6 +192,12 @@ public class CustomNetObject
         action();
     }
 
+    public static void ResetSpawnState()
+    {
+        SpawnQueue.Clear();
+        IsSpawning = false;
+    }
+
     private void DoCreate(Vector2 position)
     {
         PlayerControl = UnityEngine.Object.Instantiate(
@@ -280,6 +286,31 @@ public class CustomNetObject
         _ = new LateTask(() =>
         {
             capturedSelf.OnCreated();
+
+            // ★ GameData.AllPlayers からも除去（会議でのUI崩れを防ぐ）
+            try
+            {
+                var allPlayers = GameData.Instance?.AllPlayers;
+                if (allPlayers != null && capturedPC != null)
+                {
+                    for (int i = allPlayers.Count - 1; i >= 0; i--)
+                    {
+                        var info = allPlayers[i];
+                        if (info != null && info.PlayerId == 254
+                            && info.Object?.NetId == capturedPC.NetId)
+                        {
+                            allPlayers.RemoveAt(i);
+                            Logger.Info($"CNO: GameData.AllPlayersからダミーを除去 NetId={capturedPC.NetId}", "CustomNetObject");
+                            break;
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"CNO.RemoveFromGameData: {e}", "CustomNetObject");
+            }
+
             IsSpawning = false;
             ProcessQueue();
         }, 0.4f, "CNO.OnCreated", true);

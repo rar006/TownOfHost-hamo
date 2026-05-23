@@ -31,7 +31,6 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         ChargeTime = OptionChargeTime.GetFloat();
         SelfDestructOnMiss = OptionSelfDestructOnMiss.GetBool();
         KillImpostor = OptionKillImpostor.GetBool();
-        BeamColorModeValue = OptionBeamColorMode.GetValue();
         IsCharging = false;
         chargeTimer = 0f;
         PlayerSpeed = 0f;
@@ -68,10 +67,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
     static bool SelfDestructOnMiss;
     static OptionItem OptionKillImpostor;
     static bool KillImpostor;
-    static OptionItem OptionBeamColorMode;
-    static int BeamColorModeValue;
 
-    enum BeamColorMode { Rainbow, Single }
     enum OptionName { HadouHoChargeTime, HadouHoSelfDestruct, HadouHoKillImpostor }
 
     static void SetUpOptionItem()
@@ -81,13 +77,11 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         OptionChargeTime = FloatOptionItem.Create(RoleInfo, 11, OptionName.HadouHoChargeTime, new(0.5f, 10f, 0.5f), 3f, false).SetValueFormat(OptionFormat.Seconds);
         OptionSelfDestructOnMiss = BooleanOptionItem.Create(RoleInfo, 12, OptionName.HadouHoSelfDestruct, false, false);
         OptionKillImpostor = BooleanOptionItem.Create(RoleInfo, 13, OptionName.HadouHoKillImpostor, false, false);
-        OptionBeamColorMode = StringOptionItem.Create(RoleInfo, 20, "HadouHoBeamColorMode", new string[] { "Rainbow", "Single" }, 1, false);
     }
 
     public override void Add()
     {
         PlayerSpeed = Main.AllPlayerSpeed[Player.PlayerId];
-        BeamColorModeValue = OptionBeamColorMode.GetValue();
         PlayerColor = Player.Data.DefaultOutfit.ColorId;
         spawnCooldownStarted = false;
     }
@@ -301,8 +295,16 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
     public override void ReceiveRPC(MessageReader reader)
     {
         if (reader.Length - reader.Position == 2) { reader.ReadByte(); BeamFacingLeft = reader.ReadBoolean(); return; }
+
+        bool oldCharging = IsCharging;
+        bool oldBeamMark = ShowBeamMark;
         IsCharging = reader.ReadBoolean();
         ShowBeamMark = reader.ReadBoolean();
+
+        if (oldCharging != IsCharging || oldBeamMark != ShowBeamMark)
+        {
+            UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
+        }
     }
 
     public override bool GetTemporaryName(ref string name, ref bool NoMarker, bool isForMeeting, PlayerControl seer, PlayerControl seen = null)
@@ -340,23 +342,16 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         SetRoleTextHeight(true);
         bool fl = BeamFacingLeft;
         string star = $"<voffset=0.35em><size=800%><color={myColor}>★</color></size></voffset>";
-        string beam = BuildBeamBlock();
+        string beam = "<#00CFFF>━━━━━━━</color>";
         string blank = "<size=1200%>　</size>";
-        string starBlank = fl ? star + blank : blank + star;
-        string longBeam = fl ? beam + beam + starBlank : starBlank + beam + beam;
-        string hugeBlank = "<alpha=#00>" + new string('　', 10) + "</alpha>";
+        string sB = fl ? star + blank : blank + star;
+        string lB = fl ? beam + beam + sB : sB + beam + beam;
+        string hugeBlank = "<alpha=#00>　　　　　　　　　　</alpha>";
         string ls = wider ? "<line-height=5300%>\n" : "<line-height=4300%>\n";
         string ss = "<size=5000%>", se = "</size></line-height>";
         name = fl
-            ? ls + $"{ss}{longBeam}{se}{ss}{hugeBlank}{se}"
-            : ls + $"{ss}{hugeBlank}{se}{ss}{longBeam}{se}";
-    }
-
-    string BuildBeamBlock()
-    {
-        if ((BeamColorMode)BeamColorModeValue == BeamColorMode.Single)
-            return "<color=#00CFFF>━</color><color=#00CFFF>━</color><color=#00CFFF>━</color><color=#00CFFF>━</color><color=#00CFFF>━</color><color=#00CFFF>━</color><color=#00CFFF>━</color>";
-        return "<color=#ff0000>━</color><color=#ff7f00>━</color><color=#ffff00>━</color><color=#00ff00>━</color><color=#0000ff>━</color><color=#4b0082>━</color><color=#8b00ff>━</color>";
+            ? ls + $"{ss}{lB}{se}{ss}{hugeBlank}{se}"
+            : ls + $"{ss}{hugeBlank}{se}{ss}{lB}{se}";
     }
 
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)

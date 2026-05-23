@@ -5,36 +5,36 @@ using Hazel;
 using TownOfHost.Modules;
 using TownOfHost.Patches;
 using TownOfHost.Roles.Core;
+using TownOfHost.Roles.Core.Interfaces;
 using UnityEngine;
 
-namespace TownOfHost.Roles.Crewmate;
+namespace TownOfHost.Roles.Impostor;
 
-public sealed class NiceLinker : RoleBase
+public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
-            typeof(NiceLinker),
-            player => new NiceLinker(player),
-            CustomRoles.NiceLinker,
-            () => RoleTypes.Engineer,
-            CustomRoleTypes.Crewmate,
-            160400,
+            typeof(EvilLinker),
+            player => new EvilLinker(player),
+            CustomRoles.EvilLinker,
+            () => RoleTypes.Phantom,
+            CustomRoleTypes.Impostor,
+            126600,
             SetupOptionItem,
-            "nl",
-            "#aaaaff",
-            (1, 7)
+            "el",
+            OptionSort: (2, 11)
         );
 
-    public NiceLinker(PlayerControl player)
+    public EvilLinker(PlayerControl player)
         : base(RoleInfo, player)
     {
         PlaceCooldown = OptionPlaceCooldown.GetFloat();
-        MaxPairs      = OptionMaxPairs.GetInt();
-        WarpCooldown  = OptionWarpCooldown.GetFloat();
+        MaxPairs = OptionMaxPairs.GetInt();
+        WarpCooldown = OptionWarpCooldown.GetFloat();
 
-        linkPairs     = new();
-        pendingDummy  = null;
-        placedCount   = 0;
+        linkPairs = new();
+        pendingDummy = null;
+        placedCount = 0;
         cooldownTimer = PlaceCooldown;
         warpCooldowns = new();
     }
@@ -44,32 +44,43 @@ public sealed class NiceLinker : RoleBase
     static OptionItem OptionWarpCooldown;
 
     static float PlaceCooldown;
-    static int   MaxPairs;
+    static int MaxPairs;
     static float WarpCooldown;
 
     enum OptionName
     {
-        NiceLinkerPlaceCooldown,
-        NiceLinkerMaxPairs,
-        NiceLinkerWarpCooldown,
+        EvilLinkerPlaceCooldown,
+        EvilLinkerMaxPairs,
+        EvilLinkerWarpCooldown,
     }
 
     static void SetupOptionItem()
     {
-        OptionPlaceCooldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.NiceLinkerPlaceCooldown,
+        OptionPlaceCooldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.EvilLinkerPlaceCooldown,
             new(2.5f, 60f, 2.5f), 15f, false).SetValueFormat(OptionFormat.Seconds);
-        OptionMaxPairs = IntegerOptionItem.Create(RoleInfo, 11, OptionName.NiceLinkerMaxPairs,
+        OptionMaxPairs = IntegerOptionItem.Create(RoleInfo, 11, OptionName.EvilLinkerMaxPairs,
             new(1, 10, 1), 3, false).SetValueFormat(OptionFormat.Times);
-        OptionWarpCooldown = FloatOptionItem.Create(RoleInfo, 12, OptionName.NiceLinkerWarpCooldown,
+        OptionWarpCooldown = FloatOptionItem.Create(RoleInfo, 12, OptionName.EvilLinkerWarpCooldown,
             new(1f, 60f, 1f), 10f, false).SetValueFormat(OptionFormat.Seconds);
     }
 
-    public class LinkPair
+    public float CalculateKillCooldown() => Main.AllPlayerKillCooldown.GetValueOrDefault(Player.PlayerId, Main.NormalOptions.KillCooldown);
+    public bool CanUseSabotageButton() => true;
+    public bool CanUseImpostorVentButton() => true;
+    bool IUsePhantomButton.IsPhantomRole => true;
+    bool IUsePhantomButton.IsresetAfterKill => false;
+    void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
-        public LinkerDummy   DummyA;
-        public LinkerDummy   DummyB;
-        public int           ColorId;
-        public bool          Activated;
+        AdjustKillCooldown = false;
+        ResetCooldown = false;
+    }
+
+    class LinkPair
+    {
+        public EvilLinkerDummy DummyA;
+        public EvilLinkerDummy DummyB;
+        public int ColorId;
+        public bool Activated;
         public HashSet<byte> InRangeA = new();
         public HashSet<byte> InRangeB = new();
     }
@@ -77,17 +88,17 @@ public sealed class NiceLinker : RoleBase
     static readonly int[] PairColors = { 1, 11, 10, 2, 5, 4, 3, 14, 17, 8 };
     const int PendingColor = 7;
 
-    readonly List<LinkPair>          linkPairs;
-    LinkPair                         pendingDummy;
-    int                              placedCount;
-    float                            cooldownTimer;
+    readonly List<LinkPair> linkPairs;
+    LinkPair pendingDummy;
+    int placedCount;
+    float cooldownTimer;
     readonly Dictionary<byte, float> warpCooldowns;
 
     public override void Add()
     {
         linkPairs.Clear();
-        pendingDummy  = null;
-        placedCount   = 0;
+        pendingDummy = null;
+        placedCount = 0;
         cooldownTimer = PlaceCooldown;
         warpCooldowns.Clear();
         PetActionManager.Register(Player.PlayerId, OnPetAction);
@@ -106,12 +117,8 @@ public sealed class NiceLinker : RoleBase
 
     public override void ApplyGameOptions(IGameOptions opt)
     {
-        AURoleOptions.EngineerCooldown     = cooldownTimer > 0f ? cooldownTimer : 0.1f;
-        AURoleOptions.EngineerInVentMaxTime = 0f;
+        AURoleOptions.PhantomCooldown = cooldownTimer > 0f ? cooldownTimer : 0.1f;
     }
-
-    public override bool CanClickUseVentButton => false;
-    public override bool OnEnterVent(PlayerPhysics physics, int ventId) => false;
 
     void OnPetAction()
     {
@@ -129,7 +136,7 @@ public sealed class NiceLinker : RoleBase
             var pair = new LinkPair
             {
                 ColorId = colorId,
-                DummyA = new LinkerDummy(pos, Player, PendingColor, activated: false),
+                DummyA = new EvilLinkerDummy(pos, Player, PendingColor, activated: false),
                 Activated = false,
             };
             pendingDummy = pair;
@@ -140,7 +147,7 @@ public sealed class NiceLinker : RoleBase
         }
         else
         {
-            pendingDummy.DummyB = new LinkerDummy(pos, Player, PendingColor, activated: false);
+            pendingDummy.DummyB = new EvilLinkerDummy(pos, Player, PendingColor, activated: false);
             pendingDummy = null;
             placedCount++;
 
@@ -205,7 +212,7 @@ public sealed class NiceLinker : RoleBase
                 {
                     pc.RpcSnapToForced(pair.DummyB.Position);
                     warpCooldowns[pc.PlayerId] = WarpCooldown;
-                    UtilsGameLog.AddGameLog("NiceLinker",
+                    UtilsGameLog.AddGameLog("EvilLinker",
                         $"{UtilsName.GetPlayerColor(pc)} がポータルA→Bへワープ");
                 }
                 else if (distB <= warpRange && !pair.InRangeB.Contains(pc.PlayerId)
@@ -213,7 +220,7 @@ public sealed class NiceLinker : RoleBase
                 {
                     pc.RpcSnapToForced(pair.DummyA.Position);
                     warpCooldowns[pc.PlayerId] = WarpCooldown;
-                    UtilsGameLog.AddGameLog("NiceLinker",
+                    UtilsGameLog.AddGameLog("EvilLinker",
                         $"{UtilsName.GetPlayerColor(pc)} がポータルB→Aへワープ");
                 }
             }
@@ -230,43 +237,43 @@ public sealed class NiceLinker : RoleBase
         for (int i = 0; i < linkPairs.Count; i++)
         {
             var pair = linkPairs[i];
-            int idx  = i;
+            int idx = i;
 
             if (pair.DummyA != null && pair.DummyB != null)
             {
-                var posA    = pair.DummyA.Position;
-                var posB    = pair.DummyB.Position;
+                var posA = pair.DummyA.Position;
+                var posB = pair.DummyB.Position;
                 var colorId = pair.ColorId;
-                var owner   = Player;
-                var oldA    = pair.DummyA;
-                var oldB    = pair.DummyB;
+                var owner = Player;
+                var oldA = pair.DummyA;
+                var oldB = pair.DummyB;
 
                 _ = new LateTask(() =>
                 {
                     try { oldA?.Despawn(); } catch { }
-                    pair.DummyA = new LinkerDummy(posA, owner, colorId, activated: true);
-                }, idx * 0.6f + 1.0f, $"NiceLinker.ActivateA.{idx}", true);
+                    pair.DummyA = new EvilLinkerDummy(posA, owner, colorId, activated: true);
+                }, idx * 0.6f + 1.0f, $"EvilLinker.ActivateA.{idx}", true);
 
                 _ = new LateTask(() =>
                 {
                     try { oldB?.Despawn(); } catch { }
-                    pair.DummyB    = new LinkerDummy(posB, owner, colorId, activated: true);
+                    pair.DummyB = new EvilLinkerDummy(posB, owner, colorId, activated: true);
                     pair.Activated = true;
                     pair.InRangeA.Clear();
                     pair.InRangeB.Clear();
-                }, idx * 0.6f + 1.4f, $"NiceLinker.ActivateB.{idx}", true);
+                }, idx * 0.6f + 1.4f, $"EvilLinker.ActivateB.{idx}", true);
             }
             else if (pair.DummyA != null && pair.DummyB == null)
             {
-                var posA  = pair.DummyA.Position;
+                var posA = pair.DummyA.Position;
                 var owner = Player;
-                var oldA  = pair.DummyA;
+                var oldA = pair.DummyA;
 
                 _ = new LateTask(() =>
                 {
                     try { oldA?.Despawn(); } catch { }
-                    pair.DummyA = new LinkerDummy(posA, owner, PendingColor, activated: false);
-                }, idx * 0.6f + 1.0f, $"NiceLinker.ReactivatePending.{idx}", true);
+                    pair.DummyA = new EvilLinkerDummy(posA, owner, PendingColor, activated: false);
+                }, idx * 0.6f + 1.0f, $"EvilLinker.ReactivatePending.{idx}", true);
             }
         }
 
@@ -326,24 +333,24 @@ public sealed class NiceLinker : RoleBase
 
     public override void ReceiveRPC(MessageReader reader)
     {
-        placedCount   = reader.ReadInt32();
+        placedCount = reader.ReadInt32();
         cooldownTimer = reader.ReadSingle();
         reader.ReadBoolean();
     }
 }
 
-public sealed class LinkerDummy : CustomNetObject
+public sealed class EvilLinkerDummy : CustomNetObject
 {
     readonly PlayerControl _owner;
-    readonly int           _colorId;
-    readonly Vector2       _pos;
-    public   bool          Activated { get; private set; }
+    readonly int _colorId;
+    readonly Vector2 _pos;
+    public bool Activated { get; private set; }
 
-    public LinkerDummy(Vector2 position, PlayerControl owner, int colorId, bool activated)
+    public EvilLinkerDummy(Vector2 position, PlayerControl owner, int colorId, bool activated)
     {
-        _owner    = owner;
-        _colorId  = colorId;
-        _pos      = position;
+        _owner = owner;
+        _colorId = colorId;
+        _pos = position;
         Activated = activated;
         CreateNetObject(position);
     }

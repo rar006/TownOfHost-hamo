@@ -4,14 +4,14 @@ using Hazel;
 using UnityEngine;
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
+using TownOfHost.Patches;
 using static TownOfHost.PlayerCatch;
 using static TownOfHost.Utils;
 using static TownOfHost.Translator;
-using static TownOfHost.Modules.SelfVoteManager;
 
 namespace TownOfHost.Roles.Crewmate;
 
-public sealed class VillageChief : RoleBase, ISelfVoter
+public sealed class VillageChief : RoleBase, IKiller
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
@@ -20,41 +20,34 @@ public sealed class VillageChief : RoleBase, ISelfVoter
             CustomRoles.VillageChief,
             () => RoleTypes.Engineer,
             CustomRoleTypes.Crewmate,
-            60000,
+            160000,
             SetupOptionItem,
             "vc",
             "#f5a623",
             (2, 0),
+            true,
             from: From.SuperNewRoles
         );
 
     public VillageChief(PlayerControl player)
         : base(RoleInfo, player, () => HasTask.True)
     {
-        hasUsedAbility = false;
-        nearTimer = 0f;
-        spawnWaitTimer = -1f;
-        appointCooldownTimer = 0f;
-        NextAppointCandidate = byte.MaxValue;
-        appointedSheriff = null;
+        appointMode = false;
+        hasAppointed = false;
+        nowcool = AppointCooldown.GetFloat();
+        LastCooltime = -1;
     }
 
-    private bool hasUsedAbility;
-    private float nearTimer;
-
-    private float spawnWaitTimer;
-    private bool CanApproach => spawnWaitTimer >= 3f;
-
-    private float appointCooldownTimer;
-
-    public byte NextAppointCandidate;
-    public PlayerControl appointedSheriff = null;
-
     private static OptionItem NotifyTarget;
-    private static OptionItem OptionAppointCooldown;
+    private static OptionItem AppointCooldown;
 
     private static readonly string[] NotifyTargetOptions =
         ["None", "Everyone", "VillageChiefOnly", "SheriffOnly", "VillageChiefAndSheriff"];
+
+    bool appointMode;
+    bool hasAppointed;
+    float nowcool;
+    int LastCooltime;
 
     private static void SetupOptionItem()
     {
@@ -62,172 +55,88 @@ public sealed class VillageChief : RoleBase, ISelfVoter
             RoleInfo, 12, "VillageChiefNotifyTarget",
             NotifyTargetOptions, 0, false
         );
-
-        OptionAppointCooldown = FloatOptionItem.Create(
+        AppointCooldown = FloatOptionItem.Create(
             RoleInfo, 13, "AppointCooldown",
-            new(0f, 120f, 5f), 30f, false
+            new(0f, 120f, 2.5f), 30f, false
         ).SetValueFormat(OptionFormat.Seconds);
     }
+
+    public float CalculateKillCooldown() => CanUseKillButton() ? AppointCooldown.GetFloat() : 999f;
+    public bool CanUseKillButton() => Player.IsAlive() && appointMode && !hasAppointed;
+    public bool CanUseSabotageButton() => false;
+    public bool CanUseImpostorVentButton() => false;
+    public override bool CanUseAbilityButton() => false;
+
+    public override bool CanClickUseVentButton => !appointMode;
+    public override bool OnEnterVent(PlayerPhysics physics, int ventId) => false;
 
     public override void ApplyGameOptions(IGameOptions opt)
     {
         opt.SetVision(false);
-        AURoleOptions.EngineerCooldown = OptionAppointCooldown.GetFloat();
-    }
-
-    public override bool CanClickUseVentButton => false;
-    public override bool OnEnterVent(PlayerPhysics physics, int ventId) => false;
-
-    public override string GetAbilityButtonText()
-    {
-        if (hasUsedAbility) return "<color=#888888>任命済</color>";
-        if (NextAppointCandidate == byte.MaxValue) return "候補未設定";
-        return "任命";
-    }
-
-    bool ISelfVoter.CanUseVoted()
-        => Player.IsAlive() && !hasUsedAbility;
-
-    public override bool CheckVoteAsVoter(byte votedForId, PlayerControl voter)
-    {
-        if (!Is(voter)) return true;
-        if (!Player.IsAlive()) return true;
-        if (hasUsedAbility) return true;
-
-        if (CheckSelfVoteMode(Player, votedForId, out var status))
+        if (!appointMode)
         {
-            if (status is VoteStatus.Self)
-            {
-                SendMessage(
-                    "<color=#f5a623>任命モードになりました！</color>\n\n" +
-                    "誰かに投票 → <color=#f5a623>任命候補に指定</color>\n" +
-                    "投票スキップ → <color=#f5a623>任命をキャンセル</color>",
-                    Player.PlayerId
-                );
-                SetMode(Player, true);
-                return false;
-            }
-
-            if (status is VoteStatus.Vote)
-            {
-                if (votedForId == Player.PlayerId || votedForId == SkipId)
-                {
-                    SendMessage("<color=#f5a623>その相手は任命できません。</color>", Player.PlayerId);
-                    SetMode(Player, false);
-                    return false;
-                }
-
-                NextAppointCandidate = votedForId;
-
-                SendMessage(
-                    "<color=#f5a623>任命候補を設定しました！</color>\n" +
-                    "次のターン、この相手に近づいて任命します。",
-                    Player.PlayerId
-                );
-
-                SetMode(Player, false);
-                return false;
-            }
-
-            if (status is VoteStatus.Skip)
-            {
-                NextAppointCandidate = byte.MaxValue;
-                SendMessage("<color=#f5a623>任命をキャンセルしました。</color>", Player.PlayerId);
-                SetMode(Player, false);
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public override void OnStartMeeting()
-    {
-        spawnWaitTimer = -1f;
-        nearTimer = 0f;
-    }
-
-    public override void AfterMeetingTasks()
-    {
-        spawnWaitTimer = 0f;
-        appointCooldownTimer = OptionAppointCooldown.GetFloat();
-
-        if (Player.IsAlive())
-        {
-            Player.RpcResetAbilityCooldown();
+            AURoleOptions.EngineerCooldown = Mathf.Max(nowcool, 0.1f);
+            AURoleOptions.EngineerInVentMaxTime = 0f;
         }
     }
 
-    public override void OnFixedUpdate(PlayerControl player)
+    public override RoleTypes? AfterMeetingRole
+        => (appointMode && !hasAppointed) ? RoleTypes.Impostor : RoleTypes.Engineer;
+
+    public override void Add()
     {
-        if (GameStates.IsInTask && Player.IsAlive() && !hasUsedAbility)
-        {
-            if (spawnWaitTimer >= 0f && spawnWaitTimer < 3f)
-            {
-                spawnWaitTimer += Time.fixedDeltaTime;
-            }
+        nowcool = AppointCooldown.GetFloat();
+        LastCooltime = -1;
+        PetActionManager.Register(Player.PlayerId, OnPetUsed);
+    }
 
-            if (appointCooldownTimer > 0f)
-            {
-                appointCooldownTimer -= Time.fixedDeltaTime;
-            }
-        }
+    public override void OnDestroy()
+    {
+        PetActionManager.Unregister(Player.PlayerId);
+    }
 
-        bool isHost = AmongUsClient.Instance.AmHost;
-        bool isMe = Is(PlayerControl.LocalPlayer);
+    private void OnPetUsed()
+    {
+        if (!Player.IsAlive() || hasAppointed) return;
 
-        if ((isHost || isMe) && GameStates.IsInTask && Player.IsAlive() && !hasUsedAbility && NextAppointCandidate != byte.MaxValue && CanApproach)
-        {
-            var target = GetPlayerById(NextAppointCandidate);
-            if (target != null && target.IsAlive())
-            {
-                float dist = Vector2.Distance(Player.GetTruePosition(), target.GetTruePosition());
-                if (dist <= 1.5f)
-                {
-                    nearTimer += Time.fixedDeltaTime;
+        appointMode = !appointMode;
+        ApplyModeDesync(appointMode);
+        SendRPC();
+        UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
+    }
 
-                    if (nearTimer >= 1.5f)
-                    {
-                        nearTimer = 1.5f;
+    public void OnCheckMurderAsKiller(MurderInfo info)
+    {
+        if (!Is(info.AttemptKiller) || info.IsSuicide) return;
 
-                        if (isHost && appointCooldownTimer <= 0f)
-                        {
-                            DoAppoint(target);
-                            NextAppointCandidate = byte.MaxValue;
-                            nearTimer = 0f;
-                        }
-                    }
-                }
-                else
-                {
-                    nearTimer = 0f;
-                }
-            }
-            else
-            {
-                nearTimer = 0f;
-                if (isHost)
-                {
-                    NextAppointCandidate = byte.MaxValue;
-                    SyncStateRpc();
-                }
-            }
-        }
+        info.DoKill = false;
+        if (!appointMode || hasAppointed) return;
+        if (nowcool > 0f) return;
+
+        (_, var target) = info.AttemptTuple;
+        DoAppoint(target);
     }
 
     private void DoAppoint(PlayerControl target)
     {
-        hasUsedAbility = true;
+        hasAppointed = true;
 
         if (target.GetCustomRole().IsImpostor())
         {
             PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = CustomDeathReason.Suicide;
             Player.RpcMurderPlayer(Player);
-            SyncStateRpc();
+            appointMode = false;
+            ApplyModeDesync(false);
+            SendRPC();
             return;
         }
 
-        appointedSheriff = target;
+        appointMode = false;
+        ApplyModeDesync(false);
+
+        Sheriff.AppointedPlayerIds.Add(target.PlayerId);
+        foreach (var task in target.Data.Tasks.ToArray())
+            target.RpcCompleteTask(task.Id);
 
         if (!Utils.RoleSendList.Contains(target.PlayerId))
             Utils.RoleSendList.Add(target.PlayerId);
@@ -247,52 +156,124 @@ public sealed class VillageChief : RoleBase, ISelfVoter
             $"{UtilsName.GetPlayerColor(target)}({UtilsRoleText.GetRoleName(previousRole)})をシェリフに任命した"
         );
 
-        SyncStateRpc();
+        SendRPC();
         UtilsNotifyRoles.NotifyRoles();
     }
-
-    public override string GetProgressText(bool comms = false, bool GameLog = false)
+    private void ApplyModeDesync(bool toAppointMode)
     {
-        if (hasUsedAbility) return "<color=#f5a623>(任命済)</color>";
-        if (NextAppointCandidate != byte.MaxValue) return "<color=#f5a623>(候補選択中)</color>";
-        return "<color=#808080>(未任命)</color>";
-    }
+        if (!Player.IsAlive()) return;
 
-    public override string GetLowerText(PlayerControl seer, PlayerControl seen = null,
-        bool isForMeeting = false, bool isForHud = false)
-    {
-        seen ??= seer;
-        if (!Is(seer) || seer.PlayerId != seen.PlayerId || isForMeeting || !Player.IsAlive()) return "";
-        if (hasUsedAbility) return "";
-
-        string prefix = isForHud ? "" : "<size=60%>";
-
-        if (NextAppointCandidate == byte.MaxValue)
-            return $"{prefix}<color=#f5a623>会議で自投票→任命候補を選択</color>";
-
-        var candidate = GetPlayerById(NextAppointCandidate);
-        string name = candidate != null ? candidate.Data.PlayerName : "???";
-
-        if (appointCooldownTimer > 0f)
+        foreach (var pc in PlayerCatch.AllAlivePlayerControls)
         {
-            return $"{prefix}<color=#f5a623>クールタイム明け待機中</color>";
+            var role = pc.GetCustomRole();
+
+            if (role.IsImpostor())
+            {
+                pc.RpcSetRoleDesync(
+                    toAppointMode ? RoleTypes.Scientist : role.GetRoleTypes(),
+                    Player.GetClientId());
+            }
+
+            if (Is(pc))
+            {
+                pc.RpcSetRoleDesync(
+                    toAppointMode ? RoleTypes.Impostor : RoleTypes.Engineer,
+                    Player.GetClientId());
+            }
         }
 
-        return $"{prefix}<color=#f5a623>{name}に1.5秒近づいて任命！</color>";
+        if (toAppointMode)
+        {
+            Player.SetKillCooldown(Mathf.Max(nowcool, 0.1f), delay: true);
+        }
+        else
+        {
+            Player.MarkDirtySettings();
+            _ = new LateTask(() =>
+            {
+                if (!Player.IsAlive() || appointMode) return;
+                Player.RpcResetAbilityCooldown(Sync: true);
+            }, 0.1f, "VillageChief.EngineerReset", true);
+        }
     }
 
-    private void SyncStateRpc()
+    private void SendRPC()
     {
         using var sender = CreateSender();
-        sender.Writer.Write(hasUsedAbility);
-        sender.Writer.Write(NextAppointCandidate);
+        sender.Writer.Write(appointMode);
+        sender.Writer.Write(hasAppointed);
+        sender.Writer.Write(nowcool);
     }
 
     public override void ReceiveRPC(MessageReader reader)
     {
-        hasUsedAbility = reader.ReadBoolean();
-        NextAppointCandidate = reader.ReadByte();
+        appointMode = reader.ReadBoolean();
+        hasAppointed = reader.ReadBoolean();
+        nowcool = reader.ReadSingle();
+    }
+
+    public override void OnFixedUpdate(PlayerControl player)
+    {
+        if (!AmongUsClient.Instance.AmHost) return;
+        if (GameStates.CalledMeeting || GameStates.Intro) return;
+
+        if (!Player.IsAlive() && appointMode)
+        {
+            appointMode = false;
+            ApplyModeDesync(false);
+            SendRPC();
+            return;
+        }
+
+        if (!Player.IsAlive()) return;
+
+        if (nowcool > 0f) nowcool -= Time.fixedDeltaTime;
+        else nowcool = 0f;
+
+        var now = Mathf.FloorToInt(nowcool);
+        if (now != LastCooltime)
+        {
+            LastCooltime = now;
+
+            if (!appointMode && !hasAppointed)
+            {
+                Player.MarkDirtySettings();
+                _ = new LateTask(() =>
+                {
+                    if (Player.IsAlive() && !appointMode)
+                        Player.RpcResetAbilityCooldown(Sync: true);
+                }, 0.1f, "VillageChief.VentCDSync", true);
+            }
+
+            if (player != PlayerControl.LocalPlayer)
+                UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: player);
+        }
+    }
+
+    public override void AfterMeetingTasks()
+    {
+        if (!Player.IsAlive()) return;
+        _ = new LateTask(() =>
+        {
+            nowcool = AppointCooldown.GetFloat();
+            LastCooltime = -1;
+            ApplyModeDesync(appointMode);
+        }, Main.LagTime, "Reset-VillageChief");
+    }
+
+    public override string GetProgressText(bool comms = false, bool gamelog = false)
+    {
+        if (hasAppointed) return "<color=#f5a623>(任命済)</color>";
+        if (!GameStates.CalledMeeting && !gamelog)
+            return Utils.ColorString(Color.yellow, appointMode ? " [任命]" : " [Task]");
+        return "<color=#808080>(未任命)</color>";
     }
 
     public override bool CanTask() => true;
+
+    public bool OverrideKillButton(out string text)
+    {
+        text = "VillageChief_Appoint";
+        return true;
+    }
 }

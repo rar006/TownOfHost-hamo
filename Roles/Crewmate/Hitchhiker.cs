@@ -76,7 +76,7 @@ public sealed class Hitchhiker : RoleBase
 
     public static void SetupOptionItem()
     {
-        OptionSpeed = FloatOptionItem.Create(RoleInfo, 10, OptionName.HitchhikerSpeed, new(0.1f, 0.9f, 0.1f), 0.5f, false)
+        OptionSpeed = FloatOptionItem.Create(RoleInfo, 10, OptionName.HitchhikerSpeed, new(0.1f, 1.0f, 0.1f), 0.5f, false)
             .SetValueFormat(OptionFormat.Multiplier);
         OptionCooldown = FloatOptionItem.Create(RoleInfo, 11, OptionName.HitchhikerCooldown, new(0f, 60f, 1f), 15f, false)
             .SetValueFormat(OptionFormat.Seconds);

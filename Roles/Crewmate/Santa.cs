@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using AmongUs.GameOptions;
+using Hazel;
+using TownOfHost.Patches;
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
-using System.Reflection;
 using static TownOfHost.Translator;
 
 namespace TownOfHost.Roles.Crewmate;
@@ -33,7 +35,7 @@ public sealed class Santa : RoleBase, IKiller
         : base(RoleInfo, player)
     {
         KillCooldown = OptKillCooldown.GetFloat();
-        taskCompleted = false;
+        giftMode = false;
         giftCount = 0;
     }
 
@@ -50,7 +52,7 @@ public sealed class Santa : RoleBase, IKiller
     static OptionItem OptCanGiftLovers;
     static OptionItem OptCanGiftMadmate;
 
-    bool taskCompleted;
+    bool giftMode;
     int giftCount;
 
     private enum OptionName
@@ -104,9 +106,10 @@ public sealed class Santa : RoleBase, IKiller
             RoleInfo, 10, "SantaKillCooldown",
             new(0.5f, 60f, 0.5f), 25f, false
         ).SetValueFormat(OptionFormat.Seconds);
+
         OptGiftLimit = IntegerOptionItem.Create(
             RoleInfo, 17, OptionName.SantaGiftLimit,
-            new(1, 100, 1), 3, false
+            new(1, 100, 1), 15, false
         ).SetValueFormat(OptionFormat.Times);
 
         OptCanGiftLovers = BooleanOptionItem.Create(
@@ -122,7 +125,94 @@ public sealed class Santa : RoleBase, IKiller
         OverrideTasksData.Create(RoleInfo, 200);
     }
 
+    public override void Add()
+    {
+        giftMode = false;
+        giftCount = 0;
+        KillCooldown = OptKillCooldown.GetFloat();
+        PetActionManager.Register(Player.PlayerId, OnPetUsed);
+    }
+
+    public override void OnDestroy()
+    {
+        PetActionManager.Unregister(Player.PlayerId);
+    }
+
+    private void OnPetUsed()
+    {
+        if (!Player.IsAlive()) return;
+
+        giftMode = !giftMode;
+        ApplyModeDesync(giftMode);
+        SendRPC();
+        UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
+    }
+    private void ApplyModeDesync(bool toGiftMode)
+    {
+        if (Is(PlayerControl.LocalPlayer)) return;
+        if (!Player.IsAlive()) return;
+
+        var roleType = toGiftMode ? RoleTypes.Impostor : RoleTypes.Crewmate;
+        foreach (var pc in PlayerCatch.AllAlivePlayerControls)
+        {
+            var role = pc.GetCustomRole();
+            if (role.IsImpostor())
+                pc.RpcSetRoleDesync(toGiftMode ? RoleTypes.Scientist : role.GetRoleTypes(), Player.GetClientId());
+            if (Is(pc))
+                pc.RpcSetRoleDesync(roleType, Player.GetClientId());
+        }
+    }
+
+    private void SendRPC()
+    {
+        using var sender = CreateSender();
+        sender.Writer.Write(giftMode);
+        sender.Writer.Write(giftCount);
+    }
+
+    public override void ReceiveRPC(MessageReader reader)
+    {
+        giftMode = reader.ReadBoolean();
+        giftCount = reader.ReadInt32();
+    }
+
     public float CalculateKillCooldown() => KillCooldown;
+
+    public bool CanUseKillButton()
+    {
+        if (!Player.IsAlive() || !giftMode) return false;
+        var limit = OptGiftLimit?.GetInt() ?? 3;
+        if (limit == 0) return true;
+        return giftCount < limit;
+    }
+
+    public bool CanUseSabotageButton() => false;
+    public bool CanUseImpostorVentButton() => false;
+
+    public override RoleTypes? AfterMeetingRole
+        => giftMode ? RoleTypes.Impostor : RoleTypes.Crewmate;
+
+    public override void AfterMeetingTasks()
+    {
+        if (!Player.IsAlive()) return;
+        _ = new LateTask(() =>
+        {
+            ApplyModeDesync(giftMode);
+            Player.RpcResetAbilityCooldown();
+        }, Main.LagTime, "Reset-Santa");
+    }
+
+    public override void ApplyGameOptions(IGameOptions opt)
+    {
+        opt.SetVision(false);
+    }
+
+    public override void ChengeRoleAdd()
+    {
+        base.ChengeRoleAdd();
+        if (giftMode && Player.IsAlive() && AmongUsClient.Instance.AmHost)
+            ApplyModeDesync(true);
+    }
 
     private static int GetGiftRate(CustomRoles role) => role switch
     {
@@ -164,51 +254,6 @@ public sealed class Santa : RoleBase, IKiller
         return weightedRoles[weightedRoles.Length - 1].Role;
     }
 
-    // ★ タスク完了後・配布上限未達成のみキルボタンを使える
-    public bool CanUseKillButton()
-    {
-        if (!Player.IsAlive() || !taskCompleted) return false;
-        var limit = OptGiftLimit?.GetInt() ?? 3;
-        if (limit == 0) return true; // 0 = 無制限
-        return giftCount < limit;
-    }
-    public bool CanUseSabotageButton() => false;
-    public bool CanUseImpostorVentButton() => false;
-
-    public override RoleTypes? AfterMeetingRole => taskCompleted ? RoleTypes.Impostor : RoleTypes.Crewmate;
-
-    public override bool OnCompleteTask(uint taskid)
-    {
-        if (!Player.IsAlive()) return true;
-
-        if (IsTaskFinished && !taskCompleted)
-        {
-            taskCompleted = true;
-
-            if (!AmongUsClient.Instance.AmHost) return true;
-
-            Player.RpcSetRoleDesync(RoleTypes.Impostor, Player.GetClientId());
-            Player.ResetKillCooldown();
-            Player.SetKillCooldown();
-            UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
-        }
-        return true;
-    }
-
-    public override void ApplyGameOptions(IGameOptions opt)
-    {
-        opt.SetVision(false);
-    }
-
-    public override void ChengeRoleAdd()
-    {
-        base.ChengeRoleAdd();
-        if (taskCompleted && Player.IsAlive() && AmongUsClient.Instance.AmHost)
-        {
-            Player.RpcSetRoleDesync(RoleTypes.Impostor, Player.GetClientId());
-        }
-    }
-
     public void OnCheckMurderAsKiller(MurderInfo info)
     {
         var (killer, target) = info.AttemptTuple;
@@ -230,6 +275,7 @@ public sealed class Santa : RoleBase, IKiller
             killer.RpcMurderPlayerV2(killer);
             return;
         }
+
         var limit = OptGiftLimit?.GetInt() ?? 3;
         if (limit > 0 && giftCount >= limit) return;
 
@@ -276,6 +322,7 @@ public sealed class Santa : RoleBase, IKiller
             UtilsOption.MarkEveryoneDirtySettings();
 
         giftCount++;
+        SendRPC();
 
         killer.ResetKillCooldown();
         killer.SetKillCooldown();
@@ -286,7 +333,7 @@ public sealed class Santa : RoleBase, IKiller
 
     public override string GetProgressText(bool comms = false, bool GameLog = false)
     {
-        if (!taskCompleted) return "";
+        if (!giftMode) return "";
         var limit = OptGiftLimit?.GetInt() ?? 3;
         if (limit == 0) return $"<color=#f29c9f>({giftCount})</color>";
         return $"<color=#f29c9f>({giftCount}/{limit})</color>";

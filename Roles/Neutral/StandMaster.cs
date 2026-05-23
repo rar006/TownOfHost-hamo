@@ -136,9 +136,7 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
     {
         (var killer, var target) = info.AttemptTuple;
         if (killer.GetRoleClass() is Stand stand && stand.OwnerId == Player.PlayerId)
-        {
             return false;
-        }
         return true;
     }
 
@@ -147,16 +145,11 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
     public bool CanUseSabotageButton() => false;
     public float CalculateKillCooldown() => SummonCooldown;
 
-    public bool OverrideKillButtonText(out string text)
-    {
-        text = "スタンド化";
-        return true;
-    }
+    public bool OverrideKillButtonText(out string text) { text = "スタンド化"; return true; }
 
     public void OnCheckMurderAsKiller(MurderInfo info)
     {
         var (killer, target) = info.AttemptTuple;
-
         info.DoKill = false;
 
         if (standCreated) return;
@@ -198,7 +191,6 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
         var stand = GetStand();
         if (stand == null || !stand.IsAlive()) return;
-
         if (standSummoned) return;
 
         standReturnPos = stand.transform.position;
@@ -207,9 +199,7 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
         stand.RpcSetRoleDesync(RoleTypes.Phantom, stand.GetClientId());
         foreach (var imp in PlayerCatch.AllAlivePlayerControls.Where(pc => pc.GetCustomRole().IsImpostor()))
-        {
             imp.RpcSetRoleDesync(RoleTypes.Scientist, stand.GetClientId());
-        }
 
         stand.MarkDirtySettings();
         stand.RpcSnapToForced(Player.transform.position);
@@ -236,15 +226,11 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
         stand.RpcSetRoleDesync(RoleTypes.Crewmate, stand.GetClientId());
         foreach (var imp in PlayerCatch.AllAlivePlayerControls.Where(pc => pc.GetCustomRole().IsImpostor()))
-        {
             imp.RpcSetRoleDesync(RoleTypes.Impostor, stand.GetClientId());
-        }
 
         stand.MarkDirtySettings();
-
         standSummoned = false;
         standReturnPos = null;
-
         SyncState();
 
         _ = new LateTask(() =>
@@ -266,9 +252,7 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
     {
         skipSwapForThisMeeting = SatsumatoImo.IsSpecialMeetingNoSwap();
         if (!skipSwapForThisMeeting)
-        {
             standSummoned = false;
-        }
     }
 
     public override void AfterMeetingTasks()
@@ -293,11 +277,22 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
             return;
         }
 
+        if (!Player.IsAlive())
+        {
+            var state = PlayerState.GetByPlayerId(stand.PlayerId);
+            if (state != null) state.DeathReason = CustomDeathReason.FollowingSuicide;
+            stand.SetRealKiller(Player);
+            stand.RpcMurderPlayerV2(stand);
+            standCreated = false;
+            standPlayerId = byte.MaxValue;
+            isRevealed = false;
+            SendRpc();
+            return;
+        }
+
         stand.RpcSetRoleDesync(RoleTypes.Crewmate, stand.GetClientId());
         foreach (var imp in PlayerCatch.AllAlivePlayerControls.Where(pc => pc.GetCustomRole().IsImpostor()))
-        {
             imp.RpcSetRoleDesync(RoleTypes.Impostor, stand.GetClientId());
-        }
 
         stand.MarkDirtySettings();
         standSummoned = false;
@@ -312,16 +307,11 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
         if (player != Player) return;
         if (!Player.IsAlive()) return;
 
-        if (standSummoned)
+        if (standSummoned && currentStayTimer > 0f)
         {
-            if (currentStayTimer > 0f)
-            {
-                currentStayTimer -= Time.fixedDeltaTime;
-                if (currentStayTimer <= 0f)
-                {
-                    ReturnStand();
-                }
-            }
+            currentStayTimer -= Time.fixedDeltaTime;
+            if (currentStayTimer <= 0f)
+                ReturnStand();
         }
     }
 
@@ -374,6 +364,7 @@ public sealed class Stand : RoleBase, ILNKiller
     public Stand(PlayerControl player) : base(RoleInfo, player, () => HasTask.False)
     {
         OwnerId = byte.MaxValue;
+        isFollowingDeath = false;
     }
 
     static void SetupOptionItem()
@@ -382,6 +373,8 @@ public sealed class Stand : RoleBase, ILNKiller
     }
 
     public byte OwnerId;
+
+    bool isFollowingDeath;
 
     public void SetOwner(byte ownerId)
     {
@@ -420,7 +413,6 @@ public sealed class Stand : RoleBase, ILNKiller
         if (sm == null || !sm.Player.IsAlive()) return true;
 
         (var killer, var target) = info.AttemptTuple;
-
         if (killer.PlayerId == target.PlayerId) return true;
 
         killer.RpcProtectedMurderPlayer(target);
@@ -431,7 +423,6 @@ public sealed class Stand : RoleBase, ILNKiller
             sm.isRevealed = true;
             sm.SyncState();
         }
-
         return true;
     }
 
@@ -439,7 +430,6 @@ public sealed class Stand : RoleBase, ILNKiller
     {
         if (!AmongUsClient.Instance.AmHost) return false;
         if (Exiled == null) return false;
-
         if (Exiled.PlayerId != Player.PlayerId) return false;
         if (!Player.IsAlive()) return false;
 
@@ -454,7 +444,6 @@ public sealed class Stand : RoleBase, ILNKiller
             sm.isRevealed = true;
             sm.SyncState();
         }
-
         return true;
     }
 
@@ -479,12 +468,8 @@ public sealed class Stand : RoleBase, ILNKiller
         if (!AmongUsClient.Instance.AmHost) return;
         if (player != Player) return;
         if (!Player.IsAlive()) return;
-
-        if (ShouldFollowOwnerDeath())
-        {
+        if (!isFollowingDeath && ShouldFollowOwnerDeath())
             FollowOwnerDeath();
-            return;
-        }
     }
 
     bool ShouldFollowOwnerDeath()
@@ -502,13 +487,14 @@ public sealed class Stand : RoleBase, ILNKiller
     void FollowOwnerDeath()
     {
         if (!Player.IsAlive()) return;
+        if (isFollowingDeath) return;
+
+        isFollowingDeath = true;
 
         var state = PlayerState.GetByPlayerId(Player.PlayerId);
-        if (state != null)
-            state.DeathReason = CustomDeathReason.FollowingSuicide;
+        if (state != null) state.DeathReason = CustomDeathReason.FollowingSuicide;
 
         var owner = OwnerId == byte.MaxValue ? null : PlayerCatch.GetPlayerById(OwnerId);
-
         Player.SetRealKiller(owner ?? Player);
         Player.RpcMurderPlayerV2(Player);
     }
@@ -532,6 +518,7 @@ public static class StandMasterMurderPatch
     public static bool Prefix(PlayerControl __instance, PlayerControl target)
     {
         if (!AmongUsClient.Instance.AmHost) return true;
+        if (__instance == null || target == null) return true;
 
         if (__instance.PlayerId == target.PlayerId) return true;
 
@@ -541,7 +528,7 @@ public static class StandMasterMurderPatch
         if (role is Stand standPlayer)
         {
             var sm = standPlayer.GetOwner();
-            if (sm != null)
+            if (sm != null && sm.Player != null)
             {
                 if (target.PlayerId == sm.Player.PlayerId) return false;
 
@@ -550,10 +537,8 @@ public static class StandMasterMurderPatch
                     _ = new LateTask(() =>
                     {
                         sm.ReturnStand();
-                        if (sm.Player.IsAlive())
-                        {
+                        if (sm.Player != null && sm.Player.IsAlive())
                             sm.Player.RpcResetAbilityCooldown();
-                        }
                     }, 0.3f, "StandMaster.ReturnAfterKill", true);
                 }
             }
@@ -567,21 +552,26 @@ public static class StandMasterMurderPatch
                 standMaster.standSummoned = false;
                 standMaster.standReturnPos = null;
                 standMaster.isRevealed = false;
+
                 if (!Utils.RoleSendList.Contains(target.PlayerId))
                     Utils.RoleSendList.Add(target.PlayerId);
+
                 target.RpcSetCustomRole(CustomRoles.Stand, log: null);
                 target.RpcSetRole(RoleTypes.Crewmate);
+
                 _ = new LateTask(() =>
                 {
                     if (target.GetRoleClass() is Stand stand)
                         stand.SetOwner(standMaster.Player.PlayerId);
                 }, 0.2f, "StandMaster.SetOwner", true);
+
                 target.MarkDirtySettings();
                 standMaster.SyncState();
                 UtilsGameLog.AddGameLog("StandMaster", $"{UtilsName.GetPlayerColor(standMaster.Player)} が {UtilsName.GetPlayerColor(target)} をスタンドにした");
+
                 _ = new LateTask(() =>
                 {
-                    if (standMaster.Player.IsAlive())
+                    if (standMaster.Player != null && standMaster.Player.IsAlive())
                         standMaster.Player.RpcResetAbilityCooldown();
                 }, 0.1f, "StandMaster.ResetPhantomCD", true);
             }

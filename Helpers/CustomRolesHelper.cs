@@ -217,7 +217,10 @@ namespace TownOfHost
         public static CustomRoles GetLoverRole(this PlayerControl pc)
         {
             if (pc == null) return CustomRoles.NotAssigned;
+            // ★ ダミーPC（CustomNetObject由来）はスキップ
+            if (pc.notRealPlayer) return CustomRoles.NotAssigned;
             var state = PlayerState.GetByPlayerId(pc.PlayerId);
+            if (state == null) return CustomRoles.NotAssigned; // ★ stateがnullの場合も防御
             foreach (var sub in state.SubRoles)
                 switch (sub)
                 {

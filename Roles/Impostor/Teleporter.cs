@@ -4,53 +4,53 @@ using Hazel;
 using TownOfHost.Modules;
 using TownOfHost.Patches;
 using TownOfHost.Roles.Core;
+using TownOfHost.Roles.Core.Interfaces;
 using UnityEngine;
 
-namespace TownOfHost.Roles.Crewmate;
+namespace TownOfHost.Roles.Impostor;
 
-public sealed class NiceTeleporter : RoleBase
+public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
-            typeof(NiceTeleporter),
-            player => new NiceTeleporter(player),
-            CustomRoles.NiceTeleporter,
-            () => RoleTypes.Engineer,
-            CustomRoleTypes.Crewmate,
-            112800,
+            typeof(Teleporter),
+            player => new Teleporter(player),
+            CustomRoles.Teleporter,
+            () => RoleTypes.Phantom,
+            CustomRoleTypes.Impostor,
+            226500,
             SetupOptionItem,
-            "ntp",
-            "#4169e1",
-            (1, 9),
+            "etp",
+            OptionSort: (3, 16),
             from: From.SuperNewRoles
         );
 
-    public NiceTeleporter(PlayerControl player)
-        : base(RoleInfo, player, () => HasTask.True)
+    public Teleporter(PlayerControl player)
+        : base(RoleInfo, player)
     {
-        Cooldown = OptionCooldown.GetFloat();
+        KillCooldown = OptionKillCooldown.GetFloat();
+        AbilityCooldown = OptionAbilityCooldown.GetFloat();
         WaitingTime = OptionWaitingTime.GetFloat();
 
-        cooldownLeft = 0f;
         pendingTimer = -1f;
         destPlayerId = byte.MaxValue;
 
-        PetActionManager.Register(Player.PlayerId, OnPet);
         CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
     }
 
-    static OptionItem OptionCooldown;
-    static float Cooldown;
+    static OptionItem OptionKillCooldown;
+    static float KillCooldown;
+    static OptionItem OptionAbilityCooldown;
+    static float AbilityCooldown;
     static OptionItem OptionWaitingTime;
     static float WaitingTime;
 
     enum OptionName
     {
-        NiceTeleporterCooldown,
-        NiceTeleporterWaitingTime,
+        TeleporterAbilityCooldown,
+        TeleporterWaitingTime,
     }
 
-    float cooldownLeft;
     float pendingTimer;
     byte destPlayerId;
 
@@ -58,26 +58,30 @@ public sealed class NiceTeleporter : RoleBase
 
     static void SetupOptionItem()
     {
-        OptionCooldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.NiceTeleporterCooldown,
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown,
+            new(2.5f, 60f, 2.5f), 30f, false).SetValueFormat(OptionFormat.Seconds);
+        OptionAbilityCooldown = FloatOptionItem.Create(RoleInfo, 11, OptionName.TeleporterAbilityCooldown,
             new(5f, 120f, 5f), 45f, false).SetValueFormat(OptionFormat.Seconds);
-        OptionWaitingTime = FloatOptionItem.Create(RoleInfo, 11, OptionName.NiceTeleporterWaitingTime,
+        OptionWaitingTime = FloatOptionItem.Create(RoleInfo, 12, OptionName.TeleporterWaitingTime,
             new(0f, 10f, 1f), 3f, false).SetValueFormat(OptionFormat.Seconds);
     }
 
+    public float CalculateKillCooldown() => KillCooldown;
+    public bool CanUseSabotageButton() => true;
+    public bool CanUseImpostorVentButton() => true;
+
+    bool IUsePhantomButton.IsPhantomRole => true;
+    bool IUsePhantomButton.IsresetAfterKill => false;
+
     public override void OnDestroy()
     {
-        PetActionManager.Unregister(Player.PlayerId);
         CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
     }
 
     public override void ApplyGameOptions(IGameOptions opt)
     {
-        AURoleOptions.EngineerCooldown = cooldownLeft > 0f ? cooldownLeft : Cooldown;
-        AURoleOptions.EngineerInVentMaxTime = 0f;
+        AURoleOptions.PhantomCooldown = AbilityCooldown;
     }
-
-    public override bool CanClickUseVentButton => false;
-    public override bool OnEnterVent(PlayerPhysics physics, int ventId) => false;
 
     static bool IsOnRestrictedMove(PlayerControl pc)
     {
@@ -90,11 +94,14 @@ public sealed class NiceTeleporter : RoleBase
         return false;
     }
 
-    void OnPet()
+    // ★ ファントムボタン → テレポート開始
+    void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
+        AdjustKillCooldown = false;
+        ResetCooldown = false;
+
         if (!AmongUsClient.Instance.AmHost) return;
         if (!Player.IsAlive()) return;
-        if (cooldownLeft > 0f) return;
         if (pendingTimer >= 0f) return;
 
         var candidates = PlayerCatch.AllAlivePlayerControls
@@ -105,16 +112,19 @@ public sealed class NiceTeleporter : RoleBase
         var dest = candidates[IRandom.Instance.Next(candidates.Length)];
         destPlayerId = dest.PlayerId;
         pendingTimer = WaitingTime;
-        cooldownLeft = Cooldown;
-
-        Player.MarkDirtySettings();
-        Player.RpcResetAbilityCooldown(Sync: true);
 
         SendRpc();
         UtilsNotifyRoles.NotifyRoles();
 
-        UtilsGameLog.AddGameLog("NiceTeleporter",
+        UtilsGameLog.AddGameLog("Teleporter",
             $"{UtilsName.GetPlayerColor(Player)} がテレポート開始 → {UtilsName.GetPlayerColor(dest)}");
+
+        _ = new LateTask(() =>
+        {
+            if (!Player.IsAlive()) return;
+            AURoleOptions.PhantomCooldown = AbilityCooldown;
+            Player.RpcResetAbilityCooldown();
+        }, 0.1f, "Teleporter.ResetCD", true);
 
         if (WaitingTime <= 0f)
             ExecuteTeleport();
@@ -124,28 +134,14 @@ public sealed class NiceTeleporter : RoleBase
     {
         if (!AmongUsClient.Instance.AmHost) return;
         if (!GameStates.IsInTask) return;
+        if (pendingTimer < 0f) return;
 
-        if (cooldownLeft > 0f)
-        {
-            float prev = cooldownLeft;
-            cooldownLeft -= Time.fixedDeltaTime;
-            if (cooldownLeft < 0f) cooldownLeft = 0f;
-            if (Mathf.FloorToInt(prev) != Mathf.FloorToInt(cooldownLeft))
-            {
-                Player.MarkDirtySettings();
-                SendRpc();
-            }
-        }
-
-        if (pendingTimer >= 0f)
-        {
-            float prev = pendingTimer;
-            pendingTimer -= Time.fixedDeltaTime;
-            if (Mathf.FloorToInt(prev) != Mathf.FloorToInt(pendingTimer))
-                UtilsNotifyRoles.NotifyRoles();
-            if (pendingTimer <= 0f)
-                ExecuteTeleport();
-        }
+        float prev = pendingTimer;
+        pendingTimer -= Time.fixedDeltaTime;
+        if (Mathf.FloorToInt(prev) != Mathf.FloorToInt(pendingTimer))
+            UtilsNotifyRoles.NotifyRoles();
+        if (pendingTimer <= 0f)
+            ExecuteTeleport();
     }
 
     void ExecuteTeleport()
@@ -204,10 +200,12 @@ public sealed class NiceTeleporter : RoleBase
     public override void AfterMeetingTasks()
     {
         if (!AmongUsClient.Instance.AmHost) return;
-        cooldownLeft = Cooldown;
-        Player.MarkDirtySettings();
-        Player.RpcResetAbilityCooldown(Sync: true);
-        SendRpc();
+        _ = new LateTask(() =>
+        {
+            if (!Player.IsAlive()) return;
+            AURoleOptions.PhantomCooldown = AbilityCooldown;
+            Player.RpcResetAbilityCooldown();
+        }, 0.3f, "Teleporter.AfterMeeting.CD", true);
     }
 
     public string GetLowerTextOthers(PlayerControl seer, PlayerControl seen = null,
@@ -222,7 +220,7 @@ public sealed class NiceTeleporter : RoleBase
         var dest = PlayerCatch.GetPlayerById(destPlayerId);
         string destName = dest != null ? UtilsName.GetPlayerColor(dest, true) : "???";
         int sec = Mathf.CeilToInt(pendingTimer);
-        return $"\n<color=#4169e1>{destName} の元に {sec}秒後テレポートします！</color>";
+        return $"\n<color=#ff4500>{destName} の元に {sec}秒後テレポートします！</color>";
     }
 
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null,
@@ -242,30 +240,26 @@ public sealed class NiceTeleporter : RoleBase
             int sec = Mathf.CeilToInt(pendingTimer);
             return $"{size}<color={color}>{destName} の元へ {sec}秒後テレポート！</color>";
         }
-        if (cooldownLeft > 0f)
-            return $"{size}<color=#888888>クールダウン中</color>";
-        return $"{size}<color={color}>ペットを撫でる → ランダムな人の元へ全員テレポート</color>";
+        return $"{size}<color={color}>ファントム → ランダムな人の元へ全員テレポート</color>";
     }
 
     public override string GetProgressText(bool comms = false, bool GameLog = false)
     {
         if (!Player.IsAlive()) return "";
         if (pendingTimer >= 0f)
-            return $"<color=#4169e1>({Mathf.CeilToInt(pendingTimer)}s)</color>";
+            return $"<color=#ff4500>({Mathf.CeilToInt(pendingTimer)}s)</color>";
         return "";
     }
 
     void SendRpc()
     {
         using var sender = CreateSender();
-        sender.Writer.Write(cooldownLeft);
         sender.Writer.Write(pendingTimer);
         sender.Writer.Write(destPlayerId);
     }
 
     public override void ReceiveRPC(MessageReader reader)
     {
-        cooldownLeft = reader.ReadSingle();
         pendingTimer = reader.ReadSingle();
         destPlayerId = reader.ReadByte();
     }

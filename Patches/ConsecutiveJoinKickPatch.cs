@@ -20,7 +20,6 @@ public static class PreviousSessionDetector
     private static bool NotifyOnly => Options.OptionNotifyJoinKick.GetBool();
     private static bool SkipModerator => Options.OptionNotModeJoinKick.GetBool();
     private static bool SkipDraw => Options.OptionDrawJoinKick.GetBool();
-    private static bool ManualKick => Options.OptionManualJoinKick.GetBool();
 
     public static bool TemporaryAllowAll = false;
 
@@ -95,18 +94,18 @@ public static class PreviousSessionDetector
 
         Logger.Warn($"前試合参加者が再参加: {playerName} ({key}) {count}回目", "PreviousSession");
 
-        if (ManualKick)
-        {
-            if (clientId >= 0 && !DetectedPlayers.Any(d => d.ClientId == clientId))
-                DetectedPlayers.Add((clientId, playerName));
+        if (clientId >= 0 && !DetectedPlayers.Any(d => d.ClientId == clientId))
+            DetectedPlayers.Add((clientId, playerName));
 
+        if (NotifyOnly)
+        {
             Utils.SendMessage(
                 $"<color=#00c1ff>【再参加検知】</color>\n" +
                 $"{playerName} は前の試合にも参加していました。\n" +
                 $"FC: {key}\n" +
                 $"<size=80%>/cmd kp で一括キックできます。</size>",
                 PlayerControl.LocalPlayer.PlayerId,
-                "<color=#00c1ff>⚠ 再参加検知（手動）</color>");
+                "<color=#00c1ff>⚠ 再参加検知</color>");
             return;
         }
 
@@ -115,9 +114,8 @@ public static class PreviousSessionDetector
             $"{playerName} は前の試合にも参加していました。\n" +
             $"FC: {key}",
             PlayerControl.LocalPlayer.PlayerId,
-            "<color=#ffaa00>⚠ 再参加検知</color>");
+            "<color=#ffaa00>⚠ 自動キック処理中...</color>");
 
-        if (NotifyOnly) return;
         if (clientId < 0) return;
 
         _ = new LateTask(() =>
@@ -125,7 +123,7 @@ public static class PreviousSessionDetector
             AmongUsClient.Instance.KickPlayer(clientId, false);
             Logger.Warn($"再参加のため {playerName} をキックしました", "PreviousSession");
             Utils.SendMessage(
-                $"<color=#ff1919>【自動キック】{playerName} を再参加のためキックしました。</color>",
+                $"<color=#ff1919>【自動キック】{playerName} をキックしました。</color>",
                 PlayerControl.LocalPlayer.PlayerId);
         }, 0.5f, "PreviousSession.Kick", true);
     }
@@ -136,7 +134,6 @@ public static class PreviousSessionDetector
         var key = GetKey(pc);
         if (string.IsNullOrEmpty(key)) return false;
         ExemptKeys.Add(key);
-        // ★ 検知済みリストからも削除
         DetectedPlayers.RemoveAll(d => d.PlayerName == (pc.Data?.PlayerName ?? ""));
         Logger.Info($"免除追加: {pc.Data?.PlayerName} ({key})", "PreviousSession");
         return true;
@@ -198,7 +195,6 @@ public static class PreviousSessionDetector
             PlayerControl.LocalPlayer.PlayerId);
     }
 
-    // ★ Moderatorと同じ検索ロジック
     public static PlayerControl FindTargetAuto(string key)
     {
         if (byte.TryParse(key, out var id))

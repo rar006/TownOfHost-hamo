@@ -8,6 +8,7 @@ using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
 using TownOfHost.Roles.Impostor;
 using TownOfHost.Roles.Neutral;
+using TownOfHost.Patches;
 using static TownOfHost.Translator;
 
 namespace TownOfHost.Roles.Crewmate;
@@ -19,7 +20,7 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
             typeof(Sheriff),
             player => new Sheriff(player),
             CustomRoles.Sheriff,
-            () => RoleTypes.Impostor,
+            () => RoleTypes.Crewmate,
             CustomRoleTypes.Crewmate,
             8800,
             SetupOptionItem,
@@ -28,20 +29,22 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
             (2, 0),
             true,
             introSound: () => GetIntroSound(RoleTypes.Crewmate),
-            from: From.SheriffMod,
-            Desc: () => string.Format(GetString("SheriffDesc"), CanKillMadmate.GetBool() ? $"{GetString("Madmate")}、" : "", CanKillNeutrals.GetBool() ? GetString("SheriffDescCanKillNeutralOption") : GetString("Neutral"), CanKillLovers.GetBool() ? $"、{GetString("Lovers")}" : ""
-            , MisfireKillsTarget.GetBool() ? GetString("SheriffDescMisfireKillsTarget") : "", !CanKillAllAlive.GetBool() ? GetString("SheriffDescAllAlive") : "", ShotLimitOpt.GetInt())
+            from: From.SheriffMod
         );
+
     public Sheriff(PlayerControl player)
     : base(
         RoleInfo,
         player,
-        () => HasTask.False
+        () => HasTask.True
     )
     {
         Flug3 = 0;
         ShotLimit = ShotLimitOpt.GetInt();
         CurrentKillCooldown = KillCooldown.GetFloat();
+        Taskmode = true;
+        nowcool = CurrentKillCooldown;
+        LastCooltime = 0;
     }
 
     public static OptionItem KillCooldown;
@@ -51,6 +54,7 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
     public static OptionItem CanKillAllAlive;
     public static OptionItem CanKillNeutrals;
     public static OptionItem CanKillLovers;
+
     enum OptionName
     {
         SheriffMisfireKillsTarget,
@@ -58,19 +62,28 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
         SheriffCanKillAllAlive,
         SheriffCanKillNeutrals,
         SheriffCanKill,
-        SheriffCanKillLovers
+        SheriffCanKillLovers,
     }
+
     public static Dictionary<CustomRoles, OptionItem> KillTargetOptions = new();
     public static Dictionary<ISchrodingerCatOwner.TeamType, OptionItem> SchrodingerCatKillTargetOptions = new();
+
     public int ShotLimit = 0;
     public float CurrentKillCooldown = 30;
+    public bool Taskmode;
+    float nowcool;
+    int LastCooltime;
+    int Flug3;
+
+    /// <summary>村長に任命されたプレイヤーID一覧（タスクなし扱い）</summary>
+    public static HashSet<byte> AppointedPlayerIds = new();
+
     public static readonly string[] KillOption =
     {
         "SheriffCanKillAll", "SheriffCanKillSeparately"
     };
 
     public ISchrodingerCatOwner.TeamType SchrodingerCatChangeTo => ISchrodingerCatOwner.TeamType.Crew;
-    int Flug3;
 
     private static void SetupOptionItem()
     {
@@ -85,7 +98,9 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
         CanKillNeutrals = StringOptionItem.Create(RoleInfo, 14, OptionName.SheriffCanKillNeutrals, KillOption, 0, false);
         SetUpNeutralOptions(30);
         CanKillLovers = BooleanOptionItem.Create(RoleInfo, 16, OptionName.SheriffCanKillLovers, true, false);
+        OverrideTasksData.Create(RoleInfo, 22);
     }
+
     public static void SetUpNeutralOptions(int idOffset)
     {
         foreach (var neutral in CustomRolesHelper.AllStandardRoles.Where(x => x.IsNeutral()).ToArray())
@@ -97,14 +112,12 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
         }
         foreach (var catType in EnumHelper.GetAllValues<ISchrodingerCatOwner.TeamType>())
         {
-            if ((byte)catType < 50)
-            {
-                continue;
-            }
+            if ((byte)catType < 50) continue;
             SetUpSchrodingerCatKillTargetOption(catType, idOffset, true, CanKillNeutrals);
             idOffset++;
         }
     }
+
     public static OptionItem SetUpKillTargetOption(CustomRoles role, int idOffset, bool defaultValue = true, OptionItem parent = null)
     {
         var id = RoleInfo.ConfigId + idOffset;
@@ -114,9 +127,9 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
         var roleoptionitem = BooleanOptionItem.Create(id, OptionName.SheriffCanKill + "%role%", defaultValue, RoleInfo.Tab, false).SetParent(parent).SetParentRole(CustomRoles.Sheriff);
         KillTargetOptions[role] = roleoptionitem;
         KillTargetOptions[role].ReplacementDictionary = replacementDic;
-
         return roleoptionitem;
     }
+
     public static void SetUpSchrodingerCatKillTargetOption(ISchrodingerCatOwner.TeamType catType, int idOffset, bool defaultValue = true, OptionItem parent = null)
     {
         var id = RoleInfo.ConfigId + idOffset;
@@ -127,38 +140,75 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
         SchrodingerCatKillTargetOptions[catType] = BooleanOptionItem.Create(id, OptionName.SheriffCanKill + "%role%", defaultValue, RoleInfo.Tab, false).SetParent(parent).SetParentRole(CustomRoles.Sheriff);
         SchrodingerCatKillTargetOptions[catType].ReplacementDictionary = replacementDic;
     }
+
     public override void Add()
     {
-        var playerId = Player.PlayerId;
-        CurrentKillCooldown = KillCooldown.GetFloat();
-
+        AppointedPlayerIds.Clear(); // ゲーム開始時にリセット
         ShotLimit = ShotLimitOpt.GetInt();
-        Logger.Info($"{PlayerCatch.GetPlayerById(playerId)?.GetNameWithRole().RemoveHtmlTags()} : 残り{ShotLimit}発", "Sheriff");
+        CurrentKillCooldown = KillCooldown.GetFloat();
+        Logger.Info($"{PlayerCatch.GetPlayerById(Player.PlayerId)?.GetNameWithRole().RemoveHtmlTags()} : 残り{ShotLimit}発", "Sheriff");
+        PetActionManager.Register(Player.PlayerId, OnPetUsed);
     }
+
+    public override void OnDestroy()
+    {
+        PetActionManager.Unregister(Player.PlayerId);
+    }
+
+    private void OnPetUsed()
+    {
+        if (!CanChangeMode()) return;
+        ModeSwitching();
+        SendRPC();
+        UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
+    }
+
     private void SendRPC()
     {
         using var sender = CreateSender();
         sender.Writer.Write(ShotLimit);
+        sender.Writer.Write(Taskmode);
+        sender.Writer.Write(nowcool);
     }
+
     public override void ReceiveRPC(MessageReader reader)
     {
         ShotLimit = reader.ReadInt32();
+        Taskmode = reader.ReadBoolean();
+        nowcool = reader.ReadSingle();
     }
+
     public float CalculateKillCooldown() => CanUseKillButton() ? CurrentKillCooldown : 0f;
+
     public bool CanUseKillButton()
+        => Player.IsAlive()
+        && !Taskmode
+        && (CanKillAllAlive.GetBool() || GameStates.AlreadyDied)
+        && ShotLimit > 0;
+
+    bool CanChangeMode()
         => Player.IsAlive()
         && (CanKillAllAlive.GetBool() || GameStates.AlreadyDied)
         && ShotLimit > 0;
+
     public bool CanUseImpostorVentButton() => false;
     public bool CanUseSabotageButton() => false;
+
     public override void ApplyGameOptions(IGameOptions opt)
     {
         opt.SetVision(false);
     }
+
     public void OnCheckMurderAsKiller(MurderInfo info)
     {
         if (Is(info.AttemptKiller) && !info.IsSuicide)
         {
+            if (LastCooltime > 0)
+            {
+                info.DoKill = false;
+                return;
+            }
+
             (var killer, var target) = info.AttemptTuple;
 
             Logger.Info($"{killer.GetNameWithRole().RemoveHtmlTags()} : 残り{ShotLimit}発", "Sheriff");
@@ -169,6 +219,7 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
             }
             ShotLimit--;
             SendRPC();
+
             var AlienTairo = false;
             var targetroleclass = target.GetRoleClass();
             if ((targetroleclass as Alien)?.CheckSheriffKill(target) == true) AlienTairo = true;
@@ -178,10 +229,11 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
             if (!CanBeKilledBy(target) || AlienTairo)
             {
                 PlayerState.GetByPlayerId(killer.PlayerId).DeathReason =
-                            target.Is(CustomRoles.Tairou) && Tairou.TairoDeathReason ? CustomDeathReason.Counter :
-                            target.Is(CustomRoles.Alien) && Alien.TairoDeathReason ? CustomDeathReason.Counter :
-                            (target.Is(CustomRoles.JackalAlien) && JackalAlien.TairoDeathReason ? CustomDeathReason.Counter :
-                            (target.Is(CustomRoles.AlienHijack) && Alien.TairoDeathReason ? CustomDeathReason.Counter : CustomDeathReason.Misfire));
+                    target.Is(CustomRoles.Tairou) && Tairou.TairoDeathReason ? CustomDeathReason.Counter :
+                    target.Is(CustomRoles.Alien) && Alien.TairoDeathReason ? CustomDeathReason.Counter :
+                    (target.Is(CustomRoles.JackalAlien) && JackalAlien.TairoDeathReason ? CustomDeathReason.Counter :
+                    (target.Is(CustomRoles.AlienHijack) && Alien.TairoDeathReason ? CustomDeathReason.Counter : CustomDeathReason.Misfire));
+
                 killer.RpcMurderPlayer(killer);
                 Flug3 = Utils.IsActive(Main.SabotageType) && Main.SabotageType.IsCriticalSabotage() ? 1 : 0;
                 UtilsGameLog.AddGameLog("Sheriff", string.Format(GetString("SheriffMissLog"), UtilsName.GetPlayerColor(target.PlayerId)));
@@ -192,14 +244,124 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
                 }
             }
 
+            nowcool = CurrentKillCooldown;
+            ModeSwitching(true);
+            SendRPC();
             killer.ResetKillCooldown();
             Achievements.RpcCompleteAchievement(Player.PlayerId, 0, SheriffAchievement.achievements[0]);
             Achievements.RpcCompleteAchievement(Player.PlayerId, 1, SheriffAchievement.achievements[1]);
         }
         return;
     }
-    
-    public override string GetProgressText(bool comms = false, bool gamelog = false) => Utils.ColorString(CanUseKillButton() ? Color.yellow : Color.gray, $"({ShotLimit})");
+
+    public override void AfterSabotage(SystemTypes systemType) => Flug3 = 0;
+
+    public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
+    {
+        if (target is null) return;
+        if (target.PlayerId == Player.Data.PlayerId && Flug3 == 1)
+        {
+            if (Utils.IsActive(Main.SabotageType) && Main.SabotageType.IsCriticalSabotage())
+            {
+                var systems = ShipStatus.Instance.Systems;
+                LifeSuppSystemType LifeSupp;
+                if (systems.ContainsKey(SystemTypes.LifeSupp) &&
+                    (LifeSupp = systems[SystemTypes.LifeSupp].TryCast<LifeSuppSystemType>()) != null &&
+                    LifeSupp.Countdown <= 15f)
+                {
+                    Achievements.RpcCompleteAchievement(Player.PlayerId, 0, SheriffAchievement.achievements[2]);
+                }
+                ISystemType sys = null;
+                if (systems.ContainsKey(SystemTypes.Reactor)) sys = systems[SystemTypes.Reactor];
+                else if (systems.ContainsKey(SystemTypes.Laboratory)) sys = systems[SystemTypes.Laboratory];
+                else if (systems.ContainsKey(SystemTypes.HeliSabotage)) sys = systems[SystemTypes.HeliSabotage];
+                ICriticalSabotage critical;
+                if (sys != null &&
+                (critical = sys.TryCast<ICriticalSabotage>()) != null &&
+                critical.Countdown <= 15f)
+                {
+                    Achievements.RpcCompleteAchievement(Player.PlayerId, 0, SheriffAchievement.achievements[2]);
+                }
+            }
+        }
+
+        if (Player.IsAlive())
+        {
+            ModeSwitching(true);
+            SendRPC();
+        }
+        Player.RpcResetAbilityCooldown(Sync: true);
+    }
+
+    public override void AfterMeetingTasks()
+    {
+        if (!Player.IsAlive()) return;
+        _ = new LateTask(() => nowcool = CurrentKillCooldown, Main.LagTime, "Reset-Sheriff");
+    }
+
+    public override string GetProgressText(bool comms = false, bool gamelog = false)
+    {
+        var progress = Utils.ColorString(CanChangeMode() ? Color.yellow : Color.gray, $"({ShotLimit})");
+        if (!GameStates.CalledMeeting && !gamelog)
+            progress += Utils.ColorString(Color.yellow, Taskmode
+                ? $" [Task]<color=#ffffff>({LastCooltime})</color>"
+                : $"  [Sheriff]<color=#ffffff>({LastCooltime})</color>");
+        return progress;
+    }
+
+    public override bool CanTask()
+    {
+        if (!Player.IsAlive()) return true;
+        // 村長に任命されたシェリフはタスクなし
+        if (AppointedPlayerIds.Contains(Player.PlayerId)) return false;
+        return Taskmode;
+    }
+
+    public override void OnFixedUpdate(PlayerControl player)
+    {
+        if (!AmongUsClient.Instance.AmHost) return;
+        if (GameStates.CalledMeeting || GameStates.Intro) return;
+        if (!player.IsAlive()) return;
+
+        if (nowcool > 0)
+            nowcool -= Time.fixedDeltaTime;
+        else
+            nowcool = 0;
+
+        var now = (int)nowcool;
+        if (now != LastCooltime)
+        {
+            if (now <= 0) player.SetKillCooldown(0.5f);
+            LastCooltime = now;
+            if (player != PlayerControl.LocalPlayer)
+                UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: player);
+        }
+    }
+
+    private bool ModeSwitching(bool? taskMode = null)
+    {
+        Taskmode = taskMode ?? !Taskmode;
+
+        if (!Is(PlayerControl.LocalPlayer))
+        {
+            if (!Player.IsAlive()) return true;
+            foreach (var pc in PlayerCatch.AllAlivePlayerControls)
+            {
+                var role = pc.GetCustomRole();
+                if (role.IsImpostor())
+                    pc.RpcSetRoleDesync(Taskmode ? role.GetRoleTypes() : RoleTypes.Scientist, Player.GetClientId());
+                if (Is(pc))
+                    pc.RpcSetRoleDesync(Taskmode ? RoleTypes.Crewmate : RoleTypes.Impostor, Player.GetClientId());
+            }
+        }
+
+        if (!Taskmode)
+        {
+            Player.SetKillCooldown(Mathf.Max(LastCooltime, 0.1f), delay: true);
+        }
+        return Taskmode;
+    }
+
     public static bool CanBeKilledBy(PlayerControl player)
     {
         var cRole = player.GetCustomRole();
@@ -238,40 +400,11 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
             _ => false,
         };
     }
+
     public bool OverrideKillButton(out string text)
     {
         text = "Sheriff_Kill";
         return true;
-    }
-    public override void AfterSabotage(SystemTypes systemType) => Flug3 = 0;
-    public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
-    {
-        if (target is null) return;
-        if (target.PlayerId == Player.Data.PlayerId && Flug3 == 1)
-        {
-            if (Utils.IsActive(Main.SabotageType) && Main.SabotageType.IsCriticalSabotage())
-            {
-                var systems = ShipStatus.Instance.Systems;
-                LifeSuppSystemType LifeSupp;
-                if (systems.ContainsKey(SystemTypes.LifeSupp) &&
-                    (LifeSupp = systems[SystemTypes.LifeSupp].TryCast<LifeSuppSystemType>()) != null &&
-                    LifeSupp.Countdown <= 15f)
-                {
-                    Achievements.RpcCompleteAchievement(Player.PlayerId, 0, SheriffAchievement.achievements[2]);
-                }
-                ISystemType sys = null;
-                if (systems.ContainsKey(SystemTypes.Reactor)) sys = systems[SystemTypes.Reactor];
-                else if (systems.ContainsKey(SystemTypes.Laboratory)) sys = systems[SystemTypes.Laboratory];
-                else if (systems.ContainsKey(SystemTypes.HeliSabotage)) sys = systems[SystemTypes.HeliSabotage];
-                ICriticalSabotage critical;
-                if (sys != null &&
-                (critical = sys.TryCast<ICriticalSabotage>()) != null &&
-                critical.Countdown <= 15f)
-                {
-                    Achievements.RpcCompleteAchievement(Player.PlayerId, 0, SheriffAchievement.achievements[2]);
-                }
-            }
-        }
     }
 }
 

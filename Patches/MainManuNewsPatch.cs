@@ -353,6 +353,37 @@ public class ModNewsHistory
                 };
                 AllModNews.Add(news);
             }
+            {
+                var news = new ModNews
+                {
+                    Number = 100083,
+                    Title = "サイドキックをしやすくしたよ！",
+                    SubTitle = "<color=#FF9631>Town Of Host-Pko v4.30.14.63</color>",
+                    ShortTitle = "<color=#FF9631>●TOH-Pko v4.30.14.63</color>",
+                    Text = "・新役職　ナイスリンカーの追加\n"
+                    + "・新役職　イビルリンカーの追加\n"
+                    + "・新役職　ゾンビの追加\n"
+                    + "・ナイステレポーターの追加 From:SuperNewRoles\n"
+                    + "・テレポーターの追加 From:SuperNewRoles\n"
+                    + "・村長仕様変更\n"
+                    + "・サンタ仕様変更\n"
+                    + "・陰陽師仕様変更\n"
+                    + "・波動砲ジャッカル仕様変更\n"
+                    + "・シェリフ仕様変更\n"
+                    + "・スイッチシェリフのリストラ\n"
+                    + "・神にオプションの追加\n"
+                    + "・シャイボーイバグ修正\n"
+                    + "・スタンドマスターのバグ修正\n"
+                    + "・イビルムービング翻訳\n"
+                    + "・波動砲、波動砲ジャッカルを色々調整し軽量化、ビームが見えなかったバグの修正、その他のバグ修正\n"
+                    + "・画像変更\n"
+                    + "・一定の条件下で会議画面が表示されないバグの修正\n"
+                    + "・その他修正\n"
+                    ,
+                    Date = "2026-5-23"
+                };
+                AllModNews.Add(news);
+            }
             AnnouncementPopUp.UpdateState = AnnouncementPopUp.AnnounceState.NotStarted;
         }
     }

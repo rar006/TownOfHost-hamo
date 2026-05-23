@@ -37,6 +37,9 @@ namespace TownOfHost
 
             if (!GameStates.IsModHost) return;
             if (__instance == null) return;
+            // ★ ダミーPC（CustomNetObject由来）はスキップ
+            //    notRealPlayer=true のPCにGetLoverRoleなどを呼ぶとNullReferenceが出るため
+            if (__instance.notRealPlayer) return;
 
             if (TaskBattle.IsRTAMode && GameStates.IsInTask && GameStates.introDestroyed)
             {

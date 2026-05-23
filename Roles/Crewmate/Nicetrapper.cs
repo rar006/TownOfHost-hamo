@@ -173,6 +173,13 @@ public sealed class NiceTrapper : RoleBase
         if (!AmongUsClient.Instance.AmHost) return;
         if (!GameStates.IsInTask || GameStates.IsMeeting) return;
 
+        // ★ 死亡時に全トラップを消す
+        if (!Player.IsAlive() && traps.Count > 0)
+        {
+            DespawnAll();
+            return;
+        }
+
         if (cooldownTimer > 0f)
         {
             cooldownTimer -= Time.fixedDeltaTime;
@@ -308,6 +315,12 @@ public sealed class NiceTrapper : RoleBase
         foreach (var pid in effectTimers.Keys.ToArray()) RemoveEffect(pid);
         effectTimers.Clear();
         foreach (var trap in traps) trap.PlayersInRange.Clear();
+    }
+
+    // ★ 死亡時にトラップを全消し
+    public override void OnMurderPlayerAsTarget(MurderInfo info)
+    {
+        DespawnAll();
     }
 
     void DespawnAll()

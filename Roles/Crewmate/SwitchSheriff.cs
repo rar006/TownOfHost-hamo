@@ -1,3 +1,4 @@
+/*
 using System.Collections.Generic;
 using System.Linq;
 using Hazel;
@@ -227,7 +228,7 @@ public sealed class SwitchSheriff : RoleBase, IKiller, ISchrodingerCatOwner
             ModeSwitching(true);
             SendRPC();
             //Player.SetKillCooldown(nowcool);
-            killer.RpcResetAbilityCooldown(/*Sync: true*/);
+            killer.RpcResetAbilityCooldown();//Sync: true
             Achievements.RpcCompleteAchievement(Player.PlayerId, 0, SheriffAchievement.achievements[0]);
             Achievements.RpcCompleteAchievement(Player.PlayerId, 1, SheriffAchievement.achievements[1]);
         }
@@ -405,3 +406,4 @@ public sealed class SwitchSheriff : RoleBase, IKiller, ISchrodingerCatOwner
         return Taskmode;
     }
 }
+*/

@@ -165,7 +165,8 @@ namespace TownOfHost
                     Fox.SFoxCheckWin(ref reason);
                     Tuna.CheckWin(ref reason);
                     Spelunker.CheckWin(ref reason);
-                    //Chatter.CheckWin(ref reason);
+                    Chatter.CheckWin(ref reason);
+                    Zombie.TryTakeOverCrewWin(ref reason);
 
                     // ★ 神の勝利チェック
                     foreach (var pc in PlayerCatch.AllAlivePlayerControls.Where(p => p.Is(CustomRoles.God)))

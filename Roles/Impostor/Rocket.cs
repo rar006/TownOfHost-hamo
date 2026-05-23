@@ -220,7 +220,7 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
             float xOffset = (i - (targets.Length - 1) / 2f) * 0.4f;
             Vector2 spawnPos = launchPos + new Vector2(xOffset, 0f);
 
-            PlayerState.GetByPlayerId(target.PlayerId).DeathReason = CustomDeathReason.etc;
+            PlayerState.GetByPlayerId(target.PlayerId).DeathReason = CustomDeathReason.Launch;
             target.RpcExileV3();
             PlayerState.GetByPlayerId(target.PlayerId).SetDead();
 

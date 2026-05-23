@@ -816,6 +816,8 @@ public enum CustomRoles
     Samurai,
     Rocket,
     EvilMoving,
+    Teleporter,
+    EvilTrapper,
     //TOH-K
     Bomber,
     TeleportKiller,
@@ -859,8 +861,7 @@ public enum CustomRoles
     DummySpawner,
     Reverser,
     EvilSanta,
-    SmokeMaker,
-    Stand,
+    EvilLinker,
     //DEBUG only Impostor
     //Madmate
     MadGuardian,
@@ -1024,6 +1025,8 @@ public enum CustomRoles
     Chatter,
     BatGirl,
     Shyboy,
+    SmokeMaker,
+    Stand,
     //DEBUG only Neutral.
     //HideAndSeek
     HASFox,

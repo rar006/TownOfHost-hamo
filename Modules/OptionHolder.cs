@@ -1270,7 +1270,7 @@ namespace TownOfHost
                 .SetColorcode("#00c1ff")
                 .SetOptionName(() => "/rename 名前変更を許可");
 
-            OptionNameCharLimit = IntegerOptionItem.Create(1_300_131, "NameCharLimit", new(1, 100, 1), 10, TabGroup.MainSettings, true)
+            OptionNameCharLimit = IntegerOptionItem.Create(1_300_131, "NameCharLimit", new(1, 100, 1), 30, TabGroup.MainSettings, true)
                 .SetParent(OptionCanChangeName)
                 .SetColorcode("#00c1ff")
                 .SetOptionName(() => "名前の文字制限");
