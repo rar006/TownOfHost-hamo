@@ -491,6 +491,19 @@ public class ModNewsHistory
                 };
                 AllModNews.Add(news);
             }
+            {
+                var news = new ModNews
+                {
+                    Number = 100090,
+                    Title = "結構バグ減ってきたんじゃね？(知らんけど",
+                    SubTitle = "<color=#FF9631>Town Of Host-Pko v4.32.16.70</color>",
+                    ShortTitle = "<color=#FF9631>●TOH-Pko v4.32.16.70</color>",
+                    Text = "・TOHKのアプデに対応\n・村長、サンタで任命されたシェリフがたまにキルク0だったバグの修正\r\n・タイムリーパーのキルクのバグ修正\r\n・ナイステレポータークールダウンバグ修正\r\n・フリーターの就職相手が乗っ取り役だと追加勝利できなかったバグの修正\r\n・マッドワーカーがシェリフに任命された際、タスクが完了判定になりインポスターが勝利するバグの修正\r\n"
+                    ,
+                    Date = "2026-6-03"
+                };
+                AllModNews.Add(news);
+            }
             AnnouncementPopUp.UpdateState = AnnouncementPopUp.AnnounceState.NotStarted;
         }
     }

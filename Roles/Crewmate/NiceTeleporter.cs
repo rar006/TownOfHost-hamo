@@ -7,6 +7,7 @@ using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Impostor;
 using TownOfHost.Roles.Neutral;
 using UnityEngine;
+
 namespace TownOfHost.Roles.Crewmate;
 
 public sealed class NiceTeleporter : RoleBase
@@ -35,6 +36,7 @@ public sealed class NiceTeleporter : RoleBase
         cooldownLeft = 0f;
         pendingTimer = -1f;
         destPlayerId = byte.MaxValue;
+        wasOnCooldown = false;
 
         PetActionManager.Register(Player.PlayerId, OnPet);
         CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
@@ -54,6 +56,7 @@ public sealed class NiceTeleporter : RoleBase
     float cooldownLeft;
     float pendingTimer;
     byte destPlayerId;
+    bool wasOnCooldown;
 
     static readonly Vector2 LIFT_POSITION = new(7.76f, 8.56f);
 
@@ -73,7 +76,7 @@ public sealed class NiceTeleporter : RoleBase
 
     public override void ApplyGameOptions(IGameOptions opt)
     {
-        AURoleOptions.EngineerCooldown = cooldownLeft > 0f ? cooldownLeft : Cooldown;
+        AURoleOptions.EngineerCooldown = cooldownLeft > 0.5f ? cooldownLeft : 0.5f;
         AURoleOptions.EngineerInVentMaxTime = 0f;
     }
 
@@ -116,6 +119,7 @@ public sealed class NiceTeleporter : RoleBase
         destPlayerId = dest.PlayerId;
         pendingTimer = WaitingTime;
         cooldownLeft = Cooldown;
+        wasOnCooldown = true;
 
         Player.MarkDirtySettings();
         Player.RpcResetAbilityCooldown(Sync: true);
@@ -137,14 +141,29 @@ public sealed class NiceTeleporter : RoleBase
 
         if (cooldownLeft > 0f)
         {
+            wasOnCooldown = true;
             float prev = cooldownLeft;
             cooldownLeft -= Time.fixedDeltaTime;
             if (cooldownLeft < 0f) cooldownLeft = 0f;
+
             if (Mathf.FloorToInt(prev) != Mathf.FloorToInt(cooldownLeft))
             {
                 Player.MarkDirtySettings();
                 SendRpc();
             }
+        }
+        else if (wasOnCooldown)
+        {
+            wasOnCooldown = false;
+            cooldownLeft = 0f;
+            SendRpc();
+
+            _ = new LateTask(() =>
+            {
+                if (!Player.IsAlive() || pendingTimer >= 0f) return;
+                Player.MarkDirtySettings();
+                Player.RpcResetAbilityCooldown(Sync: true);
+            }, Main.LagTime + 0.1f, "NiceTeleporter.CDExpire", true);
         }
 
         if (pendingTimer >= 0f)
@@ -165,19 +184,13 @@ public sealed class NiceTeleporter : RoleBase
         pendingTimer = -1f;
 
         if (destPlayer == null || !destPlayer.IsAlive() || !Player.IsAlive())
-        {
-            SendRpc(); UtilsNotifyRoles.NotifyRoles(); return;
-        }
+        { SendRpc(); UtilsNotifyRoles.NotifyRoles(); return; }
 
         if (IsBeamingOrCharging(Player))
-        {
-            SendRpc(); UtilsNotifyRoles.NotifyRoles(); return;
-        }
+        { SendRpc(); UtilsNotifyRoles.NotifyRoles(); return; }
 
         if (IsOnRestrictedMove(destPlayer) || IsBeamingOrCharging(destPlayer))
-        {
-            SendRpc(); UtilsNotifyRoles.NotifyRoles(); return;
-        }
+        { SendRpc(); UtilsNotifyRoles.NotifyRoles(); return; }
 
         var dest = (Vector2)destPlayer.transform.position;
 
@@ -217,6 +230,7 @@ public sealed class NiceTeleporter : RoleBase
     {
         if (!AmongUsClient.Instance.AmHost) return;
         cooldownLeft = Cooldown;
+        wasOnCooldown = true;
         Player.MarkDirtySettings();
         Player.RpcResetAbilityCooldown(Sync: true);
         SendRpc();

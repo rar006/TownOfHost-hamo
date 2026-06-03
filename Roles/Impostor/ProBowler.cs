@@ -155,12 +155,8 @@ public sealed class ProBowler : RoleBase, IImpostor
             }
         }
     }
-    public override void OnStartMeeting()
+    public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
     {
-        timer = 0;
-        Rollscount = 0;
-        NowKilling = false;
-        Bowl = null;
         if (Bowltarget.IsAlive())
         {
             if (DeaathreasonIsFall)
@@ -168,6 +164,13 @@ public sealed class ProBowler : RoleBase, IImpostor
             Bowltarget.RpcMurderPlayerV2(Bowltarget);
             Bowltarget.SetRealKiller(Player);
         }
+    }
+    public override void OnStartMeeting()
+    {
+        timer = 0;
+        Rollscount = 0;
+        NowKilling = false;
+        Bowl = null;
     }
     public float CalculateKillCooldown() => KillCooldown;
     public override string GetProgressText(bool comms = false, bool GameLog = false)

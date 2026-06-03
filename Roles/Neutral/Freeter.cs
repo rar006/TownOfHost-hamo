@@ -1,5 +1,6 @@
 using AmongUs.GameOptions;
 using Hazel;
+using System.Linq;
 using UnityEngine;
 
 using TownOfHost.Roles.Core;
@@ -182,20 +183,34 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
 
     public bool CheckWin(ref CustomRoles winnerRole)
     {
+        if (!Player.IsAlive()) return false;
         if (BetTargetId == byte.MaxValue) return false;
-
-        if (CustomWinnerHolder.WinnerIds.Contains(BetTargetId)) return true;
 
         var target = GetPlayerById(BetTargetId);
         if (target == null) return false;
 
-        var winTeam = CustomWinnerHolder.WinnerTeam;
-        var role = target.GetCustomRole();
+        if (target.Is(CustomRoles.Freeter)) return false;
 
-        if (winTeam == CustomWinner.Crewmate && role.IsCrewmate()) return true;
-        if (winTeam == CustomWinner.Impostor && role.IsImpostor()) return true;
+        return CustomWinnerHolder.WinnerIds.Contains(BetTargetId)
+            || CustomWinnerHolder.WinnerRoles.Any(role => target.Is(role));
+    }
 
-        return false;
+    public override void CheckWinner(GameOverReason reason)
+    {
+        if (!AmongUsClient.Instance.AmHost) return;
+        if (BetTargetId == byte.MaxValue) return;
+        if (CustomWinnerHolder.WinnerIds.Contains(Player.PlayerId)) return;
+
+        var target = GetPlayerById(BetTargetId);
+        if (target == null || target.Is(CustomRoles.Freeter)) return;
+
+        bool employerWon = CustomWinnerHolder.WinnerIds.Contains(BetTargetId)
+                        || CustomWinnerHolder.WinnerRoles.Any(role => target.Is(role));
+        if (!employerWon) return;
+
+        CustomWinnerHolder.WinnerIds.Add(Player.PlayerId);
+        if (!CustomWinnerHolder.AdditionalWinnerRoles.Contains(CustomRoles.Freeter))
+            CustomWinnerHolder.AdditionalWinnerRoles.Add(CustomRoles.Freeter);
     }
 
     private PlayerControl GetClosestPlayerInRange()

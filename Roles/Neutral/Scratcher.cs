@@ -1,21 +1,15 @@
-/*using System;
+using System;
 using System.Text;
 using Hazel;
 using AmongUs.GameOptions;
+using HarmonyLib;
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
-using static TownOfHost.Modules.SelfVoteManager;
 using static TownOfHost.Translator;
 
 namespace TownOfHost.Roles.Neutral;
 
-/// <summary>
-/// スクラッチャー
-/// タスクを終わらせる度にスクラッチ(削れる枚数)を入手する。
-/// 会議で自投票することでスクラッチを削ることができ、
-/// 設定された枚数の"当たり"を引くと乗っ取り単独勝利する。
-/// </summary>
-public sealed class Scratcher : RoleBase, ISelfVoter, IAdditionalWinner
+public sealed class Scratcher : RoleBase, IAdditionalWinner
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
@@ -32,17 +26,13 @@ public sealed class Scratcher : RoleBase, ISelfVoter, IAdditionalWinner
             true,
             from: From.TownOfHost_Pko
         );
+
     public Scratcher(PlayerControl player)
-    : base(
-        RoleInfo,
-        player,
-        () => HasTask.True
-    )
+    : base(RoleInfo, player, () => HasTask.True)
     {
         Scratches = 0;
         Hits = 0;
         ScratchedThisMeeting = 0;
-        Seted = false;
         Won = false;
         AddWin = false;
 
@@ -58,7 +48,6 @@ public sealed class Scratcher : RoleBase, ISelfVoter, IAdditionalWinner
     private int Scratches;
     private int Hits;
     private int ScratchedThisMeeting;
-    private bool Seted;
     private bool Won;
     private bool AddWin;
 
@@ -83,14 +72,16 @@ public sealed class Scratcher : RoleBase, ISelfVoter, IAdditionalWinner
 
     private static void SetupOptionItem()
     {
-        OptionScratchPerTask = IntegerOptionItem.Create(RoleInfo, 10, OptionName.ScratcherScratchPerTask, new(1, 100, 1), 2, false)
-            .SetValueFormat(OptionFormat.Pieces);
-        OptionMaxScratchPerMeeting = IntegerOptionItem.Create(RoleInfo, 11, OptionName.ScratcherMaxScratchPerMeeting, new(1, 100, 1), 3, false)
-            .SetValueFormat(OptionFormat.Pieces);
-        OptionWinHitCount = IntegerOptionItem.Create(RoleInfo, 12, OptionName.ScratcherWinHitCount, new(1, 100, 1), 1, false)
-            .SetValueFormat(OptionFormat.Pieces);
-        OptionHitProbability = IntegerOptionItem.Create(RoleInfo, 13, OptionName.ScratcherHitProbability, new(1, 100, 1), 20, false)
-            .SetValueFormat(OptionFormat.Percent);
+        SoloWinOption.Create(RoleInfo, 9, defo: 1);
+
+        OptionScratchPerTask = IntegerOptionItem.Create(RoleInfo, 10, OptionName.ScratcherScratchPerTask,
+            new(1, 100, 1), 2, false).SetValueFormat(OptionFormat.Pieces);
+        OptionMaxScratchPerMeeting = IntegerOptionItem.Create(RoleInfo, 11, OptionName.ScratcherMaxScratchPerMeeting,
+            new(1, 100, 1), 3, false).SetValueFormat(OptionFormat.Pieces);
+        OptionWinHitCount = IntegerOptionItem.Create(RoleInfo, 12, OptionName.ScratcherWinHitCount,
+            new(1, 100, 1), 1, false).SetValueFormat(OptionFormat.Pieces);
+        OptionHitProbability = IntegerOptionItem.Create(RoleInfo, 13, OptionName.ScratcherHitProbability,
+            new(1, 100, 1), 20, false).SetValueFormat(OptionFormat.Percent);
         OptionWinTiming = BooleanOptionItem.Create(RoleInfo, 14, OptionName.ScratcherWinTiming, false, false);
         OptionIsAdditionalWin = BooleanOptionItem.Create(RoleInfo, 15, OptionName.ScratcherIsAdditionalWin, false, false);
         OptionCanWinAtDeath = BooleanOptionItem.Create(RoleInfo, 16, OptionName.ScratcherCanWinAtDeath, false, false, OptionIsAdditionalWin);
@@ -104,11 +95,12 @@ public sealed class Scratcher : RoleBase, ISelfVoter, IAdditionalWinner
 
     public override bool OnCompleteTask(uint taskid)
     {
-        if (AmongUsClient.Instance.AmHost is false) return true;
+        if (!AmongUsClient.Instance.AmHost) return true;
 
         Scratches += ScratchPerTask;
         Logger.Info($"タスク完了: スクラッチ +{ScratchPerTask} (所持:{Scratches})", "Scratcher");
-        UtilsGameLog.AddGameLog("Scratcher", string.Format(GetString("ScratcherGetScratchLog"), ScratchPerTask, Scratches, Player.Data.GetPlayerColor()));
+        UtilsGameLog.AddGameLog("Scratcher",
+            string.Format(GetString("ScratcherGetScratchLog"), ScratchPerTask, Scratches, Player.Data.GetPlayerColor()));
         RPC.PlaySoundRPC(Player.PlayerId, Sounds.TaskComplete);
         SendRPC();
         UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: [Player]);
@@ -118,45 +110,26 @@ public sealed class Scratcher : RoleBase, ISelfVoter, IAdditionalWinner
     public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
     {
         ScratchedThisMeeting = 0;
-        Seted = false;
     }
 
-    public override bool VotingResults(ref NetworkedPlayerInfo Exiled, ref bool IsTie, System.Collections.Generic.Dictionary<byte, int> vote, byte[] mostVotedPlayers, bool ClearAndExile)
+    public override bool VotingResults(ref NetworkedPlayerInfo Exiled, ref bool IsTie,
+        System.Collections.Generic.Dictionary<byte, int> vote, byte[] mostVotedPlayers, bool ClearAndExile)
     {
         if (Won && WinAtMeetingEnd)
-        {
             DoSoloWin();
-        }
         return false;
-    }
-
-    bool ISelfVoter.CanUseVoted() => true;
-    public override bool CheckVoteAsVoter(byte votedForId, PlayerControl voter)
-    {
-        if (Madmate.MadAvenger.Skill) return true;
-        if (Impostor.Assassin.NowUse) return true;
-
-        if (Is(voter))
-        {
-            if (CheckSelfVoteMode(Player, votedForId, out var status))
-            {
-                if (status is VoteStatus.Self)
-                    ScratchOne();
-                if (status is VoteStatus.Skip)
-                    Utils.SendMessage(GetString("ScratcherInfoMeg"), Player.PlayerId);
-                SetMode(Player, status is VoteStatus.Self);
-                return false;
-            }
-        }
-        return true;
     }
 
     private void ScratchOne()
     {
-        if (AmongUsClient.Instance.AmHost is false) return;
-
+        if (!AmongUsClient.Instance.AmHost) return;
         if (Won && !WinAtMeetingEnd) return;
 
+        if (!GameStates.IsMeeting)
+        {
+            Utils.SendMessage(GetString("ScratcherNotMeeting"), Player.PlayerId);
+            return;
+        }
         if (Scratches <= 0)
         {
             Utils.SendMessage(GetString("ScratcherNoScratch"), Player.PlayerId);
@@ -208,27 +181,31 @@ public sealed class Scratcher : RoleBase, ISelfVoter, IAdditionalWinner
                 Won = true;
                 SendRPC();
                 if (WinAtMeetingEnd)
-                {
                     Utils.SendMessage(GetString("ScratcherAchieveSoon"), Player.PlayerId);
-                }
                 else
-                {
                     DoSoloWin();
-                }
             }
         }
     }
 
     private void DoSoloWin()
     {
-        if (AmongUsClient.Instance.AmHost is false) return;
+        if (!AmongUsClient.Instance.AmHost) return;
         Logger.Info("スクラッチャー単独勝利", "Scratcher");
+
         if (CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Scratcher, Player.PlayerId, true))
         {
-            CustomWinnerHolder.WinnerRoles.Add(CustomRoles.Scratcher);
             CustomWinnerHolder.NeutralWinnerIds.Add(Player.PlayerId);
         }
+
         Won = false;
+        SendRPC();
+
+        _ = new LateTask(() =>
+        {
+            GameManager.Instance.enabled = false;
+            GameManager.Instance.RpcEndGame(GameOverReason.ImpostorsByKill, false);
+        }, 0.5f, "Scratcher.EndGame", true);
     }
 
     bool IAdditionalWinner.CheckWin(ref CustomRoles winnerRole)
@@ -244,11 +221,18 @@ public sealed class Scratcher : RoleBase, ISelfVoter, IAdditionalWinner
         return AddWin ? Utils.AdditionalAliveWinnerMark : "";
     }
 
-    public override string GetLowerText(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
+    public override string GetLowerText(PlayerControl seer, PlayerControl seen = null,
+        bool isForMeeting = false, bool isForHud = false)
     {
         seen ??= seer;
         if (seen != seer) return "";
-        return $"<size=80%><{RoleInfo.RoleColorCode}>{string.Format(GetString("ScratcherLower"), Scratches, Hits, WinHitCount)}</color></size>";
+
+        var lower = $"<size=80%><{RoleInfo.RoleColorCode}>{string.Format(GetString("ScratcherLower"), Scratches, Hits, WinHitCount)}</color></size>";
+
+        if (isForMeeting && Player.IsAlive() && Scratches > 0 && ScratchedThisMeeting < MaxScratchPerMeeting)
+            lower += $"\n<size=70%><color={RoleInfo.RoleColorCode}>/cmd st でスクラッチを削る</color></size>";
+
+        return lower;
     }
 
     private void SendRPC()
@@ -259,6 +243,7 @@ public sealed class Scratcher : RoleBase, ISelfVoter, IAdditionalWinner
         sender.Writer.Write(Won);
         sender.Writer.Write(AddWin);
     }
+
     public override void ReceiveRPC(MessageReader reader)
     {
         Scratches = reader.ReadInt32();
@@ -266,5 +251,36 @@ public sealed class Scratcher : RoleBase, ISelfVoter, IAdditionalWinner
         Won = reader.ReadBoolean();
         AddWin = reader.ReadBoolean();
     }
+
+    [HarmonyPatch(typeof(GuessManager), nameof(GuessManager.GuesserMsg))]
+    private static class ScratcherCommandPatch
+    {
+        private static bool Prefix(PlayerControl pc, string msg, ref bool __result)
+        {
+            if (!TryParseStCommand(msg)) return true;
+
+            __result = true;
+            if (!AmongUsClient.Instance.AmHost || !GameStates.IsInGame || pc == null) return false;
+
+            if (pc.GetRoleClass() is not Scratcher scratcher)
+            {
+                Utils.SendMessage("/cmd st はスクラッチャー専用コマンドです。", pc.PlayerId,
+                    $"<{RoleInfo.RoleColorCode}>スクラッチャー</color>");
+                return false;
+            }
+
+            scratcher.ScratchOne();
+            return false;
+        }
+
+        private static bool TryParseStCommand(string msg)
+        {
+            if (string.IsNullOrWhiteSpace(msg)) return false;
+            var args = msg.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (args.Length < 2) return false;
+            if (args[0] != "/cmd") return false;
+            var cmd = args[1].StartsWith("/") ? args[1] : $"/{args[1]}";
+            return cmd == "/st";
+        }
+    }
 }
-*/

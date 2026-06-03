@@ -108,9 +108,6 @@ public sealed class TimeSleeper : RoleBase, IImpostor, IUsePhantomButton
 
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
-        AdjustKillCooldown = false;
-        ResetCooldown = false;
-
         if (isRecording || isRewinding) return;
         if (!Player.IsAlive()) return;
 
