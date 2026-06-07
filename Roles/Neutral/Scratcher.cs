@@ -280,7 +280,7 @@ public sealed class Scratcher : RoleBase, IAdditionalWinner
             if (args.Length < 2) return false;
             if (args[0] != "/cmd") return false;
             var cmd = args[1].StartsWith("/") ? args[1] : $"/{args[1]}";
-            return cmd == "/st";
+            return cmd == "/sh";
         }
     }
 }

@@ -364,7 +364,7 @@ namespace TownOfHost
                             );
                         }
                         break;
-                    case "/grc":
+                    /*case "/grc":
                         canceled = true;
                         byte myId = PlayerControl.LocalPlayer.PlayerId;
                         if (GlobalChatManager.IgnoreList.Contains(myId))
@@ -396,7 +396,7 @@ namespace TownOfHost
                             string message = string.Join(" ", args.Skip(1));
                             GlobalChatManager.SendMessage($"{PlayerControl.LocalPlayer.Data.PlayerName}: {message}");
                         }
-                        break;
+                        break;*/
                     case "/nc":
                         canceled = true;
 
@@ -2089,7 +2089,7 @@ namespace TownOfHost
                         );
                     }
                     break;
-                case "/grc":
+                /*case "/grc":
                     canceled = true;
                     if (GlobalChatManager.IgnoreList.Contains(player.PlayerId))
                     {
@@ -2120,7 +2120,7 @@ namespace TownOfHost
                         string message = string.Join(" ", args.Skip(1));
                         GlobalChatManager.SendMessage($"{player.Data.PlayerName}: {message}", player);
                     }
-                    break;
+                    break;*/
                 case "/nc":
                     canceled = true;
                     if (args.Length < 2) break;
@@ -2170,7 +2170,7 @@ namespace TownOfHost
                     canceled = true;
                     if (!Options.OptionCanChangeName.GetBool())
                     {
-                        SendMessage("<color=#ff0000>名前変更コマンドは現在許可されていません。</color>", player.PlayerId);
+                        SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
                         break;
                     }
                     var name = string.Join(" ", args.Skip(1)).Trim();
@@ -2277,7 +2277,7 @@ namespace TownOfHost
                     canceled = true;
                     if (!Options.OptionCanUseTpCommand.GetBool())
                     {
-                        SendMessage("<color=#ff0000>テレポートコマンドは現在許可されていません。</color>", player.PlayerId);
+                        SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
                         break;
                     }
                     subArgs = args[1];

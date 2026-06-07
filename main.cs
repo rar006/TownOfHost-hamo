@@ -59,8 +59,8 @@ namespace TownOfHost
         public static ConfigEntry<string> ExplosionKeyInput { get; private set; }
 
         public const string PluginGuid = "com.satokazoku.TownOfHost-Pko";
-        public const string PluginVersion = "4.32.16.70";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
-        public const string PluginShowVersion = "4.32.16.70";
+        public const string PluginVersion = "4.32.17.71";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
+        public const string PluginShowVersion = "4.32.17.71";
         public const string ModVersion = ".32.16";//リリースver用バージョン変更
 
         /// 配布するデバッグ版なのであればtrue。リリース時にはfalseにすること。
@@ -314,7 +314,7 @@ namespace TownOfHost
             Application.quitting += new Action(UtilsOutputLog.SaveNowLog);
             Application.quitting += new Action(SaveStatistics.Save);
             Statistics.NowStatistics = SaveStatistics.Load();
-            GlobalChatManager.Initialize("wss://catwalk-skimming-lapel.ngrok-free.dev");
+            //GlobalChatManager.Initialize("wss://catwalk-skimming-lapel.ngrok-free.dev");
         }
 
         public static bool IsCs()
@@ -389,6 +389,7 @@ namespace TownOfHost
         Swallowed,
         Poisoned,
         Launch,
+        Compression,
         etc = -1
     }
     //WinData

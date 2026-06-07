@@ -10,10 +10,11 @@ using TownOfHost.Patches;
 using static TownOfHost.PlayerCatch;
 using static TownOfHost.Utils;
 using static TownOfHost.Translator;
+using static TownOfHost.Modules.SelfVoteManager;
 
 namespace TownOfHost.Roles.Neutral;
 
-public sealed class Onmyoji : RoleBase, IKiller
+public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
@@ -48,7 +49,14 @@ public sealed class Onmyoji : RoleBase, IKiller
 
     public List<byte> ShikigamiIds;
     bool hasCompletedTaskRequirement;
+
     bool nominateMode;
+
+    public byte NextShikigamiCandidate;
+    float nearTimer;
+    float createCooldownTimer;
+    float spawnWaitTimer;
+    bool SkCanApproach => spawnWaitTimer >= 3f;
 
     enum OptionName
     {
@@ -69,37 +77,35 @@ public sealed class Onmyoji : RoleBase, IKiller
         ShikigamiIds = new();
         hasCompletedTaskRequirement = !(OptionNeedTaskToWin?.GetBool() ?? false);
         nominateMode = false;
+        NextShikigamiCandidate = byte.MaxValue;
+        nearTimer = 0f;
+        createCooldownTimer = 0f;
+        spawnWaitTimer = -1f;
         MyTaskState.NeedTaskCount = OptionWinTaskCount.GetInt();
     }
 
     private static void SetupOptionItem()
     {
         SoloWinOption.Create(RoleInfo, 8, defo: 15);
-
         OptionWinTaskCount = IntegerOptionItem.Create(RoleInfo, 9, OptionName.OnmyojiWinTaskCount, new(1, 99, 1), 5, false)
             .SetValueFormat(OptionFormat.Times);
-
         OptionCanUseVent = BooleanOptionItem.Create(RoleInfo, 10, GeneralOption.CanVent, true, false);
         OptionVentCooldown = FloatOptionItem.Create(RoleInfo, 11, "OnmyojiVentCooldown", new(0f, 60f, 2.5f), 15f, false, OptionCanUseVent)
             .SetValueFormat(OptionFormat.Seconds);
         OptionVentDuration = FloatOptionItem.Create(RoleInfo, 12, "OnmyojiVentDuration", new(0f, 60f, 2.5f), 10f, false, OptionCanUseVent)
             .SetValueFormat(OptionFormat.Seconds);
         OptionImpostorVision = BooleanOptionItem.Create(RoleInfo, 13, GeneralOption.ImpostorVision, true, false);
-
         OptionCanCreateShikigami = BooleanOptionItem.Create(RoleInfo, 14, OptionName.OnmyojiCanCreateShikigami, true, false);
         OptionCreateShikigamiCooldown = FloatOptionItem.Create(RoleInfo, 15, OptionName.OnmyojiCreateShikigamiCooldown, new(0f, 60f, 2.5f), 20f, false, OptionCanCreateShikigami)
             .SetValueFormat(OptionFormat.Seconds);
-
         OptionNeedTaskToWin = BooleanOptionItem.Create(RoleInfo, 16, OptionName.OnmyojiNeedTaskToWin, true, false);
         OptionCanHijackCrewWin = BooleanOptionItem.Create(RoleInfo, 17, OptionName.OnmyojiCanHijackCrewWin, true, false);
         OptionDisableReport = BooleanOptionItem.Create(RoleInfo, 18, OptionName.OnmyojiDisableReport, false, false);
         OptionDisableEmergencyMeeting = BooleanOptionItem.Create(RoleInfo, 19, OptionName.OnmyojiDisableEmergencyMeeting, false, false);
-
         OptionShikigamiShiftCooldown = FloatOptionItem.Create(RoleInfo, 20, OptionName.OnmyojiShikigamiShiftCooldown, new(0f, 60f, 2.5f), 20f, false)
             .SetValueFormat(OptionFormat.Seconds);
         OptionShikigamiSuicideCooldown = FloatOptionItem.Create(RoleInfo, 21, OptionName.OnmyojiShikigamiSuicideCooldown, new(0f, 60f, 2.5f), 10f, false)
             .SetValueFormat(OptionFormat.Seconds);
-
         OverrideTasksData.Create(RoleInfo, 30);
         PavlovDog.HideRoleOptions(CustomRoles.Shikigami);
     }
@@ -118,23 +124,10 @@ public sealed class Onmyoji : RoleBase, IKiller
     public bool CanUseSabotageButton() => false;
     public bool CanUseImpostorVentButton() => false;
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
-    {
-        if (!Is(info.AttemptKiller) || info.IsSuicide) return;
-        info.DoKill = false;
-
-        if (!nominateMode || ShikigamiIds.Count >= 1) return;
-
-        (_, var target) = info.AttemptTuple;
-        if (!IsValidShikigamiTarget(target)) return;
-
-        AddShikigami(target);
-
-        nominateMode = false;
-        ApplyModeDesync(false);
-        SendRPC();
-        UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
-    }
+    bool ISelfVoter.CanUseVoted()
+        => Player.IsAlive()
+        && OptionCanCreateShikigami.GetBool()
+        && ShikigamiIds.Count < 1;
 
     public override void Add()
     {
@@ -162,22 +155,78 @@ public sealed class Onmyoji : RoleBase, IKiller
         UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
     }
 
-    private void ApplyModeDesync(bool toNominateMode)
+    public void OnCheckMurderAsKiller(MurderInfo info)
     {
-        if (Is(PlayerControl.LocalPlayer)) return;
-        if (!Player.IsAlive()) return;
+        if (!Is(info.AttemptKiller) || info.IsSuicide) return;
+        info.DoKill = false;
 
-        var baseRole = (OptionCanUseVent?.GetBool() ?? true) ? RoleTypes.Engineer : RoleTypes.Crewmate;
-        var targetRole = toNominateMode ? RoleTypes.Impostor : baseRole;
+        if (!nominateMode || ShikigamiIds.Count >= 1) return;
 
-        foreach (var pc in PlayerCatch.AllAlivePlayerControls)
+        (_, var target) = info.AttemptTuple;
+        if (!IsValidShikigamiTarget(target)) return;
+
+        nominateMode = false;
+        ApplyModeDesync(false);
+        AddShikigami(target);
+        UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
+    }
+
+    public override bool CheckVoteAsVoter(byte votedForId, PlayerControl voter)
+    {
+        if (!Is(voter)) return true;
+        if (!Player.IsAlive() || !OptionCanCreateShikigami.GetBool() || ShikigamiIds.Count >= 1) return true;
+
+        if (CheckSelfVoteMode(Player, votedForId, out var status))
         {
-            var role = pc.GetCustomRole();
-            if (role.IsImpostor())
-                pc.RpcSetRoleDesync(toNominateMode ? RoleTypes.Scientist : role.GetRoleTypes(), Player.GetClientId());
-            if (Is(pc))
-                pc.RpcSetRoleDesync(targetRole, Player.GetClientId());
+            if (status is VoteStatus.Self)
+            {
+                NextShikigamiCandidate = byte.MaxValue;
+                SendMessage(
+                    "<color=#9b59b6>【式神候補選択モード】</color>\n" +
+                    "誰かに投票 → 近接指名の候補に設定\n" +
+                    "スキップ → キャンセル\n" +
+                    "（ペットでモード切替→キルボタンでも指名可）",
+                    Player.PlayerId);
+                SetMode(Player, true);
+                SendRPC();
+                return false;
+            }
+            if (status is VoteStatus.Skip)
+            {
+                NextShikigamiCandidate = byte.MaxValue;
+                SendMessage(GetString("VoteSkillFin"), Player.PlayerId);
+                SetMode(Player, false);
+                SendRPC();
+                return false;
+            }
+            if (status is VoteStatus.Vote)
+            {
+                var target = GetPlayerById(votedForId);
+                if (target == null || !target.IsAlive() || votedForId == Player.PlayerId)
+                {
+                    SendMessage("<color=#9b59b6>その相手は式神にできません。</color>", Player.PlayerId);
+                    SetMode(Player, false);
+                    return false;
+                }
+                if (!IsValidShikigamiTarget(target))
+                {
+                    SendMessage("<color=#9b59b6>キル能力を持たない相手のみ式神にできます。</color>", Player.PlayerId);
+                    SetMode(Player, false);
+                    return false;
+                }
+                NextShikigamiCandidate = votedForId;
+                nearTimer = 0f;
+                SendMessage(
+                    $"<color=#9b59b6>【式神候補設定】</color>\n" +
+                    $"{UtilsName.GetPlayerColor(target, true)} を候補に設定しました。\n" +
+                    $"次ターン、1.5秒近づいて式神作成！",
+                    Player.PlayerId);
+                SetMode(Player, false);
+                SendRPC();
+                return false;
+            }
         }
+        return true;
     }
 
     public override bool CanClickUseVentButton => !nominateMode && (OptionCanUseVent?.GetBool() ?? true);
@@ -195,13 +244,11 @@ public sealed class Onmyoji : RoleBase, IKiller
     public override void ApplyGameOptions(IGameOptions opt)
     {
         opt.SetVision(OptionImpostorVision.GetBool());
-
         if (OptionCanUseVent.GetBool())
         {
             AURoleOptions.EngineerCooldown = OptionVentCooldown.GetFloat();
             AURoleOptions.EngineerInVentMaxTime = OptionVentDuration.GetFloat();
         }
-
         if (OptionDisableEmergencyMeeting.GetBool())
             opt.SetInt(Int32OptionNames.NumEmergencyMeetings, 0);
     }
@@ -213,6 +260,10 @@ public sealed class Onmyoji : RoleBase, IKiller
             ShikigamiIds.Clear();
             hasCompletedTaskRequirement = !(OptionNeedTaskToWin?.GetBool() ?? false);
             nominateMode = false;
+            NextShikigamiCandidate = byte.MaxValue;
+            nearTimer = 0f;
+            createCooldownTimer = OptionCreateShikigamiCooldown.GetFloat();
+            spawnWaitTimer = -1f;
             NameColorManager.RemoveAll(Player.PlayerId);
         }
         RefreshStarReadingTargets();
@@ -225,11 +276,18 @@ public sealed class Onmyoji : RoleBase, IKiller
             nominateMode = false;
             SendRPC();
         }
+        NextShikigamiCandidate = byte.MaxValue;
+        nearTimer = 0f;
+        spawnWaitTimer = -1f;
         RefreshStarReadingTargets();
     }
 
     public override void AfterMeetingTasks()
     {
+        spawnWaitTimer = 0f;
+        createCooldownTimer = OptionCreateShikigamiCooldown.GetFloat();
+        nearTimer = 0f;
+
         if (!AmongUsClient.Instance.AmHost) return;
         if (!Player.IsAlive()) return;
 
@@ -250,6 +308,46 @@ public sealed class Onmyoji : RoleBase, IKiller
         if (!AmongUsClient.Instance.AmHost) return;
         if (!GameStates.IsInTask) return;
         if (!Player.IsAlive()) return;
+
+        if (createCooldownTimer > 0f)
+            createCooldownTimer = Mathf.Max(0f, createCooldownTimer - Time.fixedDeltaTime);
+
+        if (spawnWaitTimer >= 0f && spawnWaitTimer < 3f)
+            spawnWaitTimer = Mathf.Min(spawnWaitTimer + Time.fixedDeltaTime, 3f);
+
+        if (OptionCanCreateShikigami.GetBool() && ShikigamiIds.Count < 1
+            && NextShikigamiCandidate != byte.MaxValue && SkCanApproach && createCooldownTimer <= 0f)
+        {
+            var target = GetPlayerById(NextShikigamiCandidate);
+
+            if (target == null || !target.IsAlive() || !IsValidShikigamiTarget(target))
+            {
+                NextShikigamiCandidate = byte.MaxValue;
+                nearTimer = 0f;
+                SendRPC();
+            }
+            else
+            {
+                float dist = Vector2.Distance(Player.GetTruePosition(), target.GetTruePosition());
+                if (dist <= 1.5f)
+                {
+                    nearTimer += Time.fixedDeltaTime;
+                    if (nearTimer >= 1.5f)
+                    {
+                        NextShikigamiCandidate = byte.MaxValue;
+                        nearTimer = 0f;
+                        AddShikigami(target);
+                    }
+                }
+                else
+                {
+                    nearTimer = 0f;
+                }
+            }
+        }
+
+        if (player != PlayerControl.LocalPlayer)
+            UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: player);
     }
 
     bool IsValidShikigamiTarget(PlayerControl target)
@@ -281,8 +379,31 @@ public sealed class Onmyoji : RoleBase, IKiller
 
         NameColorManager.Add(Player.PlayerId, target.PlayerId, "#9b59b6");
 
+        createCooldownTimer = OptionCreateShikigamiCooldown.GetFloat();
+
         SendRPC();
         _ = new LateTask(() => UtilsNotifyRoles.NotifyRoles(), 0.2f, "Onmyoji.Shikigami", true);
+    }
+
+    private void ApplyModeDesync(bool toNominateMode)
+    {
+        if (Is(PlayerControl.LocalPlayer)) return;
+        if (!Player.IsAlive()) return;
+
+        var baseRole = (OptionCanUseVent?.GetBool() ?? true) ? RoleTypes.Engineer : RoleTypes.Crewmate;
+
+        foreach (var pc in PlayerCatch.AllAlivePlayerControls)
+        {
+            var role = pc.GetCustomRole();
+            if (role.IsImpostor())
+                pc.RpcSetRoleDesync(
+                    toNominateMode ? RoleTypes.Scientist : role.GetRoleTypes(),
+                    Player.GetClientId());
+            if (Is(pc))
+                pc.RpcSetRoleDesync(
+                    toNominateMode ? RoleTypes.Impostor : baseRole,
+                    Player.GetClientId());
+        }
     }
 
     void RefreshStarReadingTargets()
@@ -296,7 +417,6 @@ public sealed class Onmyoji : RoleBase, IKiller
             if (!IsStarReadingTarget(pc)) continue;
             NameColorManager.Add(Player.PlayerId, pc.PlayerId, UtilsRoleText.GetRoleColorCode(pc.GetCustomRole()));
         }
-
         foreach (var id in ShikigamiIds)
             NameColorManager.Add(Player.PlayerId, id, "#9b59b6");
     }
@@ -319,77 +439,14 @@ public sealed class Onmyoji : RoleBase, IKiller
     public override void OnLeftPlayer(PlayerControl player)
     {
         if (player == null) return;
+        if (player.PlayerId == NextShikigamiCandidate)
+        {
+            NextShikigamiCandidate = byte.MaxValue;
+            nearTimer = 0f;
+            SendRPC();
+        }
         ShikigamiIds.Remove(player.PlayerId);
         TargetArrow.Remove(Player.PlayerId, player.PlayerId);
-    }
-
-    public override string GetMark(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)
-    {
-        seen ??= seer;
-        if (!Is(seer) || !Player.IsAlive()) return "";
-
-        if (seer.PlayerId != seen.PlayerId)
-        {
-            if (!IsStarReadingTarget(seen)) return "";
-            return $" <color={UtilsRoleText.GetRoleColorCode(seen.GetCustomRole())}>★</color>";
-        }
-
-        if (isForMeeting) return "";
-
-        var arrows = "";
-        foreach (var id in ShikigamiIds)
-        {
-            var sk = GetPlayerById(id);
-            if (sk == null || !sk.IsAlive()) continue;
-            arrows += TargetArrow.GetArrows(seer, id);
-        }
-
-        return arrows != "" ? $"<color=#9b59b6>{arrows}</color>" : "";
-    }
-
-    public override string GetLowerText(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
-    {
-        seen ??= seer;
-        if (seen.PlayerId != seer.PlayerId || !Player.IsAlive()) return "";
-        if (!OptionCanCreateShikigami.GetBool() || ShikigamiIds.Count >= 1) return "";
-
-        string size = isForHud ? "" : "<size=60%>";
-        if (nominateMode)
-            return $"{size}<color=#9b59b6>式神にしたいプレイヤーにキル！（キル能力なし限定）</color>";
-        return $"{size}<color=#9b59b6>ペットを撫でて指名モードへ</color>";
-    }
-
-    bool IsStarReadingTarget(PlayerControl target)
-    {
-        if (target == null || !target.IsAlive()) return false;
-        if (target.Is(CustomRoles.PavlovOwner)) return false;
-        return IsOnmyojiKillerTarget(target);
-    }
-
-    bool IsOnmyojiKillerTarget(PlayerControl target)
-    {
-        if (target == null) return false;
-        if (target.Is(CustomRoleTypes.Impostor)) return true;
-
-        return target.GetCustomRole() is
-            CustomRoles.CountKiller or
-            CustomRoles.Strawdoll or
-            CustomRoles.Jackal or
-            CustomRoles.JackalHadouHo or
-            CustomRoles.JackalMafia or
-            CustomRoles.JackalAlien or
-            CustomRoles.DoppelGanger or
-            CustomRoles.GrimReaper or
-            CustomRoles.Remotekiller or
-            CustomRoles.Egoist or
-            CustomRoles.Eater or
-            CustomRoles.PavlovDog or
-            CustomRoles.Sheriff or
-            CustomRoles.SwitchSheriff or
-            CustomRoles.MeetingSheriff or
-            CustomRoles.WolfBoy or
-            CustomRoles.JackalWolf or
-            CustomRoles.Stand;
     }
 
     bool CanWinNow()
@@ -430,6 +487,60 @@ public sealed class Onmyoji : RoleBase, IKiller
         return false;
     }
 
+    public override string GetMark(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)
+    {
+        seen ??= seer;
+        if (!Is(seer) || !Player.IsAlive()) return "";
+
+        if (seer.PlayerId != seen.PlayerId)
+        {
+            if (!IsStarReadingTarget(seen)) return "";
+            return $" <color={UtilsRoleText.GetRoleColorCode(seen.GetCustomRole())}>★</color>";
+        }
+
+        if (isForMeeting) return "";
+
+        var arrows = "";
+        foreach (var id in ShikigamiIds)
+        {
+            var sk = GetPlayerById(id);
+            if (sk == null || !sk.IsAlive()) continue;
+            arrows += TargetArrow.GetArrows(seer, id);
+        }
+        return arrows != "" ? $"<color=#9b59b6>{arrows}</color>" : "";
+    }
+
+    public override string GetLowerText(PlayerControl seer, PlayerControl seen = null,
+        bool isForMeeting = false, bool isForHud = false)
+    {
+        seen ??= seer;
+        if (seen.PlayerId != seer.PlayerId || !Player.IsAlive()) return "";
+        if (!OptionCanCreateShikigami.GetBool() || ShikigamiIds.Count >= 1) return "";
+
+        string size = isForHud ? "" : "<size=60%>";
+        string cd = createCooldownTimer > 0f ? $" (CD:{Mathf.CeilToInt(createCooldownTimer)}s)" : "";
+
+        if (nominateMode)
+            return $"{size}<color=#9b59b6>【指名モード】キルボタンで式神指定！</color>";
+
+        if (NextShikigamiCandidate != byte.MaxValue)
+        {
+            var target = GetPlayerById(NextShikigamiCandidate);
+            string name = target != null ? target.Data.PlayerName : "???";
+            if (!SkCanApproach)
+                return $"{size}<color=#9b59b6>候補: {name} (待機中...)</color>";
+            if (createCooldownTimer > 0f)
+                return $"{size}<color=#9b59b6>候補: {name}{cd}</color>";
+            float prog = Mathf.Min(nearTimer, 1.5f);
+            return $"{size}<color=#9b59b6>{name}に近づき中 {prog:F1}/1.5s</color>";
+        }
+
+        if (isForMeeting)
+            return $"{size}<color=#9b59b6>自投票→式神候補を選択</color>";
+
+        return $"{size}<color=#9b59b6>ペット→指名モード / 会議自投票→近接指名{cd}</color>";
+    }
+
     public override string GetProgressText(bool comms = false, bool gameLog = false)
     {
         var ready = CanWinNow() ? "#9b59b6" : "#5e5e5e";
@@ -445,6 +556,8 @@ public sealed class Onmyoji : RoleBase, IKiller
             sender.Writer.Write(id);
         sender.Writer.Write(hasCompletedTaskRequirement);
         sender.Writer.Write(nominateMode);
+        sender.Writer.Write(createCooldownTimer);
+        sender.Writer.Write(NextShikigamiCandidate);
     }
 
     public override void ReceiveRPC(MessageReader reader)
@@ -455,14 +568,32 @@ public sealed class Onmyoji : RoleBase, IKiller
             ShikigamiIds.Add(reader.ReadByte());
         hasCompletedTaskRequirement = reader.ReadBoolean();
         nominateMode = reader.ReadBoolean();
+        createCooldownTimer = reader.ReadSingle();
+        if (reader.BytesRemaining > 0)
+            NextShikigamiCandidate = reader.ReadByte();
     }
 
     public override string GetAbilityButtonText() => GetString("OnmyojiAbilityButtonText");
+    public bool OverrideKillButton(out string text) { text = "Onmyoji_Nominate"; return true; }
 
-    public bool OverrideKillButton(out string text)
+    bool IsStarReadingTarget(PlayerControl target)
     {
-        text = "Onmyoji_Nominate";
-        return true;
+        if (target == null || !target.IsAlive()) return false;
+        if (target.Is(CustomRoles.PavlovOwner)) return false;
+        return IsOnmyojiKillerTarget(target);
+    }
+
+    bool IsOnmyojiKillerTarget(PlayerControl target)
+    {
+        if (target == null) return false;
+        if (target.Is(CustomRoleTypes.Impostor)) return true;
+        return target.GetCustomRole() is
+            CustomRoles.CountKiller or CustomRoles.Strawdoll or
+            CustomRoles.Jackal or CustomRoles.JackalHadouHo or CustomRoles.JackalMafia or CustomRoles.JackalAlien or
+            CustomRoles.DoppelGanger or CustomRoles.GrimReaper or CustomRoles.Remotekiller or
+            CustomRoles.Egoist or CustomRoles.Eater or CustomRoles.PavlovDog or
+            CustomRoles.Sheriff or CustomRoles.SwitchSheriff or CustomRoles.MeetingSheriff or
+            CustomRoles.WolfBoy or CustomRoles.JackalWolf or CustomRoles.Stand;
     }
 }
 public sealed class Shikigami : RoleBase, IUsePhantomButton, IKillFlashSeeable
@@ -712,7 +843,8 @@ public sealed class Shikigami : RoleBase, IUsePhantomButton, IKillFlashSeeable
         return result;
     }
 
-    public override string GetLowerText(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
+    public override string GetLowerText(PlayerControl seer, PlayerControl seen = null,
+        bool isForMeeting = false, bool isForHud = false)
     {
         seen ??= seer;
         if (isForMeeting || seer.PlayerId != seen.PlayerId || !Is(seer) || !Player.IsAlive()) return "";
@@ -810,7 +942,6 @@ public sealed class Shikigami : RoleBase, IUsePhantomButton, IKillFlashSeeable
     {
         if (OwnerId == byte.MaxValue)
             return unresolvedOwnerGraceTimer <= 0f && !HasOnmyojiLink();
-
         var owner = GetPlayerById(OwnerId);
         return owner == null || !owner.IsAlive() || !owner.Is(CustomRoles.Onmyoji);
     }

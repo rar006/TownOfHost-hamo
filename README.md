@@ -130,4 +130,4 @@ TOR_GM_Haoming_Edition<br>
 　マッドジェスターの参考/移植させていただきました<br>
 
 [ExtremeRoles](https://github.com/yukieiji/ExtremeRoles)<br>
-　アサシンとマーリンの参考/移植、イーターの移植をさせていただきました。<br>
+　アサシンとマーリンの参考/移植、イーター、エボルバーの移植をさせていただきました。<br>

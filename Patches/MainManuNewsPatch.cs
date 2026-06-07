@@ -496,9 +496,22 @@ public class ModNewsHistory
                 {
                     Number = 100090,
                     Title = "結構バグ減ってきたんじゃね？(知らんけど",
-                    SubTitle = "<color=#FF9631>Town Of Host-Pko v4.32.16.70</color>",
-                    ShortTitle = "<color=#FF9631>●TOH-Pko v4.32.16.70</color>",
-                    Text = "・TOHKのアプデに対応\n・村長、サンタで任命されたシェリフがたまにキルク0だったバグの修正\r\n・タイムリーパーのキルクのバグ修正\r\n・ナイステレポータークールダウンバグ修正\r\n・フリーターの就職相手が乗っ取り役だと追加勝利できなかったバグの修正\r\n・マッドワーカーがシェリフに任命された際、タスクが完了判定になりインポスターが勝利するバグの修正\r\n"
+                    SubTitle = "<color=#FF9631>Town Of Host-Pko v4.32.17.70</color>",
+                    ShortTitle = "<color=#FF9631>●TOH-Pko v4.32.17.70</color>",
+                    Text = "・エボルバーの追加 From:ExtremeRoles\r\n・オポチュニストバグ修正\r\n・忘却者バグ修正\r\n・スタンドマスターバグ修正\r\n・村長の仕様変更\r\n・陰陽師の仕様変更\r\n・サンタの仕様変更\r\n・波動砲ジャッカルの仕様変更\r\n・グローバルチャット封印\r\n"
+                    ,
+                    Date = "2026-6-03"
+                };
+                AllModNews.Add(news);
+            }
+            {
+                var news = new ModNews
+                {
+                    Number = 100091,
+                    Title = "グローバルチャット君またね(",
+                    SubTitle = "<color=#FF9631>Town Of Host-Pko v4.32.17.71</color>",
+                    ShortTitle = "<color=#FF9631>●TOH-Pko v4.32.17.71</color>",
+                    Text = "・TOHKのアプデに対応\n・村長、サンタで任命されたシェリフがたまにキルク0だったバグの修正\r\n・タイムリーパーのキルクのバグ修正\r\n・ナイステレポータークールダウンバグ修正\r\n・フリーターの就職相手が乗っ取り役だと追加勝利できなかったバグの修正\r\n・マッドワーカーがシェリフに任命された際、タスクが完了判定になりインポスターが勝利するバグの修正\r\n・Joinメッセージを変更\r\n"
                     ,
                     Date = "2026-6-03"
                 };

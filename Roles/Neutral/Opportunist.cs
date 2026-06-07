@@ -19,6 +19,7 @@ public sealed class Opportunist : RoleBase, IAdditionalWinner, IKiller
             "op",
             "#00ff00",
             (6, 2),
+            true,
             from: From.TOR_GM_Edition
         );
 

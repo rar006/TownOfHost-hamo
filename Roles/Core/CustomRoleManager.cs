@@ -820,6 +820,8 @@ public enum CustomRoles
     Teleporter,
     EvilTrapper,
     Minimalist,
+    Evolver,
+    Conjurer,
     //TOH-K
     Bomber,
     TeleportKiller,
@@ -966,6 +968,7 @@ public enum CustomRoles
     Apprentice,
     Milkman,
     Police,
+    NiceWorkaholic,
     //DEBUG only Crewmate
     Analyzer,
     //Neutral

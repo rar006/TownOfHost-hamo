@@ -1,4 +1,4 @@
-using System;
+/*using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,9 +20,15 @@ public static class GlobalChatManager
 
     public static List<byte> IgnoreList = new();
 
-    // ★ フィールド区切り文字（プレイヤー名/フレコに含まれない制御文字）
-    //    hostName \x1E playerName \x1E friendCode \x1E message
     private const char Sep = '\x1E';
+
+    private static readonly Dictionary<string, Queue<DateTime>> _rateTimes = new();
+    private static readonly Dictionary<string, string> _lastMessage = new();
+    private static readonly Dictionary<string, DateTime> _blockedUntil = new();
+
+    private const int RateLimit = 5;
+    private static readonly TimeSpan RateWindow = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan BlockDuration = TimeSpan.FromSeconds(120);
 
     public static void Initialize(string serverUrl)
     {
@@ -85,7 +91,43 @@ public static class GlobalChatManager
             message = raw;
         }
 
-        //[Global](ホスト名)-(プレイヤー名) (フレコ)
+        if (string.IsNullOrWhiteSpace(friendCode) || friendCode == "???") return;
+
+        var now = DateTime.UtcNow;
+
+        if (_blockedUntil.TryGetValue(friendCode, out var until) && now < until)
+        {
+            Logger.Info($"GlobalChat スパムブロック中: {friendCode} (あと{(until - now).TotalSeconds:F0}s)", "GlobalChatManager");
+            return;
+        }
+        if (_blockedUntil.ContainsKey(friendCode) && now >= until)
+            _blockedUntil.Remove(friendCode);
+
+        if (_lastMessage.TryGetValue(friendCode, out var last) && last == message)
+        {
+            Logger.Info($"GlobalChat 重複メッセージ無視: {friendCode}", "GlobalChatManager");
+            return;
+        }
+        _lastMessage[friendCode] = message;
+
+        if (!_rateTimes.ContainsKey(friendCode))
+            _rateTimes[friendCode] = new Queue<DateTime>();
+
+        var q = _rateTimes[friendCode];
+
+        while (q.Count > 0 && (now - q.Peek()) > RateWindow)
+            q.Dequeue();
+
+        q.Enqueue(now);
+
+        if (q.Count > RateLimit)
+        {
+            _blockedUntil[friendCode] = now + BlockDuration;
+            _rateTimes[friendCode].Clear();
+            Logger.Warn($"GlobalChat スパム検知→{BlockDuration.TotalSeconds}秒ブロック: {friendCode}", "GlobalChatManager");
+            return;
+        }
+
         string title = $"<size=70%>[Global]</size> <size=70%>({hostName}村)-{playerName}</size> <size=40%>({friendCode})</size>";
 
         bool isInGame = AmongUsClient.Instance != null
@@ -149,4 +191,4 @@ public static class GlobalChatTickPatch
         _timer = 0f;
         try { GlobalChatManager.Tick(); } catch { }
     }
-}
+}*/

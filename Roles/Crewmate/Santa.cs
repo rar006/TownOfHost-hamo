@@ -37,6 +37,7 @@ public sealed class Santa : RoleBase, IKiller
         KillCooldown = OptKillCooldown.GetFloat();
         giftMode = false;
         giftCount = 0;
+        tasksCompleted = false;
     }
 
     static OptionItem OptKillCooldown;
@@ -54,6 +55,7 @@ public sealed class Santa : RoleBase, IKiller
 
     bool giftMode;
     int giftCount;
+    bool tasksCompleted;
 
     private enum OptionName
     {
@@ -129,6 +131,7 @@ public sealed class Santa : RoleBase, IKiller
     {
         giftMode = false;
         giftCount = 0;
+        tasksCompleted = false;
         KillCooldown = OptKillCooldown.GetFloat();
         PetActionManager.Register(Player.PlayerId, OnPetUsed);
     }
@@ -142,11 +145,38 @@ public sealed class Santa : RoleBase, IKiller
     {
         if (!Player.IsAlive()) return;
 
+        if (tasksCompleted) return;
+
         giftMode = !giftMode;
         ApplyModeDesync(giftMode);
         SendRPC();
         UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
     }
+
+    public override bool OnCompleteTask(uint taskid)
+    {
+        if (!AmongUsClient.Instance.AmHost) return true;
+        if (tasksCompleted) return true;
+
+        if (!MyTaskState.IsTaskFinished) return true;
+
+        tasksCompleted = true;
+
+        if (!giftMode)
+        {
+            giftMode = true;
+            ApplyModeDesync(true);
+        }
+
+        SendRPC();
+        UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
+        Utils.SendMessage(
+            $"<color={RoleInfo.RoleColorCode}>全タスク完了！ずっとギフトモードになります。</color>",
+            Player.PlayerId);
+
+        return true;
+    }
+
     private void ApplyModeDesync(bool toGiftMode)
     {
         if (Is(PlayerControl.LocalPlayer)) return;
@@ -168,12 +198,14 @@ public sealed class Santa : RoleBase, IKiller
         using var sender = CreateSender();
         sender.Writer.Write(giftMode);
         sender.Writer.Write(giftCount);
+        sender.Writer.Write(tasksCompleted);
     }
 
     public override void ReceiveRPC(MessageReader reader)
     {
         giftMode = reader.ReadBoolean();
         giftCount = reader.ReadInt32();
+        tasksCompleted = reader.ReadBoolean();
     }
 
     public float CalculateKillCooldown() => KillCooldown;
@@ -335,8 +367,12 @@ public sealed class Santa : RoleBase, IKiller
     {
         if (!giftMode) return "";
         var limit = OptGiftLimit?.GetInt() ?? 3;
-        if (limit == 0) return $"<color=#f29c9f>({giftCount})</color>";
-        return $"<color=#f29c9f>({giftCount}/{limit})</color>";
+        if (tasksCompleted)
+            return limit == 0
+                ? $"<color={RoleInfo.RoleColorCode}>({giftCount}) ∞</color>"
+                : $"<color={RoleInfo.RoleColorCode}>({giftCount}/{limit}) ∞</color>";
+        if (limit == 0) return $"<color={RoleInfo.RoleColorCode}>({giftCount})</color>";
+        return $"<color={RoleInfo.RoleColorCode}>({giftCount}/{limit})</color>";
     }
 
     public bool OverrideKillButtonText(out string text)
