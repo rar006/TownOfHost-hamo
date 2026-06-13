@@ -458,7 +458,8 @@ namespace TownOfHost
         Votes,
         Pieces,
         day,
-        Set
+        Set,
+        Turns
     }
     public enum OptionZeroNotation
     {

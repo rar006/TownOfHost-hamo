@@ -80,7 +80,9 @@ public sealed class Sage : RoleBase
 
                     string currentPet = Player.Data?.DefaultOutfit?.PetId ?? Player.CurrentOutfit?.PetId ?? "";
 
-                    bool hasPet = !string.IsNullOrEmpty(currentPet) && currentPet.ToLower() != "pet_none" && currentPet.ToLower() != "none";
+                    bool hasPet = !string.IsNullOrEmpty(currentPet)
+                               && currentPet.ToLower() != "pet_none"
+                               && currentPet.ToLower() != "none";
                     if (hasPet) return;
 
                     Player.RpcSetPet(DefaultPetId);
@@ -97,6 +99,16 @@ public sealed class Sage : RoleBase
     public override void OnDestroy()
     {
         PetActionManager.Unregister(Player.PlayerId);
+
+        if (isBarrierActive)
+        {
+            Main.AllPlayerSpeed[Player.PlayerId] =
+                Main.RealOptionsData?.GetFloat(FloatOptionNames.PlayerSpeedMod) ?? 1f;
+            Player.MarkDirtySettings();
+            if (AmongUsClient.Instance.AmHost)
+                Player.SyncSettings();
+            isBarrierActive = false;
+        }
     }
 
     public override void ApplyGameOptions(IGameOptions opt)
@@ -180,9 +192,7 @@ public sealed class Sage : RoleBase
 
         var currentPos = Player.transform.position;
         if (Vector2.Distance(currentPos, savedPosition) > 0.02f)
-        {
             SnapPlayerToSaved();
-        }
 
         if (Main.AllPlayerSpeed.TryGetValue(Player.PlayerId, out float spd) && spd > Main.MinSpeed)
         {
@@ -191,9 +201,7 @@ public sealed class Sage : RoleBase
         }
 
         if (barrierTimer >= BarrierDuration)
-        {
             DeactivateBarrier();
-        }
     }
 
     public override bool OnCheckMurderAsTarget(MurderInfo info)

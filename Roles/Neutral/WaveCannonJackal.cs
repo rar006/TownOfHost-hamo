@@ -228,6 +228,23 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
     public override void OnDestroy()
     {
         PetActionManager.Unregister(Player.PlayerId);
+        CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
+
+        if (IsCharging || IsSuperCharging || ShowBeamMark || IsFiring)
+        {
+            Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
+            Player.MarkDirtySettings();
+            if (AmongUsClient.Instance.AmHost)
+            {
+                Player.SyncSettings();
+                Player.RpcSetColor((byte)PlayerColor);
+            }
+            IsCharging = false;
+            IsSuperCharging = false;
+            ShowBeamMark = false;
+            IsFiring = false;
+            SetRoleTextHeight(false);
+        }
     }
 
     private void OnPetUsed()

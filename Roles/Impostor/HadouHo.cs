@@ -86,6 +86,26 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         spawnCooldownStarted = false;
     }
 
+    public override void OnDestroy()
+    {
+        CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
+
+        if (IsCharging || ShowBeamMark || IsFiring)
+        {
+            Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
+            Player.MarkDirtySettings();
+            if (AmongUsClient.Instance.AmHost)
+            {
+                Player.SyncSettings();
+                Player.RpcSetColor((byte)PlayerColor);
+            }
+            IsCharging = false;
+            ShowBeamMark = false;
+            IsFiring = false;
+            SetRoleTextHeight(false);
+        }
+    }
+
     public override void ApplyGameOptions(IGameOptions opt) => AURoleOptions.PhantomCooldown = Cooldown;
     public float CalculateKillCooldown() => KillCooldown;
 
@@ -117,7 +137,6 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
         _prevCharging = true;
         _prevBeamMark = false;
-
         SendRpc();
     }
 
@@ -129,6 +148,21 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         if (rt == null) return;
         if (beaming) { rt.text = "<alpha=#00>　</alpha>"; t.SetLocalY(0.35f); }
         else { rt.enabled = true; t.SetLocalY(0.35f); }
+    }
+
+    private void ResetState()
+    {
+        IsCharging = false;
+        ShowBeamMark = false;
+        IsFiring = false;
+        chargeTimer = 0f;
+        HasHit = false;
+        _prevCharging = false;
+        _prevBeamMark = false;
+        Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
+        Player.MarkDirtySettings();
+        Player.RpcSetColor((byte)PlayerColor);
+        SetRoleTextHeight(false);
     }
 
     public override void OnFixedUpdate(PlayerControl player)
@@ -145,11 +179,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         {
             if (IsCharging || ShowBeamMark || IsFiring)
             {
-                IsCharging = false; ShowBeamMark = false; IsFiring = false;
-                _prevCharging = false; _prevBeamMark = false;
-                Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
-                Player.MarkDirtySettings();
-                SetRoleTextHeight(false);
+                ResetState();
                 UtilsNotifyRoles.NotifyRoles();
                 SendRpc();
             }
@@ -158,16 +188,12 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
 
         if (!Player.IsAlive() && (IsCharging || ShowBeamMark))
         {
-            IsCharging = false; ShowBeamMark = false; IsFiring = false;
-            _prevCharging = false; _prevBeamMark = false;
-            Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
-            Player.MarkDirtySettings();
-            Player.RpcSetColor((byte)PlayerColor);
-            SetRoleTextHeight(false);
+            ResetState();
             UtilsNotifyRoles.NotifyRoles();
             SendRpc();
             return;
         }
+
         bool changed = (IsCharging != _prevCharging) || (ShowBeamMark != _prevBeamMark);
         if (changed)
         {
@@ -191,7 +217,6 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         _prevCharging = false;
         _prevBeamMark = true;
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
-
         SendRpc();
         ApplyBeamHit();
 
@@ -244,11 +269,9 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
             var toTarget = target.GetTruePosition() - myPos;
             float dot = Vector2.Dot(toTarget, dir);
             if (dot <= 0) continue;
-
             var proj = dir * dot;
             var perp = toTarget - proj;
             if (perp.magnitude > 1.3f) continue;
-
             CustomRoleManager.OnCheckMurder(Player, target, target, target, true, deathReason: CustomDeathReason.Hit);
             HasHit = true;
         }
@@ -256,19 +279,15 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
 
     public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
     {
-        IsCharging = false; ShowBeamMark = false; chargeTimer = 0f; HasHit = false; IsFiring = false;
-        _prevCharging = false; _prevBeamMark = false;
-        Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed; Player.MarkDirtySettings(); Player.SyncSettings();
-        Player.RpcSetColor((byte)PlayerColor); SetRoleTextHeight(false);
+        ResetState();
+        Player.SyncSettings();
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true); SendRpc();
     }
 
     public override void OnStartMeeting()
     {
-        IsCharging = false; ShowBeamMark = false; chargeTimer = 0f; HasHit = false; IsFiring = false;
-        _prevCharging = false; _prevBeamMark = false;
-        Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed; Player.MarkDirtySettings(); Player.SyncSettings();
-        Player.RpcSetColor((byte)PlayerColor); SetRoleTextHeight(false);
+        ResetState();
+        Player.SyncSettings();
     }
 
     public override void AfterMeetingTasks()
@@ -295,16 +314,12 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
     public override void ReceiveRPC(MessageReader reader)
     {
         if (reader.Length - reader.Position == 2) { reader.ReadByte(); BeamFacingLeft = reader.ReadBoolean(); return; }
-
         bool oldCharging = IsCharging;
         bool oldBeamMark = ShowBeamMark;
         IsCharging = reader.ReadBoolean();
         ShowBeamMark = reader.ReadBoolean();
-
         if (oldCharging != IsCharging || oldBeamMark != ShowBeamMark)
-        {
             UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
-        }
     }
 
     public override bool GetTemporaryName(ref string name, ref bool NoMarker, bool isForMeeting, PlayerControl seer, PlayerControl seen = null)

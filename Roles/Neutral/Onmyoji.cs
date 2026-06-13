@@ -73,7 +73,7 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter
     }
 
     public Onmyoji(PlayerControl player)
-        : base(RoleInfo, player, () => HasTask.True)
+        : base(RoleInfo, player, () => HasTask.ForRecompute)
     {
         ShikigamiIds = new();
         hasCompletedTaskRequirement = !(OptionNeedTaskToWin?.GetBool() ?? false);

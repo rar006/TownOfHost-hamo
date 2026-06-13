@@ -28,7 +28,7 @@ public sealed class God : RoleBase, ISystemTypeUpdateHook, IDeathReasonSeeable
         );
 
     public God(PlayerControl player)
-        : base(RoleInfo, player, () => HasTask.True)
+        : base(RoleInfo, player, () => HasTask.ForRecompute)
     {
     }
 

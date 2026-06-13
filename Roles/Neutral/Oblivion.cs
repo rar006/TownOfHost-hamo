@@ -28,7 +28,7 @@ public sealed class Oblivion : RoleBase, IKillFlashSeeable
         );
 
     public Oblivion(PlayerControl player)
-        : base(RoleInfo, player, () => HasTask.False)
+        : base(RoleInfo, player, () => HasTask.ForRecompute)
     {
         hasTransformed = false;
         pendingDeadPlayerId = byte.MaxValue;

@@ -28,7 +28,7 @@ public sealed class Scratcher : RoleBase, IAdditionalWinner
         );
 
     public Scratcher(PlayerControl player)
-    : base(RoleInfo, player, () => HasTask.True)
+    : base(RoleInfo, player, () => HasTask.ForRecompute)
     {
         Scratches = 0;
         Hits = 0;
@@ -124,6 +124,12 @@ public sealed class Scratcher : RoleBase, IAdditionalWinner
     {
         if (!AmongUsClient.Instance.AmHost) return;
         if (Won && !WinAtMeetingEnd) return;
+
+        if (!Player.IsAlive())
+        {
+            Utils.SendMessage(GetString("ScratcherDead"), Player.PlayerId);
+            return;
+        }
 
         if (!GameStates.IsMeeting)
         {

@@ -17,7 +17,7 @@ public sealed class Milkman : RoleBase, IKiller
             typeof(Milkman),
             player => new Milkman(player),
             CustomRoles.Milkman,
-            () => RoleTypes.Crewmate,
+            () => RoleTypes.Engineer,
             CustomRoleTypes.Crewmate,
             173500,
             SetupOptionItem,
@@ -50,6 +50,7 @@ public sealed class Milkman : RoleBase, IKiller
     static int MilkPerTask;
     static OptionItem OptionEnableRottenMilk;
     static OptionItem OptionRottenMilkChance;
+    static OptionItem OptionRevealNameOnSurvive;
 
     enum OptionName
     {
@@ -57,6 +58,7 @@ public sealed class Milkman : RoleBase, IKiller
         MilkmanMilkPerTask,
         MilkmanEnableRottenMilk,
         MilkmanRottenMilkChance,
+        MilkmanRevealNameOnSurvive,
     }
 
     static void SetupOptionItem()
@@ -68,6 +70,7 @@ public sealed class Milkman : RoleBase, IKiller
         OptionEnableRottenMilk = BooleanOptionItem.Create(RoleInfo, 12, OptionName.MilkmanEnableRottenMilk, false, false);
         OptionRottenMilkChance = IntegerOptionItem.Create(RoleInfo, 13, OptionName.MilkmanRottenMilkChance,
             new(1, 100, 1), 5, false, OptionEnableRottenMilk).SetValueFormat(OptionFormat.Percent);
+        OptionRevealNameOnSurvive = BooleanOptionItem.Create(RoleInfo, 14, OptionName.MilkmanRevealNameOnSurvive, true, false);
     }
 
     bool deliveryMode;
@@ -86,6 +89,9 @@ public sealed class Milkman : RoleBase, IKiller
     public bool CanUseImpostorVentButton() => false;
     public bool CanUseSabotageButton() => false;
 
+    public override bool CanClickUseVentButton => false;
+    public override bool OnEnterVent(PlayerPhysics physics, int ventId) => false;
+
     public override void Add()
     {
         deliveryMode = false;
@@ -98,6 +104,14 @@ public sealed class Milkman : RoleBase, IKiller
         diedThisRound = false;
 
         PetActionManager.Register(Player.PlayerId, OnPetUsed);
+
+        if (AmongUsClient.Instance.AmHost)
+        {
+            _ = new LateTask(() =>
+            {
+                if (Player.IsAlive()) SwitchMode(false);
+            }, 2f, "Milkman.InitEngineer");
+        }
     }
 
     public override void OnDestroy()
@@ -106,11 +120,16 @@ public sealed class Milkman : RoleBase, IKiller
     }
 
     public override RoleTypes? AfterMeetingRole
-        => deliveryMode ? RoleTypes.Impostor : RoleTypes.Crewmate;
+        => deliveryMode ? RoleTypes.Impostor : RoleTypes.Engineer;
 
     public override void ApplyGameOptions(IGameOptions opt)
     {
         opt.SetVision(false);
+        if (!deliveryMode)
+        {
+            AURoleOptions.EngineerCooldown = Mathf.Max(nowcool, 0.1f);
+            AURoleOptions.EngineerInVentMaxTime = 0f;
+        }
     }
 
     private void OnPetUsed()
@@ -135,7 +154,7 @@ public sealed class Milkman : RoleBase, IKiller
                     Player.GetClientId());
             if (Is(pc))
                 pc.RpcSetRoleDesync(
-                    toDelivery ? RoleTypes.Impostor : RoleTypes.Crewmate,
+                    toDelivery ? RoleTypes.Impostor : RoleTypes.Engineer,
                     Player.GetClientId());
         }
 
@@ -209,7 +228,9 @@ public sealed class Milkman : RoleBase, IKiller
 
         if (Player.IsAlive())
         {
+            bool revealName = OptionRevealNameOnSurvive.GetBool();
             string myName = Player.GetRealName();
+
             foreach (var pid in pendingNotify.ToArray())
             {
                 byte capturedPid = pid;
@@ -217,9 +238,11 @@ public sealed class Milkman : RoleBase, IKiller
                 {
                     var pc = PlayerCatch.GetPlayerById(capturedPid);
                     if (pc == null || !pc.IsAlive()) return;
-                    Utils.SendMessage(
-                        $"【===牛乳屋生存中===】\n{myName}印の牛乳が配られた",
-                        capturedPid);
+
+                    string msg = revealName
+                        ? $"【===牛乳屋生存中===】\n{myName}印の牛乳が配られた"
+                        : "【===牛乳屋生存中===】\n謎の牛乳が配られた";
+                    Utils.SendMessage(msg, capturedPid);
                 }, 3f, $"Milkman.NotifySurvive.{pid}", true);
             }
             pendingNotify.Clear();
@@ -292,6 +315,10 @@ public sealed class Milkman : RoleBase, IKiller
             if (now <= 0 && deliveryMode)
                 player.SetKillCooldown(0.5f);
             LastCooltime = now;
+
+            if (!deliveryMode)
+                Player.MarkDirtySettings();
+
             if (player != PlayerControl.LocalPlayer)
                 UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: player);
         }
@@ -315,9 +342,14 @@ public sealed class Milkman : RoleBase, IKiller
     public override string GetProgressText(bool comms = false, bool GameLog = false)
     {
         if (!Player.IsAlive()) return "";
+
         string mode = deliveryMode
             ? $"<color={RoleInfo.RoleColorCode}>[配達]</color>"
             : "<color=#aaaaaa>[Task]</color>";
+
+        if (!GameStates.CalledMeeting && !GameLog)
+            mode += $"<color=#ffffff>({LastCooltime})</color>";
+
         return $"<color={RoleInfo.RoleColorCode}>(牛乳:{milkCount})</color>{mode}";
     }
 

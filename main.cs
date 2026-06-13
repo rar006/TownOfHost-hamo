@@ -452,6 +452,9 @@ namespace TownOfHost
         Shyboy = CustomRoles.Shyboy,
         Villain = CustomRoles.Villain,
         Scratcher = CustomRoles.Scratcher,
+        PokerFace = CustomRoles.PokerFace,
+        Lawyer = CustomRoles.Lawyer,
+        Pirate = CustomRoles.Pirate,
 
         HASTroll = CustomRoles.HASTroll,
         TaskPlayerB = CustomRoles.TaskPlayerB,
@@ -494,6 +497,8 @@ namespace TownOfHost
         AssassinandMerlin,
         DriverandBraid,
         FoolandNue,
-        VegaandAltair
+        VegaandAltair,
+        PokerFace,
+        TheThreeLittlePigs
     }
 }
