@@ -1,5 +1,4 @@
-/*using System.Collections.Generic;
-using System.Linq;
+using System.Collections.Generic;
 using AmongUs.GameOptions;
 using Hazel;
 using TownOfHost.Roles.Core;
@@ -56,8 +55,9 @@ public sealed class Duelist : RoleBase, IAdditionalWinner
             .SetValueFormat(OptionFormat.day);
     }
 
-    public static readonly HashSet<Duelist> Duelists = new();
-    public byte archenemyPlayerId;
+    private static readonly HashSet<Duelist> Duelists = new();
+
+    byte archenemyPlayerId;
     bool hasChosenArchenemy;
 
     private PlayerControl Archenemy
@@ -73,7 +73,7 @@ public sealed class Duelist : RoleBase, IAdditionalWinner
         if (!Is(voter) || !Player.IsAlive()) return true;
         if (hasChosenArchenemy) return true;
 
-        if (votedForId == Player.PlayerId || votedForId >= 253)
+        if (votedForId >= 253 || votedForId == Player.PlayerId)
         {
             int left = MeetingLimit - UtilsGameLog.day;
             SendMessage(
@@ -85,24 +85,16 @@ public sealed class Duelist : RoleBase, IAdditionalWinner
         var target = GetPlayerById(votedForId);
         if (target == null || !target.IsAlive()) return true;
 
-        archenemyPlayerId = votedForId;
         hasChosenArchenemy = true;
+        archenemyPlayerId = votedForId;
         SendRpc();
 
-        if (!RoleSendList.Contains(target.PlayerId))
-            RoleSendList.Add(target.PlayerId);
-
-        target.RpcSetCustomRole(CustomRoles.Archenemy, log: null);
-
-        _ = new LateTask(() =>
-        {
-            if (target.GetRoleClass() is Archenemy ae)
-                ae.SetDuelist(Player.PlayerId);
-        }, 0.1f, "Duelist.SetArchenemy", true);
-
         SendMessage(
-            $"<color={RoleInfo.RoleColorCode}>{target.Data.PlayerName} を宿敵に指定しました！\n相手が死亡すれば追加勝利！</color>",
+            $"<color={RoleInfo.RoleColorCode}>{target.Data.PlayerName} を宿敵に指定！\n相手が死亡すれば追加勝利！</color>",
             Player.PlayerId);
+        SendMessage(
+            $"<color={RoleInfo.RoleColorCode}>あなたは {Player.Data.PlayerName} に宿敵として指定されました。\n相手が死亡すれば追加勝利！</color>",
+            target.PlayerId);
 
         UtilsNotifyRoles.NotifyRoles();
         return false;
@@ -130,8 +122,31 @@ public sealed class Duelist : RoleBase, IAdditionalWinner
 
     bool IAdditionalWinner.CheckWin(ref CustomRoles winnerRole)
     {
+        if (archenemyPlayerId == byte.MaxValue) return false;
         var ae = Archenemy;
-        return Player.IsAlive() && ae != null && !ae.IsAlive();
+        return Player.IsAlive() && (ae == null || !ae.IsAlive());
+    }
+
+    public static bool ArchenemyCheckWin(PlayerControl pc)
+    {
+        if (pc == null || !pc.IsAlive()) return false;
+        foreach (var duelist in Duelists)
+        {
+            if (duelist.archenemyPlayerId == byte.MaxValue) continue;
+            if (pc.PlayerId == duelist.archenemyPlayerId && !duelist.Player.IsAlive())
+                return true;
+        }
+        return false;
+    }
+
+    public static bool CheckNotify(PlayerControl pc)
+    {
+        foreach (var duelist in Duelists)
+        {
+            if (pc.PlayerId == duelist.archenemyPlayerId || pc.PlayerId == duelist.Player.PlayerId)
+                return true;
+        }
+        return false;
     }
 
     public override string GetMark(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)
@@ -146,7 +161,7 @@ public sealed class Duelist : RoleBase, IAdditionalWinner
     public string GetMarkOthers(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)
     {
         seen ??= seer;
-        if (archenemyPlayerId == byte.MaxValue || !Player.IsAlive()) return "";
+        if (archenemyPlayerId == byte.MaxValue) return "";
         if (seer.PlayerId == archenemyPlayerId && seen.PlayerId == Player.PlayerId)
             return ColorString(RoleInfo.RoleColor, "χ");
         return "";
@@ -164,8 +179,8 @@ public sealed class Duelist : RoleBase, IAdditionalWinner
             return $"<color=#888888>(自爆)</color>";
 
         var ae = Archenemy;
-        bool aeDead = ae == null || !ae.IsAlive();
-        return aeDead
+        bool dead = ae == null || !ae.IsAlive();
+        return dead
             ? $"<color={RoleInfo.RoleColorCode}>(宿敵†✓)</color>"
             : $"<color={RoleInfo.RoleColorCode}>(宿敵♦)</color>";
     }
@@ -177,23 +192,24 @@ public sealed class Duelist : RoleBase, IAdditionalWinner
         if (!Is(seer) || seer.PlayerId != seen.PlayerId || !Player.IsAlive()) return "";
 
         string size = isForHud ? "" : "<size=60%>";
+        string c = RoleInfo.RoleColorCode;
 
         if (!hasChosenArchenemy && isForMeeting)
         {
             int left = MeetingLimit - UtilsGameLog.day;
             string warn = left <= 0
-                ? "<color=#ff1919>！期限切れ・次ターン自爆！</color>"
+                ? "<color=#ff1919>！期限切れ！</color>"
                 : $"残り{left}ターン";
-            return $"{size}<color={RoleInfo.RoleColorCode}>誰かに投票 → 宿敵を設定 ({warn})\nスキップ or 自投票 → 今ターンはパス</color>";
+            return $"{size}<color={c}>誰かに投票 → 宿敵を設定 ({warn})\nスキップ / 自投票 → 今ターンはパス</color>";
         }
 
         if (archenemyPlayerId == byte.MaxValue) return "";
 
         var ae = Archenemy;
-        string aeName = ae?.Data?.PlayerName ?? "???";
+        string name = ae?.Data?.PlayerName ?? "???";
         bool aeDead = ae == null || !ae.IsAlive();
         string status = aeDead ? "<color=#00ff88>†</color>" : "<color=#ff4444>生</color>";
-        return $"{size}<color={RoleInfo.RoleColorCode}>宿敵: {aeName} {status}</color>";
+        return $"{size}<color={c}>宿敵: {name} {status}</color>";
     }
 
     void SendRpc()
@@ -209,97 +225,3 @@ public sealed class Duelist : RoleBase, IAdditionalWinner
         hasChosenArchenemy = reader.ReadBoolean();
     }
 }
-
-public sealed class Archenemy : RoleBase, IAdditionalWinner
-{
-    public static readonly SimpleRoleInfo RoleInfo =
-        SimpleRoleInfo.Create(
-            typeof(Archenemy),
-            player => new Archenemy(player),
-            CustomRoles.Archenemy,
-            () => RoleTypes.Crewmate,
-            CustomRoleTypes.Neutral,
-            85290,
-            SetupOptionItem,
-            "ae",
-            "#ff6347",
-            (4, 9),
-            countType: CountTypes.OutOfGame,
-            from: From.TownOfHost_Pko
-        );
-
-    public Archenemy(PlayerControl player) : base(RoleInfo, player, () => HasTask.False)
-    {
-        duelistPlayerId = byte.MaxValue;
-    }
-
-    static void SetupOptionItem()
-    {
-        if (Options.CustomRoleSpawnChances?.TryGetValue(CustomRoles.Archenemy, out var sp) == true)
-            sp.SetHidden(true);
-        if (Options.CustomRoleCounts?.TryGetValue(CustomRoles.Archenemy, out var cp) == true)
-            cp.SetHidden(true);
-    }
-
-    public byte duelistPlayerId;
-
-    public void SetDuelist(byte id)
-    {
-        duelistPlayerId = id;
-        SendRpc();
-    }
-
-    private PlayerControl Duelist
-        => duelistPlayerId == byte.MaxValue ? null : GetPlayerById(duelistPlayerId);
-
-    bool IAdditionalWinner.CheckWin(ref CustomRoles winnerRole)
-    {
-        var dl = Duelist;
-        return Player.IsAlive() && dl != null && !dl.IsAlive();
-    }
-
-    public override string GetMark(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)
-    {
-        seen ??= seer;
-        if (!Is(seer) || duelistPlayerId == byte.MaxValue) return "";
-        if (seen.PlayerId == duelistPlayerId)
-            return ColorString(RoleInfo.RoleColor, "χ");
-        return "";
-    }
-
-    public override string GetProgressText(bool comms = false, bool GameLog = false)
-    {
-        var dl = Duelist;
-        if (dl == null) return "";
-        bool dlDead = !dl.IsAlive();
-        return dlDead
-            ? $"<color={RoleInfo.RoleColorCode}>(決闘者†✓)</color>"
-            : $"<color={RoleInfo.RoleColorCode}>(決闘者♦)</color>";
-    }
-
-    public override string GetLowerText(PlayerControl seer, PlayerControl seen = null,
-        bool isForMeeting = false, bool isForHud = false)
-    {
-        seen ??= seer;
-        if (!Is(seer) || seer.PlayerId != seen.PlayerId || !Player.IsAlive()) return "";
-        if (duelistPlayerId == byte.MaxValue) return "";
-
-        var dl = Duelist;
-        string dlName = dl?.Data?.PlayerName ?? "???";
-        bool dlDead = dl == null || !dl.IsAlive();
-        string status = dlDead ? "<color=#00ff88>†</color>" : "<color=#ff4444>生</color>";
-        string size = isForHud ? "" : "<size=60%>";
-        return $"{size}<color={RoleInfo.RoleColorCode}>決闘者: {dlName} {status}  決闘者が死ねば追加勝利</color>";
-    }
-
-    void SendRpc()
-    {
-        using var sender = CreateSender();
-        sender.Writer.Write(duelistPlayerId);
-    }
-
-    public override void ReceiveRPC(MessageReader reader)
-    {
-        duelistPlayerId = reader.ReadByte();
-    }
-}*/

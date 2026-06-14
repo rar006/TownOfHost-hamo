@@ -51,6 +51,7 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
     static OptionItem OptionSummonCooldown;
     static OptionItem OptionStandStayTime;
+    static OptionItem OptionKillCooldown;
     static OptionItem OptionEnableKillAbility;
     static OptionItem OptionStandImpostorVision;
     static OptionItem OptionEnableTaskAddon;
@@ -60,6 +61,7 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
     public static float SummonCooldown;
     public static float StandStayTime;
+    public static float KillCooldown_;
     public static bool EnableKillAbility;
     public static bool StandImpostorVision;
     public static bool EnableTaskAddon;
@@ -71,12 +73,13 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
     {
         StandMasterSummonCooldown,
         StandMasterStayTime,
+        StandMasterKillCooldown,
         StandMasterEnableKillAbility,
+        StandMasterStandDeathGrantsKill,
         StandImpostorVision,
         StandEnableTaskAddon,
         StandAddonGiveToMaster,
         StandAddonAllowDebuff,
-        StandMasterStandDeathGrantsKill,
     }
 
     public static readonly CustomRoles[] BuffAddons =
@@ -106,6 +109,8 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
         CustomRoles.LastImpostor,
         CustomRoles.LastNeutral,
         CustomRoles.Stack,
+        CustomRoles.Jumbo,
+        CustomRoles.Stamina
     ];
 
     public byte standPlayerId;
@@ -123,10 +128,14 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
             new(2.5f, 60f, 2.5f), 30f, false).SetValueFormat(OptionFormat.Seconds);
         OptionStandStayTime = FloatOptionItem.Create(RoleInfo, 11, OptionName.StandMasterStayTime,
             new(2.5f, 60f, 2.5f), 20f, false).SetValueFormat(OptionFormat.Seconds);
+
         OptionEnableKillAbility = BooleanOptionItem.Create(
             RoleInfo, 12, OptionName.StandMasterEnableKillAbility, false, false);
         OptionStandDeathGrantsKill = BooleanOptionItem.Create(
             RoleInfo, 13, OptionName.StandMasterStandDeathGrantsKill, false, false);
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 18, OptionName.StandMasterKillCooldown,
+            new(0f, 60f, 2.5f), 30f, false).SetValueFormat(OptionFormat.Seconds);
+
         OptionStandImpostorVision = BooleanOptionItem.Create(
             RoleInfo, 14, OptionName.StandImpostorVision, false, false);
         OptionEnableTaskAddon = BooleanOptionItem.Create(
@@ -135,6 +144,7 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
             RoleInfo, 16, OptionName.StandAddonGiveToMaster, false, false, OptionEnableTaskAddon);
         OptionAddonAllowDebuff = BooleanOptionItem.Create(
             RoleInfo, 17, OptionName.StandAddonAllowDebuff, false, false, OptionEnableTaskAddon);
+
         HideRoleOptions(CustomRoles.Stand);
     }
 
@@ -150,6 +160,7 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
     {
         EnableKillAbility = OptionEnableKillAbility.GetBool();
         StandDeathGrantsKill = OptionStandDeathGrantsKill.GetBool();
+        KillCooldown_ = OptionKillCooldown.GetFloat();   // ★
         StandImpostorVision = OptionStandImpostorVision.GetBool();
         EnableTaskAddon = OptionEnableTaskAddon.GetBool();
         AddonGiveToMaster = OptionAddonGiveToMaster.GetBool();
@@ -217,7 +228,12 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
     public bool CanUseImpostorVentButton() => false;
     public bool CanUseSabotageButton() => false;
-    public float CalculateKillCooldown() => SummonCooldown;
+
+    public float CalculateKillCooldown()
+    {
+        if (!standCreated && !standHadDied) return SummonCooldown;
+        return KillCooldown_;
+    }
 
     public bool OverrideKillButtonText(out string text)
     {
