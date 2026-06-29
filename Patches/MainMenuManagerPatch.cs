@@ -21,7 +21,7 @@ namespace TownOfHost
         private static SimpleButton StatisticsButton;
         private static GameObject Statistics_ScrollStuff;
         public static SimpleButton UpdateButton { get; private set; }
-        public static SimpleButton UpdateButton2;
+        public static SimpleButton UpdateDetailsButton { get; private set; }
         private static SimpleButton gitHubButton;
         private static SimpleButton TwitterXButton;
         private static SimpleButton TOHkBOTButton;
@@ -31,7 +31,7 @@ namespace TownOfHost
         public static TextMeshPro Statistics_TMP;
         public static GameObject VersionMenu;
         public static GameObject betaVersionMenu;
-        public static AnnouncementPopUp updatea;
+        public static AnnouncementPopUp UpdateDetailsPopup;
 
         [HarmonyPatch(nameof(MainMenuManager.Start)), HarmonyPostfix, HarmonyPriority(Priority.Normal)]
         public static void StartPostfix(MainMenuManager __instance)
@@ -163,27 +163,27 @@ namespace TownOfHost
                     isActive: false);
             }
             // アップデート(詳細)ボタンを生成
-            if (SimpleButton.IsNullOrDestroyed(UpdateButton2))
+            if (SimpleButton.IsNullOrDestroyed(UpdateDetailsButton))
             {
-                UpdateButton2 = CreateButton(
-                    "UpdateButton2",
+                UpdateDetailsButton = CreateButton(
+                    "UpdateDetailsButton",
                     new(1.3f, -1.9f, 1f),
                     new(153, 153, 153, byte.MaxValue),
                     new(209, 209, 209, byte.MaxValue),
                     () =>
                     {
-                        if (updatea == null)
+                        if (UpdateDetailsPopup == null)
                         {
-                            updatea = Object.Instantiate(__instance.announcementPopUp);
+                            UpdateDetailsPopup = Object.Instantiate(__instance.announcementPopUp);
                         }
-                        updatea.name = "Update Detail";
-                        updatea.gameObject.SetActive(true);
-                        updatea.AnnouncementListSlider.SetActive(false);
-                        updatea.Title.text = "TOH-K " + ModUpdater.latestTitle;
-                        updatea.AnnouncementBodyText.text = Regex.Replace(ModUpdater.body.Replace("#", "").Replace("**", ""), @"\[(.*?)\]\(.*?\)", "$1");
-                        updatea.DateString.text = "Latest Release";
-                        updatea.SubTitle.text = "";
-                        updatea.ListScroller.gameObject.SetActive(false);
+                        UpdateDetailsPopup.name = "Update Detail";
+                        UpdateDetailsPopup.gameObject.SetActive(true);
+                        UpdateDetailsPopup.AnnouncementListSlider.SetActive(false);
+                        UpdateDetailsPopup.Title.text = "TOH-K " + ModUpdater.latestTitle;
+                        UpdateDetailsPopup.AnnouncementBodyText.text = Regex.Replace(ModUpdater.body.Replace("#", "").Replace("**", ""), @"\[(.*?)\]\(.*?\)", "$1");
+                        UpdateDetailsPopup.DateString.text = "Latest Release";
+                        UpdateDetailsPopup.SubTitle.text = "";
+                        UpdateDetailsPopup.ListScroller.gameObject.SetActive(false);
                     },
                     "▽",
                     new(0.5f, 0.5f),
