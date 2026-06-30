@@ -19,7 +19,7 @@ using static Unity.Services.LevelPlay.LevelPlayBannerPosition;
 [assembly: AssemblyInformationalVersionAttribute(TownOfHost.Main.PluginVersion)]
 namespace TownOfHost
 {
-    [BepInPlugin(PluginGuid, "Town Of Host-Pko", PluginVersion)]
+    [BepInPlugin(PluginGuid, "Town Of Host-Pko", BepInExPluginVersion)]
     [BepInIncompatibility("jp.ykundesu.supernewrolesnext")]
     [BepInIncompatibility("jp.ykundesu.supernewroles")]
     [BepInIncompatibility("me.yukieiji.extremeroles")]
@@ -59,14 +59,15 @@ namespace TownOfHost
         public static ConfigEntry<string> ExplosionKeyInput { get; private set; }
 
         public const string PluginGuid = "com.satokazoku.TownOfHost-Pko";
-        public const string PluginVersion = "4.31.15.67";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
-        public const string PluginShowVersion = "4.31.15.67";
-        public const string ModVersion = ".1.1";//リリースver用バージョン変更
+        public const string BepInExPluginVersion = "4.32.17+86";
+        public const string PluginVersion = "4.32.17.86";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
+        public const string PluginShowVersion = "4.32.17.86";
+        public const string ModVersion = ".17.86";//リリースver用バージョン変更dc9b79
 
         /// 配布するデバッグ版なのであればtrue。リリース時にはfalseにすること。
         public static bool DebugVersion = false;
 
-        // サポートされている最低のAmongUsバージョン
+        // サポートされている最低のAmongUsバージョン(Readmeも変える)
         public static readonly string LowestSupportedVersion = "2026.3.31";
         // このバージョンのみで公開ルームを無効にする場合
         public static readonly bool IsPublicAvailableOnThisVersion = false;
@@ -102,9 +103,6 @@ namespace TownOfHost
         public static ConfigEntry<bool> DebugTours { get; private set; }
         public static ConfigEntry<bool> ShowDistance { get; private set; }
         public static ConfigEntry<bool> FpsLimitRemoval { get; private set; }
-        // 設定画面UIスタイル（SNR風 / 従来）クライアント側の表示設定
-        public static ConfigEntry<bool> SettingUIStyleVertical { get; private set; }
-        public static ConfigEntry<bool> SettingUIStyleRoleGrid { get; private set; }
         public static Dictionary<byte, PlayerVersion> playerVersion = new();
         //Preset Name Options
         public static ConfigEntry<string> Preset1 { get; private set; }
@@ -213,10 +211,6 @@ namespace TownOfHost
             DebugTours = Config.Bind("Client Options", "DebugTours", false);
             ShowDistance = Config.Bind("Client Options", "Show Distance", false);
             FpsLimitRemoval = Config.Bind("Client Options", "Fps Limit Removal", false);
-            // 設定画面UIスタイル: タブを左に縦並びにするか（true=SNR風縦タブ / false=従来の上部横タブ）
-            SettingUIStyleVertical = Config.Bind("Client Options", "Setting UI Vertical Tabs", false);
-            // 役職表示・役職別サブメニューをSNR風のアイコングリッドにするか（true=SNR風 / false=従来）
-            SettingUIStyleRoleGrid = Config.Bind("Client Options", "Setting UI Role Grid", false);
             JoinWord = Config.Bind("StreamMenu", "JoinWord", "");
             RemoveWord = Config.Bind("StreamMenu", "RemoveWord", "");
             DebugKeyInput = Config.Bind("Authentication", "Debug Key", "");

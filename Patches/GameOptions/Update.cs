@@ -122,6 +122,7 @@ namespace TownOfHost
 
                     var enabled = true;
                     var parent = option.Parent;
+                    var childOption = option;
                     var opt = option.OptionBehaviour.LabelBackground;
                     var isroleoption = option.CustomRole is not CustomRoles.NotAssigned;
                     /*if (isroleoption && rolebutton.TryGetValue(option.CustomRole, out var button))
@@ -157,7 +158,8 @@ namespace TownOfHost
                     while (parent != null && enabled)
                     {
                         i++;
-                        enabled = parent.CustomRole is not CustomRoles.NotAssigned || parent.GetBool() || (parent.CustomRole.IsAddOn() && option.Name is not "%roleTypes%Maximum" and not "Maximum" and not "FixedRole");
+                        enabled = parent.CustomRole is not CustomRoles.NotAssigned || childOption.IsParentValueEnabledForDisplay() || (parent.CustomRole.IsAddOn() && option.Name is not "%roleTypes%Maximum" and not "Maximum" and not "FixedRole");
+                        childOption = parent;
                         parent = parent.Parent;
                     }
                     if (i > 0 && option.Name != "Maximum")
@@ -238,10 +240,12 @@ namespace TownOfHost
                     var hi = 0;
                     var henabled = AmongUsClient.Instance.AmHost && !option.IsHiddenOn(Options.CurrentGameMode);
                     var heparent = option.Parent;
+                    var headerChildOption = option;
                     while (heparent != null && henabled)
                     {
                         hi++;
-                        henabled = option.Name == "RoleOption" || heparent.CustomRole is not CustomRoles.NotAssigned || heparent.GetBool() || (heparent.CustomRole.IsAddOn() && option.Name is not "%roleTypes%Maximum" and not "Maximum" and not "FixedRole");
+                        henabled = option.Name == "RoleOption" || heparent.CustomRole is not CustomRoles.NotAssigned || headerChildOption.IsParentValueEnabledForDisplay() || (heparent.CustomRole.IsAddOn() && option.Name is not "%roleTypes%Maximum" and not "Maximum" and not "FixedRole");
+                        headerChildOption = heparent;
                         heparent = heparent.Parent;
                     }
                     if (option.Name == "RoleOption")
@@ -249,7 +253,7 @@ namespace TownOfHost
                         var chm = option.OptionHedder.GetComponent<CategoryHeaderMasked>();
                         chm.Background.color = UtilsRoleText.GetRoleColor(NowRoleTab);
                         chm.Title.text = NowRoleTab.IsBuffAddon() || NowRoleTab.IsDebuffAddon() || NowRoleTab.IsLovers() ||
-                        NowRoleTab is CustomRoles.Amanojaku or CustomRoles.Twins ? "<b>Assign Setting</b>" : "<b>Role Setting</b>";
+                        NowRoleTab is CustomRoles.Amanojaku or CustomRoles.Twins or CustomRoles.Triplets ? "<b>Assign Setting</b>" : "<b>Role Setting</b>";
                         if (NowRoleTab.IsCombinationRole()) chm.Title.text = $"<b>{NowRoleTab} Setting</b>";
                         if (henabled) offset -= -0.23f;
                     }
@@ -292,20 +296,6 @@ namespace TownOfHost
                 var offset = 2.7f;
                 var y = 0.713f;
 
-                // ===== SNR風 役職グリッド表示用 =====
-                // 役職選択行(役職トップ行)をグリッド配置するか
-                bool roleGrid = Main.SettingUIStyleRoleGrid?.Value == true;
-                // 1行に並べる役職数
-                const int RoleGridColumns = 3;
-                // グリッドのセル幅(X方向)
-                const float RoleGridCellWidth = 2.0f;
-                // グリッドの1行の高さ(Y方向)
-                const float RoleGridRowHeight = 0.5f;
-                // グリッドの左端X基準
-                const float RoleGridStartX = -0.95f;
-                // これまでに配置した役職グリッドセル数
-                int roleGridCount = 0;
-
                 foreach (var option in OptionItem.AllOptions)
                 {
                     if ((TabGroup)tab != option.Tab) continue;
@@ -322,10 +312,12 @@ namespace TownOfHost
                             var hi = 0;
                             var henabled = AmongUsClient.Instance.AmHost && !option.IsHiddenOn(Options.CurrentGameMode);
                             var heparent = option.Parent;
-                            while (option.Parent != null && henabled)
+                            var headerChildOption = option;
+                            while (heparent != null && henabled)
                             {
                                 hi++;
-                                henabled = heparent.GetBool();
+                                henabled = headerChildOption.IsParentValueEnabledForDisplay();
+                                headerChildOption = heparent;
                                 heparent = heparent.Parent;
                             }
                             option.OptionHedder.gameObject.SetActive(henabled);
@@ -403,7 +395,7 @@ namespace TownOfHost
                                 if (OptionShower.Checkenabled(option.Parent) is false or null)
                                 {
                                     var v = OptionShower.Checkenabled(option.Parent);
-                                    enabled = v is not null && option.Parent.GetBool();
+                                    enabled = v is not null && option.IsParentValueEnabledForDisplay();
                                 }
                         }
                         if (!Event.CheckRole(option.CustomRole))
@@ -441,10 +433,12 @@ namespace TownOfHost
                     RectTransform titleTextRect = titleText.GetComponent<RectTransform>();
 
                     var i = 0;
+                    var childOption = option;
                     while (parent != null && enabled)
                     {
                         i++;
-                        enabled = parent.GetBool();
+                        enabled = childOption.IsParentValueEnabledForDisplay();
+                        childOption = parent;
                         parent = parent.Parent;
                     }
 
@@ -479,43 +473,20 @@ namespace TownOfHost
                     }
 
                     option.OptionBehaviour.gameObject.SetActive(enabled);
-                    // この行が「役職選択行(役職トップ行)」かどうか
-                    var isRoleSelectorRow = roleGrid && isroleoption && option.Parent == null
-                        && rolebutton.ContainsKey(option.CustomRole);
                     if (enabled)
                     {
                         opt.color = color;
                         opt.size = size;
-                        if (isRoleSelectorRow)
-                        {
-                            // SNR風グリッド配置: 役職選択行を複数列で並べる
-                            int col = roleGridCount % RoleGridColumns;
-                            roleGridCount++;
-                            // 行頭(新しい行)に来たときだけ縦方向offsetを1段下げる
-                            if (col == 0)
-                            {
-                                offset -= RoleGridRowHeight;
-                                y -= RoleGridRowHeight;
-                            }
-                            opt.size = new Vector2(RoleGridCellWidth - 0.15f, 0.62f);
-                            option.OptionBehaviour.transform.localPosition = new Vector3(
-                                RoleGridStartX + (col * RoleGridCellWidth),
-                                offset - 1.5f,
-                                option.OptionBehaviour.transform.localPosition.z);
-                        }
-                        else
-                        {
-                            offset -= option.IsHeader ? 0.68f : 0.45f;
-                            option.OptionBehaviour.transform.localPosition = new Vector3(
-                                option.OptionBehaviour.transform.localPosition.x,//0.952f,
-                                offset - 1.5f,//y,
-                                option.OptionBehaviour.transform.localPosition.z);//-120f);
-                            y -= option.IsHeader ? 0.68f : 0.45f;
+                        offset -= option.IsHeader ? 0.68f : 0.45f;
+                        option.OptionBehaviour.transform.localPosition = new Vector3(
+                            option.OptionBehaviour.transform.localPosition.x,//0.952f,
+                            offset - 1.5f,//y,
+                            option.OptionBehaviour.transform.localPosition.z);//-120f);
+                        y -= option.IsHeader ? 0.68f : 0.45f;
 
-                            if (option.IsHeader)
-                            {
-                                numItems += 0.5f;
-                            }
+                        if (option.IsHeader)
+                        {
+                            numItems += 0.5f;
                         }
                     }
                     else

@@ -30,8 +30,6 @@ namespace TownOfHost
         private static ClientActionItem FpsLimitRemoval;
         private static ClientActionItem AutoSaveScreenShot;
         private static ClientActionItem PreloadMapAssets;
-        private static ClientActionItem SettingUIStyleVertical;
-        private static ClientActionItem SettingUIStyleRoleGrid;
         public static OptionsMenuBehaviour Instance;
 
         public static void Postfix(OptionsMenuBehaviour __instance)
@@ -100,16 +98,6 @@ namespace TownOfHost
             if ((PreloadMapAssets == null || PreloadMapAssets.ToggleButton == null) && !Main.IsAndroid())
             {
                 PreloadMapAssets = ClientOptionItem.Create("PreloadMapAssets", Main.PreloadMapAssets, __instance, showTooltip: true);
-            }
-            // 設定画面UI: タブを左に縦並びにする(SNR風) / 従来の上部横並び
-            if (SettingUIStyleVertical == null || SettingUIStyleVertical.ToggleButton == null)
-            {
-                SettingUIStyleVertical = ClientOptionItem.Create("SettingUIStyleVertical", Main.SettingUIStyleVertical, __instance, showTooltip: true);
-            }
-            // 設定画面UI: 役職表示・役職別サブメニューをSNR風グリッドにする / 従来
-            if (SettingUIStyleRoleGrid == null || SettingUIStyleRoleGrid.ToggleButton == null)
-            {
-                SettingUIStyleRoleGrid = ClientOptionItem.Create("SettingUIStyleRoleGrid", Main.SettingUIStyleRoleGrid, __instance, showTooltip: true);
             }
 #if DEBUG
             if (ViewPingDetails == null || ViewPingDetails.ToggleButton == null)

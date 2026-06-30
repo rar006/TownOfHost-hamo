@@ -231,7 +231,6 @@ public sealed class MagicalGirl : RoleBase, ISelfVoter, IKiller, IUsePhantomButt
                     }
                     break;
                 case VoteStatus.Skip:
-                    meetingCandidates.Clear();
                     Utils.SendMessage(GetString("VoteSkillFin"), Player.PlayerId);
                     SetMode(Player, false);
                     break;
@@ -259,7 +258,10 @@ public sealed class MagicalGirl : RoleBase, ISelfVoter, IKiller, IUsePhantomButt
         {
             addRole?.OnStartMeeting();
         }
-        meetingCandidates.Clear();
+        else
+        {
+            RefreshMeetingCandidateTargets();
+        }
         SendStateRPC();
     }
 
@@ -400,10 +402,11 @@ public sealed class MagicalGirl : RoleBase, ISelfVoter, IKiller, IUsePhantomButt
     public override string GetMark(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)
     {
         if (!isForMeeting || !Is(seer) || IsTransformed) return "";
+        if (!CheckVote.TryGetValue(Player.PlayerId, out var mode) || !mode) return "";
         seen ??= seer;
         if (seen == seer) return "";
         var candidate = meetingCandidates.FirstOrDefault(x => x.PlayerId == seen.PlayerId);
-        if (candidate.PlayerId == seen.PlayerId)
+        if (candidate.SlotNumber > 0 && candidate.PlayerId == seen.PlayerId)
         {
             return $" <color={RoleInfo.RoleColorCode}>[{candidate.SlotNumber}]</color>";
         }
@@ -489,13 +492,12 @@ public sealed class MagicalGirl : RoleBase, ISelfVoter, IKiller, IUsePhantomButt
 
     private bool PrepareMeetingCandidates()
     {
-        meetingCandidates.Clear();
+        if (meetingCandidates.Count > 0)
+        {
+            return RefreshMeetingCandidateTargets();
+        }
 
-        var targets = PlayerCatch.AllAlivePlayerControls
-            .Where(pc => pc.PlayerId != Player.PlayerId)
-            .OrderBy(pc => pc.PlayerId)
-            .ToList();
-
+        var targets = GetCandidateTargets();
         if (targets.Count <= 0) return false;
 
         var reserved = new HashSet<CustomRoles>(usedRoles);
@@ -507,6 +509,38 @@ public sealed class MagicalGirl : RoleBase, ISelfVoter, IKiller, IUsePhantomButt
             meetingCandidates.Add(new CandidateEntry(targets[index].PlayerId, (byte)(slotIndex + 1), role));
             index++;
         }
+        return meetingCandidates.Count > 0;
+    }
+
+    private List<PlayerControl> GetCandidateTargets()
+    {
+        return PlayerCatch.AllAlivePlayerControls
+            .Where(pc => pc.PlayerId != Player.PlayerId)
+            .OrderBy(pc => pc.PlayerId)
+            .ToList();
+    }
+
+    private bool RefreshMeetingCandidateTargets()
+    {
+        if (meetingCandidates.Count <= 0) return false;
+
+        var targets = GetCandidateTargets();
+        if (targets.Count <= 0) return false;
+
+        var roles = meetingCandidates
+            .OrderBy(candidate => candidate.SlotNumber)
+            .Select(candidate => candidate.Role)
+            .Where(role => role is not CustomRoles.NotAssigned)
+            .ToList();
+
+        meetingCandidates.Clear();
+
+        var count = Math.Min(roles.Count, targets.Count);
+        for (var i = 0; i < count; i++)
+        {
+            meetingCandidates.Add(new CandidateEntry(targets[i].PlayerId, (byte)(i + 1), roles[i]));
+        }
+
         return meetingCandidates.Count > 0;
     }
 

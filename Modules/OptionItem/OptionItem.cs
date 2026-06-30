@@ -69,6 +69,7 @@ namespace TownOfHost
         // 親子情報
         public bool parented = false;
         public OptionItem Parent { get; private set; }
+        public bool InvertParentValueForDisplay { get; private set; }
         public List<OptionItem> Children;
 
         public OptionBehaviour OptionBehaviour;
@@ -171,7 +172,7 @@ namespace TownOfHost
                 SetParentRole(role);
             });
 
-        public OptionItem SetParent(OptionItem parent) => Do(i =>
+        public OptionItem SetParent(OptionItem parent, bool invertParentValueForDisplay = false) => Do(i =>
         {
             if (parent != null && parented)
             {
@@ -180,8 +181,11 @@ namespace TownOfHost
             }
             if (parent != null) parented = true;
             i.Parent = parent;
+            i.InvertParentValueForDisplay = invertParentValueForDisplay;
             parent.SetChild(i);
         });
+        public bool IsParentValueEnabledForDisplay()
+            => Parent == null || (InvertParentValueForDisplay ? !Parent.GetBool() : Parent.GetBool());
         public OptionItem SetParentRole(CustomRoles parentrole)
             => Do(i => i.ParentRole = parentrole);
         public OptionItem SetChild(OptionItem child) => Do(i => i.Children.Add(child));

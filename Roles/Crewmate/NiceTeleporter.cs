@@ -33,10 +33,10 @@ public sealed class NiceTeleporter : RoleBase
         Cooldown = OptionCooldown.GetFloat();
         WaitingTime = OptionWaitingTime.GetFloat();
 
-        cooldownLeft = 0f;
+        cooldownLeft = Cooldown;
         pendingTimer = -1f;
         destPlayerId = byte.MaxValue;
-        wasOnCooldown = false;
+        wasOnCooldown = cooldownLeft > 0f;
 
         PetActionManager.Register(Player.PlayerId, OnPet);
         CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
@@ -66,6 +66,16 @@ public sealed class NiceTeleporter : RoleBase
             new(5f, 120f, 5f), 45f, false).SetValueFormat(OptionFormat.Seconds);
         OptionWaitingTime = FloatOptionItem.Create(RoleInfo, 11, OptionName.NiceTeleporterWaitingTime,
             new(0f, 10f, 1f), 3f, false).SetValueFormat(OptionFormat.Seconds);
+    }
+
+    public override void OnSpawn(bool initialState = false)
+    {
+        Cooldown = OptionCooldown.GetFloat();
+        cooldownLeft = Cooldown;
+        pendingTimer = -1f;
+        destPlayerId = byte.MaxValue;
+        wasOnCooldown = cooldownLeft > 0f;
+        SendRpc();
     }
 
     public override void OnDestroy()

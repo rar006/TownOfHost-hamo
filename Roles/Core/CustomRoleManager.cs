@@ -825,6 +825,7 @@ public enum CustomRoles
     Evolver,
     Conjurer,
     Swooper,
+    BeginnerImpostor,
     //TOH-K
     Bomber,
     TeleportKiller,
@@ -877,6 +878,7 @@ public enum CustomRoles
     MadSnitch,
     MadAvenger,
     SKMadmate,
+    BlackCat,
     //TOH-K
     MadJester,
     MadTeller,
@@ -925,6 +927,7 @@ public enum CustomRoles
     MagicalGirl,
     Walkure,
     SuspiciousTeller,
+    NiceNekomata,
     //TOH-K
     Gasp,
     VentMaster,

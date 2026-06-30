@@ -213,6 +213,16 @@
         "NotAvailableOnline": false,
         "AnnounceText": "～debug版～"
     },
+    "4.32.17.74": {
+        "Unavailable": false,
+        "NotAvailableOnline": false,
+        "AnnounceText": ""
+    },
+    "4.32.17.75": {
+        "Unavailable": false,
+        "NotAvailableOnline": false,
+        "AnnounceText": ""
+    },
     "51.14.32.43": {
         "Unavailable": false,
         "NotAvailableOnline": false

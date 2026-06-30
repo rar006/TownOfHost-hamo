@@ -71,11 +71,18 @@ namespace TownOfHost
             var reason = GameOverReason.ImpostorsByKill;
 
             predicate.CheckForEndGame(out reason);
+            var isSabotageEnd = reason == GameOverReason.ImpostorsBySabotage;
+            var lockSabotageWinner = isSabotageEnd
+                && CustomWinnerHolder.WinnerTeam is not CustomWinner.Default and not CustomWinner.None;
+            var lockDrawWinner = CustomWinnerHolder.WinnerTeam == CustomWinner.Draw;
+            var lockWinner = lockSabotageWinner || lockDrawWinner;
 
-            // 陰陽師を勝たせる
-            Zombie.TryTakeOverCrewWin(ref reason);
-            Onmyoji.TryTakeOverCrewWin(ref reason);
-            BatGirl.TryTakeOverSoloWin(ref reason);
+            if (!lockWinner)
+            {
+                Zombie.TryTakeOverCrewWin(ref reason);
+                Onmyoji.TryTakeOverCrewWin(ref reason);
+                BatGirl.TryTakeOverSoloWin(ref reason);
+            }
 
             if (CustomWinnerHolder.WinnerTeam is not CustomWinner.Default)
             {
@@ -102,18 +109,21 @@ namespace TownOfHost
                             PlayerCatch.AllPlayerControls
                                 .Where(pc => (pc.Is(CustomRoleTypes.Impostor) || pc.Is(CustomRoleTypes.Madmate) || pc.Is(CustomRoles.SKMadmate)) && (!pc.GetCustomRole().IsLovers() || !pc.Is(CustomRoles.Jackaldoll) || !pc.Is(CustomRoles.Tama)))
                                 .Do(pc => CustomWinnerHolder.WinnerIds.Add(pc.PlayerId));
-                            if (Egoist.CheckWin()) break;
-                            foreach (var pc in PlayerCatch.AllPlayerControls)
+                            if (!lockWinner && Egoist.CheckWin()) break;
+                            if (!lockWinner)
                             {
-                                if (pc.GetCustomRole() is CustomRoles.Jackaldoll ||
-                                    pc.IsLovers())
-                                    CustomWinnerHolder.CantWinPlayerIds.Add(pc.PlayerId);
+                                foreach (var pc in PlayerCatch.AllPlayerControls)
+                                {
+                                    if (pc.GetCustomRole() is CustomRoles.Jackaldoll ||
+                                        pc.IsLovers())
+                                        CustomWinnerHolder.CantWinPlayerIds.Add(pc.PlayerId);
+                                }
                             }
                             break;
                         default:
                             //ラバー勝利以外の時にラバーをしめt...勝利を剥奪する処理。
                             //どーせ追加なら追加勝利するやろし乗っ取りなら乗っ取りやし。
-                            if (CustomWinnerHolder.WinnerTeam.IsLovers())
+                            if (lockWinner || CustomWinnerHolder.WinnerTeam.IsLovers())
                                 break;
                             PlayerCatch.AllPlayerControls
                                 .Where(p => p.IsLovers())
@@ -121,11 +131,15 @@ namespace TownOfHost
                             break;
                     }
 
-                if (SuddenDeathMode.NowSuddenDeathTemeMode && !(CustomWinnerHolder.WinnerTeam is CustomWinner.SuddenDeathRed or CustomWinner.SuddenDeathBlue or CustomWinner.SuddenDeathGreen or CustomWinner.SuddenDeathYellow or CustomWinner.PurpleLovers))
+                // 勝者固定経路でも、乗っ取りではない個人勝利条件は必ず適用する。
+                foreach (var beginner in CustomRoleManager.AllActiveRoles.Values.OfType<BeginnerImpostor>())
+                    beginner.EnforceDummyKillWinRequirement();
+
+                if (!lockWinner && SuddenDeathMode.NowSuddenDeathTemeMode && !(CustomWinnerHolder.WinnerTeam is CustomWinner.SuddenDeathRed or CustomWinner.SuddenDeathBlue or CustomWinner.SuddenDeathGreen or CustomWinner.SuddenDeathYellow or CustomWinner.PurpleLovers))
                 {
                     SuddenDeathMode.TeamAllWin();
                 }
-                if (CustomWinnerHolder.WinnerTeam is not CustomWinner.Draw and not CustomWinner.None)
+                if (!lockWinner && CustomWinnerHolder.WinnerTeam is not CustomWinner.Draw and not CustomWinner.None)
                 {
                     if (!reason.Equals(GameOverReason.CrewmatesByTask))
                     {
@@ -159,7 +173,7 @@ namespace TownOfHost
                         Amanojaku.CheckWin(pc, reason);
                     }
                 }
-                if (CustomWinnerHolder.WinnerTeam is not CustomWinner.Draw)
+                if (!lockWinner && CustomWinnerHolder.WinnerTeam is not CustomWinner.Draw)
                 {
                     CurseMaker.CheckWin();
                     Fox.SFoxCheckWin(ref reason);
@@ -197,22 +211,41 @@ namespace TownOfHost
                         }
                     }
                 }
-                AsistingAngel.CheckAddWin();
-                foreach (var phantomthiefplayer in PlayerCatch.AllAlivePlayerControls.Where(pc => pc.GetCustomRole() is CustomRoles.PhantomThief))
+                if (!lockWinner)
                 {
-                    if (phantomthiefplayer.GetRoleClass() is PhantomThief phantomThief)
+                    AsistingAngel.CheckAddWin();
+                    foreach (var phantomthiefplayer in PlayerCatch.AllAlivePlayerControls.Where(pc => pc.GetCustomRole() is CustomRoles.PhantomThief))
                     {
-                        phantomThief.CheckWin();
+                        if (phantomthiefplayer.GetRoleClass() is PhantomThief phantomThief)
+                        {
+                            phantomThief.CheckWin();
+                        }
                     }
+                    foreach (var player in PlayerCatch.AllPlayerControls)
+                    {
+                        var roleclass = player.GetRoleClass();
+                        roleclass?.CheckWinner(reason);
+                    }
+                    Twins.CheckAddWin();
+                    Triplets.CheckAddWin();
+                    Faction.CheckWin();
                 }
-                foreach (var player in PlayerCatch.AllPlayerControls)
+
+                if (lockDrawWinner)
                 {
-                    var roleclass = player.GetRoleClass();
-                    roleclass?.CheckWinner(reason);
+                    CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Draw);
                 }
-                Twins.CheckAddWin();
-                Triplets.CheckAddWin();
-                Faction.CheckWin();
+
+                if (isSabotageEnd && Options.OptionSabotageFinAllKill.GetBool())
+                {
+                    PlayerCatch.AllAlivePlayerControls
+                        .Where(player => !player.IsWinner())
+                        .Do(player =>
+                        {
+                            player.GetPlayerState().DeathReason = CustomDeathReason.Kill;
+                            player.RpcMurderPlayer(player);
+                        });
+                }
 
                 ShipStatus.Instance.enabled = false;
                 if (CustomWinnerHolder.WinnerTeam != CustomWinner.Crewmate && (reason.Equals(GameOverReason.CrewmatesByTask) || reason.Equals(GameOverReason.CrewmatesByVote)))
@@ -305,11 +338,6 @@ namespace TownOfHost
             yield return new WaitForSeconds(EndGameDelay);
 
             GameManager.Instance.RpcEndGame(reason, false);
-            EndGameNavigation nav = DestroyableSingleton<EndGameNavigation>.Instance;
-            if (nav != null)
-            {
-                nav.NextGame();
-            }
             CheckGetNomalAchievement.CallEndGame(reason);
         }
         private static void SetRoleSummaryText(CustomRpcSender sender = null)

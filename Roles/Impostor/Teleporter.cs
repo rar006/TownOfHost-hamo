@@ -63,7 +63,7 @@ public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
             new(0f, 10f, 1f), 3f, false).SetValueFormat(OptionFormat.Seconds);
     }
 
-    public float CalculateKillCooldown() => Main.NormalOptions.KillCooldown;
+    public float CalculateKillCooldown() => Options.DefaultKillCooldown;
     public bool CanUseSabotageButton() => true;
     public bool CanUseImpostorVentButton() => true;
 
@@ -102,17 +102,17 @@ public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
 
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
-        AdjustKillCooldown = false;
-        ResetCooldown = false;
+        AdjustKillCooldown = true;
+        ResetCooldown = true;
 
-        if (!AmongUsClient.Instance.AmHost) return;
-        if (!Player.IsAlive()) return;
-        if (pendingTimer >= 0f) return;
+        if (!AmongUsClient.Instance.AmHost) { ResetCooldown = false; return; }
+        if (!Player.IsAlive()) { ResetCooldown = false; return; }
+        if (pendingTimer >= 0f) { ResetCooldown = false; return; }
 
         var candidates = PlayerCatch.AllAlivePlayerControls
             .Where(pc => pc.PlayerId != Player.PlayerId)
             .ToArray();
-        if (candidates.Length == 0) return;
+        if (candidates.Length == 0) { ResetCooldown = false; return; }
 
         var dest = candidates[IRandom.Instance.Next(candidates.Length)];
         destPlayerId = dest.PlayerId;
@@ -123,13 +123,6 @@ public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
 
         UtilsGameLog.AddGameLog("Teleporter",
             $"{UtilsName.GetPlayerColor(Player)} がテレポート開始 → {UtilsName.GetPlayerColor(dest)}");
-
-        _ = new LateTask(() =>
-        {
-            if (!Player.IsAlive()) return;
-            AURoleOptions.PhantomCooldown = AbilityCooldown;
-            Player.RpcResetAbilityCooldown();
-        }, 0.1f, "Teleporter.ResetCD", true);
 
         if (WaitingTime <= 0f)
             ExecuteTeleport();
@@ -209,7 +202,7 @@ public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
     {
         if (!AmongUsClient.Instance.AmHost) return;
 
-        Main.AllPlayerKillCooldown[Player.PlayerId] = Main.NormalOptions.KillCooldown;
+        Main.AllPlayerKillCooldown[Player.PlayerId] = Options.DefaultKillCooldown;
 
         _ = new LateTask(() =>
         {
@@ -232,7 +225,7 @@ public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
         var dest = PlayerCatch.GetPlayerById(destPlayerId);
         string destName = dest != null ? UtilsName.GetPlayerColor(dest, true) : "???";
         int sec = Mathf.CeilToInt(pendingTimer);
-        return $"\n<color=#ff4500>{destName} の元に {sec}秒後テレポートします！</color>";
+        return $"\\n<color=#ff4500>{destName} の元に {sec}秒後テレポートします！</color>";
     }
 
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null,

@@ -17,6 +17,11 @@ namespace TownOfHost
     [HarmonyPatch(typeof(MainMenuManager))]
     public class MainMenuManagerPatch
     {
+        private const float AutoCreateGameDeadline = 0.01f;
+        private const float AutoCreateGamePollInterval = 0.01f;
+        private const string OnlineButtonScalerPath = "MainUI/AspectScaler/RightPanel/MaskedBlackScreen/OnlineButtons/AspectSize/Scaler";
+        private static bool autoCreateGameRequested;
+        private static int autoCreateGameRequestId;
         private static SimpleButton discordButton;
         private static SimpleButton StatisticsButton;
         private static GameObject Statistics_ScrollStuff;
@@ -241,6 +246,10 @@ namespace TownOfHost
                 betaversionchange.FontSize = 2;
             }
             CreateStreameMenu.CreateMenu(__instance);
+            CancelAutoCreateGame();
+            __instance.PlayOnlineButton.OnClick.AddListener((Action)RequestAutoCreateGame);
+            __instance.ResetScreen();
+            HideOnlineJoinControls(__instance);
 
             // フリープレイの無効化
             var howToPlayButton = __instance.howToPlayButton;
@@ -271,6 +280,17 @@ namespace TownOfHost
             pb.OnClick.AddListener((Action)(() => CustomSpawnEditor.ActiveEditMode = true));
             freeplayButton.GetComponent<PassiveButton>().OnClick.AddListener((Action)(() => CustomSpawnEditor.ActiveEditMode = false));//ボタンを生成
 #endif
+        }
+
+        private static void HideOnlineJoinControls(MainMenuManager mainMenu)
+        {
+            var scaler = mainMenu.transform.Find(OnlineButtonScalerPath);
+            if (scaler == null) return;
+
+            scaler.Find("Enter Code Button")?.gameObject.SetActive(false);
+            scaler.Find("Find Game Button")?.gameObject.SetActive(false);
+            scaler.Find("Line")?.gameObject.SetActive(false);
+            scaler.Find("Create Lobby Button")?.gameObject.SetActive(false);
         }
 
         /// <summary>TOHロゴの子としてボタンを生成</summary>
@@ -313,30 +333,97 @@ namespace TownOfHost
             return !(VersionInfoManager.version != null && VersionInfoManager.version.DisableRoomJoin == true
             && VersionInfoManager.allversion != null && VersionInfoManager.allversion.DisableRoomJoin == true);
         }
-        [HarmonyPatch(nameof(MainMenuManager.ClickBackOnline))]
+        [HarmonyPatch(nameof(MainMenuManager.OpenOnlineMenu))]
         [HarmonyPostfix]
-        public static void ClickBackOnline(MainMenuManager __instance)
+        [HarmonyPriority(Priority.Last)]
+        public static void OpenOnlineMenuPostfix(MainMenuManager __instance)
         {
+            _ = new LateTask(() => BeginAutoCreateGame(__instance), AutoCreateGamePollInterval, "Begin Auto Create Game", true);
+        }
+
+        private static void RequestAutoCreateGame()
+        {
+            autoCreateGameRequested = true;
+            autoCreateGameRequestId++;
+        }
+
+        private static void CancelAutoCreateGame()
+        {
+            autoCreateGameRequested = false;
+            autoCreateGameRequestId++;
+        }
+
+        private static void BeginAutoCreateGame(MainMenuManager mainMenu)
+        {
+            if (!autoCreateGameRequested)
+            {
+                if (mainMenu != null)
+                {
+                    mainMenu.animating = false;
+                    mainMenu.ResetScreen();
+                }
+                return;
+            }
+
+            var requestId = autoCreateGameRequestId;
+            TryOpenCreateGame(mainMenu, requestId, Time.realtimeSinceStartup + AutoCreateGameDeadline);
+        }
+
+        private static void TryOpenCreateGame(MainMenuManager mainMenu, int requestId, float deadline)
+        {
+            _ = new LateTask(() =>
+            {
+                if (!autoCreateGameRequested || requestId != autoCreateGameRequestId) return;
+                if (mainMenu == null || mainMenu.createGameButton == null) return;
+
+                if (mainMenu.animating && Time.realtimeSinceStartup < deadline)
+                {
+                    TryOpenCreateGame(mainMenu, requestId, deadline);
+                    return;
+                }
+
+                autoCreateGameRequested = false;
+                mainMenu.animating = false;
+                mainMenu.createGameButton.OnClick.Invoke();
+            }, AutoCreateGamePollInterval, "Open Create Game Directly", true);
+        }
+        [HarmonyPatch(nameof(MainMenuManager.ClickBackOnline))]
+        [HarmonyPrefix]
+        public static bool ClickBackOnline(MainMenuManager __instance)
+        {
+            CancelAutoCreateGame();
+            __instance.animating = false;
             __instance.ResetScreen();
+            return false;
+        }
+        [HarmonyPatch(nameof(MainMenuManager.GoBackCreateGame))]
+        [HarmonyPrefix]
+        public static bool GoBackCreateGamePrefix(MainMenuManager __instance)
+        {
+            CancelAutoCreateGame();
+            __instance.animating = false;
+            __instance.createGameScreen?.gameObject?.SetActive(false);
+            __instance.ResetScreen();
+            return false;
         }
         // プレイメニュー，アカウントメニュー，クレジット画面が開かれたらロゴとボタンを消す
         [HarmonyPatch(nameof(MainMenuManager.OpenGameModeMenu))]
         [HarmonyPatch(nameof(MainMenuManager.OpenAccountMenu))]
         [HarmonyPatch(nameof(MainMenuManager.OpenCredits))]
         [HarmonyPatch(nameof(MainMenuManager.OpenOnlineMenu))]
-        [HarmonyPatch(nameof(MainMenuManager.GoBackCreateGame))]
         [HarmonyPatch(nameof(MainMenuManager.OpenEnterCodeMenu))]
         [HarmonyPostfix]
         public static void OpenMenuPostfix(MainMenuManager __instance)
         {
             CreateStreameMenu.CloseMenu();
-            var Findbuttongo = GameObject.Find("MainMenuManager/MainUI/AspectScaler/RightPanel/MaskedBlackScreen/OnlineButtons/AspectSize/Scaler/Find Game Button");
+            var onlineButtonScaler = __instance.transform.Find(OnlineButtonScalerPath);
+            var Findbuttongo = onlineButtonScaler?.Find("Find Game Button")?.gameObject;
 
-            var codebuttongo = GameObject.Find("MainMenuManager/MainUI/AspectScaler/RightPanel/MaskedBlackScreen/OnlineButtons/AspectSize/Scaler/Enter Code Button");
-            var Codebutton = codebuttongo.transform.GetComponent<PassiveButton>();
+            var codebuttongo = onlineButtonScaler?.Find("Enter Code Button")?.gameObject;
+            var Codebutton = codebuttongo?.GetComponent<PassiveButton>();
 
-            var createbuttongameobject = GameObject.Find("MainMenuManager/MainUI/AspectScaler/RightPanel/MaskedBlackScreen/OnlineButtons/AspectSize/Scaler/Create Lobby Button");
-            var createbutton = createbuttongameobject.transform.GetComponent<PassiveButton>();
+            var createbuttongameobject = onlineButtonScaler?.Find("Create Lobby Button")?.gameObject;
+            var createbutton = createbuttongameobject?.GetComponent<PassiveButton>();
 
             var version = VersionInfoManager.version;
             var allVersion = VersionInfoManager.allversion;
@@ -371,12 +458,11 @@ namespace TownOfHost
             if (Statistics_ScrollStuff?.gameObject != null)
                 Statistics_ScrollStuff?.gameObject.SetActive(false);
 
+            var warning = onlineButtonScaler?.parent?.Find("CrossplayWarning")?.gameObject;
+            var TMP = warning?.transform.Find("CrossPlayText/Text_TMP")?.GetComponent<TextMeshPro>();
+            if (warning != null && TMP != null)
             {
-                var warning = GameObject.Find("MainMenuManager/MainUI/AspectScaler/RightPanel/MaskedBlackScreen/OnlineButtons/AspectSize/CrossplayWarning");
                 warning.SetActive(true);
-                var TMPobjct = GameObject.Find("MainMenuManager/MainUI/AspectScaler/RightPanel/MaskedBlackScreen/OnlineButtons/AspectSize/CrossplayWarning/CrossPlayText/Text_TMP");
-
-                var TMP = TMPobjct.transform.GetComponent<TextMeshPro>();
                 var cantJoin = VersionInfoManager.version != null && VersionInfoManager.version.DisableRoomJoin == true;
                 cantJoin |= VersionInfoManager.allversion != null && VersionInfoManager.allversion.DisableRoomJoin == true;
                 var text = Main.IsAndroid() ? Translator.GetString("CantAndroidCreateGame") : cantJoin ? Translator.GetString("CantPublickAndJoin") : "";
@@ -385,10 +471,12 @@ namespace TownOfHost
                 if (text == "") warning.SetActive(false);
             }
             OptionsMenuBehaviourStartPatch.Instance = null;
+            HideOnlineJoinControls(__instance);
         }
         [HarmonyPatch(nameof(MainMenuManager.ResetScreen)), HarmonyPostfix]
         public static void ResetScreenPostfix(MainMenuManager __instance)
         {
+            CancelAutoCreateGame();
             if (CredentialsPatch.TOHPLogo != null)
             {
                 CredentialsPatch.TOHPLogo?.gameObject?.SetActive(true);
@@ -404,8 +492,13 @@ namespace TownOfHost
             CreateStreameMenu.CloseMenu();
             _ = new LateTask(() =>
             {
-                __instance.ejectMenu?.ejectButton?.gameObject.SetActive(true);
+                if (__instance == null) return;
+
+                var ejectButton = __instance.ejectMenu?.ejectButton;
+                if (ejectButton != null && ejectButton.gameObject != null)
+                    ejectButton.gameObject.SetActive(true);
             }, 0.5f, "ShowButton", true);
+            HideOnlineJoinControls(__instance);
         }
         public static void DestroyButton()
         {

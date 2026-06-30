@@ -19,7 +19,7 @@ public sealed class Police : RoleBase, IKiller, IUsePhantomButton
             CustomRoles.Police,
             () => RoleTypes.Engineer,
             CustomRoleTypes.Crewmate,
-            173600,
+            37300,
             SetupOptionItem,
             "pol",
             "#1a6bb5",

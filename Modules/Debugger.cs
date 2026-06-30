@@ -4,6 +4,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using LogLevel = BepInEx.Logging.LogLevel;
 using TownOfHost.Modules;
 
@@ -11,6 +15,8 @@ namespace TownOfHost
 {
     class Webhook
     {
+        private static readonly HttpClient HttpClient = new();
+
         public static bool SendToUrl(string text, string webhookUrl)
         {
             if (Main.IsAndroid()) return false;
@@ -47,19 +53,145 @@ namespace TownOfHost
             if (Main.IsAndroid()) return;
             ClientOptionsManager.CheckOptions();
             if (ClientOptionsManager.WebhookUrl == "none" || !Main.UseWebHook.Value) return;
+
             try
             {
-                HttpClient httpClient = new();
-                using MultipartFormDataContent content = new();
-                content.Add(new ByteArrayContent(pngImage), "file", "image.png");
-                var awaiter = httpClient.PostAsync(ClientOptionsManager.WebhookUrl, content).GetAwaiter();
-                awaiter.GetResult();
-                return;
+                var webhookUrl = ClientOptionsManager.WebhookUrl;
+                var threadName = $"{DateTime.Now:yyyy年 MM月dd日 HH:mm} {Main.GameCount}試合目";
+                var killLog = UtilsGameLog.BuildKillLogText().RemoveHtmlTags();
+                var preset = Encoding.UTF8.GetBytes(OptionSerializer.GenerateOptionsString());
+                var currentLog = UtilsOutputLog.ReadCurrentLog();
+                var gameCount = Main.GameCount;
+
+                _ = Task.Run(() => SendGameResultToForum(
+                    webhookUrl,
+                    threadName,
+                    pngImage,
+                    killLog,
+                    preset,
+                    currentLog,
+                    gameCount));
             }
             catch (Exception e)
             {
                 Logger.Info($"{e}", "SendResult");
             }
+        }
+
+        private static void SendGameResultToForum(
+            string webhookUrl,
+            string threadName,
+            byte[] pngImage,
+            string killLog,
+            byte[] preset,
+            byte[] currentLog,
+            int gameCount)
+        {
+            try
+            {
+                var createUrl = AddQuery(webhookUrl, "wait=true");
+                var createPayload = $"{{\"thread_name\":\"{EscapeJson(threadName)}\",\"allowed_mentions\":{{\"parse\":[]}}}}";
+                var responseBody = Post(createUrl, createPayload, pngImage, "image.png");
+                var match = Regex.Match(responseBody, "\\\"channel_id\\\"\\s*:\\s*\\\"(?<id>\\d+)\\\"");
+                if (!match.Success)
+                    throw new InvalidOperationException("Discord response did not contain the created forum thread ID.");
+
+                var threadUrl = AddQuery(webhookUrl, $"thread_id={match.Groups["id"].Value}");
+                foreach (var part in SplitMessage(killLog))
+                {
+                    var payload = $"{{\"content\":\"{EscapeJson(part)}\",\"allowed_mentions\":{{\"parse\":[]}}}}";
+                    Post(threadUrl, payload);
+                }
+
+                Post(
+                    threadUrl,
+                    "{\"allowed_mentions\":{\"parse\":[]}}",
+                    preset,
+                    $"Preset_Data.txt");
+                Post(
+                    threadUrl,
+                    "{\"allowed_mentions\":{\"parse\":[]}}",
+                    currentLog,
+                    $"TOHP_AutoLog_{gameCount}試合目.txt");
+            }
+            catch (Exception e)
+            {
+                Logger.Info($"{e}", "SendResult");
+            }
+        }
+
+        private static string Post(string url, string payload, byte[] file = null, string fileName = null)
+        {
+            for (var attempt = 0; attempt < 4; attempt++)
+            {
+                using MultipartFormDataContent content = new();
+                content.Add(new StringContent(payload, Encoding.UTF8, "application/json"), "payload_json");
+                if (file != null)
+                    content.Add(new ByteArrayContent(file), "files[0]", fileName);
+
+                using var response = HttpClient.PostAsync(url, content).GetAwaiter().GetResult();
+                var responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                if (response.IsSuccessStatusCode) return responseBody;
+
+                if ((int)response.StatusCode == 429 && attempt < 3)
+                {
+                    var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(1);
+                    Thread.Sleep(retryAfter + TimeSpan.FromMilliseconds(100));
+                    continue;
+                }
+
+                throw new HttpRequestException($"Discord webhook returned {(int)response.StatusCode}: {responseBody}");
+            }
+
+            throw new HttpRequestException("Discord webhook retry limit was exceeded.");
+        }
+
+        private static IEnumerable<string> SplitMessage(string text, int maxLength = 2000)
+        {
+            if (string.IsNullOrEmpty(text)) yield break;
+
+            var offset = 0;
+            while (offset < text.Length)
+            {
+                var length = Math.Min(maxLength, text.Length - offset);
+                if (offset + length < text.Length)
+                {
+                    var newline = text.LastIndexOf('\n', offset + length - 1, length);
+                    if (newline >= offset)
+                        length = newline - offset + 1;
+                }
+
+                yield return text.Substring(offset, length);
+                offset += length;
+            }
+        }
+
+        private static string AddQuery(string url, string query) =>
+            $"{url}{(url.Contains('?') ? '&' : '?')}{query}";
+
+        private static string EscapeJson(string value)
+        {
+            var builder = new StringBuilder(value.Length + 16);
+            foreach (var character in value)
+            {
+                switch (character)
+                {
+                    case '\\': builder.Append("\\\\"); break;
+                    case '"': builder.Append("\\\""); break;
+                    case '\b': builder.Append("\\b"); break;
+                    case '\f': builder.Append("\\f"); break;
+                    case '\n': builder.Append("\\n"); break;
+                    case '\r': builder.Append("\\r"); break;
+                    case '\t': builder.Append("\\t"); break;
+                    default:
+                        if (character < ' ')
+                            builder.Append($"\\u{(int)character:x4}");
+                        else
+                            builder.Append(character);
+                        break;
+                }
+            }
+            return builder.ToString();
         }
     }
 

@@ -113,20 +113,6 @@ namespace TownOfHost
         public static float roletaby;
         public static HashSet<TabGroup> tabGenerated;
 
-        // ===== SNR風 縦タブレイアウト用パラメータ =====
-        // タブを縦並びにするときのボタン縮小率
-        public const float VerticalTabScale = 0.82f;
-        // 縦並び時のタブ間隔(Y方向, ワールド座標)
-        public const float VerticalTabSpacing = 0.62f;
-        // 縦並び時の左寄せオフセット(X方向, ワールド座標) ※テンプレ位置からどれだけ左へ寄せるか
-        public const float VerticalTabOffsetX = -0.05f;
-        // 縦並び時の上端開始オフセット(Y方向, ワールド座標) ※テンプレ位置からどれだけ上へ寄せるか
-        public const float VerticalTabStartY = 1.95f;
-
-        // i番目のタブの縦並び配置オフセットを返す
-        public static Vector3 VerticalTabOffset(int i)
-            => new(VerticalTabOffsetX, VerticalTabStartY - (VerticalTabSpacing * i), -300f);
-
         public static void Postfix(GameSettingMenu __instance)
         {
             var ErrorNumber = 0;
@@ -340,17 +326,7 @@ namespace TownOfHost
 
                     var tabButton = Object.Instantiate(templateTabButton, templateTabButton.transform.parent);
                     tabButton.name = tab.ToString();
-                    if (Main.SettingUIStyleVertical?.Value == true)
-                    {
-                        // SNR風: タブを画面左に縦並び配置
-                        tabButton.transform.position = templateTabButton.transform.position + VerticalTabOffset(i);
-                        tabButton.transform.localScale *= VerticalTabScale;
-                    }
-                    else
-                    {
-                        // 従来: タブを上部に横並び配置
-                        tabButton.transform.position = templateTabButton.transform.position + new Vector3((0.762f * i * 0.8f) + (0.762f * i * 0.2f), 0, -300f);
-                    }
+                    tabButton.transform.position = templateTabButton.transform.position + new Vector3((0.762f * i * 0.8f) + (0.762f * i * 0.2f), 0, -300f);
                     tabButton.inactiveSprites.GetComponent<SpriteRenderer>().sprite = UtilsSprite.LoadSprite($"TownOfHost.Resources.TOHP.Tab.TabIcon_{tab}.png", 60);
                     tabButton.activeSprites.GetComponent<SpriteRenderer>().sprite = UtilsSprite.LoadSprite($"TownOfHost.Resources.TOHP.Tab.TabIcon_S_{tab}.png", 120);
                     tabButton.selectedSprites.GetComponent<SpriteRenderer>().sprite = UtilsSprite.LoadSprite($"TownOfHost.Resources.TOHP.Tab.TabIcon_{tab}.png", 120);

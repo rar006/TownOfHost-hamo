@@ -1295,92 +1295,93 @@ namespace TownOfHost
             OptionCommandSetting = BooleanOptionItem.Create(1_300_114, "CommandSetting", true, TabGroup.MainSettings, true)
                 .SetHeader(true)
                 .SetColorcode("#00c1ff")
-                .SetOptionName(() => "コマンド使用許可");
+                .SetOptionName(() => "一部コマンドを禁止する");
 
-            OptionCommandNowRole = BooleanOptionItem.Create(1_600_100, "CommandNowRole", true, TabGroup.MainSettings, true)
+            OptionCommandNowRole = BooleanOptionItem.Create(1_601_100, "DisableCommandNowRole", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
-                .SetOptionName(() => "/now role 役職一覧を表示");
+                .SetOptionName(() => "/now role - 役職一覧を表示 ");
 
-            OptionCommandNowSet = BooleanOptionItem.Create(1_600_110, "CommandNowSet", true, TabGroup.MainSettings, true)
+            OptionCommandNowSet = BooleanOptionItem.Create(1_601_110, "DisableCommandNowSet", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
-                .SetOptionName(() => "/now set アサインモード/バニラ設定を表示");
+                .SetOptionName(() => "/now set - アサイン/バニラ設定を表示");
 
-            OptionCommandNowW = BooleanOptionItem.Create(1_600_120, "CommandNowW", true, TabGroup.MainSettings, true)
+            OptionCommandNowW = BooleanOptionItem.Create(1_601_120, "DisableCommandNowW", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
-                .SetOptionName(() => "/now w 勝利優先順位を表示");
+                .SetOptionName(() => "/now w - 勝利優先度を表示");
 
-            OptionCommandHNow = BooleanOptionItem.Create(1_600_130, "CommandNowH", true, TabGroup.MainSettings, true)
+            OptionCommandHNow = BooleanOptionItem.Create(1_601_130, "DisableCommandNowH", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
-                .SetOptionName(() => "/h now 現在有効な設定の説明を表示");
+                .SetOptionName(() => "/h now - 有効な設定の説明を表示");
 
-            OptionCommandHRoles = BooleanOptionItem.Create(1_600_140, "CommandHRoles", true, TabGroup.MainSettings, true)
+            OptionCommandHRoles = BooleanOptionItem.Create(1_601_140, "DisableCommandHRoles", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
-                .SetOptionName(() => "/h roles 役職の説明を表示");
+                .SetOptionName(() => "/h roles - 役職の説明を表示");
 
-            OptionCommandMyrole = BooleanOptionItem.Create(1_600_150, "CommandMyrole", true, TabGroup.MainSettings, true)
+            OptionCommandMyrole = BooleanOptionItem.Create(1_601_150, "DisableCommandMyrole", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
-                .SetOptionName(() => "/myrole 自身の役職を表示");
+                .SetOptionName(() => "/myrole - 自身の役職を表示");
 
-            OptionCommandMeetinginfo = BooleanOptionItem.Create(1_600_160, "CommandMeetinginfo", true, TabGroup.MainSettings, true)
+            OptionCommandMeetinginfo = BooleanOptionItem.Create(1_601_160, "DisableCommandMeetinginfo", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
-                .SetOptionName(() => "/meetinginfo MeetingInfoを再表示");
+                .SetOptionName(() => "/meetinginfo - MeetingInfoを再表示");
 
-            OptionCommandNumberDNumber = BooleanOptionItem.Create(1_600_170, "CommandNumberDNumber", true, TabGroup.MainSettings, true)
+            OptionCommandNumberDNumber = BooleanOptionItem.Create(1_601_170, "DisableCommandNumberDNumber", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
-                .SetOptionName(() => "/(number)d(number) 乱数を振れます");
+                .SetOptionName(() => "/(number)d(number) - 乱数を振れます");
 
-            OptionCommand8ball = BooleanOptionItem.Create(1_600_180, "Command8ball", true, TabGroup.MainSettings, true)
+            OptionCommand8ball = BooleanOptionItem.Create(1_601_180, "DisableCommand8ball", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
-                .SetOptionName(() => "/8ball 8ball");
+                .SetOptionName(() => "/8ball - 8ballができます");
 
-            OptionCommandPko = BooleanOptionItem.Create(1_600_190, "CommandPko", true, TabGroup.MainSettings, true)
+            OptionCommandPko = BooleanOptionItem.Create(1_601_190, "DisableCommandPko", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
-                .SetOptionName(() => "/pko ぴけおAIとチャットができます");
+                .SetOptionName(() => "/pko - ぴけおAIとチャットができます");
 
-            OptionCommandRename = BooleanOptionItem.Create(1_600_200, "CommandRename", true, TabGroup.MainSettings, true)
+            OptionCommandRename = BooleanOptionItem.Create(1_601_200, "DisableCommandRename", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
-                .SetOptionName(() => "/rename 自身の名前を変更");
+                .SetOptionName(() => "/rename - 自身の名前を変更");
 
             OptionNameCharLimit = IntegerOptionItem.Create(1_600_201, "NameCharLimit", new(1, 100, 1), 30, TabGroup.MainSettings, true)
-                .SetParent(OptionCommandRename)
+                .SetParent(OptionCommandRename, invertParentValueForDisplay: true)
+                .SetEnabled(() => !OptionCommandRename.GetBool())
                 .SetColorcode("#00c1ff")
                 .SetOptionName(() => "名前の文字制限");
 
-            OptionCommandRule = BooleanOptionItem.Create(1_600_210, "CommandRule", true, TabGroup.MainSettings, true)
+            OptionCommandRule = BooleanOptionItem.Create(1_601_210, "DisableCommandRule", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
-                .SetOptionName(() => "/rule ルールを表示");
+                .SetOptionName(() => "/rule - ルールを表示");
 
-            OptionCommandLastresult = BooleanOptionItem.Create(1_600_220, "CommandLastresult", true, TabGroup.MainSettings, true)
+            OptionCommandLastresult = BooleanOptionItem.Create(1_601_220, "DisableCommandLastresult", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
-                .SetOptionName(() => "/lastresult 試合結果を表示");
+                .SetOptionName(() => "/lastresult - 試合結果を表示");
 
-            OptionCommandKilllog = BooleanOptionItem.Create(1_600_230, "CommandKilllog", true, TabGroup.MainSettings, true)
+            OptionCommandKilllog = BooleanOptionItem.Create(1_601_230, "DisableCommandKilllog", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
-                .SetOptionName(() => "/killlog ゲームログを表示");
+                .SetOptionName(() => "/killlog - ゲームログを表示");
 
-            OptionCommandTimer = BooleanOptionItem.Create(1_600_240, "CommandTimer", true, TabGroup.MainSettings, true)
+            OptionCommandTimer = BooleanOptionItem.Create(1_601_240, "DisableCommandTimer", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
-                .SetOptionName(() => "/timer ルームタイマーを表示");
+                .SetOptionName(() => "/timer - ルームタイマーを表示");
 
-            OptionCommandTp = BooleanOptionItem.Create(1_600_250, "CommandTp", true, TabGroup.MainSettings, true)
+            OptionCommandTp = BooleanOptionItem.Create(1_601_250, "DisableCommandTp", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
-                .SetOptionName(() => "/tp o,i ルームでテレポートができます");
+                .SetOptionName(() => "/tp o,i ロビー内へテレポート");
 
             OptionAutoFunction = BooleanOptionItem.Create(1_400_150, "AutoFunction", false, TabGroup.MainSettings, true)
                 .SetHeader(true)
