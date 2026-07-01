@@ -1,5 +1,8 @@
 # Town Of Host-hamo
 
+# 注意！！！'rgb(0,255,0)'
+このmodは未完成/開発中のmodです。今現在こちらのmodで遊ぶことはできません！！
+
 ## この Mod について
 
 この Mod は非公式のものであり、この Mod の開発に関して Among Us の開発元である"Innersloth"は一切関与していません。<br>
