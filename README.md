@@ -8,10 +8,10 @@
 この Mod はTOH,TOHK,TOHPKOに役職や機能など追加したModです
 TOH-hamoで起きたバグは本家や他MODには報告しないでまずはTOH-hamoに報告してください。<br>
 
-また、TOH-Pkoに関する質問、バグ報告は基本、[DiscordServer](https://discord.gg/PQ5CrVHC25)でのみ受け付けております。<br>
+また、TOH-hamoに関する質問、バグ報告は基本、[DiscordServer](https://discord.gg/AFa66yKC)でのみ受け付けております。<br>
 
 [本家TOHはこちら](https://github.com/tukasa0001/TownOfHost)<br>
-[TOHKはこちら](https://github.com/KYMario/TownOfHost-K)<br>
+[TOHPKOはこちら](https://github.com/satokazoku/TownOfHost-Pko)<br>
 
 ## リリース
 AmongUsバージョン : **17.3.0**~<br>
