@@ -16,8 +16,8 @@ TOH-hamoで起きたバグは本家や他MODには報告しないでまずはTOH
 ## リリース
 AmongUsバージョン : **17.3.0**~<br>
 
-**最新版は[こちら](https://github.com/satokazoku/TownOfHost-Pko/releases/latest)**<br>
-過去バージョンは[こちら](https://github.com/satokazoku/TownOfHost-Pko/releases)<br>
+**最新版は[こちら]()**<re>
+過去バージョンは[こちら]()<re>
 
 ## 公開ルームについて
 > [!Note]
@@ -46,16 +46,16 @@ AmongUsバージョン : **17.3.0**~<br>
 **禁止されない行為**
 > [**Note**]
 > - Discordや村のオープンチャットで非公開ルームのコードを伝え身内間でMod部屋を開催
-> - Town Of Host-Pkoのマッチメイキングでの募集
+> - Town Of Host-hamoのマッチメイキングでの募集
 > - Youtubeなどの配信サイトで上記の禁止行為に該当しない参加型/身内村配信<br>
 
 =>　要するに**Modだと認知していない野良のプレイヤーが交わる可能性がある**とアウトです。<br>
 <br>
 勧誘部屋に遭遇した場合は勧誘先に無闇に参加せずまずは開発者にお知らせください。厳正に対処いたします。<br>
 
-## TOH-Pkoでの処罰、利用不可について
+## TOH-hamoでの処罰、利用不可について
 v.5.1.61.1以降より[SuperNewRoles](https://github.com/SuperNewRoles/SuperNewRoles/)様等一部のModに搭載されていた<br>
-ブラックリストをTown Of Host-Pkoでも適応するようにいたしました。<br>
+ブラックリストをTown Of Host-hamoでも適応するようにいたしました。<br>
 
 > [!note]
 > - 【処罰に値する利用方法】
@@ -70,7 +70,7 @@ v.5.1.61.1以降より[SuperNewRoles](https://github.com/SuperNewRoles/SuperNewR
 -----------------------------------------------
 
 **【絶対に読むんだ】**<br>
-Town Of Host-Pkoの利用をもって"処罰に値する利用方法"内で記載されている<br>
+Town Of Host-hamoの利用をもって"処罰に値する利用方法"内で記載されている<br>
 行動をしないと誓い,<br>
 処罰に値する利用を行った場合はいかなる場合でも処罰を受け入れるものとします。<br>
 
@@ -83,17 +83,20 @@ Modが使えなくなるよ!<br>
 その処罰に値する利用方法をしないよ！！<br>
 ってことです。
 
-**TownOfHost-Pkoの開発者**<br>
-　しぇとこch<br>
-　　[Youtube](https://youtube.com/channel/UCM1gs89uwjOJF3EcVc1ZEOA?si=a1ffdwsBjGbJKig6)<br>
+**TownOfHost-hamoの開発者**<br>
+　haru<br>
+　　[Youtube](https://youtube.com/@harudayo1210?si=XFtImV4TE2FO9o-U)<br>
 
-※本家TownOfHost,TownOfHost_K様の開発者はここでは省略させていただきます
+※本家TownOfHost,TownOfHost_PKO様の開発者はここでは省略させていただきます
 #### クレジット
 [Town Of Host](https://github.com/tukasa0001/TownOfHost)<br>
 　Fork元の本家です。<br>TownOfHost様にある機能はTownOfHost-Pkoでも大体実装されています<br>
 
 [Town Of Host_K](https://github.com/KYMario/TownOfHost-K)<br>
-　Fork元です。<br>TownOfHost_K様にある機能はTownOfHost-Pkoでも大体実装されています<br>
+　Town Of Host_PKO様のフォーク元です。TownOfHost_K様にある機能はTownOfHost-hamoでも大体実装されています<br>
+
+ [Town Of Host_PKO](https://github.com/satokazoku/TownOfHost-Pko)<br>
+フォーク元です。TownOfHost_PKO様にある機能もTownOfHost-hamoにはだいたい実装されています。<br>
 
 [Town Of Host_Y](https://github.com/Yumenopai/TownOfHost_Y)<br>
 　会議時の役職表示、会議拡張、ワーカホリック,ラビット,チェイサー,ニムロッド,鬼,弁護士(追跡者),決闘者,海賊,属性名、一部役職を参考/移植させて頂きました！<br>
