@@ -29,6 +29,7 @@ class AddondataInfo
                 CustomRoles.Seeing => "☯",
                 CustomRoles.Lighting => "＊",
                 CustomRoles.Moon => "э",
+                CustomRoles.Absorb => "Г",
                 //デバフ
                 CustomRoles.SlowStarter => "Ｓs",
                 CustomRoles.Notvoter => "Ｖ",
@@ -89,6 +90,7 @@ class AddondataInfo
                     {CustomRoles.MagicHand , "#dea785"},
                     {CustomRoles.Powerful , "#f08e39"},
                     {CustomRoles.Stack , "#b55f47"},
+                    {CustomRoles.Absorb,"#434981"},
                     //{CustomRoles.AntiTeleporter,"#dea785"},
                     //デバフ
                     { CustomRoles.NonReport,"#006666"},

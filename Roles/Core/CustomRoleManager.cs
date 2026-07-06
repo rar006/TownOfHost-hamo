@@ -119,6 +119,18 @@ public static class CustomRoleManager
                     GuardreasonNumber = 1;
                     info.GuardPower = 1;
                 }
+                //アブソーブチェック
+                if (info.KillPower > info.GuardPower && Absorb.IsAchive())
+                {
+                    if (Absorb.AbsorbGuard.TryGetValue(attemptTarget.PlayerId, out var count))
+                    {
+                        if (count > 0)
+                        {
+                            GuardreasonNumber = 4;
+                            info.GuardPower = 1;
+                        }
+                    }
+                }
                 //属性ガードのチェック
                 if (info.KillPower > info.GuardPower)//消費する必要がある
                 {
@@ -195,6 +207,10 @@ public static class CustomRoleManager
                         + ":  " + string.Format(Translator.GetString("GuardMaster.Guard"), UtilsName.GetPlayerColor(attemptKiller, true)));
                         break;
                     case 3://Role
+                        break;
+                    case 4:
+                        Logger.Info($"AbsorbGuard : {--Absorb.AbsorbGuard[attemptTarget.PlayerId]}", "Absorb");
+                        UtilsGameLog.AddGameLog($"Guard", UtilsName.GetPlayerColor(attemptTarget) + ":  " + string.Format(Translator.GetString("GuardMaster.Guard"), UtilsName.GetPlayerColor(attemptKiller, true)));
                         break;
                     default:
                         break;
@@ -533,6 +549,7 @@ public static class CustomRoleManager
                 case CustomRoles.Autopsy: Autopsy.Add(pc.PlayerId); break;
                 case CustomRoles.MagicHand: MagicHand.Add(pc.PlayerId); break;
                 case CustomRoles.Powerful: Powerful.Add(pc.PlayerId); break;
+                case CustomRoles.Absorb: Absorb.Add(pc.PlayerId); break;
 
                 case CustomRoles.SlowStarter: SlowStarter.Add(pc.PlayerId); break;
                 case CustomRoles.Notvoter: Notvoter.Add(pc.PlayerId); break;
@@ -1005,6 +1022,7 @@ public enum CustomRoles
     Moon,
     Guarding,
     MagicHand,
+    Absorb,
     //デバフ
     Amnesia,
     Notvoter,
