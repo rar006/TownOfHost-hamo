@@ -1001,6 +1001,7 @@ public enum CustomRoles
     Milkman,
     Police,
     NiceWorkaholic,
+    Jaller,
     //DEBUG only Crewmate
     Analyzer,
     //Neutral
