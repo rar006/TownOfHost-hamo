@@ -72,6 +72,13 @@ namespace TownOfHost
         public bool InvertParentValueForDisplay { get; private set; }
         public List<OptionItem> Children;
 
+        /// <summary>
+        /// 親が複数選択(StringOptionなど)の時、親がこの値(index)のいずれかの時のみ表示・有効になる。<br/>
+        /// null の場合は従来通り「親の GetBool() が true(=0以外)」で表示。<br/>
+        /// SetParent(parent, activeValues...) で設定する。
+        /// </summary>
+        public int[] ParentActiveValues { get; private set; } = null;
+
         public OptionBehaviour OptionBehaviour;
         public MonoBehaviour OptionHedder;
 
@@ -184,6 +191,38 @@ namespace TownOfHost
             i.InvertParentValueForDisplay = invertParentValueForDisplay;
             parent.SetChild(i);
         });
+
+        /// <summary>
+        /// 親が複数選択(StringOptionなど)の場合に、親が指定した値(index)のいずれかの時のみ
+        /// この子オプションを表示・有効化する。<br/>
+        /// 例: <c>.SetParent(ModeOption, 1, 2)</c> で ModeOption が index 1 か 2 の時だけ表示。
+        /// </summary>
+        public OptionItem SetParent(OptionItem parent, params int[] activeValues) => Do(i =>
+        {
+            if (parent != null && parented)
+            {
+                Logger.Warn($"{Name} : 既にSetParentがされてます", "SetParent");
+                return;
+            }
+            if (parent != null) parented = true;
+            i.Parent = parent;
+            i.ParentActiveValues = (activeValues != null && activeValues.Length > 0) ? activeValues : null;
+            parent.SetChild(i);
+        });
+
+        /// <summary>
+        /// 親の値条件(ParentActiveValues)を満たしているか。<br/>
+        /// 条件未設定(null)なら常に true。
+        /// </summary>
+        private bool CheckParentActiveValue()
+        {
+            if (ParentActiveValues == null || Parent == null) return true;
+            var pv = Parent.GetValue();
+            for (int k = 0; k < ParentActiveValues.Length; k++)
+                if (ParentActiveValues[k] == pv) return true;
+            return false;
+        }
+
         public bool IsParentValueEnabledForDisplay()
             => Parent == null || (InvertParentValueForDisplay ? !Parent.GetBool() : Parent.GetBool());
         public OptionItem SetParentRole(CustomRoles parentrole)
@@ -233,6 +272,10 @@ namespace TownOfHost
             if (!(CurrentValue != 0 && (Parent == null || Parent.GetBool() || CheckRoleOption(Parent))))
                 return false;
 
+            // 親が複数選択で、指定した値の時のみ表示する条件が設定されている場合
+            if (!CheckParentActiveValue())
+                return false;
+
             var tags = GameModeManager.GetTags(Options.CurrentGameMode);
 
             if (!(Tag == CustomOptionTags.All || tags.Contains(Tag)))
@@ -240,7 +283,7 @@ namespace TownOfHost
 
             return !tags.Any(tag => DisableTag.Contains(tag));
         }
-        public bool InfoGetBool() => CurrentValue != 0 && (Parent == null || Parent.InfoGetBool());
+        public bool InfoGetBool() => CurrentValue != 0 && (Parent == null || Parent.InfoGetBool()) && CheckParentActiveValue();
         public bool CheckRoleOption(OptionItem option) => option.CustomRole is not CustomRoles.NotAssigned;
 
         /* オプションのgetboolの表示のやつ */

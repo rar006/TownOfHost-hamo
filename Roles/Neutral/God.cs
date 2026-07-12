@@ -36,6 +36,7 @@ public sealed class God : RoleBase, ISystemTypeUpdateHook, IDeathReasonSeeable
 
     public static OptionItem SeeVotesOpt;
     public static OptionItem CanSeeDeathReasonOpt;
+    public static OptionItem SeeAddonsOpt;
     public static OptionItem RequireTasksToWinOpt;
     public static OptionItem TaskCountOpt;
 
@@ -56,6 +57,7 @@ public sealed class God : RoleBase, ISystemTypeUpdateHook, IDeathReasonSeeable
         GodCantFixLightsOut,
         GodCantFixHeli,
         GodCantFixComms,
+        GodSeeAddons,
     }
 
     private static void SetupOptionItem()
@@ -64,12 +66,15 @@ public sealed class God : RoleBase, ISystemTypeUpdateHook, IDeathReasonSeeable
         OverrideTasksData.Create(RoleInfo, 20);
 
         Bakuro = BooleanOptionItem.Create(RoleInfo, 18, OptionName.GodBakuro, false, false)
-            .SetParentRole(CustomRoles.God); //本当にキックする処理も暴露を検知する処理もありません。プレイヤーにルールを守らすために見せかけで作りました。口外しないでいただけると助かります。
+            .SetParentRole(CustomRoles.God);
 
         SeeVotesOpt = BooleanOptionItem.Create(RoleInfo, 10, OptionName.GodSeeVotes, true, false)
             .SetParentRole(CustomRoles.God);
 
         CanSeeDeathReasonOpt = BooleanOptionItem.Create(RoleInfo, 11, OptionName.GodCanSeeDeathReason, true, false)
+            .SetParentRole(CustomRoles.God);
+
+        SeeAddonsOpt = BooleanOptionItem.Create(RoleInfo, 19, OptionName.GodSeeAddons, true, false)
             .SetParentRole(CustomRoles.God);
 
         RequireTasksToWinOpt = BooleanOptionItem.Create(RoleInfo, 12, OptionName.GodRequireTasksToWin, false, false)
@@ -103,8 +108,9 @@ public sealed class God : RoleBase, ISystemTypeUpdateHook, IDeathReasonSeeable
     {
         if (!Player.IsAlive()) return;
         enabled = true;
-        roleText = UtilsRoleText.GetTrueRoleName(seen.PlayerId, true);
-        addon = true;
+        bool seeAddons = SeeAddonsOpt?.GetBool() == true;
+        roleText = UtilsRoleText.GetTrueRoleName(seen.PlayerId, seeAddons);
+        addon = seeAddons;
     }
 
     public override void OverrideTrueRoleName(ref Color roleColor, ref string roleText)

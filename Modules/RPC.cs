@@ -42,6 +42,7 @@ namespace TownOfHost
 
         SyncYomiage,
         MeetingInfo,
+        PersonalMeetingInfo,
         CustomRoleSync,
         CustomSubRoleSync,
         ShowMeetingKill,

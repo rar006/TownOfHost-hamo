@@ -270,7 +270,7 @@ public sealed class Scratcher : RoleBase, IAdditionalWinner
 
             if (pc.GetRoleClass() is not Scratcher scratcher)
             {
-                Utils.SendMessage("/cmd st はスクラッチャー専用コマンドです。", pc.PlayerId,
+                Utils.SendMessage("/cmd sh はスクラッチャー専用コマンドです。", pc.PlayerId,
                     $"<{RoleInfo.RoleColorCode}>スクラッチャー</color>");
                 return false;
             }

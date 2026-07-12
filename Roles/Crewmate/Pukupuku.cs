@@ -13,7 +13,7 @@ namespace TownOfHost.Roles.Crewmate
                 CustomRoles.Pukupuku,
                 () => RoleTypes.Crewmate,
                 CustomRoleTypes.Crewmate,
-                34200,
+                65000,
                 SetupOptionItem,
                 "Pukupuku",
                 "#55ccff",
@@ -62,15 +62,16 @@ namespace TownOfHost.Roles.Crewmate
                 new string[] { "Off", "Guard", "Reflect", "Revenge" },
                 1, false);
 
+            // ModeOption が "Guard"(index 1) の時のみ表示
             OptionGuardCount = IntegerOptionItem.Create(
                 RoleInfo, 11, OptionName.PukupukuGuardCount,
                 new(1, 10, 1), 1, false)
-                .SetParent(ModeOption);
+                .SetParent(ModeOption, (int)AbilityMode.Guard);
 
             OptionNotifyOnGuard = BooleanOptionItem.Create(
                 RoleInfo, 12, "PukupukuNotifyOnGuard",
                 true, false)
-                .SetParent(ModeOption);
+                .SetParent(ModeOption, (int)AbilityMode.Guard);
 
             OptionPostDeathRevengeEnabled = BooleanOptionItem.Create(
                 RoleInfo, 20, "PukupukuPostDeathRevenge",

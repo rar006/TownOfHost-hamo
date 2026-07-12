@@ -96,7 +96,7 @@ Modが使えなくなるよ!<br>
 　Fork元です。<br>TownOfHost_K様にある機能はTownOfHost-Pkoでも大体実装されています<br>
 
 [Town Of Host_Y](https://github.com/Yumenopai/TownOfHost_Y)<br>
-　会議時の役職表示、会議拡張、ワーカホリック,ラビット,チェイサー,ニムロッド,鬼,弁護士,決闘者,海賊,属性名、一部役職を参考/移植させて頂きました！<br>
+　会議時の役職表示、会議拡張、ワーカホリック,ラビット,チェイサー,ニムロッド,鬼,決闘者,海賊,属性名、一部役職を参考/移植させて頂きました！<br>
 
 [Town Of Host For E](https://github.com/AsumuAkaguma/TownOfHost_ForE) <br>
 　機能やコメント取得一部処理の参考にさせて頂きました！<br>
@@ -118,7 +118,7 @@ Modが使えなくなるよ!<br>
 　ブラックリスト等や様々な部分を参考にさせて頂きました！<br>
 
 [TheOtherRoles](https://github.com/TheOtherRolesAU/TheOtherRoles)<br>
-　カモフラージャー、ゲッサー等を参考/移植させていただきました<br>
+　カモフラージャー、弁護士、ゲッサー等を参考/移植させていただきました<br>
 
 [TheOtherRole GM](https://github.com/yukinogatari/TheOtherRoles-GM)<br>
 　一部役職を参考/移植させていただきました<br>

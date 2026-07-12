@@ -26,7 +26,7 @@ public sealed class Lawyer : RoleBase
             "#daa520",
             (4, 7),
             introSound: () => GetIntroSound(RoleTypes.Impostor),
-            from: From.TownOfHost_Y
+            from: From.TheOtherRoles
         );
 
     public Lawyer(PlayerControl player)
@@ -248,7 +248,7 @@ public sealed class Pursuer : RoleBase, IAdditionalWinner
             "#daa520",
             (4, 7),
             introSound: () => GetIntroSound(RoleTypes.Impostor),
-            from: From.TownOfHost_Y
+            from: From.TheOtherRoles
         );
 
     public Pursuer(PlayerControl player) : base(RoleInfo, player, () => HasTask.False)
