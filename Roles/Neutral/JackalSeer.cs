@@ -166,7 +166,7 @@ public sealed class JackalSeer : RoleBase, ILNKiller, ISchrodingerCatOwner, IUse
         if (target == null) { ResetCooldown = false; return; }
 
         var targetrole = target.GetCustomRole();
-        if (targetrole is CustomRoles.King or CustomRoles.Jackal or CustomRoles.JackalAlien
+        if (targetrole is CustomRoles.King or CustomRoles.Autocrat or CustomRoles.Jackal or CustomRoles.JackalAlien
             or CustomRoles.Jackaldoll or CustomRoles.JackalMafia or CustomRoles.JackalSeer or CustomRoles.Merlin
             || ((targetrole.IsImpostor() || targetrole is CustomRoles.Egoist) && !OptionImpostorCanSidekick.GetBool()))
         {

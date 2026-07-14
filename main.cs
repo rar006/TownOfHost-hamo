@@ -59,10 +59,10 @@ namespace TownOfHost
         public static ConfigEntry<string> ExplosionKeyInput { get; private set; }
 
         public const string PluginGuid = "com.satokazoku.TownOfHost-Pko";
-        public const string BepInExPluginVersion = "4.32.17+86";
-        public const string PluginVersion = "4.32.17.86";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
-        public const string PluginShowVersion = "4.32.17.86";
-        public const string ModVersion = ".17.86";//リリースver用バージョン変更dc9b79
+        public const string BepInExPluginVersion = "5.33.18.91";
+        public const string PluginVersion = "5.33.18.91";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
+        public const string PluginShowVersion = "5.33.18.91";
+        public const string ModVersion = ".18.91";//リリースver用バージョン変更dc9b79
 
         /// 配布するデバッグ版なのであればtrue。リリース時にはfalseにすること。
         public static bool DebugVersion = false;
@@ -316,7 +316,8 @@ namespace TownOfHost
             Application.quitting += new Action(SaveStatistics.Save);
             Application.quitting += new Action(AchievementSaver.Save);
             Statistics.NowStatistics = SaveStatistics.Load();
-            //GlobalChatManager.Initialize("wss://catwalk-skimming-lapel.ngrok-free.dev");
+            //このModをフォークした皆さんできれば下の行(320行)は消してください
+            GlobalChatManager.Initialize("wss://catwalk-skimming-lapel.ngrok-free.dev");
             AchievementSaver.Load();
         }
 
@@ -393,6 +394,8 @@ namespace TownOfHost
         Poisoned,
         Launch,
         Compression,
+        Evaporation,
+        Retaliation,
         etc = -1
     }
     //WinData
@@ -459,6 +462,8 @@ namespace TownOfHost
         PokerFace = CustomRoles.PokerFace,
         Lawyer = CustomRoles.Lawyer,
         Pirate = CustomRoles.Pirate,
+        Victim = CustomRoles.Victim,
+        Amateras = CustomRoles.Amateras,
 
         HASTroll = CustomRoles.HASTroll,
         TaskPlayerB = CustomRoles.TaskPlayerB,
@@ -502,6 +507,7 @@ namespace TownOfHost
         DriverandBraid,
         FoolandNue,
         VegaandAltair,
+        AbuserandVictim,
         PokerFace,
         TheThreeLittlePigs
     }

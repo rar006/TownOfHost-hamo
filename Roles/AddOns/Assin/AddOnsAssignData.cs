@@ -151,7 +151,7 @@ namespace TownOfHost.Roles.AddOns.Common
                     {
                         if (crewmates.Count == 0) break;
                         var selectedCrewmate = crewmates[rnd.Next(crewmates.Count)];
-                        if (data.Role is CustomRoles.Amnesia && selectedCrewmate.Is(CustomRoles.King))
+                        if (data.Role is CustomRoles.Amnesia && (selectedCrewmate.Is(CustomRoles.King) || selectedCrewmate.Is(CustomRoles.Autocrat)))
                         {
                             crewmates.Remove(selectedCrewmate);
                             continue;

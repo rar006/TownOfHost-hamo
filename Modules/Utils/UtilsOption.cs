@@ -696,6 +696,7 @@ namespace TownOfHost
             if (player.Is(CustomRoles.Revenger)) SendMessage(GetAddonsHelp(CustomRoles.Revenger), player.PlayerId, AddRoleInfoTitle);
             if (player.Is(CustomRoles.Speeding)) SendMessage(GetAddonsHelp(CustomRoles.Speeding), player.PlayerId, AddRoleInfoTitle);
             if (player.Is(CustomRoles.Guarding)) SendMessage(GetAddonsHelp(CustomRoles.Guarding), player.PlayerId, AddRoleInfoTitle);
+            if (player.Is(CustomRoles.Absorb)) SendMessage(GetAddonsHelp(CustomRoles.Absorb), player.PlayerId, AddRoleInfoTitle);
             if (player.Is(CustomRoles.Management)) SendMessage(GetAddonsHelp(CustomRoles.Management), player.PlayerId, AddRoleInfoTitle);
             if (player.Is(CustomRoles.Opener)) SendMessage(GetAddonsHelp(CustomRoles.Opener), player.PlayerId, AddRoleInfoTitle);
             if (player.Is(CustomRoles.Seeing)) SendMessage(GetAddonsHelp(CustomRoles.Seeing), player.PlayerId, AddRoleInfoTitle);
@@ -761,6 +762,8 @@ namespace TownOfHost
                 CustomRoles.Revenger => AddonInfo(role, "Я", From.TownOfHost_Y),
                 CustomRoles.Speeding => AddonInfo(role, "∈"),
                 CustomRoles.Guarding => AddonInfo(role, "ζ", From.TownOfHost_Y),
+                CustomRoles.Absorb => AddonInfo(role, "Г"),
+                CustomRoles.VoteTracker => AddonInfo(role, "ν"),
                 CustomRoles.Management => AddonInfo(role, "θ", From.TownOfHost_Y),
                 CustomRoles.Opener => AddonInfo(role, "п"),
                 //CustomRoles.AntiTeleporter => AddonInfo(role, "t", From.RevolutionaryHostRoles),
@@ -797,6 +800,8 @@ namespace TownOfHost
                 CustomRoles.Stack => AddonInfo(role),
                 //幽霊役職
                 CustomRoles.Ghostbuttoner => AddonInfo(role),
+                CustomRoles.GhostFloodlight => AddonInfo(role),
+                CustomRoles.GhostSaboteur => AddonInfo(role),
                 CustomRoles.GhostNoiseSender => AddonInfo(role),
                 CustomRoles.GhostReseter => AddonInfo(role),
                 CustomRoles.GhostRumour => AddonInfo(role),
@@ -932,7 +937,7 @@ namespace TownOfHost
                 case From.TownOfHost_K: Fromtext += $"<#00bfff>TownOfHost K</color>"; break;
                 case From.TownOfHost_for_E: Fromtext += $"<#18e744>TownOfHost for E</color>"; break;
                 case From.Speyrp: Fromtext = $"<#7fffbf>From:Yoran★</color>"; break;
-                case From.TownOfHost_E: Fromtext += $"<#ffc0cb>TownOfHost E</color>"; break;
+                case From.TownOfHost_Enhanced: Fromtext += $"<#ffc0cb>TownOfHost Enhanced</color>"; break;
                 case From.TownOfHost_Pko: Fromtext += $"<#FF9631>TownOfHost Pko</color>"; break;
                 case From.RevolutionaryHostRoles: Fromtext += $"<#3cb371>RevolutionaryHostRoles</color>"; break;
                 case From.Love_Couple_Mod: Fromtext += "<#ff6be4>Love Couple Mod</color>"; break;

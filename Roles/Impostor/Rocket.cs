@@ -1,4 +1,4 @@
-/*using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
@@ -50,11 +50,6 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
     }
 
     public readonly List<PlayerControl> GrabbedPlayers;
-
-    /// <summary>
-    /// CheckMurderでキルをブロックするために使用するグローバルセット。
-    /// CustomNetObject.DummyKillPatchから参照される。
-    /// </summary>
     public static readonly HashSet<byte> GrabbedPlayerIds = new();
 
     bool launchPending;
@@ -94,7 +89,6 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
     public override void ApplyGameOptions(IGameOptions opt)
         => AURoleOptions.PhantomCooldown = LaunchCooldown;
 
-    // ─── キルボタン → 掴む ───────────────────────────────────────
     public void OnCheckMurderAsKiller(MurderInfo info)
     {
         var target = info.AttemptTarget;
@@ -102,19 +96,27 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         if (GrabbedPlayers.Contains(target)) { info.DoKill = false; return; }
 
         info.DoKill = false;
-        if (!AmongUsClient.Instance.AmHost) return;
-        GrabPlayer(target);
+
+        if (AmongUsClient.Instance.AmHost)
+        {
+            GrabPlayer(target);
+        }
+        else
+        {
+            using var sender = CreateSender();
+            sender.Writer.Write((byte)0);
+            sender.Writer.Write(target.PlayerId);
+        }
     }
 
     void GrabPlayer(PlayerControl target)
     {
         GrabbedPlayers.Add(target);
+        GrabbedPlayerIds.Add(target.PlayerId);
 
         PlayerState.GetByPlayerId(target.PlayerId).CanMove = false;
         target.MarkDirtySettings();
 
-        // ★ ホストはIsDead一時フラグでキルターゲットから外す
-        // ★ 非ホストはSetRole偽装RPCを送る
         if (Player.AmOwner)
             target.Data.IsDead = true;
         else
@@ -127,16 +129,15 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         Player.SetKillCooldown(killCDOverride, force: false);
         Player.KillFlash();
 
-        SendRpc();
+        SendSyncRpc();
         UtilsNotifyRoles.NotifyRoles();
         Logger.Info($"{Player.Data.GetLogPlayerName()} が {target.Data.GetLogPlayerName()} を掴んだ", "Rocket");
     }
 
-    // ★ 非ホストのロケットプレイヤーの視点でのみターゲットをインポスターに見せる
     void SetAppearsAsImpostorForRocket(PlayerControl target, bool asImpostor)
     {
         if (!AmongUsClient.Instance.AmHost) return;
-        if (Player.AmOwner) return; // ★ ホストには送らない
+        if (Player.AmOwner) return;
 
         var fakeRole = asImpostor ? RoleTypes.Impostor : target.Data.RoleType;
         var writer = AmongUsClient.Instance.StartRpcImmediately(
@@ -149,6 +150,7 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
     void ReleasePlayer(PlayerControl target)
     {
         if (!GrabbedPlayers.Remove(target)) return;
+        GrabbedPlayerIds.Remove(target.PlayerId);
         PlayerState.GetByPlayerId(target.PlayerId).CanMove = true;
         target.MarkDirtySettings();
         if (Player.AmOwner)
@@ -169,9 +171,9 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
                 SetAppearsAsImpostorForRocket(p, false);
         }
         GrabbedPlayers.Clear();
+        GrabbedPlayerIds.Clear();
     }
 
-    // ─── ファントムボタン → 打ち上げ ─────────────────────────────
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
         if (GrabbedPlayers.Count == 0)
@@ -184,6 +186,21 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         AdjustKillCooldown = false;
         ResetCooldown = false;
 
+        if (!Player.IsAlive()) return;
+
+        if (AmongUsClient.Instance.AmHost)
+        {
+            ExecuteLaunch();
+        }
+        else
+        {
+            using var sender = CreateSender();
+            sender.Writer.Write((byte)1);
+        }
+    }
+
+    void ExecuteLaunch()
+    {
         if (!Player.IsAlive()) return;
 
         LaunchAll(Player.GetTruePosition());
@@ -201,7 +218,7 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
             Player.RpcResetAbilityCooldown();
         }, 0.1f, "Rocket.ResetCD", true);
 
-        SendRpc();
+        SendSyncRpc();
     }
 
     void LaunchAll(Vector2 launchPos)
@@ -209,7 +226,7 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         if (!AmongUsClient.Instance.AmHost) return;
 
         var targets = GrabbedPlayers.ToArray();
-        ReleaseAll(); // ★ GrabbedPlayerIds も全削除
+        ReleaseAll();
         UtilsNotifyRoles.NotifyRoles();
 
         for (int i = 0; i < targets.Length; i++)
@@ -227,7 +244,6 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
             UtilsGameLog.AddGameLog("Rocket",
                 $"{UtilsName.GetPlayerColor(Player)}が{UtilsName.GetPlayerColor(target)}を打ち上げた");
 
-            // ★ 0.6秒ずつずらしてスポーン（IsSpawning競合防止）
             var capturedTarget = target;
             var capturedPos = spawnPos;
             int idx = i;
@@ -272,7 +288,6 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         return "";
     }
 
-    // ─── FixedUpdate ─────────────────────────────────────────────
     public override void OnFixedUpdate(PlayerControl player)
     {
         if (LaunchNotifications.Count > 0)
@@ -292,10 +307,18 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         if (!AmongUsClient.Instance.AmHost) return;
         if (!GameStates.IsInTask) return;
         if (GrabbedPlayers.Count == 0) return;
-        if (!Player.IsAlive()) { ReleaseAll(); SendRpc(); return; }
+        if (!Player.IsAlive()) { ReleaseAll(); SendSyncRpc(); return; }
 
+        bool removed = false;
         foreach (var p in GrabbedPlayers.ToArray())
-            if (p == null || !p.IsAlive()) ReleasePlayer(p);
+        {
+            if (p == null || !p.IsAlive())
+            {
+                ReleasePlayer(p);
+                removed = true;
+            }
+        }
+        if (removed) SendSyncRpc();
 
         snapFrame++;
         if (snapFrame % 3 != 0) return;
@@ -315,7 +338,6 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         }
     }
 
-    // ─── 会議関連 ─────────────────────────────────────────────────
     public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
     {
         if (!AmongUsClient.Instance.AmHost) return;
@@ -327,10 +349,10 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         {
             PlayerState.GetByPlayerId(p.PlayerId).CanMove = true;
             p.MarkDirtySettings();
-            // ★ 会議中はSetRole偽装を解除（ホストはData.IsDead不使用なので不要）
             if (!Player.AmOwner)
                 SetAppearsAsImpostorForRocket(p, false);
         }
+        SendSyncRpc();
     }
 
     public override void OnStartMeeting()
@@ -342,12 +364,13 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
             if (!Player.AmOwner)
                 SetAppearsAsImpostorForRocket(p, false);
         }
+        SendSyncRpc();
     }
 
     public override void AfterMeetingTasks()
     {
         if (!AmongUsClient.Instance.AmHost) return;
-        if (!Player.IsAlive()) { ReleaseAll(); SendRpc(); return; }
+        if (!Player.IsAlive()) { ReleaseAll(); SendSyncRpc(); return; }
 
         if (launchPending && GrabbedPlayers.Count > 0)
         {
@@ -360,7 +383,7 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
                 var afterMeetingState = PlayerState.GetByPlayerId(Player.PlayerId);
                 if (afterMeetingState != null) afterMeetingState.Is10secKillButton = false;
                 Player.SetKillCooldown(killCDOverride, force: false);
-                SendRpc();
+                SendSyncRpc();
             }, 1.5f, "Rocket.LaunchAfterMeeting", true);
         }
         else
@@ -371,8 +394,8 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
                 p.MarkDirtySettings();
                 if (!Player.AmOwner)
                     SetAppearsAsImpostorForRocket(p, true);
-                // ★ ホストは GrabbedPlayerIds に入ったままなのでCheckMurderがブロックされる
             }
+            SendSyncRpc();
         }
         launchPending = false;
 
@@ -384,7 +407,6 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         }, 0.3f, "Rocket.AfterMeeting.CD", true);
     }
 
-    // ─── テキスト ─────────────────────────────────────────────────
     public override string GetMark(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)
     {
         seen ??= seer;
@@ -415,10 +437,11 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         return $"<color=#ff6600>({count}人)</color>";
     }
 
-    // ─── RPC ─────────────────────────────────────────────────────
-    void SendRpc()
+    void SendSyncRpc()
     {
+        if (!AmongUsClient.Instance.AmHost) return;
         using var sender = CreateSender();
+        sender.Writer.Write((byte)2);
         sender.Writer.Write(GrabbedPlayers.Count);
         foreach (var p in GrabbedPlayers)
             sender.Writer.Write(p?.PlayerId ?? byte.MaxValue);
@@ -428,23 +451,41 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
 
     public override void ReceiveRPC(MessageReader reader)
     {
-        int count = reader.ReadInt32();
-        // ★ 受信時もGrabbedPlayerIdsを同期
-        foreach (var old in GrabbedPlayers) GrabbedPlayerIds.Remove(old.PlayerId);
-        GrabbedPlayers.Clear();
-
-        for (int i = 0; i < count; i++)
+        byte rpcType = reader.ReadByte();
+        if (rpcType == 0)
         {
-            var id = reader.ReadByte();
-            var pc = PlayerCatch.GetPlayerById(id);
-            if (pc != null)
+            if (!AmongUsClient.Instance.AmHost) return;
+            byte targetId = reader.ReadByte();
+            var target = PlayerCatch.GetPlayerById(targetId);
+            if (target != null && !GrabbedPlayers.Contains(target))
             {
-                GrabbedPlayers.Add(pc);
-                GrabbedPlayerIds.Add(id);
+                GrabPlayer(target);
             }
         }
-        launchPending = reader.ReadBoolean();
-        killCDOverride = reader.ReadSingle();
+        else if (rpcType == 1)
+        {
+            if (!AmongUsClient.Instance.AmHost) return;
+            ExecuteLaunch();
+        }
+        else if (rpcType == 2)
+        {
+            int count = reader.ReadInt32();
+            foreach (var old in GrabbedPlayers) GrabbedPlayerIds.Remove(old.PlayerId);
+            GrabbedPlayers.Clear();
+
+            for (int i = 0; i < count; i++)
+            {
+                var id = reader.ReadByte();
+                var pc = PlayerCatch.GetPlayerById(id);
+                if (pc != null)
+                {
+                    GrabbedPlayers.Add(pc);
+                    GrabbedPlayerIds.Add(id);
+                }
+            }
+            launchPending = reader.ReadBoolean();
+            killCDOverride = reader.ReadSingle();
+        }
     }
 
     public override string GetAbilityButtonText() =>
@@ -457,7 +498,6 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
     }
 }
 
-// ─── 打ち上げアニメーションダミー ────────────────────────────────────
 public class RocketFlyDummy : CustomNetObject
 {
     private static readonly List<RocketFlyDummy> ActiveDummies = new();
@@ -564,4 +604,3 @@ public class RocketFlyDummy : CustomNetObject
         ActiveDummies.Clear();
     }
 }
-*/

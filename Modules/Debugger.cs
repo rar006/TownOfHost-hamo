@@ -59,8 +59,12 @@ namespace TownOfHost
                 var webhookUrl = ClientOptionsManager.WebhookUrl;
                 var threadName = $"{DateTime.Now:yyyy年 MM月dd日 HH:mm} {Main.GameCount}試合目";
                 var killLog = UtilsGameLog.BuildKillLogText().RemoveHtmlTags();
-                var preset = Encoding.UTF8.GetBytes(OptionSerializer.GenerateOptionsString());
-                var currentLog = UtilsOutputLog.ReadCurrentLog();
+                var preset = ClientOptionsManager.PresetData
+                    ? Encoding.UTF8.GetBytes(OptionSerializer.GenerateOptionsString())
+                    : null;
+                var currentLog = ClientOptionsManager.LogData
+                    ? UtilsOutputLog.ReadCurrentLog()
+                    : null;
                 var gameCount = Main.GameCount;
 
                 _ = Task.Run(() => SendGameResultToForum(
@@ -103,16 +107,22 @@ namespace TownOfHost
                     Post(threadUrl, payload);
                 }
 
-                Post(
-                    threadUrl,
-                    "{\"allowed_mentions\":{\"parse\":[]}}",
-                    preset,
-                    $"Preset_Data.txt");
-                Post(
-                    threadUrl,
-                    "{\"allowed_mentions\":{\"parse\":[]}}",
-                    currentLog,
-                    $"TOHP_AutoLog_{gameCount}試合目.txt");
+                if (preset != null)
+                {
+                    Post(
+                        threadUrl,
+                        "{\"allowed_mentions\":{\"parse\":[]}}",
+                        preset,
+                        $"Preset_Data.txt");
+                }
+                if (currentLog != null)
+                {
+                    Post(
+                        threadUrl,
+                        "{\"allowed_mentions\":{\"parse\":[]}}",
+                        currentLog,
+                        $"TOHP_AutoLog_{gameCount}試合目.txt");
+                }
             }
             catch (Exception e)
             {

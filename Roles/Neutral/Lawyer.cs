@@ -26,7 +26,7 @@ public sealed class Lawyer : RoleBase
             "#daa520",
             (4, 7),
             introSound: () => GetIntroSound(RoleTypes.Impostor),
-            from: From.TownOfHost_Y
+            from: From.TheOtherRoles
         );
 
     public Lawyer(PlayerControl player)
@@ -63,6 +63,8 @@ public sealed class Lawyer : RoleBase
 
     static void SetupOptionItem()
     {
+        SoloWinOption.Create(RoleInfo, 9, defo: 15);
+
         OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, 10, GeneralOption.ImpostorVision, false, false);
         OptionKnowTargetRole = BooleanOptionItem.Create(RoleInfo, 11, OptionName.LawyerKnowTargetRole, false, false);
         OptionTargetKnows = BooleanOptionItem.Create(RoleInfo, 12, OptionName.LawyerTargetKnows, false, false);
@@ -246,7 +248,7 @@ public sealed class Pursuer : RoleBase, IAdditionalWinner
             "#daa520",
             (4, 7),
             introSound: () => GetIntroSound(RoleTypes.Impostor),
-            from: From.TownOfHost_Y
+            from: From.TheOtherRoles
         );
 
     public Pursuer(PlayerControl player) : base(RoleInfo, player, () => HasTask.False)

@@ -19,7 +19,8 @@ public sealed class NiceNekomata : RoleBase, INekomata
             SetupOptionItems,
             "nn",
             "#FFA55A",
-            (1, 7)
+            (1, 7),
+            from: From.SuperNewRoles
         );
 
     public NiceNekomata(PlayerControl player)

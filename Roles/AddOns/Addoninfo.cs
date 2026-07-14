@@ -29,6 +29,8 @@ class AddondataInfo
                 CustomRoles.Seeing => "☯",
                 CustomRoles.Lighting => "＊",
                 CustomRoles.Moon => "э",
+                CustomRoles.VoteTracker => "∇",
+                CustomRoles.Absorb => "Г",
                 //デバフ
                 CustomRoles.SlowStarter => "Ｓs",
                 CustomRoles.Notvoter => "Ｖ",
@@ -97,6 +99,7 @@ class AddondataInfo
                     {CustomRoles.MagicHand , "#dea785"},
                     {CustomRoles.Powerful , "#f08e39"},
                     {CustomRoles.Stack , "#b55f47"},
+                    {CustomRoles.Absorb,"#434981"},
                     //{CustomRoles.AntiTeleporter,"#dea785"},
                     //デバフ
                     { CustomRoles.NonReport,"#006666"},
@@ -130,7 +133,9 @@ class AddondataInfo
 
                     // 幽霊役職
                     {CustomRoles.Ghostbuttoner,"#d0af4c"},
+                    {CustomRoles.GhostFloodlight, "#66f3ff"},
                     {CustomRoles.GhostNoiseSender, "#5aa698"},
+                    {CustomRoles.GhostSaboteur, "#00ffcc"},
                     {CustomRoles.GhostReseter , "#a87a71"},
                     {CustomRoles.GhostRumour , "#707cab"},
                     {CustomRoles.GuardianAngel,"#7cc0fc"},

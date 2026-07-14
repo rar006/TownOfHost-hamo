@@ -7,31 +7,23 @@ using static TownOfHost.Translator;
 
 namespace TownOfHost.Roles.Impostor;
 
-/// <summary>
-/// マスマーダー (Mass Murder)
-/// インポスター役職。ファントムボタンで現在の部屋を「死の床」に設定。
-/// 死の床内でキル → キルクール大幅短縮
-/// 死の床外でキル → キルクール増加
-/// </summary>
-public sealed class MassMurder : RoleBase, IKiller, IUsePhantomButton
+public sealed class MassmMurder : RoleBase, IKiller, IUsePhantomButton
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
-            typeof(MassMurder),
-            player => new MassMurder(player),
+            typeof(MassmMurder),
+            player => new MassmMurder(player),
             CustomRoles.MassMurder,
             () => RoleTypes.Phantom,
             CustomRoleTypes.Impostor,
             15000,
             SetupOptionItem,
             "mm",
-            "#8b0000",
-            (8, 8),
-            true,
+            OptionSort: (6, 8),
             introSound: () => GetIntroSound(RoleTypes.Impostor)
         );
 
-    public MassMurder(PlayerControl player)
+    public MassmMurder(PlayerControl player)
         : base(RoleInfo, player)
     {
         KillCooldown_ = OptionKillCooldown.GetFloat();
@@ -43,22 +35,21 @@ public sealed class MassMurder : RoleBase, IKiller, IUsePhantomButton
     static OptionItem OptionKillCooldown;
     static OptionItem OptionDeathBedKillCooldown;
     static OptionItem OptionOutsideKillCooldown;
-    static OptionItem OptionDeathBedSetCount;   // ★ 追加
+    static OptionItem OptionDeathBedSetCount;
 
     static float KillCooldown_;
     static float DeathBedKillCooldown;
     static float OutsideKillCooldown;
-    static int DeathBedSetCount;                // ★ 追加
+    static int DeathBedSetCount;
 
-    // 死の床として設定された部屋
     SystemTypes? deathBedRoom;
-    int remainingSetCount;                      // ★ 追加: 残り設定回数
+    int remainingSetCount;
 
     enum OptionName
     {
         MassMurderDeathBedKillCooldown,
         MassMurderOutsideKillCooldown,
-        MassMurderDeathBedSetCount,             // ★ 追加
+        MassMurderDeathBedSetCount,
     }
 
     static void SetupOptionItem()
@@ -69,7 +60,6 @@ public sealed class MassMurder : RoleBase, IKiller, IUsePhantomButton
             new(0f, 180f, 0.5f), 0f, false).SetValueFormat(OptionFormat.Seconds);
         OptionOutsideKillCooldown = FloatOptionItem.Create(RoleInfo, 12, OptionName.MassMurderOutsideKillCooldown,
             new(0f, 180f, 1f), 45f, false).SetValueFormat(OptionFormat.Seconds);
-        // ★ 死の床設定回数
         OptionDeathBedSetCount = IntegerOptionItem.Create(RoleInfo, 13, OptionName.MassMurderDeathBedSetCount,
             new(1, 100, 1), 2, false).SetValueFormat(OptionFormat.Times);
     }
@@ -79,20 +69,19 @@ public sealed class MassMurder : RoleBase, IKiller, IUsePhantomButton
         KillCooldown_ = OptionKillCooldown.GetFloat();
         DeathBedKillCooldown = OptionDeathBedKillCooldown.GetFloat();
         OutsideKillCooldown = OptionOutsideKillCooldown.GetFloat();
-        DeathBedSetCount = OptionDeathBedSetCount.GetInt();  // ★
+        DeathBedSetCount = OptionDeathBedSetCount.GetInt();
         deathBedRoom = null;
-        remainingSetCount = DeathBedSetCount;                 // ★
+        remainingSetCount = DeathBedSetCount;
     }
 
-    // ── IUsePhantomButton ─────────────────────────────────────────
     public bool IsPhantomRole => true;
     public bool IsresetAfterKill => false;
-    public bool UseOneclickButton => true;  // ワンクリックで発動
+    public bool UseOneclickButton => true;
 
     public override void ApplyGameOptions(IGameOptions opt)
     {
         AURoleOptions.PhantomCooldown = KillCooldown_;
-        AURoleOptions.PhantomDuration = 0f;  // 透明化しない
+        AURoleOptions.PhantomDuration = 0f; 
     }
 
     public void OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
@@ -101,14 +90,12 @@ public sealed class MassMurder : RoleBase, IKiller, IUsePhantomButton
         ResetCooldown = false;
         if (!Player.IsAlive()) return;
 
-        // ★ 設定回数が残っていなければ何もしない
         if (remainingSetCount <= 0)
         {
             Logger.Info($"[MassMurder] 設定回数が残っていません", "MassMurder");
             return;
         }
 
-        // 現在の部屋を取得（部屋外なら何もしない・設定回数も消費しない）
         var room = Player.GetPlainShipRoom();
         if (room == null)
         {
@@ -116,7 +103,7 @@ public sealed class MassMurder : RoleBase, IKiller, IUsePhantomButton
             return;
         }
 
-        remainingSetCount--;          // ★ 消費
+        remainingSetCount--;
         deathBedRoom = room.RoomId;
         ResetCooldown = true;
 
@@ -125,7 +112,6 @@ public sealed class MassMurder : RoleBase, IKiller, IUsePhantomButton
         UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
     }
 
-    // ── IKiller ───────────────────────────────────────────────────
     public float CalculateKillCooldown() => KillCooldown_;
     public bool CanUseKillButton() => Player.IsAlive();
     public bool CanUseSabotageButton() => true;
@@ -134,14 +120,13 @@ public sealed class MassMurder : RoleBase, IKiller, IUsePhantomButton
     public void OnCheckMurderAsKiller(MurderInfo info)
     {
         if (!Is(info.AttemptKiller)) return;
-        if (!deathBedRoom.HasValue) return;  // 死の床未設定: クール変動なし
+        if (!deathBedRoom.HasValue) return;
 
         var (killer, target) = info.AttemptTuple;
 
         var killerRoom = killer.GetPlainShipRoom();
         bool inDeathBed = killerRoom != null && killerRoom.RoomId == deathBedRoom.Value;
 
-        // キル後にクールを上書き
         float cd = inDeathBed ? DeathBedKillCooldown : OutsideKillCooldown;
         _ = new LateTask(() =>
         {
@@ -156,17 +141,14 @@ public sealed class MassMurder : RoleBase, IKiller, IUsePhantomButton
 
     public override void AfterMeetingTasks()
     {
-        // 死の床は会議をまたいで持続。クールだけリセット。
         if (!AmongUsClient.Instance.AmHost) return;
         if (!Player.IsAlive()) return;
         Player.RpcResetAbilityCooldown();
     }
 
-    // ── 表示 ──────────────────────────────────────────────────────
     public override string GetProgressText(bool comms = false, bool GameLog = false)
     {
         if (!Player.IsAlive()) return "";
-        // ★ 残り設定回数を表示
         string countStr = $"({remainingSetCount})";
         if (!deathBedRoom.HasValue)
             return $"<color={RoleInfo.RoleColorCode}>床:未設定 {countStr}</color>";
@@ -198,13 +180,13 @@ public sealed class MassMurder : RoleBase, IKiller, IUsePhantomButton
         sender.Writer.Write(deathBedRoom.HasValue);
         if (deathBedRoom.HasValue)
             sender.Writer.Write((int)deathBedRoom.Value);
-        sender.Writer.Write(remainingSetCount);  // ★
+        sender.Writer.Write(remainingSetCount);
     }
 
     public override void ReceiveRPC(MessageReader reader)
     {
         bool hasRoom = reader.ReadBoolean();
         deathBedRoom = hasRoom ? (SystemTypes?)((SystemTypes)reader.ReadInt32()) : null;
-        remainingSetCount = reader.ReadInt32();  // ★
+        remainingSetCount = reader.ReadInt32();
     }
 }

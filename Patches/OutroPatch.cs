@@ -53,6 +53,7 @@ namespace TownOfHost
             switch (CustomWinnerHolder.WinnerTeam)
             {
                 case CustomWinner.God: meg = GetString("GodWinText"); break;
+                case CustomWinner.Amateras: meg = GetString("AmaterasWinText"); break;
                 case CustomWinner.Draw: meg = GetString("ForceEnd"); break;
                 case CustomWinner.None: meg = GetString("EveryoneDied"); break;
                 case CustomWinner.SuddenDeathRed: meg = GetString("SuddenDeathRed"); winnerColor = ModColors.Red; break;

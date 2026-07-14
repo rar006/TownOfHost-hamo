@@ -25,6 +25,28 @@ namespace TownOfHost
         private static TextMeshPro warningText;
         public static TextMeshPro HideName;
         private static TextMeshPro GameMaster;
+        private static bool privacyLabelRenamed;
+
+        private static void RenamePrivacyLabel(GameStartManager gameStartManager)
+        {
+            if (privacyLabelRenamed || gameStartManager == null) return;
+
+            var privacyLabelRoot = GameObject.Find("PrivacyLabel");
+            var privacyLabel = privacyLabelRoot?.GetComponent<TextMeshPro>()
+                ?? privacyLabelRoot?.transform.FindChild("Text_TMP")?.GetComponent<TextMeshPro>();
+
+            privacyLabel ??= gameStartManager.GetComponentsInChildren<TextMeshPro>(true)
+                .FirstOrDefault(text => text != null
+                    && text != gameStartManager.privatePublicPanelText
+                    && (text.text == "プライバシー"
+                        || text.text.Equals("Privacy", StringComparison.OrdinalIgnoreCase)));
+
+            if (privacyLabel == null) return;
+
+            privacyLabel.DestroyTranslator();
+            privacyLabel.text = "募集状況";
+            privacyLabelRenamed = true;
+        }
 
         public static string GetTimerString()
         {
@@ -41,6 +63,8 @@ namespace TownOfHost
             public static void Postfix(GameStartManager __instance)
             {
                 __instance.MinPlayers = 1;
+                privacyLabelRenamed = false;
+                RenamePrivacyLabel(__instance);
 
                 __instance.GameRoomNameCode.text = GameCode.IntToGameName(AmongUsClient.Instance.GameId);
                 // Reset lobby countdown timer
@@ -114,6 +138,8 @@ namespace TownOfHost
             //private static float ext = 0f;
             public static void Prefix(GameStartManager __instance)
             {
+                RenamePrivacyLabel(__instance);
+
                 // Lobby code
                 if (DataManager.Settings.Gameplay.StreamerMode
                 && AmongUsClient.Instance.NetworkMode == NetworkModes.OnlineGame)

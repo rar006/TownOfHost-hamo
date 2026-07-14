@@ -120,6 +120,7 @@ namespace TownOfHost
             if ((Event.OptionLoad.Contains(str) || str is "CakeshopInfoLong" or "CakeshopInfo" or "Cakeshop") && !Event.Special && !Event.CheckRole(CustomRoles.Cakeshop)) return res;
             if (str is "VegaInfoLong" or "VegaInfo" or "Vega" && !Event.CheckRole(CustomRoles.Vega)) return res;
             if (str is "AltairInfoLong" or "AltairInfo" or "Altair" && !Event.CheckRole(CustomRoles.Altair)) return res;
+            if (str.StartsWith("Amateras") && !Event.CheckRole(CustomRoles.Amateras)) return res;
             if (translateMaps.TryGetValue(str, out var dic) && (!dic.TryGetValue((int)langId, out res) || res == "")) //strに該当する&無効なlangIdかresが空
             {
                 res = $"*{dic[0]}";
@@ -256,6 +257,15 @@ namespace TownOfHost
                         "PhantomThiefStolenMessage_2" => "会議室にあった桜餅が食べられてる!!!怪盗の仕業か!!!",
                         "ModSettingInfo2" => "柏餅は食べた?",
                         "ModSettingInfo3" => "やねよ～り～た～か～い～",
+                        _ => res
+                    };
+                }
+                if (Event.Tanabata)
+                {
+                    res = str switch
+                    {
+                        "LoversBreakerInfo" => "二つの星が重なる時、終焉の火花が咲く。",
+                        "ModSettingInfo2" => "今年は織姫と彦星../nあともう一人やってきてるみたいだよ!",
                         _ => res
                     };
                 }

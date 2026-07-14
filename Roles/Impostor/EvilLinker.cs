@@ -1,4 +1,4 @@
-/*using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
@@ -69,6 +69,9 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
     public bool CanUseImpostorVentButton() => true;
     bool IUsePhantomButton.IsPhantomRole => true;
     bool IUsePhantomButton.IsresetAfterKill => false;
+
+    bool IUsePhantomButton.SyncAbilityCooldownWithKillCooldown => false;
+
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
         AdjustKillCooldown = false;
@@ -123,9 +126,19 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
     void OnPetAction()
     {
         if (!Player.IsAlive()) return;
-        if (!AmongUsClient.Instance.AmHost) return;
         if (cooldownTimer > 0f) return;
 
+        if (!AmongUsClient.Instance.AmHost)
+        {
+            SendActionRpc();
+            return;
+        }
+
+        PerformPlacePortal();
+    }
+
+    void PerformPlacePortal()
+    {
         var pos = Player.transform.position;
 
         if (pendingDummy == null)
@@ -136,7 +149,7 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
             var pair = new LinkPair
             {
                 ColorId = colorId,
-                DummyA = new EvilLinkerDummy(pos, Player, PendingColor, activated: false),
+                DummyA = new EvilLinkerDummy((Vector2)pos, Player, PendingColor, activated: false),
                 Activated = false,
             };
             pendingDummy = pair;
@@ -147,7 +160,7 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
         }
         else
         {
-            pendingDummy.DummyB = new EvilLinkerDummy(pos, Player, PendingColor, activated: false);
+            pendingDummy.DummyB = new EvilLinkerDummy((Vector2)pos, Player, PendingColor, activated: false);
             pendingDummy = null;
             placedCount++;
 
@@ -161,6 +174,12 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
 
     public override void OnFixedUpdate(PlayerControl player)
     {
+        if (cooldownTimer > 0f)
+        {
+            cooldownTimer -= Time.fixedDeltaTime;
+            if (cooldownTimer < 0f) cooldownTimer = 0f;
+        }
+
         if (!AmongUsClient.Instance.AmHost) return;
         if (!GameStates.IsInTask || GameStates.IsMeeting) return;
 
@@ -174,12 +193,6 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
             linkPairs.Clear();
             pendingDummy = null;
             return;
-        }
-
-        if (cooldownTimer > 0f)
-        {
-            cooldownTimer -= Time.fixedDeltaTime;
-            if (cooldownTimer < 0f) cooldownTimer = 0f;
         }
 
         foreach (var pid in warpCooldowns.Keys.ToArray())
@@ -278,7 +291,11 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
         }
 
         cooldownTimer = PlaceCooldown;
+
+        Player.MarkDirtySettings();
         Player.RpcResetAbilityCooldown(Sync: true);
+        Main.AllPlayerKillCooldown[Player.PlayerId] = CalculateKillCooldown();
+        Player.SetKillCooldown(CalculateKillCooldown());
 
         foreach (var pair in linkPairs)
         {
@@ -326,16 +343,33 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
     {
         if (!AmongUsClient.Instance.AmHost) return;
         using var sender = CreateSender();
+        sender.Writer.Write((byte)0);
         sender.Writer.Write(placedCount);
         sender.Writer.Write(cooldownTimer);
         sender.Writer.Write(pendingDummy != null);
     }
 
+    void SendActionRpc()
+    {
+        using var sender = CreateSender();
+        sender.Writer.Write((byte)1);
+    }
+
     public override void ReceiveRPC(MessageReader reader)
     {
-        placedCount = reader.ReadInt32();
-        cooldownTimer = reader.ReadSingle();
-        reader.ReadBoolean();
+        byte rpcType = reader.ReadByte();
+
+        if (rpcType == 0)
+        {
+            placedCount = reader.ReadInt32();
+            cooldownTimer = reader.ReadSingle();
+            reader.ReadBoolean();
+        }
+        else if (rpcType == 1)
+        {
+            if (AmongUsClient.Instance.AmHost)
+                PerformPlacePortal();
+        }
     }
 }
 
@@ -359,7 +393,14 @@ public sealed class EvilLinkerDummy : CustomNetObject
     {
         if (PlayerControl == null) return;
 
-        SetAppearance(_colorId, "", "", "", "");
+        var hostPlayer = PlayerControl.LocalPlayer;
+        byte hostColor = (byte)(hostPlayer?.Data?.DefaultOutfit.ColorId ?? 0);
+
+        PlayerControl.RpcSetColor((byte)_colorId);
+        if (hostPlayer != null)
+            hostPlayer.RpcSetColor(hostColor);
+        PlayerControl.RawSetColor((byte)_colorId);
+
         SetName("ポータル");
         SnapToPosition(_pos);
 
@@ -372,7 +413,14 @@ public sealed class EvilLinkerDummy : CustomNetObject
                     Hide(pc);
             }
         }
+
+        var capturedDummy = PlayerControl;
+        _ = new LateTask(() =>
+        {
+            if (capturedDummy != null)
+                capturedDummy.RawSetColor((byte)_colorId);
+        }, 0.15f, "EvilLinker.ApplyDummyColor", true);
     }
 
     public override void OnMeeting() { }
-}*/
+}

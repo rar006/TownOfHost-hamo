@@ -46,9 +46,14 @@ namespace TownOfHost
                 }
                 if (pingTrackerCredentialAspectPos)
                 {
-                    pingTrackerCredentialAspectPos.DistanceFromEdge = DestroyableSingleton<HudManager>.InstanceExists && DestroyableSingleton<HudManager>.Instance.Chat.chatButton.gameObject.active
-                        ? new(2.5f, 0, 0)
-                        : new(1.8f, 0, 0);
+                    bool isChatButtonVisible = DestroyableSingleton<HudManager>.InstanceExists
+                        && DestroyableSingleton<HudManager>.Instance.Chat.chatButton.gameObject.activeInHierarchy;
+                    float rightOffset = isChatButtonVisible
+                        ? 2.5f
+                        : 1.8f;
+                    // 役職ガイドボタンの左側へ上部表示を収める。
+                    if (RoleGuideButtonPatch.HasGuideButton) rightOffset += 0.72f;
+                    pingTrackerCredentialAspectPos.DistanceFromEdge = new(rightOffset, 0, 0);
                 }
 
                 if ((FixedUpdatePatch.timer is 1 && GameStates.InGame) || GameStates.IsLobby || GameStates.IsFreePlay)

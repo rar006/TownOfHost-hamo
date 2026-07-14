@@ -504,6 +504,7 @@ namespace TownOfHost
         };
         // その他
         public static OptionItem OptionCommandSetting;
+        public static OptionItem OptionCommandNow;
         public static OptionItem OptionCommandNowRole;
         public static OptionItem OptionCommandNowSet;
         public static OptionItem OptionCommandNowW;
@@ -1296,6 +1297,11 @@ namespace TownOfHost
                 .SetHeader(true)
                 .SetColorcode("#00c1ff")
                 .SetOptionName(() => "一部コマンドを禁止する");
+
+            OptionCommandNow = BooleanOptionItem.Create(1_601_090, "DisableCommandNow", false, TabGroup.MainSettings, true)
+                .SetParent(OptionCommandSetting)
+                .SetColorcode("#00c1ff")
+                .SetOptionName(() => "/now - 現在の設定を表示");
 
             OptionCommandNowRole = BooleanOptionItem.Create(1_601_100, "DisableCommandNowRole", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)

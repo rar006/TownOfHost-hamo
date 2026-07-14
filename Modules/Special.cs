@@ -76,6 +76,7 @@ static class Event
     {
         {CustomRoles.Altair,() => Tanabata},
         {CustomRoles.Vega,() => Tanabata},
+        {CustomRoles.Amateras,() => Tanabata},
         {CustomRoles.SpeedStar , () => Special},
         {CustomRoles.Chameleon , () => Special},
         {CustomRoles.UnFortuner , () => 4 <= DateTime.Now.Month},

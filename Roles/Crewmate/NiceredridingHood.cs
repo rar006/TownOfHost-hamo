@@ -1,3 +1,4 @@
+/*
 using AmongUs.GameOptions;
 using Hazel;
 using TownOfHost.Roles.Core;
@@ -7,10 +8,6 @@ using static TownOfHost.Translator;
 
 namespace TownOfHost.Roles.Crewmate;
 
-/// <summary>
-/// ナイス赤ずきん (SNR移植)
-/// 自分を殺した相手が追放（またはゲーム中に死亡）すると復活する。
-/// </summary>
 public sealed class NiceredridingHood : RoleBase
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -23,7 +20,7 @@ public sealed class NiceredridingHood : RoleBase
             362000,
             SetupOptionItem,
             "nrrh",
-            "#fa8072",   // サーモン色
+            "#fa8072",
             (5, 3),
             introSound: () => GetIntroSound(RoleTypes.Crewmate),
             from: From.SuperNewRoles
@@ -63,13 +60,11 @@ public sealed class NiceredridingHood : RoleBase
         OverrideTasksData.Create(RoleInfo, 20);
     }
 
-    // ─── 自分がキルされた瞬間にキラーを記録 ──────────────
     public override bool OnCheckMurderAsTarget(MurderInfo info)
     {
         if (remainingReviveCount <= 0) return true;
 
         (var killer, _) = info.AttemptTuple;
-        // 自殺・ゲームシステムによる死亡は除外
         if (killer == null || killer.PlayerId == Player.PlayerId) return true;
 
         killerPlayerId = killer.PlayerId;
@@ -81,11 +76,9 @@ public sealed class NiceredridingHood : RoleBase
             "NiceRedRidingHood");
         SendRpc();
 
-        return true; // キルを通す
+        return true;
     }
 
-    // ─── 追放者がキラーかどうかを記録 ────────────────────
-    //   VotingResults は追放確定タイミングで呼ばれる
     public override bool VotingResults(ref NetworkedPlayerInfo Exiled, ref bool IsTie,
         Dictionary<byte, int> vote, byte[] mostVotedPlayers, bool ClearAndExile)
     {
@@ -100,7 +93,6 @@ public sealed class NiceredridingHood : RoleBase
         return false;
     }
 
-    // ─── 会議終了後に復活判定 ─────────────────────────────
     public override void AfterMeetingTasks()
     {
         if (!AmongUsClient.Instance.AmHost) return;
@@ -112,7 +104,6 @@ public sealed class NiceredridingHood : RoleBase
         if (!shouldRevive && isKillerDeathRevive)
         {
             var killer = GetPlayerById(killerPlayerId);
-            // ゲーム中死亡（サボ・キルなど）も含めてキラーが死んでいれば復活
             if (killer != null && !killer.IsAlive())
             {
                 shouldRevive = true;
@@ -123,7 +114,6 @@ public sealed class NiceredridingHood : RoleBase
         if (shouldRevive) DoRevive();
     }
 
-    // ─── 復活処理 ─────────────────────────────────────────
     private void DoRevive()
     {
         if (!AmongUsClient.Instance.AmHost) return;
@@ -134,20 +124,17 @@ public sealed class NiceredridingHood : RoleBase
         killerPlayerId = byte.MaxValue;
         SendRpc();
 
-        // LateTask でゲーム状態が落ち着いてから復活する
         _ = new LateTask(() =>
         {
             if (Player == null) return;
 
-            // ★ TOH-P の PlayerState をリセット
             var state = PlayerState.GetByPlayerId(Player.PlayerId);
             if (state != null)
             {
                 state.IsDead = false;
-                state.DeathReason = CustomDeathReason.etc;   // リセット
+                state.DeathReason = CustomDeathReason.etc;
             }
 
-            // ★ Among Us の本体 Revive を呼ぶ
             Player.Revive();
             Player.Data.IsDead = false;
 
@@ -155,7 +142,6 @@ public sealed class NiceredridingHood : RoleBase
                 $"{UtilsName.GetPlayerColor(Player)} が復活した (残り{remainingReviveCount}回)");
             UtilsNotifyRoles.NotifyRoles();
 
-            // 本人に通知
             Utils.SendMessage(GetString("NiceRedRidingHoodRevived"), Player.PlayerId);
 
             Logger.Info(
@@ -165,11 +151,9 @@ public sealed class NiceredridingHood : RoleBase
         }, Main.LagTime + 0.2f, "NiceRedRidingHood.Revive", true);
     }
 
-    // ─── 表示 ─────────────────────────────────────────────
     public override string GetProgressText(bool comms = false, bool GameLog = false)
     {
         if (remainingReviveCount <= 0) return "";
-        // 復活待機中は赤、通常はロールカラー
         string color = isRevivable ? "#ff4444" : RoleInfo.RoleColorCode;
         return $"<color={color}>({remainingReviveCount})</color>";
     }
@@ -180,7 +164,6 @@ public sealed class NiceredridingHood : RoleBase
         seen ??= seer;
         if (!Is(seer) || seer.PlayerId != seen.PlayerId) return "";
 
-        // 死亡中かつ復活待機中：キラー情報を表示
         if (!Player.IsAlive() && isRevivable && killerPlayerId != byte.MaxValue)
         {
             var killer = GetPlayerById(killerPlayerId);
@@ -190,7 +173,6 @@ public sealed class NiceredridingHood : RoleBase
             return $"{size}<color={RoleInfo.RoleColorCode}>{killerName} の{cond}で復活！</color>";
         }
 
-        // 生存中：説明
         if (Player.IsAlive() && !isForMeeting)
         {
             string size = isForHud ? "" : "<size=60%>";
@@ -202,7 +184,6 @@ public sealed class NiceredridingHood : RoleBase
         return "";
     }
 
-    // ─── RPC ─────────────────────────────────────────────
     void SendRpc()
     {
         if (!AmongUsClient.Instance.AmHost) return;
@@ -219,3 +200,4 @@ public sealed class NiceredridingHood : RoleBase
         killerPlayerId = reader.ReadByte();
     }
 }
+*/

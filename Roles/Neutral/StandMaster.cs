@@ -27,7 +27,7 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
             "#8B4513",
             (6, 4),
             true,
-            countType: CountTypes.Crew,
+            countType: CountTypes.StandMaster,
             assignInfo: new RoleAssignInfo(CustomRoles.StandMaster, CustomRoleTypes.Neutral)
             {
                 AssignCountRule = new(1, 1, 1)
@@ -160,7 +160,7 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
     {
         EnableKillAbility = OptionEnableKillAbility.GetBool();
         StandDeathGrantsKill = OptionStandDeathGrantsKill.GetBool();
-        KillCooldown_ = OptionKillCooldown.GetFloat();   // ★
+        KillCooldown_ = OptionKillCooldown.GetFloat();
         StandImpostorVision = OptionStandImpostorVision.GetBool();
         EnableTaskAddon = OptionEnableTaskAddon.GetBool();
         AddonGiveToMaster = OptionAddonGiveToMaster.GetBool();
@@ -466,7 +466,7 @@ public sealed class Stand : RoleBase, ILNKiller
             "st",
             "#8B4513",
             (6, 4),
-            countType: CountTypes.OutOfGame,
+            countType: CountTypes.StandMaster,
             from: From.TownOfHost_Pko
         );
 
@@ -513,6 +513,8 @@ public sealed class Stand : RoleBase, ILNKiller
 
     public override bool OnCheckMurderAsTarget(MurderInfo info)
     {
+        if (!info.DoKill) return true;
+
         var sm = GetOwner();
         if (sm == null || !sm.Player.IsAlive()) return true;
 

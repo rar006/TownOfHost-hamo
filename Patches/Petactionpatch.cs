@@ -1,5 +1,3 @@
-// ペットの自動破棄機能はK対応来るまで一時的にこうしてます。対応が来たらTOHK処理に戻します。
-
 using System;
 using System.Collections.Generic;
 using AmongUs.GameOptions;
@@ -59,9 +57,36 @@ internal static class ExternalRpcPetPatch
 
         LastProcess[pc.PlayerId] = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
+        if (!pc.AmOwner
+            && !pc.inVent
+            && !pc.inMovingPlat
+            && !pc.walkingToVent
+            && !pc.onLadder
+            && !__instance.Animations.IsPlayingEnterVentAnimation()
+            && !__instance.Animations.IsPlayingAnyLadderAnimation()
+            && GameStates.IsInTask)
+        {
+            CancelPetNow(__instance);
+            _ = new LateTask(() => CancelPetNow(__instance), 0.4f, "ExternalRpcPetPatch.CancelPet", true);
+        }
+
         Logger.Info($"{pc.Data?.GetLogPlayerName()} がペットを撫でた", "PetActionPatch");
 
         OnPetUse(pc);
+    }
+
+    private static void CancelPetNow(PlayerPhysics physics)
+    {
+        try { physics.CancelPet(); }
+        catch { }
+
+        try
+        {
+            MessageWriter w = AmongUsClient.Instance.StartRpcImmediately(
+                physics.NetId, (byte)RpcCalls.CancelPet, SendOption.None);
+            AmongUsClient.Instance.FinishRpcImmediately(w);
+        }
+        catch { }
     }
 
     private static void OnPetUse(PlayerControl pc)
@@ -92,7 +117,6 @@ public static class PetsHelper
 
     public static void RemovePet(PlayerControl pc)
     {
-        // Data.IsDeadは会議中にアンチブラックアウトで偽装されるため、PlayerState由来のIsAliveで判定する
         if (pc?.Data == null || pc.IsAlive()) return;
         if (pc.CurrentOutfit.PetId == "") return;
 

@@ -73,6 +73,7 @@ namespace TownOfHost
                 CustomRoles.Stack or
                 //バフ
                 CustomRoles.Moon or
+                CustomRoles.VoteTracker or
                 CustomRoles.Guesser or
                 CustomRoles.Speeding or
                 CustomRoles.Guarding or
@@ -90,6 +91,7 @@ namespace TownOfHost
                 CustomRoles.Tiebreaker or
                 CustomRoles.MagicHand or
                 CustomRoles.Powerful or
+                CustomRoles.Absorb or
                 //デバフ
                 CustomRoles.NonReport or
                 CustomRoles.Notvoter or
@@ -129,7 +131,8 @@ namespace TownOfHost
                 CustomRoles.Autopsy or
                 CustomRoles.Tiebreaker or
                 CustomRoles.MagicHand or
-                CustomRoles.Powerful
+                CustomRoles.Powerful or
+                CustomRoles.Absorb
                 ;
         }
         public static bool IsDebuffAddon(this CustomRoles roles)
@@ -157,6 +160,7 @@ namespace TownOfHost
         CustomRoles.Assassin or CustomRoles.Merlin or
         CustomRoles.Driver or CustomRoles.Braid or
         CustomRoles.Vega or CustomRoles.Altair or
+        CustomRoles.Abuser or CustomRoles.Victim or
         CustomRoles.Fool or CustomRoles.Nue;
         public static CustomRoles GetCombination(this CustomRoles role)
         {
@@ -170,6 +174,8 @@ namespace TownOfHost
                 case CustomRoles.Braid: return CustomRoles.Driver;
                 case CustomRoles.Vega: return CustomRoles.Altair;
                 case CustomRoles.Altair: return CustomRoles.Vega;
+                case CustomRoles.Abuser: return CustomRoles.Victim;
+                case CustomRoles.Victim: return CustomRoles.Abuser;
                 case CustomRoles.Fool: return CustomRoles.Nue;
                 case CustomRoles.Nue: return CustomRoles.Fool;
             }
@@ -253,6 +259,8 @@ namespace TownOfHost
         {
             return role is CustomRoles.GuardianAngel
                         or CustomRoles.Ghostbuttoner
+                        or CustomRoles.GhostFloodlight
+                        or CustomRoles.GhostSaboteur
                         or CustomRoles.GhostNoiseSender
                         or CustomRoles.GhostReseter
                         or CustomRoles.GhostRumour
@@ -377,6 +385,7 @@ namespace TownOfHost
         MilkyWay,
         Pavlov,
         Eater,
+        Victim,
         Monika,
         StandMaster,
         Villain

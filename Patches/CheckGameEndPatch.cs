@@ -28,7 +28,12 @@ namespace TownOfHost
         {
             if (!AmongUsClient.Instance.AmHost) return true;
 
-            if (predicate == null) return false;
+            if (predicate == null)
+            {
+                Logger.Warn("ゲーム終了判定が未初期化のため、現在のゲームモードに合わせて初期化します", "GameEndChecker");
+                EnsurePredicate();
+                return false;
+            }
 
             if (Main.DontGameSet && CustomWinnerHolder.WinnerTeam != CustomWinner.Draw) return false;
 
@@ -134,6 +139,13 @@ namespace TownOfHost
                 // 勝者固定経路でも、乗っ取りではない個人勝利条件は必ず適用する。
                 foreach (var beginner in CustomRoleManager.AllActiveRoles.Values.OfType<BeginnerImpostor>())
                     beginner.EnforceDummyKillWinRequirement();
+
+                // 勝者固定経路でも、加虐者・被虐者の個別条件を必ず反映する。
+                foreach (var abuser in CustomRoleManager.AllActiveRoles.Values.OfType<Abuser>())
+                    abuser.EnforceWinRequirement();
+                foreach (var victim in CustomRoleManager.AllActiveRoles.Values.OfType<Victim>())
+                    victim.EnforceFactionWin();
+
 
                 if (!lockWinner && SuddenDeathMode.NowSuddenDeathTemeMode && !(CustomWinnerHolder.WinnerTeam is CustomWinner.SuddenDeathRed or CustomWinner.SuddenDeathBlue or CustomWinner.SuddenDeathGreen or CustomWinner.SuddenDeathYellow or CustomWinner.PurpleLovers))
                 {
@@ -406,6 +418,28 @@ namespace TownOfHost
             }
         }
         private const float EndGameDelay = 0.2f;
+
+        private static void EnsurePredicate()
+        {
+            switch (Options.CurrentGameMode)
+            {
+                case CustomGameMode.SuddenDeath:
+                    SetPredicateToSadness();
+                    break;
+                case CustomGameMode.MurderMystery:
+                    SetPredicateToMurderMystery();
+                    break;
+                case CustomGameMode.HideAndSeek:
+                    SetPredicateToHideAndSeek();
+                    break;
+                case CustomGameMode.TaskBattle:
+                    SetPredicateToTaskBattle();
+                    break;
+                default:
+                    SetPredicateToNormal();
+                    break;
+            }
+        }
 
         public static void SetPredicateToNormal() => predicate = new NormalGameEndPredicate();
         public static void SetPredicateToHideAndSeek() => predicate = new HideAndSeekGameEndPredicate();

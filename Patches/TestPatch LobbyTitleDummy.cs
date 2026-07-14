@@ -1,4 +1,4 @@
-using System;
+/*using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
@@ -8,48 +8,54 @@ using TownOfHost.Modules;
 
 namespace TownOfHost.Patches;
 
-public sealed class LobbyTitleDummy : CustomNetObject
+public sealed class テスト用PatchLobbyTitleDummy : CustomNetObject
 {
-    private static LobbyTitleDummy _instance;
+    private static テスト用PatchLobbyTitleDummy _instance;
 
     private static readonly Vector2 SpawnPosition = new(0f, 10f);
+    // ─── サイズ設定（個別に変更可）──────────────────────────────────
+    private const string NameSizePercent = "500%";  // MOD名のサイズ
+    private const string VersionSizePercent = "220%";  // バージョンのサイズ
 
-    private const string NameSizePercent = "500%";
-    private const string VersionSizePercent = "220%";
-
+    // ─── グラデーション名前 + バージョン生成 ─────────────────────────
     private static string BuildTitle()
     {
         const string nameText = "TownOfHost-Pko";
+        // ★ バージョン文字列が異なる場合は Main.PluginVersion を適切なものに変更
         string versionText = $"v{Main.PluginVersion}";
 
         Color[] stops =
         [
-            new Color(1.00f, 0.42f, 0.62f),
-            new Color(1.00f, 0.75f, 0.30f),
-            new Color(0.30f, 1.00f, 0.60f),
-            new Color(0.30f, 0.75f, 1.00f),
+            new Color(1.00f, 0.42f, 0.62f), // ピンク
+            new Color(1.00f, 0.75f, 0.30f), // 黄
+            new Color(0.30f, 1.00f, 0.60f), // 緑
+            new Color(0.30f, 0.75f, 1.00f), // 水色
         ];
 
         var sb = new StringBuilder();
-        sb.Append("<line-height=7500%>\n<line-height=100%>");
-        sb.Append($"<size={NameSizePercent}><b><i>");
 
+        // ── 位置調整（line-height + 改行で名前を浮かせる）─────────────
+        sb.Append("<line-height=7500%>\n<line-height=100%>");
+
+        // ── MOD名（1文字ずつグラデーション）──────────────────────────
+        sb.Append($"<size={NameSizePercent}><b><i>");
         for (int i = 0; i < nameText.Length; i++)
         {
             float t = (float)i / (nameText.Length - 1) * (stops.Length - 1);
             int idx = Mathf.Clamp(Mathf.FloorToInt(t), 0, stops.Length - 2);
             Color c = Color.Lerp(stops[idx], stops[idx + 1], t - idx);
-            sb.Append($"<color=#{ColorUtility.ToHtmlStringRGB(c)}>{nameText[i]}</color>");
+            string hex = ColorUtility.ToHtmlStringRGB(c);
+            sb.Append($"<color=#{hex}>{nameText[i]}</color>");
         }
-
         sb.Append($"</i></b></size>");
+
+        // ── バージョン（改行して MOD名の下に表示）────────────────────
         sb.Append($"\n<size={VersionSizePercent}><color=#BBCCFF>{versionText}</color></size>");
+
         return sb.ToString();
     }
 
-    // ──────────────────────────────────────────────────────────────────
-    //  リフレクション（SpawnQueue/DoCreate は元の CustomNetObject に存在）
-    // ──────────────────────────────────────────────────────────────────
+    // ─── リフレクション用キャッシュ ──────────────────────────────────
     private static readonly FieldInfo _spawnQueueField = typeof(CustomNetObject)
         .GetField("SpawnQueue", BindingFlags.NonPublic | BindingFlags.Static);
     private static readonly MethodInfo _processQueueMethod = typeof(CustomNetObject)
@@ -70,18 +76,15 @@ public sealed class LobbyTitleDummy : CustomNetObject
         }
 
         var self = this;
-        queue.Enqueue(() => _doCreateMethod.Invoke(self, [position]));
+        queue.Enqueue(() => _doCreateMethod.Invoke(self, new object[] { position }));
         _processQueueMethod.Invoke(null, null);
     }
 
-    // ──────────────────────────────────────────────────────────────────
-    //  召喚 / 破棄
-    // ──────────────────────────────────────────────────────────────────
     public static void Spawn()
     {
         if (!AmongUsClient.Instance.AmHost) return;
         if (_instance != null) return;
-        _instance = new LobbyTitleDummy();
+        _instance = new テスト用PatchLobbyTitleDummy();
         _instance.SpawnInLobby(SpawnPosition);
     }
 
@@ -94,44 +97,11 @@ public sealed class LobbyTitleDummy : CustomNetObject
 
     public static void ResetInstance() => _instance = null;
 
-    // ──────────────────────────────────────────────────────────────────
-    //  OnCreated — BeginnerImpostorDummy と同じ方式に統一
-    //
-    //  ❌ 旧: Shapeshift トリック（バニラクライアントに届かない）
-    //  ✅ 新: RpcSetColor + RawSetColor → バニラクライアントにも色が届く
-    //         SetName → 名前テキストを設定
-    // ──────────────────────────────────────────────────────────────────
     protected override void OnCreated()
     {
-        if (PlayerControl == null) return;
-
         SnapToPosition(SpawnPosition);
-
-        // ★ ボディの色を黒(6)に設定
-        //   RpcSetColor: 全クライアント（バニラ含む）に届く標準 RPC
-        //   RawSetColor: ホスト側の描画を即座に更新
-        const byte bodyColor = 6; // Black
-        try
-        {
-            PlayerControl.RpcSetColor(bodyColor);
-            PlayerControl.RawSetColor(bodyColor);
-        }
-        catch (Exception e)
-        {
-            Logger.Error(e.ToString(), "LobbyTitleDummy.SetColor");
-        }
-
-        // ボディを非表示（ホスト側のみ — 他クライアントはカラーで代替）
-        try
-        {
-            PlayerControl.cosmetics.currentBodySprite.BodySprite.color = Color.clear;
-        }
-        catch { }
-
-        // 名前（タイトル文字列）を設定
         _ = new LateTask(() =>
         {
-            if (PlayerControl == null) return;
             SetName(BuildTitle());
         }, 0.2f, "LobbyTitle.SetName", true);
     }
@@ -145,13 +115,14 @@ internal static class LobbyTitleSpawnPatch
     public static void Postfix()
     {
         if (!AmongUsClient.Instance.AmHost) return;
-        LobbyTitleDummy.ResetInstance();
-        _ = new LateTask(LobbyTitleDummy.Spawn, 0.8f, "LobbyTitle.Spawn", true);
+        テスト用PatchLobbyTitleDummy.ResetInstance();
+        _ = new LateTask(テスト用PatchLobbyTitleDummy.Spawn, 0.8f, "LobbyTitle.Spawn", true);
     }
 }
 
 [HarmonyPatch(typeof(LobbyBehaviour), nameof(LobbyBehaviour.OnDestroy))]
 internal static class LobbyTitleDespawnPatch
 {
-    public static void Prefix() => LobbyTitleDummy.DespawnInstance();
+    public static void Prefix() => テスト用PatchLobbyTitleDummy.DespawnInstance();
 }
+*/

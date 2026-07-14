@@ -198,6 +198,7 @@ public sealed class PavlovOwner : RoleBase, IKiller, IAdditionalWinner, ISchrodi
     bool LastCanImprintState;
 
     public ISchrodingerCatOwner.TeamType SchrodingerCatChangeTo => ISchrodingerCatOwner.TeamType.Pavlov;
+    public bool HasRemainingImprintCount() => RemainingImprintCount > 0;
 
     bool CanImprintNow()
         => Player.IsAlive() &&

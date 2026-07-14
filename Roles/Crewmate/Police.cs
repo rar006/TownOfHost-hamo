@@ -1,4 +1,5 @@
-/*using System.Collections.Generic;
+/*
+using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
@@ -40,10 +41,10 @@ public sealed class Police : RoleBase, IKiller, IUsePhantomButton
         markedTargets = new();
         handcuffStock = MaxHandcuffs;
         nowcool = HandcuffCooldown;
-        LastCooltime = 0;
+        LastCooltime = (int)HandcuffCooldown;
+        spawnCooldownStarted = false;
     }
 
-    // ─── 手錠中プレイヤー管理（全インスタンス共有） ──────────────
     public static Dictionary<byte, int> HandcuffedPlayers = new();
 
     static OptionItem OptionHandcuffCooldown; static float HandcuffCooldown;
@@ -68,7 +69,7 @@ public sealed class Police : RoleBase, IKiller, IUsePhantomButton
         OptionMaxHandcuffs = IntegerOptionItem.Create(RoleInfo, 12, OptionName.PoliceMaxHandcuffs,
             new(1, 15, 1), 3, false).SetValueFormat(OptionFormat.Times);
         OptionHandcuffDuration = IntegerOptionItem.Create(RoleInfo, 13, OptionName.PoliceHandcuffDuration,
-            new(1, 10, 1), 2, false);
+            new(1, 10, 1), 2, false).SetValueFormat(OptionFormat.Times);
     }
 
     bool handcuffMode;
@@ -76,6 +77,7 @@ public sealed class Police : RoleBase, IKiller, IUsePhantomButton
     int handcuffStock;
     float nowcool;
     int LastCooltime;
+    bool spawnCooldownStarted;
 
     public float CalculateKillCooldown() => handcuffMode && handcuffStock > 0 ? HandcuffCooldown : 999f;
     public bool CanUseKillButton() => Player.IsAlive() && handcuffMode && handcuffStock > 0;
@@ -110,14 +112,17 @@ public sealed class Police : RoleBase, IKiller, IUsePhantomButton
         markedTargets.Clear();
         handcuffStock = MaxHandcuffs;
         nowcool = HandcuffCooldown;
-        LastCooltime = 0;
+        LastCooltime = (int)HandcuffCooldown;
+        spawnCooldownStarted = false;
         HandcuffedPlayers.Clear();
         PetActionManager.Register(Player.PlayerId, OnPetUsed);
+        CustomRoleManager.MarkOthers.Add(GetMarkOthers);
     }
 
     public override void OnDestroy()
     {
         PetActionManager.Unregister(Player.PlayerId);
+        CustomRoleManager.MarkOthers.Remove(GetMarkOthers);
     }
 
     void OnPetUsed()
@@ -189,7 +194,8 @@ public sealed class Police : RoleBase, IKiller, IUsePhantomButton
         handcuffStock--;
 
         Utils.SendMessage(
-            $"<color=#1a6bb5>{target.GetRealName()} をマーク！({markedTargets.Count}人) ファントムで発動 (残{handcuffStock}個)</color>",
+            $"<color=#1a6bb5>{target.GetRealName()} をマーク！({markedTargets.Count}人) " +
+            $"ファントムで発動 (残{handcuffStock}個)</color>",
             Player.PlayerId);
 
         nowcool = HandcuffCooldown;
@@ -218,7 +224,8 @@ public sealed class Police : RoleBase, IKiller, IUsePhantomButton
                 pid);
 
             UtilsGameLog.AddGameLog("Police",
-                $"{UtilsName.GetPlayerColor(Player)} が {UtilsName.GetPlayerColor(pc)} に手錠をかけた（{HandcuffDuration}ターン）");
+                $"{UtilsName.GetPlayerColor(Player)} が {UtilsName.GetPlayerColor(pc)} " +
+                $"に手錠をかけた（{HandcuffDuration}ターン）");
         }
 
         markedTargets.Clear();
@@ -238,6 +245,15 @@ public sealed class Police : RoleBase, IKiller, IUsePhantomButton
     {
         if (!AmongUsClient.Instance.AmHost) return;
         if (GameStates.CalledMeeting || GameStates.Intro || !Player.IsAlive()) return;
+
+        if (!spawnCooldownStarted && GameStates.IsInTask && !GameStates.IsMeeting)
+        {
+            spawnCooldownStarted = true;
+            nowcool = HandcuffCooldown;
+            LastCooltime = (int)HandcuffCooldown;
+            Player.RpcResetAbilityCooldown(Sync: true);
+            return;
+        }
 
         if (handcuffMode) return;
 
@@ -290,9 +306,8 @@ public sealed class Police : RoleBase, IKiller, IUsePhantomButton
     {
         if (!AmongUsClient.Instance.AmHost || !Player.IsAlive()) return;
 
-        handcuffStock = MaxHandcuffs;
         nowcool = HandcuffCooldown;
-        LastCooltime = 0;
+        LastCooltime = (int)HandcuffCooldown;
 
         _ = new LateTask(() =>
         {
@@ -340,7 +355,9 @@ public sealed class Police : RoleBase, IKiller, IUsePhantomButton
     public override string GetProgressText(bool comms = false, bool GameLog = false)
     {
         if (!Player.IsAlive()) return "";
-        string mode = handcuffMode ? $"<color=#1a6bb5>[手錠]</color>" : "<color=#aaaaaa>[Task]</color>";
+        string mode = handcuffMode
+            ? "<color=#1a6bb5>[手錠]</color>"
+            : "<color=#aaaaaa>[タスク]</color>";
         string stock = $"<color=#1a6bb5>({handcuffStock})</color>";
         return $"{stock}{mode}";
     }
@@ -363,11 +380,25 @@ public sealed class Police : RoleBase, IKiller, IUsePhantomButton
         return $"{size}<color={color}>キル → ターゲットをマーク | ペット → タスクモードへ (残{handcuffStock}個)</color>";
     }
 
-    public static string GetHandcuffMark(PlayerControl seen)
+    public static string GetMarkOthers(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)
     {
-        if (seen == null) return "";
-        if (!HandcuffedPlayers.TryGetValue(seen.PlayerId, out int turns)) return "";
-        return $" <color=#1a6bb5>🔒({turns})</color>";
+        seen ??= seer;
+
+        if (HandcuffedPlayers.TryGetValue(seen.PlayerId, out int turns))
+        {
+            bool isPolice = seer.GetRoleClass() is Police;
+            bool isSelf = seer.PlayerId == seen.PlayerId;
+            if (isPolice || isSelf)
+                return $" <color=#1a6bb5>[鎖{turns}]</color>";
+        }
+
+        if (seer.GetRoleClass() is Police police)
+        {
+            if (police.markedTargets.Contains(seen.PlayerId))
+                return $" <color=#1a6bb5>✓</color>";
+        }
+
+        return "";
     }
 
     public bool OverrideKillButton(out string text) { text = "Police_Mark"; return true; }
@@ -376,11 +407,6 @@ public sealed class Police : RoleBase, IKiller, IUsePhantomButton
     public override bool OverrideAbilityButton(out string text) { text = "Police_Handcuff"; return true; }
 }
 
-// ══════════════════════════════════════════════════════════════
-// ★ 手錠中のキルブロック
-//   Priority.High で TOH-P の CheckMurderPatch より先に実行し
-//   確実にキルをキャンセルする
-// ══════════════════════════════════════════════════════════════
 [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.CheckMurder))]
 [HarmonyPriority(Priority.High)]
 public static class HandcuffedKillBlockPatch
@@ -391,7 +417,6 @@ public static class HandcuffedKillBlockPatch
         if (__instance == null || __instance.Data == null) return true;
         if (!Police.HandcuffedPlayers.ContainsKey(__instance.PlayerId)) return true;
 
-        // ★ 手錠中: キルをキャンセルしてメッセージ送信
         _ = new LateTask(() =>
         {
             if (__instance != null && __instance.IsAlive())
@@ -400,6 +425,7 @@ public static class HandcuffedKillBlockPatch
                     __instance.PlayerId);
         }, 0.05f, $"Police.HandcuffBlock.{__instance.PlayerId}", true);
 
-        return false; // ★ オリジナルをスキップ（Priority.High で先に実行されるため有効）
+        return false;
     }
-}*/
+}
+*/

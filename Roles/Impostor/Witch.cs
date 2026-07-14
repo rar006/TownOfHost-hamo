@@ -189,7 +189,7 @@ namespace TownOfHost.Roles.Impostor
         }
         public void SetSpelled(PlayerControl target)
         {
-            if (target.Is(CustomRoles.King)) return;
+            if (target.Is(CustomRoles.King) || target.Is(CustomRoles.Autocrat)) return;
 
             if (!IsSpelled(target.PlayerId))
             {

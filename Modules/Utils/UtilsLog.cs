@@ -218,6 +218,7 @@ namespace TownOfHost
                 case CustomWinner.CupidLovers: barColor = GetRoleColor(CustomRoles.CupidLovers); break;
                 case CustomWinner.OneLove: CustomWinnerText = ColorString(GetRoleColor(CustomRoles.OneLove), GetString("OneLoveWin")); barColor = GetRoleColor(CustomRoles.OneLove); break;
                 case CustomWinner.God: CustomWinnerText = GetString("GodWinText"); barColor = GetRoleColor(CustomRoles.God); break;
+                case CustomWinner.Amateras: CustomWinnerText = GetString("AmaterasWinText"); barColor = GetRoleColor(CustomRoles.Amateras); break;
                 case CustomWinner.MilkyWay: var MilkyWayColor = StringHelper.CodeColor(Roles.Neutral.Vega.TeamColor); CustomWinnerText = ColorString(MilkyWayColor, GetString("TeamMilkyWay")); barColor = MilkyWayColor; break;
                 case CustomWinner.TaskPlayerB:
                     if (winnerList.Count is 0) break;
@@ -454,6 +455,7 @@ namespace TownOfHost
                     switch (CustomWinnerHolder.WinnerTeam)
                     {
                         case CustomWinner.God: meg = GetString("GodWinText"); break;
+                        case CustomWinner.Amateras: meg = GetString("AmaterasWinText"); break;
                         case CustomWinner.Draw: meg = GetString("ForceEnd"); break;
                         case CustomWinner.None: meg = GetString("EveryoneDied"); break;
                         case CustomWinner.SuddenDeathRed: meg = GetString("SuddenDeathRed"); winnerColor = ModColors.Red; break;

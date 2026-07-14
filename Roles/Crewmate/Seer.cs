@@ -320,6 +320,7 @@ public sealed class SoulObject : CustomNetObject
 
     public override void OnMeeting() { }
 }*/
+
 using System;
 using System.Collections.Generic;
 using AmongUs.GameOptions;

@@ -501,10 +501,8 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
         }
     }
 
-    bool ShouldWinByLastSurvivorRule()
+    bool CanWinByLastSurvivorRule()
     {
-        if (CustomWinnerHolder.WinnerTeam is not (CustomWinner.Crewmate or CustomWinner.Remotekiller or CustomWinner.None)) return false;
-
         var alivePlayers = PlayerCatch.AllAlivePlayerControls.ToList();
         if (alivePlayers.Count != 2) return false;
 
@@ -512,6 +510,16 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
         if (other == null) return false;
 
         return IsValidLastOpponent(other);
+    }
+
+    public bool TryWinByLastSurvivorRule()
+    {
+        if (!CanWinByLastSurvivorRule()) return false;
+        if (!CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Eater, Player.PlayerId, true)) return false;
+
+        CustomWinnerHolder.NeutralWinnerIds.Add(Player.PlayerId);
+        CustomWinnerHolder.WinnerIds.Add(Player.PlayerId);
+        return true;
     }
 
     bool IsValidLastOpponent(PlayerControl other)
@@ -737,13 +745,8 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
     {
         if (!Player.IsAlive()) return;
         if (CustomWinnerHolder.WinnerTeam is CustomWinner.Eater) return;
-        if (!ShouldWinByLastSurvivorRule()) return;
-
-        if (CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Eater, Player.PlayerId, true))
-        {
-            CustomWinnerHolder.NeutralWinnerIds.Add(Player.PlayerId);
-            CustomWinnerHolder.WinnerIds.Add(Player.PlayerId);
-        }
+        if (CustomWinnerHolder.WinnerTeam is not (CustomWinner.Crewmate or CustomWinner.Remotekiller or CustomWinner.None)) return;
+        TryWinByLastSurvivorRule();
     }
 
     public static Dictionary<int, Achievement> achievements = new();

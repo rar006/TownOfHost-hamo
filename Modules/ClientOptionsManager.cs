@@ -11,14 +11,17 @@ namespace TownOfHost
     public static class ClientOptionsManager
     {
         private static readonly string OPTIONS_FILE_PATH = Main.BaseDirectory + "/options.txt";
-        private static readonly string DEFAULT = "//default:none\nWebHookUrl:none\n//default:50080\nYomiagePort:50080\n\n// Don't Change The Value. / この値を変更しないでください。\nverison:1";
+        private static readonly string DEFAULT = "WebHookUrl:none\nLog Data:true\nPreset Data:true\nYomiagePort:50080\n\n// Don't Change The Value. / この値を変更しないでください。\nverison:1";
         private static readonly int Version = 1;
         public static string WebhookUrl = "none";
+        public static bool LogData = true;
+        public static bool PresetData = true;
         public static string YomiagePort = "50080";
         [PluginModuleInitializer]
         public static void Init()
         {
             CreateIfNotExists();
+            EnsureWebhookDataOptions();
         }
 
         public static void CreateIfNotExists()
@@ -49,6 +52,9 @@ namespace TownOfHost
         {
             //CreateIfNotExists();
             CheckVersion();
+            EnsureWebhookDataOptions();
+            LogData = true;
+            PresetData = true;
             using StreamReader sr = new(OPTIONS_FILE_PATH, Encoding.GetEncoding("UTF-8"));
             string text;
             string[] tmp = Array.Empty<string>();
@@ -63,8 +69,39 @@ namespace TownOfHost
                         var none = tmp.Skip(1).Join(delimiter: ":").ToLower() == "none";
                         WebhookUrl = none ? "none" : tmp.Skip(1).Join(delimiter: ":");
                     }
+                    var optionName = tmp[0].Replace(" ", "").ToLowerInvariant();
+                    var optionValue = tmp.Skip(1).Join(delimiter: ":").Trim();
+                    if (optionName == "logdata" && bool.TryParse(optionValue, out var logData))
+                        LogData = logData;
+                    if (optionName == "presetdata" && bool.TryParse(optionValue, out var presetData))
+                        PresetData = presetData;
                     if (tmp[0].ToLower() == "yomiageport") YomiagePort = tmp.Skip(1).Join(delimiter: ":");
                 }
+            }
+        }
+
+        private static void EnsureWebhookDataOptions()
+        {
+            try
+            {
+                var lines = File.ReadAllLines(OPTIONS_FILE_PATH, Encoding.UTF8);
+                var updatedLines = lines
+                    .Where(line => !line.TrimStart().StartsWith("//default:", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                var hasLogData = updatedLines.Any(line =>
+                    line.Split(':')[0].Replace(" ", "").Equals("logdata", StringComparison.OrdinalIgnoreCase));
+                var hasPresetData = updatedLines.Any(line =>
+                    line.Split(':')[0].Replace(" ", "").Equals("presetdata", StringComparison.OrdinalIgnoreCase));
+
+                if (!hasLogData) updatedLines.Add("Log Data:true");
+                if (!hasPresetData) updatedLines.Add("Preset Data:true");
+
+                if (updatedLines.Count != lines.Length || !hasLogData || !hasPresetData)
+                    File.WriteAllLines(OPTIONS_FILE_PATH, updatedLines, Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                Logger.Exception(ex, "OptionsManager");
             }
         }
         public static void CheckVersion(StreamReader sr = null)

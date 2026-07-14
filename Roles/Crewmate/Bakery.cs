@@ -26,7 +26,7 @@ public sealed class Bakery : RoleBase
             introSound: () => GetIntroSound(RoleTypes.Crewmate)
         );
 
-    private static OptionItem PoisonedBakeryChanceOption;
+    internal static OptionItem PoisonedBakeryChanceOption;
 
     public Bakery(PlayerControl player)
     : base(RoleInfo, player)
@@ -192,7 +192,12 @@ public sealed class PoisonedBakery : RoleBase
 
     private static void SetupOptionItem()
     {
-        SoloWinOption.Create(RoleInfo, 9, defo: 50);
+        SoloWinOption.Create(
+            RoleInfo.ConfigId + 9,
+            Bakery.RoleInfo.Tab,
+            CustomRoles.PoisonedBakery,
+            defo: 0,
+            parent: Bakery.PoisonedBakeryChanceOption);
         HideRoleOptions(CustomRoles.PoisonedBakery);
     }
 

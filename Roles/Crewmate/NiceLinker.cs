@@ -1,4 +1,4 @@
-/*using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
@@ -29,12 +29,12 @@ public sealed class NiceLinker : RoleBase
         : base(RoleInfo, player)
     {
         PlaceCooldown = OptionPlaceCooldown.GetFloat();
-        MaxPairs      = OptionMaxPairs.GetInt();
-        WarpCooldown  = OptionWarpCooldown.GetFloat();
+        MaxPairs = OptionMaxPairs.GetInt();
+        WarpCooldown = OptionWarpCooldown.GetFloat();
 
-        linkPairs     = new();
-        pendingDummy  = null;
-        placedCount   = 0;
+        linkPairs = new();
+        pendingDummy = null;
+        placedCount = 0;
         cooldownTimer = PlaceCooldown;
         warpCooldowns = new();
     }
@@ -44,7 +44,7 @@ public sealed class NiceLinker : RoleBase
     static OptionItem OptionWarpCooldown;
 
     static float PlaceCooldown;
-    static int   MaxPairs;
+    static int MaxPairs;
     static float WarpCooldown;
 
     enum OptionName
@@ -66,10 +66,10 @@ public sealed class NiceLinker : RoleBase
 
     public class LinkPair
     {
-        public LinkerDummy   DummyA;
-        public LinkerDummy   DummyB;
-        public int           ColorId;
-        public bool          Activated;
+        public LinkerDummy DummyA;
+        public LinkerDummy DummyB;
+        public int ColorId;
+        public bool Activated;
         public HashSet<byte> InRangeA = new();
         public HashSet<byte> InRangeB = new();
     }
@@ -77,17 +77,17 @@ public sealed class NiceLinker : RoleBase
     static readonly int[] PairColors = { 1, 11, 10, 2, 5, 4, 3, 14, 17, 8 };
     const int PendingColor = 7;
 
-    readonly List<LinkPair>          linkPairs;
-    LinkPair                         pendingDummy;
-    int                              placedCount;
-    float                            cooldownTimer;
+    readonly List<LinkPair> linkPairs;
+    LinkPair pendingDummy;
+    int placedCount;
+    float cooldownTimer;
     readonly Dictionary<byte, float> warpCooldowns;
 
     public override void Add()
     {
         linkPairs.Clear();
-        pendingDummy  = null;
-        placedCount   = 0;
+        pendingDummy = null;
+        placedCount = 0;
         cooldownTimer = PlaceCooldown;
         warpCooldowns.Clear();
         PetActionManager.Register(Player.PlayerId, OnPetAction);
@@ -106,7 +106,7 @@ public sealed class NiceLinker : RoleBase
 
     public override void ApplyGameOptions(IGameOptions opt)
     {
-        AURoleOptions.EngineerCooldown     = cooldownTimer > 0f ? cooldownTimer : 0.1f;
+        AURoleOptions.EngineerCooldown = cooldownTimer > 0f ? cooldownTimer : 0.1f;
         AURoleOptions.EngineerInVentMaxTime = 0f;
     }
 
@@ -230,16 +230,16 @@ public sealed class NiceLinker : RoleBase
         for (int i = 0; i < linkPairs.Count; i++)
         {
             var pair = linkPairs[i];
-            int idx  = i;
+            int idx = i;
 
             if (pair.DummyA != null && pair.DummyB != null)
             {
-                var posA    = pair.DummyA.Position;
-                var posB    = pair.DummyB.Position;
+                var posA = pair.DummyA.Position;
+                var posB = pair.DummyB.Position;
                 var colorId = pair.ColorId;
-                var owner   = Player;
-                var oldA    = pair.DummyA;
-                var oldB    = pair.DummyB;
+                var owner = Player;
+                var oldA = pair.DummyA;
+                var oldB = pair.DummyB;
 
                 _ = new LateTask(() =>
                 {
@@ -250,7 +250,7 @@ public sealed class NiceLinker : RoleBase
                 _ = new LateTask(() =>
                 {
                     try { oldB?.Despawn(); } catch { }
-                    pair.DummyB    = new LinkerDummy(posB, owner, colorId, activated: true);
+                    pair.DummyB = new LinkerDummy(posB, owner, colorId, activated: true);
                     pair.Activated = true;
                     pair.InRangeA.Clear();
                     pair.InRangeB.Clear();
@@ -258,9 +258,9 @@ public sealed class NiceLinker : RoleBase
             }
             else if (pair.DummyA != null && pair.DummyB == null)
             {
-                var posA  = pair.DummyA.Position;
+                var posA = pair.DummyA.Position;
                 var owner = Player;
-                var oldA  = pair.DummyA;
+                var oldA = pair.DummyA;
 
                 _ = new LateTask(() =>
                 {
@@ -326,7 +326,7 @@ public sealed class NiceLinker : RoleBase
 
     public override void ReceiveRPC(MessageReader reader)
     {
-        placedCount   = reader.ReadInt32();
+        placedCount = reader.ReadInt32();
         cooldownTimer = reader.ReadSingle();
         reader.ReadBoolean();
     }
@@ -335,15 +335,15 @@ public sealed class NiceLinker : RoleBase
 public sealed class LinkerDummy : CustomNetObject
 {
     readonly PlayerControl _owner;
-    readonly int           _colorId;
-    readonly Vector2       _pos;
-    public   bool          Activated { get; private set; }
+    readonly int _colorId;
+    readonly Vector2 _pos;
+    public bool Activated { get; private set; }
 
     public LinkerDummy(Vector2 position, PlayerControl owner, int colorId, bool activated)
     {
-        _owner    = owner;
-        _colorId  = colorId;
-        _pos      = position;
+        _owner = owner;
+        _colorId = colorId;
+        _pos = position;
         Activated = activated;
         CreateNetObject(position);
     }
@@ -352,7 +352,14 @@ public sealed class LinkerDummy : CustomNetObject
     {
         if (PlayerControl == null) return;
 
-        SetAppearance(_colorId, "", "", "", "");
+        var hostPlayer = PlayerControl.LocalPlayer;
+        byte hostColor = (byte)(hostPlayer?.Data?.DefaultOutfit.ColorId ?? 0);
+
+        PlayerControl.RpcSetColor((byte)_colorId);
+        if (hostPlayer != null)
+            hostPlayer.RpcSetColor(hostColor);
+        PlayerControl.RawSetColor((byte)_colorId);
+
         SetName("ポータル");
         SnapToPosition(_pos);
 
@@ -365,7 +372,14 @@ public sealed class LinkerDummy : CustomNetObject
                     Hide(pc);
             }
         }
+
+        var capturedDummy = PlayerControl;
+        _ = new LateTask(() =>
+        {
+            if (capturedDummy != null)
+                capturedDummy.RawSetColor((byte)_colorId);
+        }, 0.15f, "NiceLinker.ApplyDummyColor", true);
     }
 
     public override void OnMeeting() { }
-}*/
+}

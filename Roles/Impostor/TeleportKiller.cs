@@ -192,7 +192,7 @@ public sealed class TeleportKiller : RoleBase, IImpostor
 
     public void TeleportKill(PlayerControl Player, PlayerControl target)
     {
-        if (target.Is(CustomRoles.King))
+        if (target.Is(CustomRoles.King) || target.Is(CustomRoles.Autocrat))
         {
             MyState.DeathReason = CustomDeathReason.Bombed;
             Player.RpcMurderPlayer(Player, true);
