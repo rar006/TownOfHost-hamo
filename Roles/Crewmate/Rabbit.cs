@@ -25,7 +25,22 @@ public sealed class Rabbit : RoleBase
         );
 
     public Rabbit(PlayerControl player)
+<<<<<<< HEAD
     : base(RoleInfo, player, () => IsFinish(player) ? HasTask.ForRecompute : HasTask.True)
+=======
+    : base(RoleInfo, player, () =>
+    {
+        // 1. 最初のタスクが終わっていない状態
+        if (!IsFinish(player)) return HasTask.True;
+
+        // 2. 最初のタスクは終わったが、追加タスクがまだ残っている状態（再計算させる）
+        var role = player.GetRoleClass();
+        if (role != null && !role.IsTaskFinished) return HasTask.ForRecompute;
+
+        // 3. 追加タスクも含めて、すべてのタスクが完全に終わった状態（Trueに戻す）
+        return HasTask.True;
+    })
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     {
         TaskTrigger = OptionTaskTrigger.GetInt();
         NumLongTasks = OptionNumLongTasks.GetInt();

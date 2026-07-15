@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /*using System.Linq;
+=======
+using System.Linq;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 using AmongUs.GameOptions;
 using Hazel;
 using TownOfHost.Roles.Core;
@@ -106,6 +110,15 @@ public sealed class Ogre : RoleBase, IKiller, IAdditionalWinner
 
     public override bool OnCheckMurderAsTarget(MurderInfo info)
     {
+<<<<<<< HEAD
+=======
+        // フリーターの「就職」やジェイラーの「拘禁」など、キルボタンを間借りして
+        // info.DoKillをfalseにしているだけの役職に対しては、鬼を実際に殺そうとしたわけではないので反撃しない。
+        // OnCheckMurderAsKiller(攻撃側の役職処理)はOnCheckMurderAsTarget(被害側の役職処理)より先に走るため、
+        // ここに来た時点でDoKillが既にfalseなら「本当のキルではない」と判定できる。
+        if (!info.DoKill) return true;
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         (var killer, var target) = info.AttemptTuple;
 
         if (killer.GetCustomRole() == CustomRoles.Tairou) return true;
@@ -147,8 +160,16 @@ public sealed class Ogre : RoleBase, IKiller, IAdditionalWinner
     {
         nowKillRate = reader.ReadInt32();
     }
+<<<<<<< HEAD
 s
     public override void AfterMeetingTasks()
     {
     }
 }*/
+=======
+
+    public override void AfterMeetingTasks()
+    {
+    }
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

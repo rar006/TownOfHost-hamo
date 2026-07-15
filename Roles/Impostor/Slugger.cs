@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 /*using AmongUs.GameOptions;
+=======
+/*
+using AmongUs.GameOptions;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 using Hazel;
 using TownOfHost.Modules;
 using TownOfHost.Roles.Core;
@@ -22,7 +27,10 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
             "slg",
             OptionSort: (3, 13),
             from: From.SuperNewRoles
+<<<<<<< HEAD
 
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         );
 
     public Slugger(PlayerControl player)
@@ -35,7 +43,10 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
         KillRange = OptionKillRange.GetFloat();
         MultiKill = OptionMultiKill.GetBool();
         FlyDistance = OptionFlyDistance.GetFloat();
+<<<<<<< HEAD
 
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         IsCharging = false;
         IsSwinging = false;
         chargeTimer = 0f;
@@ -44,7 +55,10 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
         SwingFacingLeft = false;
     }
 
+<<<<<<< HEAD
     // ★ 状態
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     public bool IsCharging;
     public bool IsSwinging;
     public bool SwingFacingLeft;
@@ -54,7 +68,10 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
     private float PlayerSpeed;
     private bool spawnCooldownStarted = false;
 
+<<<<<<< HEAD
     // ★ オプション
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     private static OptionItem OptionKillCooldown;
     private static float KillCooldown;
     private static OptionItem OptionCooldown;
@@ -72,11 +89,16 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
 
     private enum OptionName
     {
+<<<<<<< HEAD
         SluggerChargeTime,
         SluggerSwingTime,
         SluggerKillRange,
         SluggerMultiKill,
         SluggerFlyDistance,
+=======
+        SluggerChargeTime, SluggerSwingTime, SluggerKillRange,
+        SluggerMultiKill, SluggerFlyDistance,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     private static void SetUpOptionItem()
@@ -97,8 +119,11 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
             new(1f, 20f, 1f), 10f, false);
     }
 
+<<<<<<< HEAD
     // ======== 基本設定 ========
 
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     public float CalculateKillCooldown() => KillCooldown;
 
     public override void Add()
@@ -116,39 +141,57 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
     bool IUsePhantomButton.IsPhantomRole => true;
     bool IUsePhantomButton.IsresetAfterKill => true;
 
+<<<<<<< HEAD
     // ======== ファントムボタン押下 ========
 
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
         AdjustKillCooldown = false;
         ResetCooldown = false;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         if (IsFiring || !Player.IsAlive()) return;
 
         IsFiring = true;
         IsCharging = true;
         chargeTimer = 0f;
+<<<<<<< HEAD
 
         // ★チャージ中も移動できるように速度固定の処理を削除
 
         // キルクールを長くして誤発防止
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         Main.AllPlayerKillCooldown[Player.PlayerId] = 60f;
         Player.SetKillCooldown(60f);
         _ = new LateTask(() => Player.SyncSettings(), 0.1f, "SluggerKillTimer", true);
         Player.SyncSettings();
+<<<<<<< HEAD
 
         // 全員にキルフラッシュ（音代わり）
         Utils.AllPlayerKillFlash();
 
+=======
+        Utils.AllPlayerKillFlash();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
         SendRpc();
     }
 
+<<<<<<< HEAD
     // ======== 毎フレーム処理 ========
 
     public override void OnFixedUpdate(PlayerControl player)
     {
         // スポーン直後のクールダウン初期化
+=======
+    public override void OnFixedUpdate(PlayerControl player)
+    {
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         if (!spawnCooldownStarted && Player.IsAlive()
             && !GameStates.Intro && GameStates.IsInTask && !GameStates.IsMeeting)
         {
@@ -156,12 +199,16 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
             Player.RpcResetAbilityCooldown(Sync: true);
         }
 
+<<<<<<< HEAD
         // 会議中はリセット
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         if (MeetingHud.Instance != null)
         {
             if (IsCharging || IsSwinging) ResetState();
             return;
         }
+<<<<<<< HEAD
 
         // 死亡時はリセット
         if (!Player.IsAlive() && (IsCharging || IsSwinging))
@@ -173,30 +220,47 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
         if (!AmongUsClient.Instance.AmHost) return;
 
         // ★ チャージ中
+=======
+        if (!Player.IsAlive() && (IsCharging || IsSwinging)) { ResetState(); return; }
+        if (!AmongUsClient.Instance.AmHost) return;
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         if (IsCharging)
         {
             chargeTimer += Time.fixedDeltaTime;
             UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
+<<<<<<< HEAD
 
             if (chargeTimer >= ChargeTime)
             {
                 // チャージ完了 → 振り抜き開始
+=======
+            if (chargeTimer >= ChargeTime)
+            {
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 IsCharging = false;
                 IsSwinging = true;
                 swingTimer = 0f;
                 SwingFacingLeft = Player.cosmetics.FlipX;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 Utils.AllPlayerKillFlash();
                 UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
                 SendRpc();
             }
         }
 
+<<<<<<< HEAD
         // ★ 振り抜き中
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         if (IsSwinging)
         {
             swingTimer += Time.fixedDeltaTime;
             UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
+<<<<<<< HEAD
 
             if (swingTimer >= SwingTime)
             {
@@ -209,12 +273,19 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
 
     // ======== 当たり判定 ========
 
+=======
+            if (swingTimer >= SwingTime) { ApplySwingHit(); ResetState(); }
+        }
+    }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     private void ApplySwingHit()
     {
         if (!AmongUsClient.Instance.AmHost || !Player.IsAlive()) return;
 
         var myPos = (Vector2)Player.GetTruePosition();
         Vector2 swingDir = SwingFacingLeft ? Vector2.left : Vector2.right;
+<<<<<<< HEAD
         // 向きに対して垂直なベクトル（上下の厚み判定用）
         Vector2 perpendicular = new Vector2(-swingDir.y, swingDir.x);
 
@@ -231,6 +302,16 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
             float sideDist = Mathf.Abs(Vector2.Dot(toTarget, perpendicular)); // 軸からのズレ
 
             // 前方は KillRange 以内、横幅は左右に 1.0f（合計 2.0f）の範囲ならヒット
+=======
+        Vector2 perpendicular = new Vector2(-swingDir.y, swingDir.x);
+
+        foreach (var target in PlayerCatch.AllAlivePlayerControls)
+        {
+            if (target.PlayerId == Player.PlayerId) continue;
+            var toTarget = (Vector2)target.GetTruePosition() - myPos;
+            float forwardDist = Vector2.Dot(toTarget, swingDir);
+            float sideDist = Mathf.Abs(Vector2.Dot(toTarget, perpendicular));
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             if (forwardDist < 0 || forwardDist > KillRange) continue;
             if (sideDist > 1.0f) continue;
 
@@ -249,11 +330,15 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
                     $"<color=#ff6600>【スラッガー】</color> {UtilsName.GetPlayerColor(Player, true)} ═> {UtilsName.GetPlayerColor(t, true)}");
             }, 0.25f, "SluggerKill_" + target.PlayerId, true);
 
+<<<<<<< HEAD
             hitAny = true;
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             if (!MultiKill) break;
         }
     }
 
+<<<<<<< HEAD
     // ★ 壁を考慮した吹き飛ばし位置
     private Vector2 CalcFlyPosition(Vector2 startPos, Vector2 dir)
     {
@@ -267,6 +352,14 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
 
     // ======== 状態リセット ========
 
+=======
+    private Vector2 CalcFlyPosition(Vector2 startPos, Vector2 dir)
+    {
+        var hit = Physics2D.Raycast(startPos + dir * 0.3f, dir, FlyDistance, Constants.ShipOnlyMask);
+        return hit.collider != null ? hit.point - dir * 0.3f : startPos + dir * FlyDistance;
+    }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     private void ResetState()
     {
         IsCharging = false;
@@ -274,9 +367,12 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
         IsFiring = false;
         chargeTimer = 0f;
         swingTimer = 0f;
+<<<<<<< HEAD
 
         // ★速度リセット処理を削除（チャージ中も移動できるようにしたため）
 
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         _ = new LateTask(() =>
         {
             if (!Player.IsAlive()) return;
@@ -285,23 +381,33 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
             AURoleOptions.PhantomCooldown = Cooldown;
             Player.RpcResetAbilityCooldown(Sync: true);
         }, 0.2f, "SluggerReset", true);
+<<<<<<< HEAD
 
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
         SendRpc();
     }
 
+<<<<<<< HEAD
     // ======== イベント ========
 
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
     {
         if (IsCharging || IsSwinging) ResetState();
     }
+<<<<<<< HEAD
 
     public override void OnStartMeeting()
     {
         if (IsCharging || IsSwinging) ResetState();
     }
 
+=======
+    public override void OnStartMeeting() { if (IsCharging || IsSwinging) ResetState(); }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     public override void AfterMeetingTasks()
     {
         if (!AmongUsClient.Instance.AmHost || !Player.IsAlive()) return;
@@ -309,7 +415,31 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
         Player.RpcResetAbilityCooldown();
     }
 
+<<<<<<< HEAD
     // ======== 名前表示（第三者にも見える） ========
+=======
+    // ══════════════════════════════════════════════════════════════
+    // バット表示（ピボット固定版）
+    //
+    // 原理:
+    //   <rotate> はキャラクター中心を軸に回転する。
+    //   <voffset> で中心を「バットの半分の長さ」だけ
+    //   プレイヤーから離した位置に動かすことで、
+    //   回転させたときに柄の端がプレイヤー付近に固定されて見える。
+    //
+    //   voffset = -BASE + HALF * sin(angleRad)
+    //     BASE: 名前ベースラインからプレイヤーへの基準下降量
+    //     HALF: バットの半分の長さ（emで近似）
+    //     angle が 90° (上向き) のとき sin=1 → 中心が上 → 先端が下でプレイヤー付近
+    //     angle が -90° (下向き) のとき sin=-1 → 中心が下 → 先端が上でプレイヤー付近
+    //
+    //   ★ BASE と HALF は見た目に合わせて要調整。
+    // ══════════════════════════════════════════════════════════════
+
+    // 調整用定数（実機で見ながらチューニングしてください）
+    const float BAT_BASE = 2.2f; // 名前ベースラインからの基準下降 (em)
+    const float BAT_HALF = 2.6f; // バット半長 (em, size=600% の ー に近似)
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
     public override bool GetTemporaryName(ref string name, ref bool NoMarker,
         bool isForMeeting, PlayerControl seer, PlayerControl seen = null)
@@ -319,6 +449,7 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
         if (seen.PlayerId != Player.PlayerId) return false;
         if (!IsCharging && !IsSwinging) return false;
 
+<<<<<<< HEAD
         bool facingLeft = (seer.PlayerId == Player.PlayerId)
             ? Player.cosmetics.FlipX
             : SwingFacingLeft;
@@ -326,18 +457,32 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
         // ★ 垂直(90度)から15度傾けた角度
         // 右向きの時は、後ろ(左)に15度傾く = 105度
         // 左向きの時は、後ろ(右)に15度傾く = 75度
+=======
+        bool facingLeft = seer.PlayerId == Player.PlayerId
+            ? Player.cosmetics.FlipX
+            : SwingFacingLeft;
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         float readyAngle = facingLeft ? 75f : 105f;
 
         if (IsCharging)
         {
+<<<<<<< HEAD
             // チャージ中は「｜」を15度傾けた状態で固定
             name = $"<voffset=-1.5em><size=600%><rotate={(int)readyAngle}><color=#ff6600>ー</color></rotate></size></voffset>";
+=======
+            float voff = CalcVoffset(readyAngle);
+            name = $"<voffset={voff:F2}em><size=600%>" +
+                   $"<rotate={(int)readyAngle}><color=#ff6600>ー</color></rotate>" +
+                   $"</size></voffset>";
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             NoMarker = true;
             return true;
         }
 
         if (IsSwinging)
         {
+<<<<<<< HEAD
             // ★ 振り抜き中（約180度前方にスイングする）
             float progress = Mathf.Clamp01(swingTimer / SwingTime);
 
@@ -346,6 +491,29 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
             int angle = (int)Mathf.Lerp(readyAngle, endAngle, progress);
 
             name = $"<voffset=-1.5em><size=800%><rotate={angle}><color=#ff2200><b>ー</b></color></rotate></size></voffset>";
+=======
+            float progress = Mathf.Clamp01(swingTimer / SwingTime);
+            float endAngle = facingLeft ? 255f : -75f;
+            float curAngle = Mathf.Lerp(readyAngle, endAngle, progress);
+            float voff = CalcVoffset(curAngle);
+
+            // ★ 残像（少し前の角度にもう一本薄く表示）
+            string trail = "";
+            if (progress > 0.15f)
+            {
+                float trailAngle = Mathf.Lerp(readyAngle, endAngle,
+                    Mathf.Clamp01(progress - 0.2f));
+                float trailVoff = CalcVoffset(trailAngle);
+                trail = $"<voffset={trailVoff:F2}em><size=500%>" +
+                        $"<rotate={(int)trailAngle}><color=#ff440066><b>ー</b></color></rotate>" +
+                        $"</size></voffset>";
+            }
+
+            name = trail +
+                   $"<voffset={voff:F2}em><size=800%>" +
+                   $"<rotate={(int)curAngle}><color=#ff2200><b>ー</b></color></rotate>" +
+                   $"</size></voffset>";
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             NoMarker = true;
             return true;
         }
@@ -353,13 +521,25 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
         return false;
     }
 
+<<<<<<< HEAD
     // ======== 下部テキスト ========
+=======
+    /// <summary>
+    /// バットの角度から voffset を計算する。
+    /// voffset = -BASE + HALF * sin(angle)
+    /// これにより "ー" キャラクターの中心が
+    /// プレイヤー基点から半長分だけ離れた位置に来る。
+    /// </summary>
+    static float CalcVoffset(float angleDeg)
+        => -BAT_BASE + BAT_HALF * Mathf.Sin(angleDeg * Mathf.Deg2Rad);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null,
         bool isForMeeting = false, bool isForHud = false)
     {
         seen ??= seer;
         if (seen.PlayerId != seer.PlayerId || isForMeeting || !Player.IsAlive()) return "";
+<<<<<<< HEAD
 
         string size = isForHud ? "" : "<size=60%>";
         if (!IsCharging && !IsSwinging)
@@ -368,14 +548,26 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
         {
             float rem = Mathf.Max(0f, ChargeTime - chargeTimer);
             return $"{size}<color=#ff6600>チャージ中... {rem:F1}s ／ 構えを維持！</color>";
+=======
+        string size = isForHud ? "" : "<size=60%>";
+        if (!IsCharging && !IsSwinging)
+            return $"{size}<color=#ff6600>ファントムボタン → バットチャージ開始</color>";
+        if (IsCharging)
+        {
+            float rem = Mathf.Max(0f, ChargeTime - chargeTimer);
+            return $"{size}<color=#ff6600>チャージ中... {rem:F1}s</color>";
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         }
         return $"{size}<color=#ff2200><b>振り抜き！！</b></color>";
     }
 
     public override string GetAbilityButtonText() => GetString("SluggerAbilityText");
 
+<<<<<<< HEAD
     // ======== RPC ========
 
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     public void SendRpc()
     {
         using var sender = CreateSender();
@@ -390,4 +582,9 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
         IsSwinging = reader.ReadBoolean();
         SwingFacingLeft = reader.ReadBoolean();
     }
+<<<<<<< HEAD
 }*/
+=======
+}
+*/
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

@@ -3,6 +3,7 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
 		<GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
+<<<<<<< HEAD
 		<!-- gitリポジトリが無い/コミットが無い環境だとGitInfoが不正なバージョン文字列(例: 0.0.0+main.)を
 		     生成し NETSDK1018 でビルドが失敗するため、明示的に固定バージョンを指定して上書きする -->
 		<Version>1.0.0</Version>
@@ -20,18 +21,38 @@
 
 	<ItemGroup>
 		<Compile Remove="Roles\Madmate\MadSheriff_Sample.cs" />
+=======
+		<Description>fork by Town Of Host</Description>
+		<Authors>tukasa0001(EmptyBottle), integral0131</Authors>
+		<langVersion>preview</langVersion>
+		<AssemblyName>TownOfHost-Pko</AssemblyName>
+		<NoWarn>MSB3246</NoWarn>
+		<AmongUs>C:\Program Files (x86)\Steam\steamapps\common\Among Us tohp</AmongUs>
+	</PropertyGroup>
+
+	<ItemGroup>
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 		<Reference Include="$(AmongUs)\BepInEx\core\*.dll" />
 		<Reference Include="$(AmongUs)\BepInEx\interop\*.dll" />
 		<EmbeddedResource Include=".\Resources\**" />
 	</ItemGroup>
 
 	<ItemGroup>
+<<<<<<< HEAD
 		<PackageReference Include="Costura.Fody" Version="6.2.0">
 			<IncludeAssets>runtime; compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
 		<PackageReference Include="csv" Version="2.0.245" />
 		<PackageReference Include="GitInfo" Version="3.6.0">
+=======
+		<PackageReference Include="Costura.Fody" Version="5.7.0">
+			<IncludeAssets>runtime; compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="csv" Version="2.0.87" />
+		<PackageReference Include="GitInfo" Version="2.0.20">
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
@@ -41,7 +62,29 @@
 	  <Folder Include="ChatServer\" />
 	</ItemGroup>
 
+<<<<<<< HEAD
 	<Target Name="Copy" AfterTargets="Build" Condition="'$(CopyToAmongUs)' == 'true' And 'C:\Program Files (x86)\Steam\steamapps\common\Among Us' != ''">
 		<Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="C:\Program Files (x86)\Steam\steamapps\common\Among Us\BepInEx\plugins/" />
 	</Target>
 </Project>
+=======
+	<ItemGroup>
+	  <Compile Update="Properties\Resources.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>Resources.resx</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Update="Properties\Resources.resx">
+	    <Generator>ResXFileCodeGenerator</Generator>
+	    <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+	  </EmbeddedResource>
+	</ItemGroup>
+
+	<Target Name="Copy" AfterTargets="Build" Condition="'$(AmongUs)' != ''">
+		<Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(AmongUs)/BepInEx/plugins/" />
+	</Target>
+</Project>
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

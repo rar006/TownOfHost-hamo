@@ -56,7 +56,11 @@ namespace TownOfHost
             Main.DebugSendAmout.Value = false;
             Main.DebugTours.Value = false;
             Main.ShowDistance.Value = false;
+<<<<<<< HEAD
             Main.DebugChatopen.Value  =false;
+=======
+            Main.DebugChatopen.Value = false;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 #endif
             //taskOptionsLoad = Task.Run(Load);
             try
@@ -504,6 +508,10 @@ namespace TownOfHost
         };
         // その他
         public static OptionItem OptionCommandSetting;
+<<<<<<< HEAD
+=======
+        public static OptionItem OptionCommandNow;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         public static OptionItem OptionCommandNowRole;
         public static OptionItem OptionCommandNowSet;
         public static OptionItem OptionCommandNowW;
@@ -513,16 +521,23 @@ namespace TownOfHost
         public static OptionItem OptionCommandMeetinginfo;
         public static OptionItem OptionCommandNumberDNumber;
         public static OptionItem OptionCommand8ball;
+<<<<<<< HEAD
+=======
+        public static OptionItem OptionCommandPko;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         public static OptionItem OptionCommandRename;
         public static OptionItem OptionCommandRule;
         public static OptionItem OptionCommandLastresult;
         public static OptionItem OptionCommandKilllog;
         public static OptionItem OptionCommandTimer;
         public static OptionItem OptionCommandTp;
+<<<<<<< HEAD
         public static OptionItem OptionCommandCo;
         public static OptionItem OptionCommandColist;
         public static OptionItem OptionCommandAco;
         public static OptionItem OptionCommandAcl;
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         public static OptionItem OptionNameCharLimit;
         public static OptionItem OptionAutoFunction;
@@ -1300,6 +1315,14 @@ namespace TownOfHost
                 .SetColorcode("#00c1ff")
                 .SetOptionName(() => "一部コマンドを禁止する");
 
+<<<<<<< HEAD
+=======
+            OptionCommandNow = BooleanOptionItem.Create(1_601_090, "DisableCommandNow", false, TabGroup.MainSettings, true)
+                .SetParent(OptionCommandSetting)
+                .SetColorcode("#00c1ff")
+                .SetOptionName(() => "/now - 現在の設定を表示");
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             OptionCommandNowRole = BooleanOptionItem.Create(1_601_100, "DisableCommandNowRole", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
@@ -1345,6 +1368,14 @@ namespace TownOfHost
                 .SetColorcode("#00c1ff")
                 .SetOptionName(() => "/8ball - 8ballができます");
 
+<<<<<<< HEAD
+=======
+            OptionCommandPko = BooleanOptionItem.Create(1_601_190, "DisableCommandPko", false, TabGroup.MainSettings, true)
+                .SetParent(OptionCommandSetting)
+                .SetColorcode("#00c1ff")
+                .SetOptionName(() => "/pko - ぴけおAIとチャットができます");
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             OptionCommandRename = BooleanOptionItem.Create(1_601_200, "DisableCommandRename", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
@@ -1381,6 +1412,7 @@ namespace TownOfHost
                 .SetColorcode("#00c1ff")
                 .SetOptionName(() => "/tp o,i ロビー内へテレポート");
 
+<<<<<<< HEAD
             OptionCommandCo = BooleanOptionItem.Create(1_601_260, "DisableCommandCo", false, TabGroup.MainSettings, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#00c1ff")
@@ -1401,6 +1433,8 @@ namespace TownOfHost
                 .SetColorcode("#00c1ff")
                 .SetOptionName(() => "/acl - 属性COの一覧を表示");
 
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             OptionAutoFunction = BooleanOptionItem.Create(1_400_150, "AutoFunction", false, TabGroup.MainSettings, true)
                 .SetHeader(true)
                 .SetColorcode("#00c1ff")

@@ -441,7 +441,11 @@ namespace TownOfHost
                         foreach (var pc in PlayerCatch.AllPlayerControls)
                         {
                             if (pc == user) continue; //本人とホストは別の処理
+<<<<<<< HEAD
                             if (pc.PlayerId == PlayerControl.LocalPlayer.PlayerId)
+=======
+                            if (pc.PlayerId == PlayerControl.LocalPlayer.PlayerId && GameStates.CalledMeeting is false)
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                             {
                                 __instance.myPlayer.RpcSnapToDesync(pc, pos);
                                 continue;
@@ -459,7 +463,11 @@ namespace TownOfHost
                                 .EndRpc()
                                 .EndMessage();
                             sender.SendMessage();
+<<<<<<< HEAD
                             __instance.myPlayer.RpcSnapToDesync(pc, pos);
+=======
+                            if (GameStates.CalledMeeting is false) __instance.myPlayer.RpcSnapToDesync(pc, pos);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         }
                         //多分負荷あれだし、テープで無理やり戻した感じだから参考にしない方がいい、
 
@@ -663,6 +671,11 @@ namespace TownOfHost
             if (__instance.IsGhostRole())
             {
                 Ghostbuttoner.UseAbility(__instance);
+<<<<<<< HEAD
+=======
+                GhostFloodlight.UseAbility(__instance, target);
+                GhostSaboteur.UseAbility(__instance, target);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 GhostNoiseSender.UseAbility(__instance, target);
                 GhostReseter.UseAbility(__instance, target);
                 GhostRumour.UseAbility(__instance, target);

@@ -27,7 +27,10 @@ namespace TownOfHost
             GameStates.task =
             GameStates.CalledMeeting =
             GameStates.ExiledAnimate = false;
+<<<<<<< HEAD
             CoLog.Reset();
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             UtilsGameLog.day++;
             UtilsGameLog.WriteGameLog();
             if (TaskBattle.IsAllMapMode)
@@ -54,6 +57,10 @@ namespace TownOfHost
             switch (CustomWinnerHolder.WinnerTeam)
             {
                 case CustomWinner.God: meg = GetString("GodWinText"); break;
+<<<<<<< HEAD
+=======
+                case CustomWinner.Amateras: meg = GetString("AmaterasWinText"); break;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 case CustomWinner.Draw: meg = GetString("ForceEnd"); break;
                 case CustomWinner.None: meg = GetString("EveryoneDied"); break;
                 case CustomWinner.SuddenDeathRed: meg = GetString("SuddenDeathRed"); winnerColor = ModColors.Red; break;

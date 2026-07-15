@@ -111,7 +111,11 @@ class Yomiage
                 ClientOptionsManager.CheckOptions();
                 using (HttpClient client = new())
                 {
+<<<<<<< HEAD
                     client.DefaultRequestHeaders.Add("User-Agent", "TownOfHost-hamo Updater");
+=======
+                    client.DefaultRequestHeaders.Add("User-Agent", "TownOfHost-Pko Updater");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     using var response = await client.GetAsync(new Uri($"http://localhost:{ClientOptionsManager.YomiagePort}/getvoicelist"), HttpCompletionOption.ResponseContentRead);
                     if (!response.IsSuccessStatusCode || response.Content == null)
                     {

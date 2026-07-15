@@ -73,6 +73,10 @@ namespace TownOfHost
                 CustomRoles.Stack or
                 //バフ
                 CustomRoles.Moon or
+<<<<<<< HEAD
+=======
+                CustomRoles.VoteTracker or
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 CustomRoles.Guesser or
                 CustomRoles.Speeding or
                 CustomRoles.Guarding or
@@ -90,6 +94,10 @@ namespace TownOfHost
                 CustomRoles.Tiebreaker or
                 CustomRoles.MagicHand or
                 CustomRoles.Powerful or
+<<<<<<< HEAD
+=======
+                CustomRoles.Absorb or
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 //デバフ
                 CustomRoles.NonReport or
                 CustomRoles.Notvoter or
@@ -106,9 +114,13 @@ namespace TownOfHost
                 CustomRoles.News or
                 CustomRoles.Sunglasses or
                 CustomRoles.Securer or
+<<<<<<< HEAD
                 CustomRoles.Sealer or
                 CustomRoles.Surrender or
                 CustomRoles.Reporting
+=======
+                CustomRoles.Sealer
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 ;
         }
         public static bool IsBuffAddon(this CustomRoles roles)
@@ -131,7 +143,12 @@ namespace TownOfHost
                 CustomRoles.Autopsy or
                 CustomRoles.Tiebreaker or
                 CustomRoles.MagicHand or
+<<<<<<< HEAD
                 CustomRoles.Powerful
+=======
+                CustomRoles.Powerful or
+                CustomRoles.Absorb
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 ;
         }
         public static bool IsDebuffAddon(this CustomRoles roles)
@@ -152,15 +169,23 @@ namespace TownOfHost
                 CustomRoles.News or
                 CustomRoles.Sunglasses or
                 CustomRoles.Securer or
+<<<<<<< HEAD
                 CustomRoles.Sealer or
                 CustomRoles.Surrender or
                 CustomRoles.Reporting
+=======
+                CustomRoles.Sealer
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 ;
         }
         public static bool IsCombinationRole(this CustomRoles role) => role is
         CustomRoles.Assassin or CustomRoles.Merlin or
         CustomRoles.Driver or CustomRoles.Braid or
         CustomRoles.Vega or CustomRoles.Altair or
+<<<<<<< HEAD
+=======
+        CustomRoles.Abuser or CustomRoles.Victim or
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         CustomRoles.Fool or CustomRoles.Nue;
         public static CustomRoles GetCombination(this CustomRoles role)
         {
@@ -174,6 +199,11 @@ namespace TownOfHost
                 case CustomRoles.Braid: return CustomRoles.Driver;
                 case CustomRoles.Vega: return CustomRoles.Altair;
                 case CustomRoles.Altair: return CustomRoles.Vega;
+<<<<<<< HEAD
+=======
+                case CustomRoles.Abuser: return CustomRoles.Victim;
+                case CustomRoles.Victim: return CustomRoles.Abuser;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 case CustomRoles.Fool: return CustomRoles.Nue;
                 case CustomRoles.Nue: return CustomRoles.Fool;
             }
@@ -257,6 +287,11 @@ namespace TownOfHost
         {
             return role is CustomRoles.GuardianAngel
                         or CustomRoles.Ghostbuttoner
+<<<<<<< HEAD
+=======
+                        or CustomRoles.GhostFloodlight
+                        or CustomRoles.GhostSaboteur
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         or CustomRoles.GhostNoiseSender
                         or CustomRoles.GhostReseter
                         or CustomRoles.GhostRumour
@@ -381,6 +416,10 @@ namespace TownOfHost
         MilkyWay,
         Pavlov,
         Eater,
+<<<<<<< HEAD
+=======
+        Victim,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         Monika,
         StandMaster,
         Villain

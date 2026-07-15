@@ -1,5 +1,8 @@
+<<<<<<< HEAD
 // ペットの自動破棄機能はK対応来るまで一時的にこうしてます。対応が来たらTOHK処理に戻します。
 
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 using System;
 using System.Collections.Generic;
 using AmongUs.GameOptions;
@@ -59,11 +62,44 @@ internal static class ExternalRpcPetPatch
 
         LastProcess[pc.PlayerId] = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
+<<<<<<< HEAD
+=======
+        if (!pc.AmOwner
+            && !pc.inVent
+            && !pc.inMovingPlat
+            && !pc.walkingToVent
+            && !pc.onLadder
+            && !__instance.Animations.IsPlayingEnterVentAnimation()
+            && !__instance.Animations.IsPlayingAnyLadderAnimation()
+            && GameStates.IsInTask)
+        {
+            CancelPetNow(__instance);
+            _ = new LateTask(() => CancelPetNow(__instance), 0.4f, "ExternalRpcPetPatch.CancelPet", true);
+        }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         Logger.Info($"{pc.Data?.GetLogPlayerName()} がペットを撫でた", "PetActionPatch");
 
         OnPetUse(pc);
     }
 
+<<<<<<< HEAD
+=======
+    private static void CancelPetNow(PlayerPhysics physics)
+    {
+        try { physics.CancelPet(); }
+        catch { }
+
+        try
+        {
+            MessageWriter w = AmongUsClient.Instance.StartRpcImmediately(
+                physics.NetId, (byte)RpcCalls.CancelPet, SendOption.None);
+            AmongUsClient.Instance.FinishRpcImmediately(w);
+        }
+        catch { }
+    }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     private static void OnPetUse(PlayerControl pc)
     {
         if (pc == null || !pc.IsAlive()) return;
@@ -92,7 +128,10 @@ public static class PetsHelper
 
     public static void RemovePet(PlayerControl pc)
     {
+<<<<<<< HEAD
         // Data.IsDeadは会議中にアンチブラックアウトで偽装されるため、PlayerState由来のIsAliveで判定する
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         if (pc?.Data == null || pc.IsAlive()) return;
         if (pc.CurrentOutfit.PetId == "") return;
 
@@ -207,4 +246,8 @@ internal static class AfterMeetingPetAssignPatch
                 PetActionManager.EnsureDefaultPet(pc.PlayerId);
         }, 1.5f, "AfterMeetingPetAssign", true);
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

@@ -36,6 +36,10 @@ public sealed class God : RoleBase, ISystemTypeUpdateHook, IDeathReasonSeeable
 
     public static OptionItem SeeVotesOpt;
     public static OptionItem CanSeeDeathReasonOpt;
+<<<<<<< HEAD
+=======
+    public static OptionItem SeeAddonsOpt;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     public static OptionItem RequireTasksToWinOpt;
     public static OptionItem TaskCountOpt;
 
@@ -56,6 +60,10 @@ public sealed class God : RoleBase, ISystemTypeUpdateHook, IDeathReasonSeeable
         GodCantFixLightsOut,
         GodCantFixHeli,
         GodCantFixComms,
+<<<<<<< HEAD
+=======
+        GodSeeAddons,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     private static void SetupOptionItem()
@@ -64,7 +72,11 @@ public sealed class God : RoleBase, ISystemTypeUpdateHook, IDeathReasonSeeable
         OverrideTasksData.Create(RoleInfo, 20);
 
         Bakuro = BooleanOptionItem.Create(RoleInfo, 18, OptionName.GodBakuro, false, false)
+<<<<<<< HEAD
             .SetParentRole(CustomRoles.God); //本当にキックする処理も暴露を検知する処理もありません。プレイヤーにルールを守らすために見せかけで作りました。口外しないでいただけると助かります。
+=======
+            .SetParentRole(CustomRoles.God);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         SeeVotesOpt = BooleanOptionItem.Create(RoleInfo, 10, OptionName.GodSeeVotes, true, false)
             .SetParentRole(CustomRoles.God);
@@ -72,6 +84,12 @@ public sealed class God : RoleBase, ISystemTypeUpdateHook, IDeathReasonSeeable
         CanSeeDeathReasonOpt = BooleanOptionItem.Create(RoleInfo, 11, OptionName.GodCanSeeDeathReason, true, false)
             .SetParentRole(CustomRoles.God);
 
+<<<<<<< HEAD
+=======
+        SeeAddonsOpt = BooleanOptionItem.Create(RoleInfo, 19, OptionName.GodSeeAddons, true, false)
+            .SetParentRole(CustomRoles.God);
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         RequireTasksToWinOpt = BooleanOptionItem.Create(RoleInfo, 12, OptionName.GodRequireTasksToWin, false, false)
             .SetParentRole(CustomRoles.God);
 
@@ -103,8 +121,14 @@ public sealed class God : RoleBase, ISystemTypeUpdateHook, IDeathReasonSeeable
     {
         if (!Player.IsAlive()) return;
         enabled = true;
+<<<<<<< HEAD
         roleText = UtilsRoleText.GetTrueRoleName(seen.PlayerId, true);
         addon = true;
+=======
+        bool seeAddons = SeeAddonsOpt?.GetBool() == true;
+        roleText = UtilsRoleText.GetTrueRoleName(seen.PlayerId, seeAddons);
+        addon = seeAddons;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     public override void OverrideTrueRoleName(ref Color roleColor, ref string roleText)

@@ -81,8 +81,11 @@ namespace TownOfHost.Roles.Crewmate
                 new(1, 10, 1), 1, false)
                 .SetParent(OptionPostDeathRevengeEnabled)
                 .SetValueFormat(OptionFormat.day);
+<<<<<<< HEAD
 
             SaruWarningOption.AddTo(RoleInfo);
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         }
 
         private AbilityMode GetMode() => (AbilityMode)ModeOption.GetValue();

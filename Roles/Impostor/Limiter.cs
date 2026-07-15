@@ -239,7 +239,11 @@ namespace TownOfHost.Roles.Impostor
             if (Limit) return;
             if (Player.IsWinner(CustomWinner.Impostor)) Achievements.RpcCompleteAchievement(Player.PlayerId, 0, achievements[2]);
             if (Player.IsWinner(CustomWinner.MadonnaLovers) && Lovers.MaMadonnaLoversPlayers.Any(lov => lov.PlayerId == Player.PlayerId))
+<<<<<<< HEAD
             if (Player.IsWinner(CustomWinner.CupidLovers) && Lovers.CuCupidLoversPlayers.Any(lov => lov.PlayerId == Player.PlayerId))
+=======
+                if (Player.IsWinner(CustomWinner.CupidLovers) && Lovers.CuCupidLoversPlayers.Any(lov => lov.PlayerId == Player.PlayerId))
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     Achievements.RpcCompleteAchievement(Player.PlayerId, 0, achievements[3]);
         }
         public static Dictionary<int, Achievement> achievements = new();

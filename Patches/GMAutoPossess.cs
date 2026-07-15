@@ -22,6 +22,7 @@ public static class GMAutoOpenHauntMenuPatch
         {
             try
             {
+<<<<<<< HEAD
                 ClickHauntButtonIfFound();
             }
             catch { }
@@ -88,6 +89,26 @@ public static class GMAutoOpenHauntMenuPatch
                 return;
             }
         }
+=======
+                var buttons = UnityEngine.Object.FindObjectsOfType<PassiveButton>();
+                foreach (var btn in buttons)
+                {
+                    if (!btn.gameObject.activeInHierarchy) continue;
+
+                    var tmpro = btn.GetComponentInChildren<TextMeshPro>();
+                    string label = tmpro != null ? tmpro.text : "";
+                    string objName = btn.gameObject.name.ToLower();
+
+                    if (objName.Contains("haunt") || label.Contains("憑依") || label.ToLower().Contains("haunt"))
+                    {
+                        btn.OnClick?.Invoke();
+                        break;
+                    }
+                }
+            }
+            catch { }
+        }, 1.2f, "GMAutoOpenHauntMenu", true);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 }
 

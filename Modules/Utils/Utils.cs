@@ -277,6 +277,7 @@ namespace TownOfHost
         {
             var tpinfo = "";
             var text = "";
+<<<<<<< HEAD
             if (GameStates.IsLobby)
             {
                 tpinfo += $"\n/cmd tp o - {GetString("Command.tpo")}";
@@ -359,10 +360,185 @@ namespace TownOfHost
             }
 
             if (Main.UseYomiage.Value) text += $"\n/cmd voice - {GetString("Command.voice")}";
+=======
+            var targetPlayer = PlayerCatch.AllPlayerControls.FirstOrDefault(player => player.PlayerId == to);
+            var isModerator = Moderator.IsModerator(targetPlayer);
+
+            // ★ 禁止コマンドはヘルプに表示しない
+            bool cmdRestricted = Options.OptionCommandSetting?.GetBool() ?? false;
+            bool Show(OptionItem opt) => !cmdRestricted || !(opt?.GetBool() ?? false);
+
+            if (GameStates.IsLobby)
+            {
+                // tp コマンド
+                if (Show(Options.OptionCommandTp))
+                {
+                    tpinfo += $"\n/cmd tp o - {GetString("Command.tpo")}";
+                    tpinfo += $"\n/cmd tp i - {GetString("Command.tpi")}";
+                    tpinfo += $"\n/cmd allplayertp(apt) - {GetString("Command.apt")}";
+                }
+            }
+
+            text = GetString("CommandList")
+                + "<size=60%><line-height=1.3pic>";
+
+            if (to == 0)
+            {
+                //ホスト限定（制限対象外）
+                text += $"<size=80%></line-height>\n<#8cffff>【~~~~~~~{GetString("OnlyHost")}~~~~~~~】</color></size><line-height=1.3pic>"
+                    + $"\n/cmd rename(r) - {GetString("Command.rename")}"
+                    + $"\n/cmd dis - {GetString("Command.dis")}"
+                    + $"\n/cmd sw - {GetString("Command.sw")}"
+                    + $"\n/cmd forceend(fe) - {GetString("Command.forceend")}"
+                    + $"\n/cmd mw - {GetString("Command.mw")}"
+                    + $"\n/cmd kf - {GetString("Command.kf")}"
+                    + $"\n/cmd addwhite(aw) - {GetString("Command.addwhite")}"
+                    + $"\n/cmd set rule(s r) - {GetString("Command.set_rule")}"
+                    + $"\n/cmd mod id|name|color - {GetString("Command.modadd")}"
+                    + $"\n/cmd mod delete id|name|color - {GetString("Command.moddel")}"
+                    + $"\n/cmd gc - {GetString("Command.globalconnect")}";
+
+                if (Options.OptionStreamerSetting.GetBool())
+                {
+                    text += $"\n/cmd exempt(ex) - {GetString("Command.exempt")}"
+                        + $"\n/cmd exempt(ex) id|name|color - {GetString("Command.exempt")}"
+                        + $"\n/cmd exempt(ex) delete id|name|color - {GetString("Command.exempt")}"
+                        + $"\n/cmd kp - {GetString("Command.kp")}"
+                        + $"\n/cmd aj - {GetString("Command.aj")}";
+                }
+
+                text += "\n/cmd ws - マッチメイキングのサブテキストをセットします。";
+
+                text += $"<size=80%></line-height>\n<#028760>【~~~~~~~{GetString("OnlyClient")}~~~~~~~】</color></size><line-height=1.3pic>"
+                    + $"\n/cmd dump - {GetString("Command.dump")}";
+            }
+
+            //全員
+            text += $"<size=80%></line-height>\n<#918877>【~~~~~~~{GetString("Allplayer")}~~~~~~~】</color></size><line-height=1.3pic>";
+            if (Show(Options.OptionCommandNow))
+                text += $"\n/cmd now(n) - {GetString("Command.now")}";
+
+            if (Show(Options.OptionCommandNowRole))
+                text += $"\n/cmd now role(n r) - {GetString("Command.nowrole")}";
+            if (Show(Options.OptionCommandNowSet))
+                text += $"\n/cmd now set(n s) - {GetString("Command.nowset")}";
+            if (Show(Options.OptionCommandNowW))
+                text += $"\n/cmd now w(n w) - {GetString("Command.nowwin")}";
+            if (Show(Options.OptionCommandHNow))
+                text += $"\n/cmd h now(h n) - {GetString("Command.h_now")}";
+            if (Show(Options.OptionCommandHRoles))
+                text += $"\n/cmd h roles(h r ) {GetString("Command.h_roles")}";
+            if (Show(Options.OptionCommandMyrole))
+                text += $"\n/cmd myrole(m) - {GetString("Command.m")}";
+            if (Show(Options.OptionCommandMeetinginfo))
+                text += $"\n/cmd meetinginfo(mi,/day) - {GetString("Command.mi")}";
+            if (Show(Options.OptionCommandNumberDNumber))
+                text += $"\n/cmd (number)d(number) - {GetString("Command.(number)d(number)")}";
+            if (Show(Options.OptionCommand8ball))
+                text += $"\n/cmd 8ball - {GetString("Command.8ball")}";
+            if (Show(Options.OptionCommandPko))
+                text += $"\n/cmd pko - {GetString("Command.pko")}";
+            if (Show(Options.OptionCommandRename))
+                text += $"\n/cmd rename(r) - {GetString("Command.rename")}";
+            if (Show(Options.OptionCommandRule))
+                text += $"\n/cmd rule(rl) - {GetString("Command.rule")}";
+
+            //条件付きコマンド（制限対象外
+            if (ShouldShowGuesserCommand())
+                text += $"\n/cmd bt - {GetString("Command.bt")}";
+            if (Event.CheckRole(CustomRoles.Amateras) && CustomRoles.Amateras.IsPresent())
+                text += $"\n/cmd wi - {GetString("Command.wi")}";
+            if (Options.ImpostorHideChat.GetBool())
+                text += $"\n/cmd ic - {GetString("Command.impchat")}";
+            if (Options.JackalHideChat.GetBool())
+                text += $"\n/cmd jc - {GetString("Command.jacchat")}";
+            if (Options.LoversHideChat.GetBool())
+                text += $"\n/cmd lc - {GetString("Command.LoverChat")}";
+            if (Options.CupidHideChat.GetBool())
+                text += $"\n/cmd lc - {GetString("Command.CupidChat")}";
+            if (Options.ConnectingHideChat.GetBool())
+                text += $"\n/cmd cc - {GetString("Command.ConnectingChat")}";
+            if (Options.TwinsHideChat.GetBool())
+                text += $"\n/cmd tc - {GetString("Command.TwinsChat")}";
+            if (Options.OnmyojiHideChat.GetBool())
+                text += $"\n/cmd oc - {GetString("Command.OnmyojiChat")}";
+            if (Options.PavlovHideChat.GetBool())
+                text += $"\n/cmd pc - {GetString("Command.PavlovChat")}";
+            if (Options.StandHideChat.GetBool())
+                text += $"\n/cmd sc - {GetString("Command.StandChat")}";
+            if (Options.FreeterHideChat.GetBool())
+                text += $"\n/cmd fc - {GetString("Command.FreeterChat")}";
+
+            //ロビー限定
+            if (GameStates.IsLobby)
+            {
+                if (Show(Options.OptionCommandLastresult))
+                    text += $"\n/cmd lastresult(l) - {GetString("Command.lastresult")}";
+                if (Show(Options.OptionCommandKilllog))
+                    text += $"\n/cmd killlog(kl) - {GetString("Command.killlog")}";
+                if (Show(Options.OptionCommandTimer))
+                    text += $"\n/cmd timer - {GetString("Command.timer")}";
+            }
+
+            //モデレーターコマンド（制限対象外)
+            if (isModerator)
+            {
+                text += $"<size=80%></line-height>\n<#ADE0EE>【~~~~~~~{GetString("ModeratorCommand")}~~~~~~~】</color></size><line-height=1.3pic>"
+                    + $"\n/cmd fe - {GetString("Command.fe")}"
+                    + $"\n/cmd sw - {GetString("Command.Mkf")}"
+                    + $"\n/cmd say - {GetString("Command.Msay")}"
+                    + $"\n/cmd start - {GetString("Command.start")}"
+                    + $"\n/cmd kf - {GetString("Command.kf")}"
+                    + $"\n/cmd mf - {GetString("Command.mf")}"
+                    + $"\n/cmd ban - {GetString("Command.ban")}"
+                    + $"\n/cmd kick - {GetString("Command.kick")}";
+            }
+
+            if (Main.UseYomiage.Value)
+                text += $"\n/cmd voice - {GetString("Command.voice")}";
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
             SendMessage(text + tpinfo, to, checkl: true);
         }
 
+<<<<<<< HEAD
+=======
+        private static bool ShouldShowGuesserCommand()
+        {
+            // 試合中は実際の配役・属性と、その配役に有効な付与設定を確認する。
+            if (GameStates.IsInGame)
+            {
+                foreach (var player in PlayerCatch.AllPlayerControls)
+                {
+                    if (player == null) continue;
+                    if (player.Is(CustomRoles.Guesser)
+                        || player.Is(CustomRoles.NiceGuesser)
+                        || player.Is(CustomRoles.EvilGuesser))
+                        return true;
+
+                    var role = player.GetCustomRole();
+                    if (role is CustomRoles.Cakeshop or CustomRoles.SantaClaus or CustomRoles.Fortuner)
+                        return true;
+                    if (RoleAddAddons.GetRoleAddon(role, out var addonOptions, player, subrole: CustomRoles.Guesser)
+                        && addonOptions.GiveGuesser.GetBool())
+                        return true;
+                }
+
+                if (CustomRoles.LastImpostor.IsPresent() && LastImpostor.GiveGuesser.GetBool()) return true;
+                if (CustomRoles.LastNeutral.IsPresent() && LastNeutral.GiveGuesser.GetBool()) return true;
+                return false;
+            }
+
+            // ロビーでは未配役なので、現在のプリセットで出現・付与し得るかを確認する。
+            return CustomRoles.Guesser.IsEnable()
+                || CustomRoles.NiceGuesser.IsEnable()
+                || CustomRoles.EvilGuesser.IsEnable()
+                || CustomRolesHelper.CheckGuesser()
+                || (CustomRoles.LastImpostor.IsEnable() && LastImpostor.GiveGuesser.GetBool())
+                || (CustomRoles.LastNeutral.IsEnable() && LastNeutral.GiveGuesser.GetBool());
+        }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         static readonly Regex UnderlineRegex = new(@"<u>(.*?)</u>", RegexOptions.Singleline | RegexOptions.Compiled);
         public static void SendMessage(string text, byte sendTo = byte.MaxValue, string title = "", bool checkl = true, bool isTowSend = false, bool setsize = false)
         {
@@ -377,6 +553,7 @@ namespace TownOfHost
                 var sendtext = "";
                 var alltext = text.Split("\n");
                 (string size, string color, string hi, string b) tag = ("", "", "", "");
+<<<<<<< HEAD
                 var nextLineIndex = 0;
                 var lineCount = 0;
                 while (nextLineIndex < alltext.Length)
@@ -391,11 +568,29 @@ namespace TownOfHost
                     nextLineIndex++;
 
                     var tagtex = line.RemoveText().RemoveDeltext("　").RemoveDeltext(" ").Split("<");
+=======
+                var sizeTags = new Stack<string>();
+                var colorTags = new Stack<string>();
+                var lineHeightTags = new Stack<string>();
+                var boldTags = new Stack<string>();
+                var oldtext = text;
+                var i = 0;
+                for (i = 0; sendtext.Length < 280 || ((sendtext.Split("\n")?.Count() ?? 0) < 10); i++)
+                {
+                    if ((sendtext.Length + alltext[i].Length > 280 || ((sendtext.Split("\n")?.Count() ?? 0) > 10)) && i > 0)
+                    {
+                        i--;
+                        break;
+                    }
+                    sendtext += $"{alltext[i]}\n";
+                    var tagtex = alltext[i].RemoveText().RemoveDeltext("　").RemoveDeltext(" ").Split("<");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     foreach (var tagtext in tagtex)
                     {
                         if (tagtext == "") continue;
                         switch (tagtext.Substring(0, 1))
                         {
+<<<<<<< HEAD
                             case "s": if (!tagtext.Contains("sub")) tag.size = $"<{tagtext.Split(">")[0]}>"; break;
                             case "c": case "#": tag.color = $"<{tagtext.Split(">")[0]}>"; break;
                             case "l": tag.hi = $"<{tagtext.Split(">")[0]}>"; break;
@@ -407,12 +602,64 @@ namespace TownOfHost
                                     case "c": tag.color = ""; break;
                                     case "l": tag.hi = ""; break;
                                     case "b": tag.b = ""; break;
+=======
+                            case "s":
+                                if (!tagtext.Contains("sub"))
+                                {
+                                    tag.size = $"<{tagtext.Split(">")[0]}>";
+                                    sizeTags.Push(tag.size);
+                                }
+                                break;
+                            case "c":
+                            case "#":
+                                tag.color = $"<{tagtext.Split(">")[0]}>";
+                                colorTags.Push(tag.color);
+                                break;
+                            case "l":
+                                tag.hi = $"<{tagtext.Split(">")[0]}>";
+                                lineHeightTags.Push(tag.hi);
+                                break;
+                            case "b":
+                                tag.b = $"<{tagtext.Split(">")[0]}>";
+                                boldTags.Push(tag.b);
+                                break;
+                            case "/":
+                                switch (tagtext.Substring(1, 1))
+                                {
+                                    case "s":
+                                        if (!tagtext.Contains("sub"))
+                                        {
+                                            if (sizeTags.Count > 0) sizeTags.Pop();
+                                            tag.size = sizeTags.Count > 0 ? sizeTags.Peek() : "";
+                                        }
+                                        break;
+                                    case "c":
+                                        if (colorTags.Count > 0) colorTags.Pop();
+                                        tag.color = colorTags.Count > 0 ? colorTags.Peek() : "";
+                                        break;
+                                    case "l":
+                                        if (lineHeightTags.Count > 0) lineHeightTags.Pop();
+                                        tag.hi = lineHeightTags.Count > 0 ? lineHeightTags.Peek() : "";
+                                        break;
+                                    case "b":
+                                        if (boldTags.Count > 0) boldTags.Pop();
+                                        tag.b = boldTags.Count > 0 ? boldTags.Peek() : "";
+                                        break;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                                 }
                                 break;
                         }
                     }
                 }
+<<<<<<< HEAD
                 var send = string.Join("\n", alltext.Skip(nextLineIndex));
+=======
+                var send = "";
+                for (var ii = i + 1; ii < alltext.Count(); ii++)
+                {
+                    send += $"{alltext[ii]}\n";
+                }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 if (tag.color == "<#ffffff>") tag.color = "";
                 towsend = $"{tag.b}{tag.hi}{tag.color}{tag.size}{send}";
                 text = sendtext;
@@ -570,7 +817,11 @@ namespace TownOfHost
                         case SuffixModes.None:
                             break;
                         case SuffixModes.TOH:
+<<<<<<< HEAD
                             name += $"<size=75%>(<{Main.ModColor}>TOH-hm v{Main.PluginShowVersion})</color></size>";
+=======
+                            name += $"<size=75%>(<{Main.ModColor}>TOH-P v{Main.PluginShowVersion})</color></size>";
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                             break;
                         case SuffixModes.Streaming:
                             name += $"<size=75%>(<{Main.ModColor}>{GetString("SuffixMode.Streaming")})</color></size>";
@@ -626,7 +877,11 @@ namespace TownOfHost
                     case CustomGameMode.SuddenDeath: sb.Append("\r\n").Append(ColorString(GetRoleColor(CustomRoles.Comebacker), GetString("SuddenDeathMode"))); break;
                     case CustomGameMode.MurderMystery: sb.Append("\r\n").Append($"<#1a389c>{GetString("MurderMystery")}"); break;
                 }
+<<<<<<< HEAD
                 n = "<line-height=-100%>\n<b></line-height>" + name + $"\n<line-height=-{(sb.Length is 0 ? "200" : "300")}%>\n<size=60%><line-height=0%><{Main.ModColor}>TownOfHost-hamo <#ffffff>v{Main.PluginShowVersion}<line-height=100%>{sb.ToString()}</size>\n<size=0> ";
+=======
+                n = "<line-height=-100%>\n<b></line-height>" + name + $"\n<line-height=-{(sb.Length is 0 ? "200" : "300")}%>\n<size=60%><line-height=0%><{Main.ModColor}>TownOfHost-Pko <#ffffff>v{Main.PluginShowVersion}<line-height=100%>{sb.ToString()}</size>\n<size=0> ";
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 if (force)
                     PlayerCatch.AllPlayerControls.DoIf(x => x.name != "Player(Clone)" && x.PlayerId != PlayerControl.LocalPlayer.PlayerId && !x.IsModClient(), x => PlayerControl.LocalPlayer.RpcSetNamePrivate(n, true, x, true));
                 else if (pc.PlayerId != PlayerControl.LocalPlayer.PlayerId)
@@ -649,7 +904,11 @@ namespace TownOfHost
             CustomRoles[] killLv2 = [CustomRoles.Ballooner, CustomRoles.FireWorks, CustomRoles.Warlock, CustomRoles.GrimReaper];
             CustomRoles[] GuardLv2 = [CustomRoles.Fox, CustomRoles.MadGuardian];
             CustomRoles[] KillLv3 = [CustomRoles.Jumper];
+<<<<<<< HEAD
             CustomRoles[] GuardLv9 = [CustomRoles.King];
+=======
+            CustomRoles[] GuardLv9 = [CustomRoles.King, CustomRoles.Autocrat];
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             CustomRoles[] KillLv10 = [CustomRoles.ConnectSaver, CustomRoles.Shyboy, CustomRoles.Limiter, CustomRoles.EarnestWolf, CustomRoles.CurseMaker];
 
             sb.Append($"{GetString("DeathReason.Kill")}{(i is 3 ? "\n" : "　")}");
@@ -1052,7 +1311,11 @@ namespace TownOfHost
         public static bool IsRestriction()
         {
             //デバッグならカスタム・ローカル問わずバニラと同処理。
+<<<<<<< HEAD
             if (DebugModeManager.AmDebugger && DebugModeManager.EnableTOHhmDebugMode.GetBool()) return true;
+=======
+            if (DebugModeManager.AmDebugger && DebugModeManager.EnableTOHPDebugMode.GetBool()) return true;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             //カスタムサーバー か ローカルゲームならfalseを返す
             if (Main.IsCs() || GameStates.IsLocalGame) return false;
 

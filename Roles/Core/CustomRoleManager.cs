@@ -120,6 +120,21 @@ public static class CustomRoleManager
                     GuardreasonNumber = 1;
                     info.GuardPower = 1;
                 }
+<<<<<<< HEAD
+=======
+                //アブソーブチェック
+                if (info.KillPower > info.GuardPower && Absorb.IsAchive())
+                {
+                    if (Absorb.AbsorbGuard.TryGetValue(attemptTarget.PlayerId, out var count))
+                    {
+                        if (count > 0)
+                        {
+                            GuardreasonNumber = 4;
+                            info.GuardPower = 1;
+                        }
+                    }
+                }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 //属性ガードのチェック
                 if (info.KillPower > info.GuardPower)//消費する必要がある
                 {
@@ -197,6 +212,13 @@ public static class CustomRoleManager
                         break;
                     case 3://Role
                         break;
+<<<<<<< HEAD
+=======
+                    case 4:
+                        Logger.Info($"AbsorbGuard : {--Absorb.AbsorbGuard[attemptTarget.PlayerId]}", "Absorb");
+                        UtilsGameLog.AddGameLog($"Guard", UtilsName.GetPlayerColor(attemptTarget) + ":  " + string.Format(Translator.GetString("GuardMaster.Guard"), UtilsName.GetPlayerColor(attemptKiller, true)));
+                        break;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     default:
                         break;
                 }
@@ -478,7 +500,10 @@ public static class CustomRoleManager
         OnFixedUpdateOthers.Clear();
         OnCompleteTaskOthers.Clear();
         SubRoleRPCSender.RoleHandlers.Clear();
+<<<<<<< HEAD
         CoLog.Reset();
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
     public static void CreateInstance()
     {
@@ -536,8 +561,12 @@ public static class CustomRoleManager
                 case CustomRoles.Autopsy: Autopsy.Add(pc.PlayerId); break;
                 case CustomRoles.MagicHand: MagicHand.Add(pc.PlayerId); break;
                 case CustomRoles.Powerful: Powerful.Add(pc.PlayerId); break;
+<<<<<<< HEAD
                 case CustomRoles.Surrender: TownOfHost.Roles.AddOns.Common.Surrender.Add(pc.PlayerId); break;
                 case CustomRoles.Reporting: TownOfHost.Roles.AddOns.Common.Reporting.Add(pc.PlayerId); break;
+=======
+                case CustomRoles.Absorb: Absorb.Add(pc.PlayerId); break;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
                 case CustomRoles.SlowStarter: SlowStarter.Add(pc.PlayerId); break;
                 case CustomRoles.Notvoter: Notvoter.Add(pc.PlayerId); break;
@@ -560,6 +589,11 @@ public static class CustomRoleManager
                 case CustomRoles.Stack: Stack.Add(pc.PlayerId); break;
 
                 case CustomRoles.Ghostbuttoner: Ghostbuttoner.Add(pc.PlayerId); break;
+<<<<<<< HEAD
+=======
+                case CustomRoles.GhostFloodlight: GhostFloodlight.Add(pc.PlayerId); break;
+                case CustomRoles.GhostSaboteur: GhostSaboteur.Add(pc.PlayerId); break;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 case CustomRoles.GhostNoiseSender: GhostNoiseSender.Add(pc.PlayerId); break;
                 case CustomRoles.GhostReseter: GhostReseter.Add(pc.PlayerId); break;
                 case CustomRoles.GhostRumour: GhostRumour.Add(pc.PlayerId); break;
@@ -828,8 +862,12 @@ public enum CustomRoles
     Evolver,
     Conjurer,
     Swooper,
+<<<<<<< HEAD
 
     BeginnerImpostor,
+=======
+    Spider,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     //TOH-K
     Bomber,
     TeleportKiller,
@@ -874,8 +912,14 @@ public enum CustomRoles
     Reverser,
     EvilSanta,
     EvilLinker,
+<<<<<<< HEAD
     VillainWolf,
     BlackVisioner,
+=======
+    MassMurder,
+    EvilStandMaster,
+    BeginnerImpostor,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     //DEBUG only Impostor
     //Madmate
     MadGuardian,
@@ -883,6 +927,10 @@ public enum CustomRoles
     MadSnitch,
     MadAvenger,
     SKMadmate,
+<<<<<<< HEAD
+=======
+    BlackCat,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     //TOH-K
     MadJester,
     MadTeller,
@@ -896,9 +944,12 @@ public enum CustomRoles
     Nue,
     MadHacker,
     MadSheriff,
+<<<<<<< HEAD
     BlackCat,
     BlackMadMate,
     MadKaiser,
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     //DEBUG only Madmate
     //Crewmate(Vanilla)
     Engineer,
@@ -934,6 +985,10 @@ public enum CustomRoles
     MagicalGirl,
     Walkure,
     SuspiciousTeller,
+<<<<<<< HEAD
+=======
+    NiceNekomata,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     //TOH-K
     Gasp,
     VentMaster,
@@ -978,7 +1033,10 @@ public enum CustomRoles
     //TOH-P
     NiceGuesser,
     Pukupuku,
+<<<<<<< HEAD
     NiceNekomata,
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     Medium,
     SheriffHadouHo,
     Hitchhiker,
@@ -988,7 +1046,11 @@ public enum CustomRoles
     Milkman,
     Police,
     NiceWorkaholic,
+<<<<<<< HEAD
     LegendStar,
+=======
+    Jailer,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     //DEBUG only Crewmate
     Analyzer,
     //Neutral
@@ -1070,9 +1132,14 @@ public enum CustomRoles
     Stand,
     Villain,
     Scratcher,
+<<<<<<< HEAD
     Connector,
     Sleeper,
     Null,
+=======
+    HappyJester,
+    Autocrat,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     //DEBUG only Neutral.
     //HideAndSeek
     HASFox,
@@ -1085,6 +1152,12 @@ public enum CustomRoles
     Braid,
     Vega,
     Altair,
+<<<<<<< HEAD
+=======
+    Amateras,
+    Abuser,
+    Victim,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     // Sub-roll after 500
     NotAssigned = 500,
     LastImpostor,
@@ -1118,8 +1191,14 @@ public enum CustomRoles
     Moon,
     Guarding,
     MagicHand,
+<<<<<<< HEAD
     //デバフ
     Surrender,
+=======
+    Absorb,
+    VoteTracker,
+    //デバフ
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     Amnesia,
     Notvoter,
     Elector,
@@ -1134,7 +1213,10 @@ public enum CustomRoles
     Sunglasses,
     Stamina,
     Jumbo,
+<<<<<<< HEAD
     Reporting,
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
     //GhostRoles
 
@@ -1150,6 +1232,12 @@ public enum CustomRoles
     GhostReseter,
     GuardianAngel,
     GhostRumour,
+<<<<<<< HEAD
+=======
+    //Pko
+    GhostFloodlight,
+    GhostSaboteur,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     //NeutralGhost
     AsistingAngel,
     Securer,

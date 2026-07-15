@@ -59,7 +59,10 @@ public sealed class NiceGuesser : RoleBase
         CanGuessVanilla = BooleanOptionItem.Create(RoleInfo, 12, OptionName.CanGuessVanilla, true, false);
         CanGuessNakama = BooleanOptionItem.Create(RoleInfo, 13, OptionName.CanGuessNakama, true, false);
         CanGuessWhiteCrew = BooleanOptionItem.Create(RoleInfo, 14, OptionName.CanWhiteCrew, false, false);
+<<<<<<< HEAD
         SaruWarningOption.AddTo(RoleInfo);
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     private static bool IsBtCommand(string msg)

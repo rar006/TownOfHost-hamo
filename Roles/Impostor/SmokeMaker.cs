@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 /*using System.Collections.Generic;
+=======
+/*
+using System.Collections.Generic;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
@@ -55,6 +60,11 @@ public sealed class SmokeMaker : RoleBase, IImpostor, IUsePhantomButton
 
     readonly List<SmokeDummy> placedDummies;
     float placeCDLeft;
+<<<<<<< HEAD
+=======
+    int clientDummiesCount;
+    int DummiesCount => AmongUsClient.Instance.AmHost ? placedDummies.Count : clientDummiesCount;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
     static void SetupOptionItem()
     {
@@ -115,6 +125,10 @@ public sealed class SmokeMaker : RoleBase, IImpostor, IUsePhantomButton
         Player.MarkDirtySettings();
 
         UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
+<<<<<<< HEAD
+=======
+        SendSyncRpc();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         Logger.Info($"{Player.Data.GetLogPlayerName()} がスモークダミーを設置: {pos}", "SmokeMaker");
     }
 
@@ -124,6 +138,26 @@ public sealed class SmokeMaker : RoleBase, IImpostor, IUsePhantomButton
         ResetCooldown = false;
 
         if (!Player.IsAlive()) return;
+<<<<<<< HEAD
+=======
+
+        if (AmongUsClient.Instance.AmHost)
+        {
+            ActivateSmoke();
+        }
+        else
+        {
+            if (DummiesCount > 0)
+            {
+                SendActivateRequestRpc();
+            }
+        }
+    }
+
+    void ActivateSmoke()
+    {
+        if (!Player.IsAlive()) return;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         if (placedDummies.Count == 0) return;
 
         foreach (var dummy in placedDummies.ToArray())
@@ -139,6 +173,10 @@ public sealed class SmokeMaker : RoleBase, IImpostor, IUsePhantomButton
         }, 0.1f, "SmokeMaker.ResetCD", true);
 
         UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
+<<<<<<< HEAD
+=======
+        SendSyncRpc();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     public override void OnFixedUpdate(PlayerControl player)
@@ -154,10 +192,18 @@ public sealed class SmokeMaker : RoleBase, IImpostor, IUsePhantomButton
             {
                 placeCDLeft = 0f;
                 UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
+<<<<<<< HEAD
+=======
+                SendSyncRpc();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             }
             else if (Mathf.CeilToInt(prev) != Mathf.CeilToInt(placeCDLeft))
             {
                 UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
+<<<<<<< HEAD
+=======
+                SendSyncRpc();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             }
         }
     }
@@ -174,6 +220,10 @@ public sealed class SmokeMaker : RoleBase, IImpostor, IUsePhantomButton
     {
         if (!AmongUsClient.Instance.AmHost) return;
         placeCDLeft = PlaceCooldown;
+<<<<<<< HEAD
+=======
+        SendSyncRpc();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     void DespawnAll()
@@ -181,6 +231,10 @@ public sealed class SmokeMaker : RoleBase, IImpostor, IUsePhantomButton
         foreach (var d in placedDummies.ToArray())
             d.ForceRemove();
         placedDummies.Clear();
+<<<<<<< HEAD
+=======
+        SendSyncRpc();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     public override string GetProgressText(bool comms = false, bool GameLog = false)
@@ -188,9 +242,15 @@ public sealed class SmokeMaker : RoleBase, IImpostor, IUsePhantomButton
         if (!Player.IsAlive()) return "";
         if (placeCDLeft > 0f)
             return $" <color=#888888>({Mathf.CeilToInt(placeCDLeft)}s)</color>";
+<<<<<<< HEAD
         if (placedDummies.Count >= MaxDummies)
             return $" <color=#555555>({placedDummies.Count}/{MaxDummies})</color>";
         return $" <color=#aaaaaa>({placedDummies.Count}/{MaxDummies})</color>";
+=======
+        if (DummiesCount >= MaxDummies)
+            return $" <color=#555555>({DummiesCount}/{MaxDummies})</color>";
+        return $" <color=#aaaaaa>({DummiesCount}/{MaxDummies})</color>";
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null,
@@ -203,6 +263,7 @@ public sealed class SmokeMaker : RoleBase, IImpostor, IUsePhantomButton
         string size = isForHud ? "" : "<size=60%>";
         string color = RoleInfo.RoleColorCode;
 
+<<<<<<< HEAD
         if (placedDummies.Count == 0)
             return $"{size}<color={color}>ペット → スモーク設置 | ファントム → 起爆</color>";
         return $"{size}<color={color}>設置済: {placedDummies.Count} | ファントム → 全て起爆！</color>";
@@ -212,6 +273,46 @@ public sealed class SmokeMaker : RoleBase, IImpostor, IUsePhantomButton
 /// <summary>
 /// スモークメーカーのダミー（設置状態）
 /// </summary>
+=======
+        if (DummiesCount == 0)
+            return $"{size}<color={color}>ペット → スモーク設置 | ファントム → 起爆</color>";
+        return $"{size}<color={color}>設置済: {DummiesCount} | ファントム → 全て起爆！</color>";
+    }
+
+    void SendSyncRpc()
+    {
+        if (!AmongUsClient.Instance.AmHost) return;
+        using var sender = CreateSender();
+        sender.Writer.Write((byte)1);
+        sender.Writer.Write(placeCDLeft);
+        sender.Writer.Write(placedDummies.Count);
+    }
+
+    void SendActivateRequestRpc()
+    {
+        using var sender = CreateSender();
+        sender.Writer.Write((byte)0);
+    }
+
+    public override void ReceiveRPC(MessageReader reader)
+    {
+        byte rpcType = reader.ReadByte();
+        if (rpcType == 0)
+        {
+            if (AmongUsClient.Instance.AmHost)
+            {
+                ActivateSmoke();
+            }
+        }
+        else if (rpcType == 1)
+        {
+            placeCDLeft = reader.ReadSingle();
+            clientDummiesCount = reader.ReadInt32();
+        }
+    }
+}
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 public class SmokeDummy : CustomNetObject
 {
     readonly PlayerControl _owner;
@@ -220,7 +321,10 @@ public class SmokeDummy : CustomNetObject
     readonly int _colorId;
     bool _activated = false;
 
+<<<<<<< HEAD
     // ★ UtilsNotifyRolesからも参照される静的リスト（SmokeCloudが入る）
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     public static HashSet<byte> PlayersInSmoke = new();
     public static readonly List<SmokeCloud> ActiveSmokes = new();
 
@@ -229,13 +333,20 @@ public class SmokeDummy : CustomNetObject
         _owner = owner;
         _smokeSize = smokeSize;
         _spawnPos = position;
+<<<<<<< HEAD
         _colorId = IRandom.Instance.Next(0, 18); // ★ 生成時にランダムな色を決める
+=======
+        _colorId = IRandom.Instance.Next(0, 18);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         CreateNetObject(position);
     }
 
     protected override void OnCreated()
     {
+<<<<<<< HEAD
         // ★ ランダムな色にして、装飾を消し、名前を空にする
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         SetAppearance(_colorId, "", "", "", "");
         SetName("");
         SnapToPosition(_spawnPos);
@@ -253,7 +364,10 @@ public class SmokeDummy : CustomNetObject
         if (_activated) return;
         _activated = true;
 
+<<<<<<< HEAD
         // ★ 非表示になっていたダミーを消して、全員に見える「スモーク雲」を新規生成する！
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         new SmokeCloud(_spawnPos, _smokeSize, duration);
         ForceRemove();
     }
@@ -315,9 +429,12 @@ public class SmokeDummy : CustomNetObject
     }
 }
 
+<<<<<<< HEAD
 /// <summary>
 /// 全員に見える起爆後のスモーク雲
 /// </summary>
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 public class SmokeCloud : CustomNetObject
 {
     public readonly int _smokeSize;
@@ -334,8 +451,13 @@ public class SmokeCloud : CustomNetObject
 
     protected override void OnCreated()
     {
+<<<<<<< HEAD
         SetAppearance(0, "", "", "", ""); // 本体は見えなくなるので適当でOK
         SetName($"<color=#aaaaaa><size={_smokeSize}%>・</size></color>"); // 煙っぽい色
+=======
+        SetAppearance(0, "", "", "", "");
+        SetName($"<color=#aaaaaa><size={_smokeSize}%>・</size></color>");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         SnapToPosition(_spawnPos);
         SmokeDummy.ActiveSmokes.Add(this);
     }
@@ -357,4 +479,9 @@ public static class SmokeDummyUpdatePatch
         if (!GameStates.IsInTask) return;
         SmokeDummy.UpdateAll();
     }
+<<<<<<< HEAD
 }*/
+=======
+}
+*/
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

@@ -17,7 +17,11 @@ namespace TownOfHost
 {
     public static class CustomButton
     {
+<<<<<<< HEAD
         public static Sprite Get(string name) => UtilsSprite.LoadSprite($"TownOfHost.Resources.TOHhm.Button.{name}.png", 115f);
+=======
+        public static Sprite Get(string name) => UtilsSprite.LoadSprite($"TownOfHost.Resources.TOHP.Button.{name}.png", 115f);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     [HarmonyPatch(typeof(HudManager), nameof(HudManager.Update))]

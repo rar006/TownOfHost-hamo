@@ -17,7 +17,15 @@ namespace TownOfHost
     [HarmonyPatch(typeof(MainMenuManager))]
     public class MainMenuManagerPatch
     {
+<<<<<<< HEAD
         private const string OnlineButtonScalerPath = "MainUI/AspectScaler/RightPanel/MaskedBlackScreen/OnlineButtons/AspectSize/Scaler";
+=======
+        private const float AutoCreateGameDeadline = 0.01f;
+        private const float AutoCreateGamePollInterval = 0.01f;
+        private const string OnlineButtonScalerPath = "MainUI/AspectScaler/RightPanel/MaskedBlackScreen/OnlineButtons/AspectSize/Scaler";
+        private static bool autoCreateGameRequested;
+        private static int autoCreateGameRequestId;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         private static SimpleButton discordButton;
         private static SimpleButton StatisticsButton;
         private static GameObject Statistics_ScrollStuff;
@@ -25,7 +33,11 @@ namespace TownOfHost
         public static SimpleButton UpdateButton2;
         private static SimpleButton gitHubButton;
         private static SimpleButton TwitterXButton;
+<<<<<<< HEAD
         private static SimpleButton TOHhmBOTButton;
+=======
+        private static SimpleButton TOHPBOTButton;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         private static SimpleButton RoleInfoButton;
         private static SimpleButton betaversionchange;
         public static TextMeshPro Statistics_TMP;
@@ -72,7 +84,11 @@ namespace TownOfHost
                     new(-0.8f, -1f, 1f),//-1f
                     new(153, 153, 153, byte.MaxValue),
                     new(209, 209, 209, byte.MaxValue),
+<<<<<<< HEAD
                     () => Application.OpenURL("https://github.com/rar006/TownOfHost-hamo"),
+=======
+                    () => Application.OpenURL("https://github.com/satokazoku/TownOfHost-Pko"),
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     "GitHub");
             }
 
@@ -84,6 +100,7 @@ namespace TownOfHost
                     new(0.9f, -1f, 1f),
                     new(0, 202, 255, byte.MaxValue),
                     new(60, 255, 255, byte.MaxValue),
+<<<<<<< HEAD
                     () => Application.OpenURL("youtube.com/@harudayo1210?si=XFtImV4TE2FO9o-U"),
                     "Youtube");
             }
@@ -97,6 +114,21 @@ namespace TownOfHost
                     new(60, 201, 87, byte.MaxValue),
                     () => Application.OpenURL(""),
                     "TOHhmBOT");
+=======
+                    () => Application.OpenURL("https://youtube.com/@toh-pko?si=P6vdE1t4MHoA_C6F"),
+                    "Youtube");
+            }
+            // TOHPBOTボタンを生成
+            if (SimpleButton.IsNullOrDestroyed(TOHPBOTButton))
+            {
+                TOHPBOTButton = CreateButton(
+                    "TOHPBOTButton",
+                    new(2.6f, -1f, 1f),
+                    new(0, 201, 87, byte.MaxValue),
+                    new(60, 201, 87, byte.MaxValue),
+                    () => Application.OpenURL("https://discord.com/"),
+                    "TOHPBOT");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             }
             if (SimpleButton.IsNullOrDestroyed(StatisticsButton))
             {
@@ -107,7 +139,11 @@ namespace TownOfHost
                     new(255, 248, 173, byte.MaxValue),
                     () =>
                     {
+<<<<<<< HEAD
                         CredentialsPatch.TOHhmLogo.gameObject.SetActive(false);
+=======
+                        CredentialsPatch.TOHPLogo.gameObject.SetActive(false);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         __instance.screenTint.enabled = true;
                         Statistics_TMP.gameObject.SetActive(true);
                         Statistics_TMP.text = $"<size=60%>{SaveStatistics.ShowText()}";
@@ -179,7 +215,11 @@ namespace TownOfHost
                         updatea.name = "Update Detail";
                         updatea.gameObject.SetActive(true);
                         updatea.AnnouncementListSlider.SetActive(false);
+<<<<<<< HEAD
                         updatea.Title.text = "TOH-hm " + ModUpdater.latestTitle;
+=======
+                        updatea.Title.text = "TOH-P " + ModUpdater.latestTitle;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         updatea.AnnouncementBodyText.text = Regex.Replace(ModUpdater.body.Replace("#", "").Replace("**", ""), @"\[(.*?)\]\(.*?\)", "$1");
                         updatea.DateString.text = "Latest Release";
                         updatea.SubTitle.text = "";
@@ -199,7 +239,11 @@ namespace TownOfHost
                     new(60, 255, 183, byte.MaxValue),
                     () =>
                     {
+<<<<<<< HEAD
                         CredentialsPatch.TOHhmLogo.gameObject.SetActive(false);
+=======
+                        CredentialsPatch.TOHPLogo.gameObject.SetActive(false);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         __instance.screenTint.enabled = true;
                         if (betaVersionMenu != null)
                         {
@@ -242,7 +286,14 @@ namespace TownOfHost
                 betaversionchange.FontSize = 2;
             }
             CreateStreameMenu.CreateMenu(__instance);
+<<<<<<< HEAD
             __instance.ResetScreen();
+=======
+            CancelAutoCreateGame();
+            __instance.PlayOnlineButton.OnClick.AddListener((Action)RequestAutoCreateGame);
+            __instance.ResetScreen();
+            HideOnlineJoinControls(__instance);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
             // フリープレイの無効化
             var howToPlayButton = __instance.howToPlayButton;
@@ -275,15 +326,26 @@ namespace TownOfHost
 #endif
         }
 
+<<<<<<< HEAD
         private static void ShowOnlineJoinControls(MainMenuManager mainMenu)
+=======
+        private static void HideOnlineJoinControls(MainMenuManager mainMenu)
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         {
             var scaler = mainMenu.transform.Find(OnlineButtonScalerPath);
             if (scaler == null) return;
 
+<<<<<<< HEAD
             scaler.Find("Enter Code Button")?.gameObject.SetActive(true);
             scaler.Find("Find Game Button")?.gameObject.SetActive(true);
             scaler.Find("Line")?.gameObject.SetActive(true);
             scaler.Find("Create Lobby Button")?.gameObject.SetActive(true);
+=======
+            scaler.Find("Enter Code Button")?.gameObject.SetActive(false);
+            scaler.Find("Find Game Button")?.gameObject.SetActive(false);
+            scaler.Find("Line")?.gameObject.SetActive(false);
+            scaler.Find("Create Lobby Button")?.gameObject.SetActive(false);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         }
 
         /// <summary>TOHロゴの子としてボタンを生成</summary>
@@ -304,7 +366,11 @@ namespace TownOfHost
             bool isActive = true,
             Transform transform = null)
         {
+<<<<<<< HEAD
             var button = new SimpleButton(transform == null ? CredentialsPatch.TOHhmLogo.transform : transform, name, localPosition, normalColor, hoverColor, action, label, isActive);
+=======
+            var button = new SimpleButton(transform == null ? CredentialsPatch.TOHPLogo.transform : transform, name, localPosition, normalColor, hoverColor, action, label, isActive);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             if (scale.HasValue)
             {
                 button.Scale = scale.Value;
@@ -316,12 +382,18 @@ namespace TownOfHost
         [HarmonyPrefix]
         public static bool ClickFindGame()
         {
+<<<<<<< HEAD
             return true;
+=======
+            return !(VersionInfoManager.version == null || VersionInfoManager.allversion.DisableMM
+            || (VersionInfoManager.allversion != null && VersionInfoManager.allversion.DisableMM));
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         }
         [HarmonyPatch(nameof(MainMenuManager.OpenEnterCodeMenu))]
         [HarmonyPrefix]
         public static bool ClickOpenEnterCodeMenu()
         {
+<<<<<<< HEAD
             return true;
         }
         [HarmonyPatch(nameof(MainMenuManager.OpenOnlineMenu))]
@@ -329,6 +401,83 @@ namespace TownOfHost
         public static void OpenOnlineMenuPostfix(MainMenuManager __instance)
         {
             ShowOnlineJoinControls(__instance);
+=======
+            return !(VersionInfoManager.version != null && VersionInfoManager.version.DisableRoomJoin == true
+            && VersionInfoManager.allversion != null && VersionInfoManager.allversion.DisableRoomJoin == true);
+        }
+        [HarmonyPatch(nameof(MainMenuManager.OpenOnlineMenu))]
+        [HarmonyPostfix]
+        [HarmonyPriority(Priority.Last)]
+        public static void OpenOnlineMenuPostfix(MainMenuManager __instance)
+        {
+            _ = new LateTask(() => BeginAutoCreateGame(__instance), AutoCreateGamePollInterval, "Begin Auto Create Game", true);
+        }
+
+        private static void RequestAutoCreateGame()
+        {
+            autoCreateGameRequested = true;
+            autoCreateGameRequestId++;
+        }
+
+        private static void CancelAutoCreateGame()
+        {
+            autoCreateGameRequested = false;
+            autoCreateGameRequestId++;
+        }
+
+        private static void BeginAutoCreateGame(MainMenuManager mainMenu)
+        {
+            if (!autoCreateGameRequested)
+            {
+                if (mainMenu != null)
+                {
+                    mainMenu.animating = false;
+                    mainMenu.ResetScreen();
+                }
+                return;
+            }
+
+            var requestId = autoCreateGameRequestId;
+            TryOpenCreateGame(mainMenu, requestId, Time.realtimeSinceStartup + AutoCreateGameDeadline);
+        }
+
+        private static void TryOpenCreateGame(MainMenuManager mainMenu, int requestId, float deadline)
+        {
+            _ = new LateTask(() =>
+            {
+                if (!autoCreateGameRequested || requestId != autoCreateGameRequestId) return;
+                if (mainMenu == null || mainMenu.createGameButton == null) return;
+
+                if (mainMenu.animating && Time.realtimeSinceStartup < deadline)
+                {
+                    TryOpenCreateGame(mainMenu, requestId, deadline);
+                    return;
+                }
+
+                autoCreateGameRequested = false;
+                mainMenu.animating = false;
+                mainMenu.createGameButton.OnClick.Invoke();
+            }, AutoCreateGamePollInterval, "Open Create Game Directly", true);
+        }
+        [HarmonyPatch(nameof(MainMenuManager.ClickBackOnline))]
+        [HarmonyPrefix]
+        public static bool ClickBackOnline(MainMenuManager __instance)
+        {
+            CancelAutoCreateGame();
+            __instance.animating = false;
+            __instance.ResetScreen();
+            return false;
+        }
+        [HarmonyPatch(nameof(MainMenuManager.GoBackCreateGame))]
+        [HarmonyPrefix]
+        public static bool GoBackCreateGamePrefix(MainMenuManager __instance)
+        {
+            CancelAutoCreateGame();
+            __instance.animating = false;
+            __instance.createGameScreen?.gameObject?.SetActive(false);
+            __instance.ResetScreen();
+            return false;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         }
         // プレイメニュー，アカウントメニュー，クレジット画面が開かれたらロゴとボタンを消す
         [HarmonyPatch(nameof(MainMenuManager.OpenGameModeMenu))]
@@ -341,10 +490,44 @@ namespace TownOfHost
         {
             CreateStreameMenu.CloseMenu();
             var onlineButtonScaler = __instance.transform.Find(OnlineButtonScalerPath);
+<<<<<<< HEAD
 
             if (CredentialsPatch.TOHhmLogo != null)
             {
                 CredentialsPatch.TOHhmLogo.gameObject.SetActive(false);
+=======
+            var Findbuttongo = onlineButtonScaler?.Find("Find Game Button")?.gameObject;
+
+            var codebuttongo = onlineButtonScaler?.Find("Enter Code Button")?.gameObject;
+            var Codebutton = codebuttongo?.GetComponent<PassiveButton>();
+
+            var createbuttongameobject = onlineButtonScaler?.Find("Create Lobby Button")?.gameObject;
+            var createbutton = createbuttongameobject?.GetComponent<PassiveButton>();
+
+            var version = VersionInfoManager.version;
+            var allVersion = VersionInfoManager.allversion;
+
+            if (Findbuttongo)
+            {
+                // var disable = version == null || version.DisableMM || (allVersion != null && allVersion.DisableMM);
+                //Findbuttongo.SetActive(!disable);
+                Findbuttongo.SetActive(false);
+            }
+            if (Codebutton && ((VersionInfoManager.version != null && VersionInfoManager.version.DisableRoomJoin == true) ||
+            VersionInfoManager.allversion != null && VersionInfoManager.allversion.DisableRoomJoin == true))
+            {
+                var buttonCollider = Codebutton.GetComponent<BoxCollider2D>();
+                buttonCollider.offset = new(100f, 100f);
+            }
+            if (Main.IsAndroid())
+            {
+                //    createbutton.GetComponent<BoxCollider2D>().offset = new(100f, 100);
+            }
+
+            if (CredentialsPatch.TOHPLogo != null)
+            {
+                CredentialsPatch.TOHPLogo.gameObject.SetActive(false);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             }
             if (VersionMenu != null)
                 VersionMenu.SetActive(false);
@@ -368,13 +551,24 @@ namespace TownOfHost
                 if (text == "") warning.SetActive(false);
             }
             OptionsMenuBehaviourStartPatch.Instance = null;
+<<<<<<< HEAD
+=======
+            HideOnlineJoinControls(__instance);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         }
         [HarmonyPatch(nameof(MainMenuManager.ResetScreen)), HarmonyPostfix]
         public static void ResetScreenPostfix(MainMenuManager __instance)
         {
+<<<<<<< HEAD
             if (CredentialsPatch.TOHhmLogo != null)
             {
                 CredentialsPatch.TOHhmLogo?.gameObject?.SetActive(true);
+=======
+            CancelAutoCreateGame();
+            if (CredentialsPatch.TOHPLogo != null)
+            {
+                CredentialsPatch.TOHPLogo?.gameObject?.SetActive(true);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             }
             if (VersionMenu != null)
                 VersionMenu.SetActive(false);
@@ -393,6 +587,10 @@ namespace TownOfHost
                 if (ejectButton != null && ejectButton.gameObject != null)
                     ejectButton.gameObject.SetActive(true);
             }, 0.5f, "ShowButton", true);
+<<<<<<< HEAD
+=======
+            HideOnlineJoinControls(__instance);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         }
         public static void DestroyButton()
         {
@@ -492,7 +690,11 @@ namespace TownOfHost
             {
                 var allrole = CustomRolesHelper.AllStandardRoles;
                 var role = allrole[IRandom.Instance.Next(allrole.Count())];
+<<<<<<< HEAD
                 var sprite = UtilsSprite.LoadSprite($"TownOfHost.Resources.TOHhm.Label.{role}.png", size);
+=======
+                var sprite = UtilsSprite.LoadSprite($"TownOfHost.Resources.TOHP.Label.{role}.png", size);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 if (sprite is null) return;
                 part.myRend.material.shader = shader;
                 part.myRend.sharedMaterial.shader = shader;
@@ -502,11 +704,19 @@ namespace TownOfHost
             {
                 var allrole = CustomRolesHelper.AllRoles;
                 var role = allrole[IRandom.Instance.Next(allrole.Count())];
+<<<<<<< HEAD
                 var sprite = UtilsSprite.LoadSprite($"TownOfHost.Resources.TOHhm.Button.{role}_Ability.png", size);
                 if (sprite is null)
                     sprite = UtilsSprite.LoadSprite($"TownOfHost.Resources.TOHhm.Button.{role}_Kill.png", size);
                 if (sprite is null)
                     sprite = UtilsSprite.LoadSprite($"TownOfHost.Resources.TOHhm.Button.{role}_Vent.png", size);
+=======
+                var sprite = UtilsSprite.LoadSprite($"TownOfHost.Resources.TOHP.Button.{role}_Ability.png", size);
+                if (sprite is null)
+                    sprite = UtilsSprite.LoadSprite($"TownOfHost.Resources.TOHP.Button.{role}_Kill.png", size);
+                if (sprite is null)
+                    sprite = UtilsSprite.LoadSprite($"TownOfHost.Resources.TOHP.Button.{role}_Vent.png", size);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 if (sprite is null) return;
                 part.myRend.material.shader = shader;
                 part.myRend.sharedMaterial.shader = shader;

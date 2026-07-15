@@ -1,4 +1,8 @@
 using System.Linq;
+<<<<<<< HEAD
+=======
+using System.Collections.Generic;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 using AmongUs.GameOptions;
 using Hazel;
 using TownOfHost.Roles.Core;
@@ -27,15 +31,28 @@ public sealed class LoversBreaker : RoleBase, ILNKiller
     static OptionItem OptionKillCooldown;
     static OptionItem OptionRequiredLoversKills;
     static OptionItem OptionCanWinAtDeath;
+<<<<<<< HEAD
+=======
+    static OptionItem OptionOnlyAssignWithLoversRole;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
     static float KillCooldown => OptionKillCooldown?.GetFloat() ?? 25f;
     static int RequiredLoversKills => OptionRequiredLoversKills?.GetInt() ?? 1;
     static bool CanWinAtDeath => OptionCanWinAtDeath?.GetBool() ?? false;
+<<<<<<< HEAD
+=======
+    public static bool IsTanabataEventActive => Event.Tanabata;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
     enum OptionName
     {
         LoversBreakerRequiredLoversKills,
+<<<<<<< HEAD
         LoversBreakerCanWinAtDeath
+=======
+        LoversBreakerCanWinAtDeath,
+        LoversBreakerOnlyAssignWithLoversRole
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     int loversKillCount;
@@ -56,6 +73,10 @@ public sealed class LoversBreaker : RoleBase, ILNKiller
         OptionRequiredLoversKills = IntegerOptionItem.Create(RoleInfo, 12, OptionName.LoversBreakerRequiredLoversKills, new(1, 10, 1), 3, false)
             .SetValueFormat(OptionFormat.Times);
         OptionCanWinAtDeath = BooleanOptionItem.Create(RoleInfo, 13, OptionName.LoversBreakerCanWinAtDeath, false, false);
+<<<<<<< HEAD
+=======
+        OptionOnlyAssignWithLoversRole = BooleanOptionItem.Create(RoleInfo, 14, OptionName.LoversBreakerOnlyAssignWithLoversRole, true, false);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     public override void Add()
@@ -75,7 +96,11 @@ public sealed class LoversBreaker : RoleBase, ILNKiller
         RefreshTargetLoversState();
         var target = info.AttemptTarget;
 
+<<<<<<< HEAD
         if (IsBreakableLover(target)) return;
+=======
+        if (CanKillTarget(target)) return;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         info.DoKill = false;
         PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = CustomDeathReason.Misfire;
@@ -85,7 +110,11 @@ public sealed class LoversBreaker : RoleBase, ILNKiller
     public void OnMurderPlayerAsKiller(MurderInfo info)
     {
         if (!Is(info.AttemptKiller) || info.IsSuicide) return;
+<<<<<<< HEAD
         if (!IsBreakableLover(info.AttemptTarget)) return;
+=======
+        if (!CountsAsLoversKill(info.AttemptTarget)) return;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         loversKillCount++;
         hadTargetLovers = true;
@@ -93,15 +122,33 @@ public sealed class LoversBreaker : RoleBase, ILNKiller
     }
 
     public override void CheckWinner(GameOverReason reason)
+<<<<<<< HEAD
     {
         RefreshTargetLoversState();
         if (!CanWinAtDeath && !Player.IsAlive()) return;
         if (!CanSoloWinNow()) return;
+=======
+        => TryWinNow();
+
+    public bool TryWinNow()
+    {
+        RefreshTargetLoversState();
+        if (!CanWinAtDeath && !Player.IsAlive()) return false;
+        if (!CanSoloWinNow()) return false;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         if (CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.LoversBreaker, Player.PlayerId))
         {
             CustomWinnerHolder.NeutralWinnerIds.Add(Player.PlayerId);
+<<<<<<< HEAD
         }
+=======
+            CustomWinnerHolder.WinnerIds.Add(Player.PlayerId);
+            return true;
+        }
+
+        return false;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     public override string GetProgressText(bool comms = false, bool gamelog = false)
@@ -111,18 +158,66 @@ public sealed class LoversBreaker : RoleBase, ILNKiller
     {
         if (loversKillCount < RequiredLoversKills) return false;
         if (!hadTargetLovers) return false;
+<<<<<<< HEAD
         return !PlayerCatch.AllAlivePlayerControls.Any(IsBreakableLover);
+=======
+        return !PlayerCatch.AllAlivePlayerControls.Any(IsVictoryTarget);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     void RefreshTargetLoversState()
     {
         if (hadTargetLovers) return;
+<<<<<<< HEAD
         hadTargetLovers = PlayerCatch.AllPlayerControls.Any(IsBreakableLover);
+=======
+        hadTargetLovers = PlayerCatch.AllPlayerControls.Any(IsVictoryTarget);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     static bool IsBreakableLover(PlayerControl target)
         => target != null && target.IsLovers(checkonelover: false);
 
+<<<<<<< HEAD
+=======
+    static bool IsTanabataCouple(PlayerControl target)
+        => IsTanabataEventActive
+            && target?.GetCustomRole() is CustomRoles.Vega or CustomRoles.Altair;
+
+    static bool IsVictoryTarget(PlayerControl target)
+        => IsBreakableLover(target) || IsTanabataCouple(target);
+
+    static bool CanKillTarget(PlayerControl target)
+        => IsVictoryTarget(target)
+            || target?.Is(CustomRoles.Madonna) == true
+            || target?.Is(CustomRoles.Cupid) == true;
+
+    static bool CountsAsLoversKill(PlayerControl target)
+    {
+        if (target == null) return false;
+        if (target.Is(CustomRoles.Cupid)) return false;
+        if (target.Is(CustomRoles.Madonna)) return target.Is(CustomRoles.MadonnaLovers);
+        return IsVictoryTarget(target);
+    }
+
+    public static bool ShouldRemoveFromAssignment(IEnumerable<CustomRoles> assignedRoles)
+    {
+        if (OptionOnlyAssignWithLoversRole?.GetBool() != true) return false;
+
+        return !assignedRoles.Any(role =>
+            role is CustomRoles.Lovers
+                or CustomRoles.RedLovers
+                or CustomRoles.YellowLovers
+                or CustomRoles.BlueLovers
+                or CustomRoles.GreenLovers
+                or CustomRoles.WhiteLovers
+                or CustomRoles.PurpleLovers
+                or CustomRoles.Madonna
+                or CustomRoles.Cupid
+            || (IsTanabataEventActive && (role is CustomRoles.Vega or CustomRoles.Altair)));
+    }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     void SendRPC()
     {
         if (!AmongUsClient.Instance.AmHost) return;

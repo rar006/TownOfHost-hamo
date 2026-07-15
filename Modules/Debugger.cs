@@ -59,7 +59,11 @@ namespace TownOfHost
                 var webhookUrl = ClientOptionsManager.WebhookUrl;
                 var threadName = $"{DateTime.Now:yyyy年 MM月dd日 HH:mm} {Main.GameCount}試合目";
                 var killLog = UtilsGameLog.BuildKillLogText().RemoveHtmlTags();
+<<<<<<< HEAD
                 var preset = (ClientOptionsManager.PresetData && Main.ShowPresetInWebhook.Value)
+=======
+                var preset = ClientOptionsManager.PresetData
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     ? Encoding.UTF8.GetBytes(OptionSerializer.GenerateOptionsString())
                     : null;
                 var currentLog = ClientOptionsManager.LogData
@@ -121,7 +125,11 @@ namespace TownOfHost
                         threadUrl,
                         "{\"allowed_mentions\":{\"parse\":[]}}",
                         currentLog,
+<<<<<<< HEAD
                         $"TOHhm_AutoLog_{gameCount}試合目.txt");
+=======
+                        $"TOHP_AutoLog_{gameCount}試合目.txt");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 }
             }
             catch (Exception e)
@@ -208,7 +216,11 @@ namespace TownOfHost
     class Alert
     {
         /*
+<<<<<<< HEAD
         public static void Send(string text, string name = "TownOfHost-hamo", string avatar = "https://cdn.discordapp.com/attachments/1219855613752774657/1254725875535183933/TabIcon_MainSettings.png?ex=667a8a08&is=66793888&hm=dc20a50c7cadab0a15a215c19abcde6006fbef9911299ab82e452b7cf5242f57&")
+=======
+        public static void Send(string text, string name = "TownOfHost-Pko", string avatar = "https://cdn.discordapp.com/attachments/1219855613752774657/1254725875535183933/TabIcon_MainSettings.png?ex=667a8a08&is=66793888&hm=dc20a50c7cadab0a15a215c19abcde6006fbef9911299ab82e452b7cf5242f57&")
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         {
             ClientOptionsManager.CheckOptions();
             HttpClient httpClient = new();

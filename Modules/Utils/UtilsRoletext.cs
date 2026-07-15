@@ -176,8 +176,13 @@ namespace TownOfHost
                         case CustomRoles.Lighting: sb.Append(Lighting.SubRoleMark); break;
                         case CustomRoles.Moon: sb.Append(Moon.SubRoleMark); break;
                         case CustomRoles.Powerful: sb.Append(Powerful.SubRoleMark); break;
+<<<<<<< HEAD
                         //デバフ
                         case CustomRoles.Surrender: sb.Append(Surrender.SubRoleMark); break;
+=======
+                        case CustomRoles.Absorb: sb.Append(Absorb.SubRoleMark); break;
+                        //デバフ
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         case CustomRoles.SlowStarter: sb.Append(SlowStarter.SubRoleMark); break;
                         case CustomRoles.NonReport: sb.Append(NonReport.SubRoleMark); break;
                         case CustomRoles.Transparent: sb.Append(Transparent.SubRoleMark); break;
@@ -193,7 +198,10 @@ namespace TownOfHost
                         case CustomRoles.InfoPoor: sb.Append(InfoPoor.SubRoleMark); break;
                         case CustomRoles.News: sb.Append(News.SubRoleMark); break;
                         case CustomRoles.Sunglasses: sb.Append(Sunglasses.SubRoleMark); break;
+<<<<<<< HEAD
                         case CustomRoles.Reporting: sb.Append(Reporting.SubRoleMark); break;
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     }
                 }
             }

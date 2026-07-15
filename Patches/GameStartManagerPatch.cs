@@ -25,6 +25,31 @@ namespace TownOfHost
         private static TextMeshPro warningText;
         public static TextMeshPro HideName;
         private static TextMeshPro GameMaster;
+<<<<<<< HEAD
+=======
+        private static bool privacyLabelRenamed;
+
+        private static void RenamePrivacyLabel(GameStartManager gameStartManager)
+        {
+            if (privacyLabelRenamed || gameStartManager == null) return;
+
+            var privacyLabelRoot = GameObject.Find("PrivacyLabel");
+            var privacyLabel = privacyLabelRoot?.GetComponent<TextMeshPro>()
+                ?? privacyLabelRoot?.transform.FindChild("Text_TMP")?.GetComponent<TextMeshPro>();
+
+            privacyLabel ??= gameStartManager.GetComponentsInChildren<TextMeshPro>(true)
+                .FirstOrDefault(text => text != null
+                    && text != gameStartManager.privatePublicPanelText
+                    && (text.text == "プライバシー"
+                        || text.text.Equals("Privacy", StringComparison.OrdinalIgnoreCase)));
+
+            if (privacyLabel == null) return;
+
+            privacyLabel.DestroyTranslator();
+            privacyLabel.text = "募集状況";
+            privacyLabelRenamed = true;
+        }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         public static string GetTimerString()
         {
@@ -41,6 +66,11 @@ namespace TownOfHost
             public static void Postfix(GameStartManager __instance)
             {
                 __instance.MinPlayers = 1;
+<<<<<<< HEAD
+=======
+                privacyLabelRenamed = false;
+                RenamePrivacyLabel(__instance);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
                 __instance.GameRoomNameCode.text = GameCode.IntToGameName(AmongUsClient.Instance.GameId);
                 // Reset lobby countdown timer
@@ -114,6 +144,11 @@ namespace TownOfHost
             //private static float ext = 0f;
             public static void Prefix(GameStartManager __instance)
             {
+<<<<<<< HEAD
+=======
+                RenamePrivacyLabel(__instance);
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 // Lobby code
                 if (DataManager.Settings.Gameplay.StreamerMode
                 && AmongUsClient.Instance.NetworkMode == NetworkModes.OnlineGame)
@@ -283,7 +318,11 @@ namespace TownOfHost
                         Logger.Warn(msg, "BeginGame");
                     }
                 }
+<<<<<<< HEAD
                 if (DebugModeManager.Spawndummy.GetBool() && DebugModeManager.EnableTOHhmDebugMode.GetBool() && GameStates.IsLocalGame && PlayerCatch.AllPlayerControls.Where(pc => pc.isDummy is false).Count() == 1
+=======
+                if (DebugModeManager.Spawndummy.GetBool() && DebugModeManager.EnableTOHPDebugMode.GetBool() && GameStates.IsLocalGame && PlayerCatch.AllPlayerControls.Where(pc => pc.isDummy is false).Count() == 1
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 && DebugModeManager.AmDebugger)
                 {
                     byte id = 0;

@@ -714,4 +714,8 @@ public sealed class AllArounder : RoleBase, ISystemTypeUpdateHook, IKillFlashSee
         achievements.Add(1, l1);
         achievements.Add(2, l2);
     }
+<<<<<<< HEAD
 }
+=======
+} 
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

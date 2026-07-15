@@ -291,7 +291,16 @@ namespace TownOfHost
                     case CountTypes.GrimReaper: GrimReaper++; break;
                     case CountTypes.MilkyWay: MilkyWay++; break;
                     case CountTypes.Pavlov: Pavlov++; break;
+<<<<<<< HEAD
                     case CountTypes.StandMaster: StandMasterCount++; break;
+=======
+                    case CountTypes.StandMaster:
+                        // キル能力ONの間はスタンドマスター本人もキル陣営として数える。
+                        // OFFの場合、本人は最初の1回スタンド化するだけの非キラーなのでスタンド本体のみカウントする。
+                        if (!pc.Is(CustomRoles.StandMaster) || StandMaster.EnableKillAbility)
+                            StandMasterCount++;
+                        break;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     case CountTypes.Eater: EaterCount++; break;
                 }
             }
@@ -332,6 +341,33 @@ namespace TownOfHost
                 }
             }
 
+<<<<<<< HEAD
+=======
+            // 覚醒した被虐者は、残り2人になった時点で相手の陣営を無視して単独勝利する。
+            // それまでは通常の人数勝利を止める。
+            foreach (var pc in PlayerCatch.AllAlivePlayerControls)
+            {
+                if (pc.GetRoleClass() is Victim victim && victim.TryWinNow())
+                {
+                    reason = GameOverReason.ImpostorsByKill;
+                    return true;
+                }
+            }
+            if (PlayerCatch.AllAlivePlayerControls.Any(pc => pc.GetRoleClass() is Victim victim && victim.IsAwakened))
+                return false;
+
+            // 爆ぜ師の条件達成そのものをゲーム終了トリガーにする。
+            // 死亡後勝利設定にも対応するため、死亡者を含む全プレイヤーを確認する。
+            foreach (var pc in PlayerCatch.AllPlayerControls)
+            {
+                if (pc.GetRoleClass() is LoversBreaker loversBreaker && loversBreaker.TryWinNow())
+                {
+                    reason = GameOverReason.ImpostorsByKill;
+                    return true;
+                }
+            }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             if (Imp == 0 && FoxAndCrew == 0 && Jackal == 0 && Remotekiller == 0
                 && MilkyWay == 0 && MadBetrayer == 0 && Pavlov == 0 && StandMasterCount == 0
                 && EaterCount == 0) //全滅
@@ -440,4 +476,8 @@ namespace TownOfHost
             return true;
         }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

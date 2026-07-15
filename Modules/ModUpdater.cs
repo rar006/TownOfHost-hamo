@@ -19,7 +19,11 @@ namespace TownOfHost
     [HarmonyPatch]
     public class ModUpdater
     {
+<<<<<<< HEAD
         private static readonly string URL = "https://github.com/rar006/TownOfHost-hamo";
+=======
+        private static readonly string URL = "https://api.github.com/repos/satokazoku/TownOfHost-Pko";
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         public static bool hasUpdate = false;
         public static bool isBroken = false;
         public static bool isChecked = false;
@@ -51,6 +55,7 @@ namespace TownOfHost
         /// <param name="all">1ページ分のリリースをすべて取得し、releasesとsnapshotsを更新します</param>
         /// <param name="forced">allパラメータと同時に使用します / キャッシュを使用せずもう一度取得します</param>
         /// <returns></returns>
+<<<<<<< HEAD
         public static Task<bool> CheckRelease(bool beta = false, bool all = false, bool forced = false)
         {
             // NOTE: 呼び出し元は全て .GetAwaiter().GetResult() で同期的に待っているため、
@@ -61,6 +66,9 @@ namespace TownOfHost
         }
 
         private static bool CheckReleaseSync(bool beta, bool all, bool forced)
+=======
+        public static async Task<bool> CheckRelease(bool beta = false, bool all = false, bool forced = false)
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         {
             //bool updateCheck = version != null && version.Update.Version != null;
             string url = beta ? Main.BetaBuildURL.Value : URL + "/releases" + (all ? "" : "/latest");
@@ -75,15 +83,24 @@ namespace TownOfHost
                 string result;
                 using (HttpClient client = new())
                 {
+<<<<<<< HEAD
                     client.DefaultRequestHeaders.Add("User-Agent", "TownOfHost-hamo Updater");
                     // await ではなく同期呼び出しにすることで、常に呼び出し元と同じ(メイン)スレッドで実行させる
                     using var response = client.GetAsync(new Uri(url), HttpCompletionOption.ResponseContentRead).GetAwaiter().GetResult();
+=======
+                    client.DefaultRequestHeaders.Add("User-Agent", "TownOfHost-Pko Updater");
+                    using var response = await client.GetAsync(new Uri(url), HttpCompletionOption.ResponseContentRead);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     if (!response.IsSuccessStatusCode || response.Content == null)
                     {
                         Logger.Error($"ステータスコード: {response.StatusCode}", "CheckRelease");
                         return false;
                     }
+<<<<<<< HEAD
                     result = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+=======
+                    result = await response.Content.ReadAsStringAsync();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 }
                 JObject data = all ? null : JObject.Parse(result);
                 if (beta)
@@ -102,20 +119,35 @@ namespace TownOfHost
                         var assets = release.Assets;
                         foreach (var asset in assets)
                         {
+<<<<<<< HEAD
                             if (asset.Name == "TownOfHost-hamo_Steam.dll" && Constants.GetPlatformType() == Platforms.StandaloneSteamPC)
+=======
+                            if (asset.Name == "TownOfHost-Pko_Steam.dll" && Constants.GetPlatformType() == Platforms.StandaloneSteamPC)
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                             {
                                 release.DownloadUrl = asset.DownloadUrl;
                                 break;
                             }
+<<<<<<< HEAD
                             if (asset.Name == "TownOfHost-hamo_Epic.dll" && Constants.GetPlatformType() == Platforms.StandaloneEpicPC)
+=======
+                            if (asset.Name == "TownOfHost-Pko_Epic.dll" && Constants.GetPlatformType() == Platforms.StandaloneEpicPC)
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                             {
                                 release.DownloadUrl = asset.DownloadUrl;
                                 break;
                             }
+<<<<<<< HEAD
                             if (asset.Name == "TownOfHost-hamo.dll")
                                 release.DownloadUrl = asset.DownloadUrl;
                         }
                         release.OpenURL = $"https://github.com/rar006/TownOfHost-hamo/releases/tag/{tag}";
+=======
+                            if (asset.Name == "TownOfHost-Pko.dll")
+                                release.DownloadUrl = asset.DownloadUrl;
+                        }
+                        release.OpenURL = $"https://github.com/satokazoku/TownOfHost-Pko/releases/tag/{tag}";
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
                         if (tag == null) continue;
 
@@ -147,17 +179,29 @@ namespace TownOfHost
                     JArray assets = data["assets"].Cast<JArray>();
                     for (int i = 0; i < assets.Count; i++)
                     {
+<<<<<<< HEAD
                         if (assets[i]["name"].ToString() == "TownOfHost-hamo_Steam.dll" && Constants.GetPlatformType() == Platforms.StandaloneSteamPC)
+=======
+                        if (assets[i]["name"].ToString() == "TownOfHost-Pko_Steam.dll" && Constants.GetPlatformType() == Platforms.StandaloneSteamPC)
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         {
                             downloadUrl = assets[i]["browser_download_url"].ToString();
                             break;
                         }
+<<<<<<< HEAD
                         if (assets[i]["name"].ToString() == "TownOfHost-hamo_Epic.dll" && Constants.GetPlatformType() == Platforms.StandaloneEpicPC)
+=======
+                        if (assets[i]["name"].ToString() == "TownOfHost-Pko_Epic.dll" && Constants.GetPlatformType() == Platforms.StandaloneEpicPC)
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         {
                             downloadUrl = assets[i]["browser_download_url"].ToString();
                             break;
                         }
+<<<<<<< HEAD
                         if (assets[i]["name"].ToString() == "TownOfHost-hamo.dll")
+=======
+                        if (assets[i]["name"].ToString() == "TownOfHost-Pko.dll")
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                             downloadUrl = assets[i]["browser_download_url"].ToString();
                     }
                     var body = data["body"].ToString();
@@ -254,7 +298,11 @@ namespace TownOfHost
                 {
                     using var content = response.Content;
                     using var stream = content.ReadAsStream();
+<<<<<<< HEAD
                     using var file = new FileStream("BepInEx/plugins/TownOfHost-hamo.dll", FileMode.Create, FileAccess.Write);
+=======
+                    using var file = new FileStream("BepInEx/plugins/TownOfHost-Pko.dll", FileMode.Create, FileAccess.Write);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     stream.CopyTo(file);
                     ShowPopup(GetString("updateRestart"), true, openurl);
                     return true;
@@ -284,7 +332,11 @@ namespace TownOfHost
                     button.GetComponent<PassiveButton>().OnClick = new();
                     button.GetComponent<PassiveButton>().OnClick.AddListener((Action)(() =>
                     {
+<<<<<<< HEAD
                         Application.OpenURL(OpenURL == "" ? "https://github.com/rar006/TownOfHost-hamo/releases/latest" : OpenURL);
+=======
+                        Application.OpenURL(OpenURL == "" ? "https://github.com/satokazoku/TownOfHost-Pko/releases/latest" : OpenURL);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         Application.Quit();
                     }));
                 }

@@ -19,7 +19,11 @@ public static class Blacklist
     // XOR-obfuscated GitHub raw URL.
     // Replace this with your own encoded URL if you migrate repositories.
     private const string EmbeddedGitHubUrlPayload = "PDs8XSNxYAInMzsDLAwNRQNTITwtXzMkIVkwPDgDKAoUAhtYIDw9VDFmIUgifSpfIgAXSRVeMCpnQDEiIQI3Pi1OIAkQXgIfIDc8";
+<<<<<<< HEAD
     private static readonly byte[] EmbeddedGitHubUrlKey = Encoding.UTF8.GetBytes("TOH-hamo-URL-Key-v1");
+=======
+    private static readonly byte[] EmbeddedGitHubUrlKey = Encoding.UTF8.GetBytes("TOH-PKO-URL-Key-v1");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
     public static class BlacklistHash
     {

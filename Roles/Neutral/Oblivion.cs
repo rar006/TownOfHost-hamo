@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+/*
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 using System.Collections.Generic;
 using AmongUs.GameOptions;
 using Hazel;
@@ -238,3 +242,7 @@ public sealed class Oblivion : RoleBase, IKillFlashSeeable
         pendingDeadPlayerId = reader.ReadByte();
     }
 }
+<<<<<<< HEAD
+=======
+*/
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

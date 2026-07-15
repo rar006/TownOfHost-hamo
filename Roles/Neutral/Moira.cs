@@ -1,7 +1,12 @@
+<<<<<<< HEAD
 //投票によりこの役職は一度封印。
 //今後調整等をして復活する場合もあります。
 
 /*using System;
+=======
+/*
+using System;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
@@ -11,7 +16,11 @@ using TownOfHost.Roles.Core.Interfaces;
 using static TownOfHost.Modules.SelfVoteManager;
 using static TownOfHost.PlayerCatch;
 using static TownOfHost.Translator;
+<<<<<<< HEAD
 
+=======
+using static TownOfHost.UtilsRoleText;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 namespace TownOfHost.Roles.Neutral;
 
 public sealed class Moira : RoleBase, ISelfVoter

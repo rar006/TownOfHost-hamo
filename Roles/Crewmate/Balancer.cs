@@ -74,7 +74,10 @@ public sealed class Balancer : RoleBase, ISelfVoter
             .SetValueFormat(OptionFormat.Seconds);
         OptionCanUseAllAlive = BooleanOptionItem.Create(RoleInfo, 11, Option.BalancerCanUseAllAlive, false, false);
         OptionCanMeetingAbility = BooleanOptionItem.Create(RoleInfo, 12, Option.BalancerCanUseMeetingAbility, false, false);
+<<<<<<< HEAD
         SaruWarningOption.AddTo(RoleInfo);
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     public override void OnDestroy()

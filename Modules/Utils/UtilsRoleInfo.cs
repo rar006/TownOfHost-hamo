@@ -71,6 +71,10 @@ namespace TownOfHost
                 roleCommands.Add(CustomRoles.Guarding, "gi");
                 roleCommands.Add(CustomRoles.Guesser, "Gr");
                 roleCommands.Add(CustomRoles.Moon, "Mo");
+<<<<<<< HEAD
+=======
+                roleCommands.Add(CustomRoles.VoteTracker, "Vt");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 roleCommands.Add(CustomRoles.Lighting, "Li");
                 roleCommands.Add(CustomRoles.Management, "Dr");
                 roleCommands.Add(CustomRoles.Connecting, "Cn");
@@ -84,6 +88,10 @@ namespace TownOfHost
                 roleCommands.Add(CustomRoles.Tiebreaker, "tb");
                 roleCommands.Add(CustomRoles.MagicHand, "MaH");
                 roleCommands.Add(CustomRoles.Powerful, "pf");
+<<<<<<< HEAD
+=======
+                roleCommands.Add(CustomRoles.Absorb, "Abs");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
                 //デバフ
                 roleCommands.Add(CustomRoles.SlowStarter, "sl");
@@ -96,8 +104,11 @@ namespace TownOfHost
                 roleCommands.Add(CustomRoles.Jumbo, "J");
                 roleCommands.Add(CustomRoles.Securer, "Su");
                 roleCommands.Add(CustomRoles.Sealer, "Sea");
+<<<<<<< HEAD
                 roleCommands.Add(CustomRoles.Surrender, "Sur");
                 roleCommands.Add(CustomRoles.Reporting, "Rep");
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 roleCommands.Add(CustomRoles.Clumsy, "lb");
                 roleCommands.Add(CustomRoles.Elector, "El");
                 roleCommands.Add(CustomRoles.Amnesia, "am");
@@ -113,6 +124,12 @@ namespace TownOfHost
                 roleCommands.Add((CustomRoles)(-7), $"== {GetString("GhostRole")} ==");  // 区切り用
                                                                                          //幽霊
                 roleCommands.Add(CustomRoles.Ghostbuttoner, "Bbu");
+<<<<<<< HEAD
+=======
+                roleCommands.Add(CustomRoles.GhostSaboteur, "Gsa");
+                roleCommands.Add(CustomRoles.GhostFloodlight, "Gfl");
+                roleCommands.Add(CustomRoles.GhostSaboteur, "Gsa");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 roleCommands.Add(CustomRoles.GhostNoiseSender, "NiS");
                 roleCommands.Add(CustomRoles.GhostReseter, "Res");
                 roleCommands.Add(CustomRoles.GhostRumour, "Rum");

@@ -660,8 +660,11 @@ public static class MeetingHudPatch
                 Cupid.CupidLoversSuicide(playerId, true);
             if (CustomRoles.OneLove.IsPresent() && !Lovers.isOneLoveDead)
                 Lovers.OneLoveSuicide(playerId, true);
+<<<<<<< HEAD
             //コネクターの後追い(会議由来の連鎖死対応)
             TownOfHost.Roles.Neutral.Connector.CheckExileDeath(playerId);
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             //道連れチェック
             RevengeOnExile(playerId, deathReason);
         }

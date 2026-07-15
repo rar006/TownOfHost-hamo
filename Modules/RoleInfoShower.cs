@@ -239,7 +239,11 @@ class RoleInfoShower
                         var numItems = 0;
                         List<CustomRoles> rolelist = new();
                         CustomRoleManager.SortCustomRoles.DoIf(r => r.IsStartedRole(), r => rolelist.Add(r));
+<<<<<<< HEAD
                         var achievementmedal = UtilsSprite.LoadSprite("TownOfHost.Resources.TOHhm.Label.AchievementMedal.png");
+=======
+                        var achievementmedal = UtilsSprite.LoadSprite("TownOfHost.Resources.TOHP.Label.AchievementMedal.png");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         foreach (var customrole in rolelist.OrderBy(role => role.IsVanilla() is false))
                         {
                             if (!Event.CheckRole(customrole)) continue;
@@ -263,7 +267,11 @@ class RoleInfoShower
                                 achievementtext.gameObject.SetActive(false);
                                 pilldown.gameObject.SetActive(false);
                                 tabbuttons.Do(button => button.gameObject.SetActive(false));
+<<<<<<< HEAD
                                 var marksprite = UtilsSprite.LoadSprite($"TownOfHost.Resources.TOHhm.Label.{customrole}.png");
+=======
+                                var marksprite = UtilsSprite.LoadSprite($"TownOfHost.Resources.TOHP.Label.{customrole}.png");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                                 if (marksprite is not null)
                                 {
                                     RoleSprite.sprite = marksprite;

@@ -9,6 +9,10 @@ using TownOfHost.Roles.Core.Interfaces;
 using TownOfHost.Roles.Impostor;
 using TownOfHost.Roles.Neutral;
 using UnityEngine;
+<<<<<<< HEAD
+=======
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 namespace TownOfHost.Roles.Impostor;
 
 public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
@@ -86,6 +90,13 @@ public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
         if (pc.MyPhysics.Animations.IsPlayingAnyLadderAnimation()) return true;
         if (pc.onLadder) return true;
         if (pc.inMovingPlat) return true;
+<<<<<<< HEAD
+=======
+        if (pc.inVent) return true;
+        if (pc.walkingToVent) return true;
+        if (pc.MyPhysics.Animations.IsPlayingEnterVentAnimation()) return true;
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         if ((MapNames)Main.NormalOptions.MapId == MapNames.Airship &&
             Vector2.Distance(pc.GetTruePosition(), LIFT_POSITION) <= 1.9f) return true;
         return false;
@@ -153,7 +164,11 @@ public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
             SendRpc(); UtilsNotifyRoles.NotifyRoles(); return;
         }
 
+<<<<<<< HEAD
         if (IsBeamingOrCharging(Player))
+=======
+        if (IsOnRestrictedMove(Player) || IsBeamingOrCharging(Player))
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         {
             SendRpc(); UtilsNotifyRoles.NotifyRoles(); return;
         }
@@ -163,7 +178,10 @@ public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
             SendRpc(); UtilsNotifyRoles.NotifyRoles(); return;
         }
 
+<<<<<<< HEAD
         // ★ 修正：GetTruePosition() から ペンギンと同じく transform.position ベースの取得に変更
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         var dest = (Vector2)destPlayer.transform.position;
 
         Player.RpcSnapToForced(dest);
@@ -268,4 +286,8 @@ public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
         pendingTimer = reader.ReadSingle();
         destPlayerId = reader.ReadByte();
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

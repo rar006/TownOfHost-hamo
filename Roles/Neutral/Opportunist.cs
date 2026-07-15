@@ -46,6 +46,10 @@ public sealed class Opportunist : RoleBase, IAdditionalWinner, IKiller
             new(0f, 180f, 0.5f), 30f, false, OptionHasKillButton)
             .SetValueFormat(OptionFormat.Seconds);
     }
+<<<<<<< HEAD
+=======
+    public static bool HasKillButton => OptionHasKillButton?.GetBool() ?? false;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
     float timer;
     Vector2 pos;
@@ -101,4 +105,8 @@ public sealed class Opportunist : RoleBase, IAdditionalWinner, IKiller
         achievements.Add(2, l2);
         achievements.Add(3, sp1);
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

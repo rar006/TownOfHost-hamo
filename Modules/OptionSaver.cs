@@ -10,7 +10,11 @@ namespace TownOfHost.Modules;
 public static class OptionSaver
 {
     private static readonly DirectoryInfo SaveDataDirectoryInfo = new(Main.BaseDirectory + "/SaveData/");
+<<<<<<< HEAD
     private static readonly FileInfo OptionSaverFileInfo = new($"{SaveDataDirectoryInfo.FullName}/Options_TOHhmv{Version}.json");
+=======
+    private static readonly FileInfo OptionSaverFileInfo = new($"{SaveDataDirectoryInfo.FullName}/Options_TOHPv{Version}.json");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     private static readonly LogHandler logger = Logger.Handler(nameof(OptionSaver));
 
     public static void Initialize()
@@ -25,7 +29,11 @@ public static class OptionSaver
             OptionSaverFileInfo.Create().Dispose();
         }
         /*バグり散らかしてv30に戻したいってのがなくなるまで削除処理を入れないでおく。
+<<<<<<< HEAD
         FileInfo oldinfo = new($"{SaveDataDirectoryInfo.FullName}/Options_TOHhm.json");
+=======
+        FileInfo oldinfo = new($"{SaveDataDirectoryInfo.FullName}/Options_TOHP.json");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         if (oldinfo.Exists)
         {
             oldinfo.Delete();
@@ -191,6 +199,7 @@ public static class OptionSaver
     /// <summary>jsonファイルからオプションを読み込み</summary>
     public static void Load()
     {
+<<<<<<< HEAD
         string jsonString;
         try
         {
@@ -202,6 +211,9 @@ public static class OptionSaver
             Save();
             return;
         }
+=======
+        var jsonString = File.ReadAllText(OptionSaverFileInfo.FullName);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         // 空なら読み込まず，デフォルト値をセーブする
         if (jsonString.Length <= 0)
         {
@@ -209,6 +221,7 @@ public static class OptionSaver
             Save();
             return;
         }
+<<<<<<< HEAD
 
         SerializableOptionsData data;
         try
@@ -239,6 +252,9 @@ public static class OptionSaver
             logger.Error($"オプションデータの適用中にエラーが発生したためデフォルト値を保存します: {ex}");
             Save();
         }
+=======
+        LoadOptionsData(JsonSerializer.Deserialize<SerializableOptionsData>(jsonString));
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     /// <summary>json保存に適したオプションデータ</summary>
@@ -255,4 +271,8 @@ public static class OptionSaver
 
     /// <summary>オプションの形式に互換性のない変更(プリセット数変更など)を加えるときはここの数字を上げる</summary>
     public const int Version = 4;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

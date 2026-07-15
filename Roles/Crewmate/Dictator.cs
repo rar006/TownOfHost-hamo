@@ -38,7 +38,10 @@ public sealed class Dictator : RoleBase, ISelfVoter
     static void SetupOptionItem()
     {
         OptionSelfVote = BooleanOptionItem.Create(RoleInfo, 10, OptionName.DictatorSelfVote, false, false);
+<<<<<<< HEAD
         SaruWarningOption.AddTo(RoleInfo);
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
     bool IsUseTurn;
     static OptionItem OptionSelfVote;

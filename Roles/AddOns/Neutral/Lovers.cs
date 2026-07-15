@@ -35,6 +35,10 @@ class Lovers
         CustomRoles.Madonna,
         CustomRoles.Cupid,
         CustomRoles.King,
+<<<<<<< HEAD
+=======
+        CustomRoles.Autocrat,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         CustomRoles.GM,
         CustomRoles.Vega,
         CustomRoles.Altair
@@ -109,7 +113,11 @@ class Lovers
             if (player.Is(CustomRoles.Madonna)) continue;
             if (player.Is(CustomRoles.Cupid)) continue;
             if (player.Is(CustomRoles.Limiter)) continue;
+<<<<<<< HEAD
             if (player.Is(CustomRoles.King)) continue;
+=======
+            if (player.Is(CustomRoles.King) || player.Is(CustomRoles.Autocrat)) continue;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             if (player.Is(CustomRoles.Vega)) continue;
             if (player.Is(CustomRoles.Altair)) continue;
             allPlayers.Add(player);

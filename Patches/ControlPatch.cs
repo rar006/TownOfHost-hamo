@@ -68,9 +68,15 @@ namespace TownOfHost
                 Event.Special = GameStates.IsNotJoined;
                 if (Event.Special)
                 {
+<<<<<<< HEAD
                     if (CredentialsPatch.TOHhmLogo)
                     {
                         CredentialsPatch.TOHhmLogo.sprite = UtilsSprite.LoadSprite("TownOfHost.Resources.TownOfHost-hamo_A.png", 300f);
+=======
+                    if (CredentialsPatch.TOHPLogo)
+                    {
+                        CredentialsPatch.TOHPLogo.sprite = UtilsSprite.LoadSprite("TownOfHost.Resources.TownOfHost-Pko_A.png", 300f);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     }
                 }
             }
@@ -271,7 +277,11 @@ namespace TownOfHost
                 Logger.isAlsoInGame = !Logger.isAlsoInGame;
                 Logger.seeingame($"ログのゲーム内出力: {Logger.isAlsoInGame}");
             }
+<<<<<<< HEAD
             if (Input.GetKeyDown(KeyCode.R) && GameStates.IsCountDown && DebugModeManager.EnableTOHhmDebugMode.GetBool())
+=======
+            if (Input.GetKeyDown(KeyCode.R) && GameStates.IsCountDown && DebugModeManager.EnableTOHPDebugMode.GetBool())
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             {
                 Logger.Info("Impostor set to 0", "KeyCommand");
                 Main.NormalOptions.NumImpostors = 0;

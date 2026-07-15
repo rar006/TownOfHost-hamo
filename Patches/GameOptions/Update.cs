@@ -75,9 +75,13 @@ namespace TownOfHost
             }
             catch { }
 
+<<<<<<< HEAD
             try
             {
                 if (__instance?.transform?.name == "GAME SETTINGS TAB") return;
+=======
+            if (__instance?.transform?.name == "GAME SETTINGS TAB") return;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
             if (ShowFilter.IsShowFilter)
             {
@@ -499,8 +503,11 @@ namespace TownOfHost
                 __instance.GetComponentInParent<Scroller>().ContentYBounds.max = -offset + 0.75f;
             }
             #endregion
+<<<<<<< HEAD
             }
             catch { }
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         }
     }
     [HarmonyPatch(typeof(GameOptionButton), nameof(GameOptionButton.SetInteractable))]

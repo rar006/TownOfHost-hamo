@@ -32,25 +32,77 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
         : base(RoleInfo, player)
     {
         BetTargetId = byte.MaxValue;
+<<<<<<< HEAD
     }
 
     static OptionItem OptBetCooldown;
+=======
+        hasBeenEmployed = false;
+        unemployedTurns = 0;
+    }
+
+    static OptionItem OptUnemployedDeathTurns;
+    static OptionItem OptInitialCooldown;
+    static OptionItem OptFinalCooldown;
+    static OptionItem OptSeeEmployerRole;
+    static OptionItem OptSurvivalRequiredForWin;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
     byte BetTargetId;
     public byte GetBetTargetId => BetTargetId;
     CustomRoles lastBetTargetRole;
+<<<<<<< HEAD
 
     enum OptionName
     {
         FreeterBetCooldown,
+=======
+    bool hasBeenEmployed;
+    int unemployedTurns;
+
+    enum OptionName
+    {
+        FreeterUnemployedDeathTurns,
+        FreeterInitialCooldown,
+        FreeterFinalCooldown,
+        FreeterSeeEmployerRole,
+        FreeterSurvivalRequiredForWin,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     private static void SetupOptionItem()
     {
+<<<<<<< HEAD
         OptBetCooldown = FloatOptionItem.Create(
                 RoleInfo, 10, OptionName.FreeterBetCooldown,
                 new(0f, 60f, 2.5f), 25f, false)
             .SetValueFormat(OptionFormat.Seconds);
+=======
+        // 無職(BetTargetId未設定)のままこのターン数が経過すると死亡する。0で無効化(死なない)
+        OptUnemployedDeathTurns = IntegerOptionItem.Create(
+                RoleInfo, 10, OptionName.FreeterUnemployedDeathTurns,
+                new(0, 15, 1), 3, false)
+            .SetValueFormat(OptionFormat.Times)
+            .SetZeroNotation(OptionZeroNotation.Infinity);
+
+        // 一度も就職したことがない状態で最初の就職を試みるときのクールタイム
+        OptInitialCooldown = FloatOptionItem.Create(
+                RoleInfo, 11, OptionName.FreeterInitialCooldown,
+                new(0f, 60f, 2.5f), 20f, false)
+            .SetValueFormat(OptionFormat.Seconds);
+
+        // 一度就職した後、雇用主が死亡するなどして再就職が必要になったときのクールタイム
+        OptFinalCooldown = FloatOptionItem.Create(
+                RoleInfo, 12, OptionName.FreeterFinalCooldown,
+                new(0f, 120f, 2.5f), 90f, false)
+            .SetValueFormat(OptionFormat.Seconds);
+
+        OptSeeEmployerRole = BooleanOptionItem.Create(
+            RoleInfo, 13, OptionName.FreeterSeeEmployerRole, true, false);
+
+        OptSurvivalRequiredForWin = BooleanOptionItem.Create(
+            RoleInfo, 14, OptionName.FreeterSurvivalRequiredForWin, false, false);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     public override void ApplyGameOptions(IGameOptions opt)
@@ -61,7 +113,14 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
     public bool CanUseKillButton() => Player.IsAlive() && BetTargetId == byte.MaxValue;
     public bool CanUseImpostorVentButton() => false;
     public bool CanUseSabotageButton() => false;
+<<<<<<< HEAD
     public float CalculateKillCooldown() => OptBetCooldown.GetFloat();
+=======
+
+    // 初回就職はInitial、雇用主を失った後の再就職はFinalのクールタイムを使う
+    public float CalculateKillCooldown() =>
+        hasBeenEmployed ? OptFinalCooldown.GetFloat() : OptInitialCooldown.GetFloat();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
     public bool OverrideKillButtonText(out string text)
     {
@@ -81,6 +140,10 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
         ref string roleText,
         ref bool addon)
     {
+<<<<<<< HEAD
+=======
+        if (!OptSeeEmployerRole.GetBool()) return;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         if (BetTargetId == byte.MaxValue) return;
         if (seen.PlayerId != BetTargetId) return;
 
@@ -92,6 +155,26 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
         addon = true;
     }
 
+<<<<<<< HEAD
+=======
+    public override void OverrideDisplayRoleNameAsSeen(
+        PlayerControl seer,
+        ref bool enabled,
+        ref Color roleColor,
+        ref string roleText,
+        ref bool addon)
+    {
+        if (BetTargetId == byte.MaxValue) return;
+        if (seer.PlayerId != BetTargetId) return;
+
+        enabled = true;
+        roleText = UtilsRoleText.GetRoleName(CustomRoles.Freeter);
+        if (ColorUtility.TryParseHtmlString(RoleInfo.RoleColorCode, out var c))
+            roleColor = c;
+        addon = false;
+    }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     public void OnCheckMurderAsKiller(MurderInfo info)
     {
         var (freeter, target) = info.AttemptTuple;
@@ -105,6 +188,11 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
 
         BetTargetId = closest.PlayerId;
         lastBetTargetRole = closest.GetCustomRole();
+<<<<<<< HEAD
+=======
+        hasBeenEmployed = true;
+        unemployedTurns = 0;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         NameColorManager.Add(closest.PlayerId, Player.PlayerId, "#32cd32");
 
@@ -156,7 +244,16 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
     public override void AfterMeetingTasks()
     {
         if (!AmongUsClient.Instance.AmHost) return;
+<<<<<<< HEAD
         if (BetTargetId == byte.MaxValue) return;
+=======
+
+        if (BetTargetId == byte.MaxValue)
+        {
+            CheckUnemployedDeath();
+            return;
+        }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         _ = new LateTask(() =>
         {
@@ -166,6 +263,44 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
         }, 0.3f, "Freeter.ColorRefresh", true);
     }
 
+<<<<<<< HEAD
+=======
+    // 無職のまま設定ターン数が経過したら死亡させる(0なら無効)
+    private void CheckUnemployedDeath()
+    {
+        if (!Player.IsAlive()) return;
+
+        int deathTurns = OptUnemployedDeathTurns.GetInt();
+        if (deathTurns <= 0) return;
+
+        unemployedTurns++;
+        SendRPC();
+
+        if (unemployedTurns < deathTurns) return;
+
+        var state = PlayerState.GetByPlayerId(Player.PlayerId);
+        state.DeathReason = CustomDeathReason.Suicide;
+        state.SetDead();
+        Player.RpcMurderPlayerV2(Player);
+        SendMessage(GetString("Freeter_UnemployedDeath"), Player.PlayerId);
+    }
+
+    public override string GetLowerText(PlayerControl seer, PlayerControl seen = null,
+        bool isForMeeting = false, bool isForHud = false)
+    {
+        seen ??= seer;
+        if (!Is(seer) || seer.PlayerId != seen.PlayerId || !Player.IsAlive()) return "";
+        if (BetTargetId != byte.MaxValue) return "";
+
+        int deathTurns = OptUnemployedDeathTurns.GetInt();
+        if (deathTurns <= 0) return "";
+
+        string sz = isForHud ? "" : "<size=60%>";
+        int remain = Mathf.Max(0, deathTurns - unemployedTurns);
+        return $"{sz}<color=#ff8800>無職状態: あと{remain}ターンで死亡</color>";
+    }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     public override void ChengeRoleAdd()
     {
         base.ChengeRoleAdd();
@@ -183,7 +318,11 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
 
     public bool CheckWin(ref CustomRoles winnerRole)
     {
+<<<<<<< HEAD
         if (!Player.IsAlive()) return false;
+=======
+        if (OptSurvivalRequiredForWin.GetBool() && !Player.IsAlive()) return false;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         if (BetTargetId == byte.MaxValue) return false;
 
         var target = GetPlayerById(BetTargetId);
@@ -198,6 +337,10 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
     public override void CheckWinner(GameOverReason reason)
     {
         if (!AmongUsClient.Instance.AmHost) return;
+<<<<<<< HEAD
+=======
+        if (OptSurvivalRequiredForWin.GetBool() && !Player.IsAlive()) return;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         if (BetTargetId == byte.MaxValue) return;
         if (CustomWinnerHolder.WinnerIds.Contains(Player.PlayerId)) return;
 
@@ -236,10 +379,20 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
     {
         using var sender = CreateSender();
         sender.Writer.Write(BetTargetId);
+<<<<<<< HEAD
+=======
+        sender.Writer.Write(hasBeenEmployed);
+        sender.Writer.Write(unemployedTurns);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     public override void ReceiveRPC(MessageReader reader)
     {
         BetTargetId = reader.ReadByte();
+<<<<<<< HEAD
+=======
+        hasBeenEmployed = reader.ReadBoolean();
+        unemployedTurns = reader.ReadInt32();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 }

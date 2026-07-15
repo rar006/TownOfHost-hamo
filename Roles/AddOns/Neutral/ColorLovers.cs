@@ -33,6 +33,10 @@ class ColorLovers
         CustomRoles.Madonna,
         CustomRoles.Cupid,
         CustomRoles.King,
+<<<<<<< HEAD
+=======
+        CustomRoles.Autocrat,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         CustomRoles.GM,
         CustomRoles.Vega,
         CustomRoles.Altair
@@ -249,10 +253,17 @@ class ColorLovers
                 PlayerCatch.AllPlayerControls
                     .Where(p => p.Is(LoverRole))
                     .Do(p =>
+<<<<<<< HEAD
                 {
                     CustomWinnerHolder.WinnerIds.Add(p.PlayerId);
                     CustomWinnerHolder.CantWinPlayerIds.Remove(p.PlayerId);
                 });
+=======
+                    {
+                        CustomWinnerHolder.WinnerIds.Add(p.PlayerId);
+                        CustomWinnerHolder.CantWinPlayerIds.Remove(p.PlayerId);
+                    });
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 reason = GameOverReason.ImpostorsByKill;
             }
         }
@@ -284,10 +295,17 @@ class ColorLovers
                 PlayerCatch.AllPlayerControls
                     .Where(p => p.Is(LoverRole) && p.IsAlive())
                     .Do(p =>
+<<<<<<< HEAD
                         {
                             CustomWinnerHolder.WinnerIds.Add(p.PlayerId);
                             CustomWinnerHolder.CantWinPlayerIds.Remove(p.PlayerId);
                         });
+=======
+                    {
+                        CustomWinnerHolder.WinnerIds.Add(p.PlayerId);
+                        CustomWinnerHolder.CantWinPlayerIds.Remove(p.PlayerId);
+                    });
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             }
             return true;
         }
@@ -301,4 +319,8 @@ class ColorLovers
         if (seer.Is(LoverRole) && seen.Is(LoverRole)) return LoverCanSeeRole.GetBool();
         return false;
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

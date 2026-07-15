@@ -87,7 +87,11 @@ class ShowRandomSpawnOption
                     Mapimage.sprite = UtilsSprite.LoadSprite($"TownOfHost.Resources.AmongUs.Map_{map}.png");
                     Mapimage.gameObject.SetActive(true);
 
+<<<<<<< HEAD
                     var pinsprite = UtilsSprite.LoadSprite("TownOfHost.Resources.TOHhm.pin.png");
+=======
+                    var pinsprite = UtilsSprite.LoadSprite("TownOfHost.Resources.TOHP.pin.png");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     var id = 103000 + ((int)map * 100);
                     List<(ToggleButtonBehaviour button, OptionItem opt)> buttons = new();
                     var options = OptionItem.AllOptions.Where(option => option.Id < id + 100 && id < option.Id);

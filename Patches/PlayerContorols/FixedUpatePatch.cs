@@ -144,7 +144,10 @@ namespace TownOfHost
                             }
                             Lovers.MadonnLoversSuicide();
                             Lovers.OneLoveSuicide();
+<<<<<<< HEAD
                             TownOfHost.Roles.Neutral.Connector.PollFollowDeath();
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         }
                         if (DisableDevice.DoDisable)
                         {

@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 /*using System.Collections.Generic;
+=======
+/*
+using System.Collections.Generic;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
@@ -11,11 +16,14 @@ using static TownOfHost.Translator;
 
 namespace TownOfHost.Roles.Impostor;
 
+<<<<<<< HEAD
 /// <summary>
 /// 魔術師 / Conjurer (SNR参考 TOH-P版)
 /// ファントムで3つのビーコン設置 → 4回目に三角形内全員キル (ループ)
 /// 通常キル不可・壁無視
 /// </summary>
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 public sealed class Conjurer : RoleBase, IUsePhantomButton
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -75,6 +83,7 @@ public sealed class Conjurer : RoleBase, IUsePhantomButton
         OptionShowFlash = BooleanOptionItem.Create(RoleInfo, 13, OptionName.ConjurerShowFlash, false, false);
     }
 
+<<<<<<< HEAD
     // ─── IImpostor（SmokeMakerと同じ構成）────────────────
     // ★ IImpostor がないとファントムボタンが動かない
     // ★ CanUseKillButton を false にして通常キルを封じる
@@ -84,6 +93,13 @@ public sealed class Conjurer : RoleBase, IUsePhantomButton
     public bool CanUseSabotageButton() => true;
 
     // ─── IUsePhantomButton ──────────────────────────────
+=======
+    public float CalculateKillCooldown() => 30f;
+    public bool CanUseKillButton() => false;
+    public bool CanUseImpostorVentButton() => true;
+    public bool CanUseSabotageButton() => true;
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     bool IUsePhantomButton.IsPhantomRole => true;
     bool IUsePhantomButton.IsresetAfterKill => false;
 
@@ -99,10 +115,15 @@ public sealed class Conjurer : RoleBase, IUsePhantomButton
 
     public override void OnDestroy() => ClearBeacons();
 
+<<<<<<< HEAD
     // ─── ファントムボタン ─────────────────────────────────
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
         // ★ SmokeMakerと同じ: AmHost チェックなし、CDは手動リセット
+=======
+    void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
+    {
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         AdjustKillCooldown = false;
         ResetCooldown = false;
 
@@ -112,6 +133,7 @@ public sealed class Conjurer : RoleBase, IUsePhantomButton
         {
             var pos = Player.GetTruePosition();
 
+<<<<<<< HEAD
             // 2個目以降の距離チェック（ガードはOnClick内で行う）
             if (BeaconCount > 0 && Vector2.Distance(pos, beaconPositions[^1]) > CanAddLength)
                 return;
@@ -128,6 +150,36 @@ public sealed class Conjurer : RoleBase, IUsePhantomButton
         }
 
         // ★ SmokeMaker と同じ LateTask パターンで CD をリセット
+=======
+            if (BeaconCount > 0 && Vector2.Distance(pos, beaconPositions[^1]) > CanAddLength)
+                return;
+
+            if (AmongUsClient.Instance.AmHost)
+            {
+                ExecuteAddBeacon(pos);
+            }
+            else
+            {
+                using var sender = CreateSender();
+                sender.Writer.Write((byte)0);
+                sender.Writer.Write(pos.x);
+                sender.Writer.Write(pos.y);
+            }
+        }
+        else
+        {
+            if (AmongUsClient.Instance.AmHost)
+            {
+                ExecuteTriangleKill();
+            }
+            else
+            {
+                using var sender = CreateSender();
+                sender.Writer.Write((byte)1);
+            }
+        }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         _ = new LateTask(() =>
         {
             if (!Player.IsAlive()) return;
@@ -136,6 +188,7 @@ public sealed class Conjurer : RoleBase, IUsePhantomButton
         }, 0.1f, "Conjurer.CDReset", true);
     }
 
+<<<<<<< HEAD
     // ─── RPC ─────────────────────────────────────────────
     private enum RpcType : byte { AddBeacon, Clear }
 
@@ -143,10 +196,19 @@ public sealed class Conjurer : RoleBase, IUsePhantomButton
     {
         using var sender = CreateSender();
         sender.Writer.Write((byte)type);
+=======
+    void ExecuteAddBeacon(Vector2 pos)
+    {
+        if (BeaconCount >= 3) return;
+
+        using var sender = CreateSender();
+        sender.Writer.Write((byte)2);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         sender.Writer.Write(pos.x);
         sender.Writer.Write(pos.y);
     }
 
+<<<<<<< HEAD
     public override void ReceiveRPC(MessageReader reader)
     {
         var type = (RpcType)reader.ReadByte();
@@ -179,6 +241,9 @@ public sealed class Conjurer : RoleBase, IUsePhantomButton
 
     // ─── 三角形キル処理 ────────────────────────────────────
     private void ProcessTriangleKill()
+=======
+    void ExecuteTriangleKill()
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     {
         if (BeaconCount < 3) return;
 
@@ -200,9 +265,55 @@ public sealed class Conjurer : RoleBase, IUsePhantomButton
 
         UtilsGameLog.AddGameLog("Conjurer",
             $"{UtilsName.GetPlayerColor(Player)} 三角形キル発動！{kills}人キル");
+<<<<<<< HEAD
     }
 
     // ─── ビーコン管理 ────────────────────────────────────
+=======
+
+        using var sender = CreateSender();
+        sender.Writer.Write((byte)3);
+    }
+
+    public override void ReceiveRPC(MessageReader reader)
+    {
+        byte rpcType = reader.ReadByte();
+        if (rpcType == 0)
+        {
+            if (!AmongUsClient.Instance.AmHost) return;
+            var pos = new Vector2(reader.ReadSingle(), reader.ReadSingle());
+            ExecuteAddBeacon(pos);
+        }
+        else if (rpcType == 1)
+        {
+            if (!AmongUsClient.Instance.AmHost) return;
+            ExecuteTriangleKill();
+        }
+        else if (rpcType == 2)
+        {
+            var pos = new Vector2(reader.ReadSingle(), reader.ReadSingle());
+
+            if (!beaconPositions.Any(p => Vector2.Distance(p, pos) < 0.01f))
+            {
+                beaconPositions.Add(pos);
+
+                if (Player.AmOwner)
+                    beaconObjects.Add(CreateBeaconVisual(pos, BeaconCount - 1));
+            }
+
+            if (Player?.AmOwner == true)
+                UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
+
+            UtilsGameLog.AddGameLog("Conjurer",
+                $"{UtilsName.GetPlayerColor(Player)} ビーコン設置 ({BeaconCount}/3)");
+        }
+        else if (rpcType == 3)
+        {
+            ClearBeacons();
+        }
+    }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     private void ClearBeacons()
     {
         beaconPositions.Clear();
@@ -242,11 +353,16 @@ public sealed class Conjurer : RoleBase, IUsePhantomButton
     public override void AfterMeetingTasks()
     {
         if (!AmongUsClient.Instance.AmHost) return;
+<<<<<<< HEAD
         // ビーコンはすでに OnStartMeeting でクリア済み
         // ファントムCDはAmongUsが会議後に自動リセット（Phantomベースロールのため不要）
     }
 
     // ─── 表示 ─────────────────────────────────────────────
+=======
+    }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null,
         bool isForMeeting = false, bool isForHud = false)
     {
@@ -283,7 +399,10 @@ public sealed class Conjurer : RoleBase, IUsePhantomButton
         return true;
     }
 
+<<<<<<< HEAD
     // ─── Ray Casting 多角形内判定 ─────────────────────────
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     private static bool PointInPolygon(Vector2 p, Vector2[] poly)
     {
         bool inside = false;
@@ -300,4 +419,9 @@ public sealed class Conjurer : RoleBase, IUsePhantomButton
         }
         return inside;
     }
+<<<<<<< HEAD
 }*/
+=======
+}
+*/
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

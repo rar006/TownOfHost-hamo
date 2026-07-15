@@ -94,9 +94,15 @@ public abstract class RoleBase : IDisposable
     protected class RoleRPCSender : IDisposable
     {
         public MessageWriter Writer;
+<<<<<<< HEAD
         public RoleRPCSender(RoleBase role)
         {
             Writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.CustomRoleSync, SendOption.None, -1);
+=======
+        public RoleRPCSender(RoleBase role, SendOption sendOption = SendOption.None)
+        {
+            Writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.CustomRoleSync, sendOption, -1);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             Writer.Write(role.Player.PlayerId);
         }
         public void Dispose()
@@ -115,9 +121,15 @@ public abstract class RoleBase : IDisposable
     /// </summary>
     /// <param name="rpcType">送信するCustomRPC</param>
     /// <returns>送信に使用するRoleRPCSender</returns>
+<<<<<<< HEAD
     protected RoleRPCSender CreateSender()
     {
         return new RoleRPCSender(this);
+=======
+    protected RoleRPCSender CreateSender(SendOption sendOption = SendOption.None)
+    {
+        return new RoleRPCSender(this, sendOption);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
     /// <summary>
     /// RPCを受け取った時に呼ばれる関数

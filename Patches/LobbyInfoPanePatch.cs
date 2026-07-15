@@ -23,7 +23,11 @@ namespace TownOfHost.Patches
         public static Sprite GetRoleIcon(CustomRoles role)
         {
             if (role.IsVanilla()) return RoleManager.Instance.GetRole(role.GetRoleTypes()).RoleIconSolid;
+<<<<<<< HEAD
             return UtilsSprite.LoadSprite($"TownOfHost.Resources.TOHhm.Label.{role}.png", 30);
+=======
+            return UtilsSprite.LoadSprite($"TownOfHost.Resources.TOHP.Label.{role}.png", 30);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         }
         public static string GetRoleText(CustomRoles role) => role.GetCombinationName(false).RemoveColorTags();
         public static int GetParentCount(OptionItem opt)

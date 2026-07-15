@@ -24,7 +24,11 @@ namespace TownOfHost
     {
         public static DirectoryInfo GetLogFolder(bool auto = false)
         {
+<<<<<<< HEAD
             var folder = Directory.CreateDirectory($"{Application.persistentDataPath}/TownOfHost_hamo/Logs");
+=======
+            var folder = Directory.CreateDirectory($"{Application.persistentDataPath}/TownOfHost_Pko/Logs");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             if (auto)
             {
                 folder = Directory.CreateDirectory($"{folder.FullName}/AutoLogs");
@@ -64,7 +68,11 @@ namespace TownOfHost
             string t = DateTime.Now.ToString("yyyy-MM-dd_HH.mm.ss");
             string subver = CredentialsPatch.Subver.RemoveHtmlTags();
             if (subver != "") subver = $"({subver})";
+<<<<<<< HEAD
             string fileName = $"{path}/TownOfHost_hamo-v{Main.PluginVersion}{subver}-{t}.log";
+=======
+            string fileName = $"{path}/TownOfHost_Pko-v{Main.PluginVersion}{subver}-{t}.log";
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             FileInfo file = new(@$"{Environment.CurrentDirectory}/BepInEx/LogOutput.log");
             var logFile = file.CopyTo(fileName);
             return logFile.FullName;
@@ -218,6 +226,10 @@ namespace TownOfHost
                 case CustomWinner.CupidLovers: barColor = GetRoleColor(CustomRoles.CupidLovers); break;
                 case CustomWinner.OneLove: CustomWinnerText = ColorString(GetRoleColor(CustomRoles.OneLove), GetString("OneLoveWin")); barColor = GetRoleColor(CustomRoles.OneLove); break;
                 case CustomWinner.God: CustomWinnerText = GetString("GodWinText"); barColor = GetRoleColor(CustomRoles.God); break;
+<<<<<<< HEAD
+=======
+                case CustomWinner.Amateras: CustomWinnerText = GetString("AmaterasWinText"); barColor = GetRoleColor(CustomRoles.Amateras); break;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 case CustomWinner.MilkyWay: var MilkyWayColor = StringHelper.CodeColor(Roles.Neutral.Vega.TeamColor); CustomWinnerText = ColorString(MilkyWayColor, GetString("TeamMilkyWay")); barColor = MilkyWayColor; break;
                 case CustomWinner.TaskPlayerB:
                     if (winnerList.Count is 0) break;
@@ -454,6 +466,10 @@ namespace TownOfHost
                     switch (CustomWinnerHolder.WinnerTeam)
                     {
                         case CustomWinner.God: meg = GetString("GodWinText"); break;
+<<<<<<< HEAD
+=======
+                        case CustomWinner.Amateras: meg = GetString("AmaterasWinText"); break;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         case CustomWinner.Draw: meg = GetString("ForceEnd"); break;
                         case CustomWinner.None: meg = GetString("EveryoneDied"); break;
                         case CustomWinner.SuddenDeathRed: meg = GetString("SuddenDeathRed"); winnerColor = ModColors.Red; break;

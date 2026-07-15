@@ -33,6 +33,7 @@ public sealed class Nimrod : RoleBase
         PendingExecutionMeetingPlayerId = byte.MaxValue;
     }
 
+<<<<<<< HEAD
     static byte ExecutionMeetingPlayerId = byte.MaxValue;
     static byte PendingExecutionMeetingPlayerId = byte.MaxValue;
 
@@ -41,6 +42,34 @@ public sealed class Nimrod : RoleBase
     public static bool IsExecutionMeeting() => ExecutionMeetingPlayerId != byte.MaxValue;
 
     public override bool VotingResults(ref NetworkedPlayerInfo Exiled, ref bool IsTie, Dictionary<byte, int> vote, byte[] mostVotedPlayers, bool ClearAndExile)
+=======
+    static OptionItem OptionMeetingTime;
+    public static int meetingtime;
+
+    static byte ExecutionMeetingPlayerId = byte.MaxValue;
+    static byte PendingExecutionMeetingPlayerId = byte.MaxValue;
+
+    enum OptionName
+    {
+        NimrodMeetingTime,
+    }
+
+    static void SetUpOptionItem()
+    {
+        OptionMeetingTime = IntegerOptionItem.Create(RoleInfo, 10, OptionName.NimrodMeetingTime,
+            new(15, 120, 1), 30, false).SetValueFormat(OptionFormat.Seconds);
+    }
+
+    public override void Add()
+    {
+        meetingtime = OptionMeetingTime.GetInt();
+    }
+
+    public static bool IsExecutionMeeting() => ExecutionMeetingPlayerId != byte.MaxValue;
+
+    public override bool VotingResults(ref NetworkedPlayerInfo Exiled, ref bool IsTie,
+        Dictionary<byte, int> vote, byte[] mostVotedPlayers, bool ClearAndExile)
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     {
         if (!AmongUsClient.Instance.AmHost) return false;
         if (Exiled == null) return false;
@@ -50,13 +79,21 @@ public sealed class Nimrod : RoleBase
         if (PendingExecutionMeetingPlayerId != byte.MaxValue) return false;
 
         PendingExecutionMeetingPlayerId = Exiled.PlayerId;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         Exiled = null;
         IsTie = false;
         return true;
     }
 
+<<<<<<< HEAD
     public override (byte? votedForId, int? numVotes, bool doVote) ModifyVote(byte voterId, byte sourceVotedForId, bool isIntentional)
+=======
+    public override (byte? votedForId, int? numVotes, bool doVote) ModifyVote(
+        byte voterId, byte sourceVotedForId, bool isIntentional)
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     {
         var baseVote = base.ModifyVote(voterId, sourceVotedForId, isIntentional);
         if (ExecutionMeetingPlayerId != Player.PlayerId || voterId != Player.PlayerId)
@@ -77,9 +114,13 @@ public sealed class Nimrod : RoleBase
         return (baseVote.votedForId, baseVote.numVotes, false);
     }
 
+<<<<<<< HEAD
     public override void OnStartMeeting()
     {
     }
+=======
+    public override void OnStartMeeting() { }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
     public override string MeetingAddMessage()
     {
@@ -135,6 +176,10 @@ public sealed class Nimrod : RoleBase
                 exiledPlayer, null, false,
                 "Nimrod.meeting",
                 RoleInfo.RoleColorCode);
+<<<<<<< HEAD
+=======
+            Nimrod(meetingtime);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         }, 2f, "Nimrod.Meeting");
 
         _ = new LateTask(() =>

@@ -16,7 +16,11 @@ namespace TownOfHost
     [HarmonyPatch]
     public static class CredentialsPatch
     {
+<<<<<<< HEAD
         public static SpriteRenderer TOHhmLogo { get; private set; }
+=======
+        public static SpriteRenderer TOHPLogo { get; private set; }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         private static TextMeshPro pingTrackerCredential = null;
         private static AspectPosition pingTrackerCredentialAspectPos = null;
         private static float deltaTime = 0.0f;
@@ -46,9 +50,20 @@ namespace TownOfHost
                 }
                 if (pingTrackerCredentialAspectPos)
                 {
+<<<<<<< HEAD
                     pingTrackerCredentialAspectPos.DistanceFromEdge = DestroyableSingleton<HudManager>.InstanceExists && DestroyableSingleton<HudManager>.Instance.Chat.chatButton.gameObject.active
                         ? new(2.5f, 0, 0)
                         : new(1.8f, 0, 0);
+=======
+                    bool isChatButtonVisible = DestroyableSingleton<HudManager>.InstanceExists
+                        && DestroyableSingleton<HudManager>.Instance.Chat.chatButton.gameObject.activeInHierarchy;
+                    float rightOffset = isChatButtonVisible
+                        ? 2.5f
+                        : 1.8f;
+                    // 役職ガイドボタンの左側へ上部表示を収める。
+                    if (RoleGuideButtonPatch.HasGuideButton) rightOffset += 0.72f;
+                    pingTrackerCredentialAspectPos.DistanceFromEdge = new(rightOffset, 0, 0);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 }
 
                 if ((FixedUpdatePatch.timer is 1 && GameStates.InGame) || GameStates.IsLobby || GameStates.IsFreePlay)
@@ -75,7 +90,11 @@ namespace TownOfHost
                         if (DebugModeManager.IsDebugMode)
                         {
                             sb.Append("\r\n");
+<<<<<<< HEAD
                             sb.Append(DebugModeManager.EnableTOHhmDebugMode.OptionMeGetBool() ? "<#0066de>DebugMode</color>" : Utils.ColorString(Color.green, "デバッグモード"));
+=======
+                            sb.Append(DebugModeManager.EnableTOHPDebugMode.OptionMeGetBool() ? "<#0066de>DebugMode</color>" : Utils.ColorString(Color.green, "デバッグモード"));
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         }
 
                         exSb.Clear();
@@ -149,14 +168,22 @@ namespace TownOfHost
                 }
 #endif
 
+<<<<<<< HEAD
                 if (SpecialEventText == null && TOHhmLogo != null)
+=======
+                if (SpecialEventText == null && TOHPLogo != null)
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 {
                     SpecialEventText = TMPTemplate.Create(
                         "SpecialEventText",
                         "",
                         Color.white,
                         alignment: TextAlignmentOptions.Center,
+<<<<<<< HEAD
                         parent: TOHhmLogo.transform);
+=======
+                        parent: TOHPLogo.transform);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     SpecialEventText.name = "SpecialEventText";
                     SpecialEventText.fontSizeMin = 3f;
                     SpecialEventText.transform.localPosition = new Vector3(0f, 0.8f, 0f);
@@ -235,6 +262,7 @@ namespace TownOfHost
                 amongUsLogo = GameObject.Find("LOGO-AU");
 
                 var rightpanel = __instance.gameModeButtons.transform.parent;
+<<<<<<< HEAD
                 var logoObject = new GameObject("titleLogo_TOHhm");
                 var logoTransform = logoObject.transform;
                 TOHhmLogo = logoObject.AddComponent<SpriteRenderer>();
@@ -242,6 +270,15 @@ namespace TownOfHost
                 logoTransform.localPosition = new(0f, 0.15f, 1f);
                 logoTransform.localScale *= 1.0f;
                 TOHhmLogo.sprite = UtilsSprite.LoadSprite(Event.April || Event.Special ? "TownOfHost.Resources.TownOfHost-hamo-logo2.png" : "TownOfHost.Resources.TownOfHost-hamo-logo.png", 175f);
+=======
+                var logoObject = new GameObject("titleLogo_TOHP");
+                var logoTransform = logoObject.transform;
+                TOHPLogo = logoObject.AddComponent<SpriteRenderer>();
+                logoTransform.parent = rightpanel;
+                logoTransform.localPosition = new(0f, 0.15f, 1f);
+                logoTransform.localScale *= 1.0f;
+                TOHPLogo.sprite = UtilsSprite.LoadSprite(Event.April || Event.Special ? "TownOfHost.Resources.TownOfHost-PKO-logo2.png" : "TownOfHost.Resources.TownOfHost-PKO-logo.png", 175f);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             }
         }
         [HarmonyPatch(typeof(ModManager), nameof(ModManager.LateUpdate))]

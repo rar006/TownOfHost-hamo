@@ -118,7 +118,10 @@ public sealed class SuspiciousTeller : RoleBase, ISelfVoter
             .SetValueFormat(OptionFormat.Times).SetZeroNotation(OptionZeroNotation.Infinity);
         optionAwakening = BooleanOptionItem.Create(RoleInfo, 25, GeneralOption.AbilityAwakening, true, false, optionNonAlignFortuneTeller);
         optionStableResult = BooleanOptionItem.Create(RoleInfo, 26, OptionName.PonkotuDontChengeGame, true, false, optionNonAlignFortuneTeller);
+<<<<<<< HEAD
         SaruWarningOption.AddTo(RoleInfo);
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
     }
 

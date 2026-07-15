@@ -30,7 +30,10 @@ namespace TownOfHost
         private static ClientActionItem FpsLimitRemoval;
         private static ClientActionItem AutoSaveScreenShot;
         private static ClientActionItem PreloadMapAssets;
+<<<<<<< HEAD
         private static ClientActionItem ShowPresetInWebhook;
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         public static OptionsMenuBehaviour Instance;
 
         public static void Postfix(OptionsMenuBehaviour __instance)
@@ -74,11 +77,14 @@ namespace TownOfHost
                 if (Main.IsAndroid() is false)
                     UseWebHook = ClientOptionItem.Create("UseWebHook", Main.UseWebHook, __instance);
             }
+<<<<<<< HEAD
             if (ShowPresetInWebhook == null || ShowPresetInWebhook.ToggleButton == null)
             {
                 if (Main.IsAndroid() is false)
                     ShowPresetInWebhook = ClientOptionItem.Create("ShowPresetInWebhook", Main.ShowPresetInWebhook, __instance, showTooltip: true);
             }
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             if (Yomiage == null || Yomiage.ToggleButton == null)
             {
                 if (Main.IsAndroid() is false)

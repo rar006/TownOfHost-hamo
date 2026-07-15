@@ -90,7 +90,10 @@ public sealed class WolfBoy : RoleBase, IKiller, ISchrodingerCatOwner
         CanKillAllAlive = BooleanOptionItem.Create(RoleInfo, 12, OptionName.SheriffCanKillAllAlive, true, false);
         ImpostorVision = BooleanOptionItem.Create(RoleInfo, 13, GeneralOption.ImpostorVision, true, false);
         Shurenekodotti = BooleanOptionItem.Create(RoleInfo, 14, OptionName.WolfBoySchrodingerCatTime, false, false);
+<<<<<<< HEAD
         SaruWarningOption.AddTo(RoleInfo);
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         optcountcrew.ReplacementDictionary = new() { { "%role%", UtilsRoleText.GetRoleColorAndtext(CustomRoles.Crewmate) } };
         optcountimpstor.ReplacementDictionary = new() { { "%role%", UtilsRoleText.GetRoleColorAndtext(CustomRoles.Impostor) } };

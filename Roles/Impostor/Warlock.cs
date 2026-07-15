@@ -97,7 +97,11 @@ public sealed class Warlock : RoleBase, IImpostor
                 float distance;
                 foreach (PlayerControl candidatePC in PlayerCatch.AllAlivePlayerControls)
                 {
+<<<<<<< HEAD
                     if (candidatePC != CursedPlayer && !candidatePC.Is(CustomRoles.King))
+=======
+                    if (candidatePC != CursedPlayer && !candidatePC.Is(CustomRoles.King) && !candidatePC.Is(CustomRoles.Autocrat))
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     {
                         distance = Vector2.Distance(cpPos, candidatePC.transform.position);
                         candidateList.Add(candidatePC, distance);
@@ -148,4 +152,8 @@ public sealed class Warlock : RoleBase, IImpostor
         achievements.Add(0, n1);
         achievements.Add(1, sp1);
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

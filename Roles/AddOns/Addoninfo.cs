@@ -29,6 +29,11 @@ class AddondataInfo
                 CustomRoles.Seeing => "☯",
                 CustomRoles.Lighting => "＊",
                 CustomRoles.Moon => "э",
+<<<<<<< HEAD
+=======
+                CustomRoles.VoteTracker => "∇",
+                CustomRoles.Absorb => "Г",
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 //デバフ
                 CustomRoles.SlowStarter => "Ｓs",
                 CustomRoles.Notvoter => "Ｖ",
@@ -45,8 +50,11 @@ class AddondataInfo
                 CustomRoles.Stamina => "Ｓt",
                 CustomRoles.Securer => "Su",
                 CustomRoles.Sealer => "Se",
+<<<<<<< HEAD
                 CustomRoles.Surrender => "s",
                 CustomRoles.Reporting => "Ⓡ",
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 CustomRoles.Triplets => "三",
                 _ => ""
             };
@@ -80,8 +88,11 @@ class AddondataInfo
                     {CustomRoles.OneWolf , "#ff1919"},
                     {CustomRoles.Securer, "#ff1919" },
                     {CustomRoles.Sealer, "#ff1919" },
+<<<<<<< HEAD
                     {CustomRoles.Surrender, "#FF7500" },
                     {CustomRoles.Reporting, "#3366ff" },
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
                     { CustomRoles.Watching, "#800080"},
                     {CustomRoles.Speeding, "#33ccff"},
@@ -101,6 +112,10 @@ class AddondataInfo
                     {CustomRoles.MagicHand , "#dea785"},
                     {CustomRoles.Powerful , "#f08e39"},
                     {CustomRoles.Stack , "#b55f47"},
+<<<<<<< HEAD
+=======
+                    {CustomRoles.Absorb,"#434981"},
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     //{CustomRoles.AntiTeleporter,"#dea785"},
                     //デバフ
                     { CustomRoles.NonReport,"#006666"},
@@ -134,7 +149,13 @@ class AddondataInfo
 
                     // 幽霊役職
                     {CustomRoles.Ghostbuttoner,"#d0af4c"},
+<<<<<<< HEAD
                     {CustomRoles.GhostNoiseSender, "#5aa698"},
+=======
+                    {CustomRoles.GhostFloodlight, "#66f3ff"},
+                    {CustomRoles.GhostNoiseSender, "#5aa698"},
+                    {CustomRoles.GhostSaboteur, "#00ffcc"},
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     {CustomRoles.GhostReseter , "#a87a71"},
                     {CustomRoles.GhostRumour , "#707cab"},
                     {CustomRoles.GuardianAngel,"#7cc0fc"},

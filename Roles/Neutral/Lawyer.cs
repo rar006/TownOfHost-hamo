@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /*using System.Collections.Generic;
+=======
+using System.Collections.Generic;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
@@ -26,7 +30,11 @@ public sealed class Lawyer : RoleBase
             "#daa520",
             (4, 7),
             introSound: () => GetIntroSound(RoleTypes.Impostor),
+<<<<<<< HEAD
             from: From.TownOfHost_Y
+=======
+            from: From.TheOtherRoles
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         );
 
     public Lawyer(PlayerControl player)
@@ -63,6 +71,11 @@ public sealed class Lawyer : RoleBase
 
     static void SetupOptionItem()
     {
+<<<<<<< HEAD
+=======
+        SoloWinOption.Create(RoleInfo, 9, defo: 15);
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, 10, GeneralOption.ImpostorVision, false, false);
         OptionKnowTargetRole = BooleanOptionItem.Create(RoleInfo, 11, OptionName.LawyerKnowTargetRole, false, false);
         OptionTargetKnows = BooleanOptionItem.Create(RoleInfo, 12, OptionName.LawyerTargetKnows, false, false);
@@ -246,7 +259,11 @@ public sealed class Pursuer : RoleBase, IAdditionalWinner
             "#daa520",
             (4, 7),
             introSound: () => GetIntroSound(RoleTypes.Impostor),
+<<<<<<< HEAD
             from: From.TownOfHost_Pko
+=======
+            from: From.TheOtherRoles
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         );
 
     public Pursuer(PlayerControl player) : base(RoleInfo, player, () => HasTask.False)
@@ -311,4 +328,8 @@ public sealed class Pursuer : RoleBase, IAdditionalWinner
     {
         guardCount = reader.ReadInt32();
     }
+<<<<<<< HEAD
 }*/
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

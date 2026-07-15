@@ -27,7 +27,11 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
             "#8B4513",
             (6, 4),
             true,
+<<<<<<< HEAD
             countType: CountTypes.Crew,
+=======
+            countType: CountTypes.StandMaster,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             assignInfo: new RoleAssignInfo(CustomRoles.StandMaster, CustomRoleTypes.Neutral)
             {
                 AssignCountRule = new(1, 1, 1)
@@ -51,6 +55,10 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
     static OptionItem OptionSummonCooldown;
     static OptionItem OptionStandStayTime;
+<<<<<<< HEAD
+=======
+    static OptionItem OptionKillCooldown;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     static OptionItem OptionEnableKillAbility;
     static OptionItem OptionStandImpostorVision;
     static OptionItem OptionEnableTaskAddon;
@@ -60,6 +68,10 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
     public static float SummonCooldown;
     public static float StandStayTime;
+<<<<<<< HEAD
+=======
+    public static float KillCooldown_;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     public static bool EnableKillAbility;
     public static bool StandImpostorVision;
     public static bool EnableTaskAddon;
@@ -71,12 +83,21 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
     {
         StandMasterSummonCooldown,
         StandMasterStayTime,
+<<<<<<< HEAD
         StandMasterEnableKillAbility,
+=======
+        StandMasterKillCooldown,
+        StandMasterEnableKillAbility,
+        StandMasterStandDeathGrantsKill,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         StandImpostorVision,
         StandEnableTaskAddon,
         StandAddonGiveToMaster,
         StandAddonAllowDebuff,
+<<<<<<< HEAD
         StandMasterStandDeathGrantsKill,
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     public static readonly CustomRoles[] BuffAddons =
@@ -106,6 +127,11 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
         CustomRoles.LastImpostor,
         CustomRoles.LastNeutral,
         CustomRoles.Stack,
+<<<<<<< HEAD
+=======
+        CustomRoles.Jumbo,
+        CustomRoles.Stamina
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     ];
 
     public byte standPlayerId;
@@ -123,10 +149,20 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
             new(2.5f, 60f, 2.5f), 30f, false).SetValueFormat(OptionFormat.Seconds);
         OptionStandStayTime = FloatOptionItem.Create(RoleInfo, 11, OptionName.StandMasterStayTime,
             new(2.5f, 60f, 2.5f), 20f, false).SetValueFormat(OptionFormat.Seconds);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         OptionEnableKillAbility = BooleanOptionItem.Create(
             RoleInfo, 12, OptionName.StandMasterEnableKillAbility, false, false);
         OptionStandDeathGrantsKill = BooleanOptionItem.Create(
             RoleInfo, 13, OptionName.StandMasterStandDeathGrantsKill, false, false);
+<<<<<<< HEAD
+=======
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 18, OptionName.StandMasterKillCooldown,
+            new(0f, 60f, 2.5f), 30f, false).SetValueFormat(OptionFormat.Seconds);
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         OptionStandImpostorVision = BooleanOptionItem.Create(
             RoleInfo, 14, OptionName.StandImpostorVision, false, false);
         OptionEnableTaskAddon = BooleanOptionItem.Create(
@@ -135,6 +171,10 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
             RoleInfo, 16, OptionName.StandAddonGiveToMaster, false, false, OptionEnableTaskAddon);
         OptionAddonAllowDebuff = BooleanOptionItem.Create(
             RoleInfo, 17, OptionName.StandAddonAllowDebuff, false, false, OptionEnableTaskAddon);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         HideRoleOptions(CustomRoles.Stand);
     }
 
@@ -150,6 +190,10 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
     {
         EnableKillAbility = OptionEnableKillAbility.GetBool();
         StandDeathGrantsKill = OptionStandDeathGrantsKill.GetBool();
+<<<<<<< HEAD
+=======
+        KillCooldown_ = OptionKillCooldown.GetFloat();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         StandImpostorVision = OptionStandImpostorVision.GetBool();
         EnableTaskAddon = OptionEnableTaskAddon.GetBool();
         AddonGiveToMaster = OptionAddonGiveToMaster.GetBool();
@@ -217,7 +261,16 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
     public bool CanUseImpostorVentButton() => false;
     public bool CanUseSabotageButton() => false;
+<<<<<<< HEAD
     public float CalculateKillCooldown() => SummonCooldown;
+=======
+
+    public float CalculateKillCooldown()
+    {
+        if (!standCreated && !standHadDied) return SummonCooldown;
+        return KillCooldown_;
+    }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
     public bool OverrideKillButtonText(out string text)
     {
@@ -445,12 +498,20 @@ public sealed class Stand : RoleBase, ILNKiller
             CustomRoles.Stand,
             () => RoleTypes.Crewmate,
             CustomRoleTypes.Neutral,
+<<<<<<< HEAD
             54500,
+=======
+            184700,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             SetupOptionItem,
             "st",
             "#8B4513",
             (6, 4),
+<<<<<<< HEAD
             countType: CountTypes.OutOfGame,
+=======
+            countType: CountTypes.StandMaster,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             from: From.TownOfHost_Pko
         );
 
@@ -497,6 +558,11 @@ public sealed class Stand : RoleBase, ILNKiller
 
     public override bool OnCheckMurderAsTarget(MurderInfo info)
     {
+<<<<<<< HEAD
+=======
+        if (!info.DoKill) return true;
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         var sm = GetOwner();
         if (sm == null || !sm.Player.IsAlive()) return true;
 
@@ -629,4 +695,8 @@ public static class StandMasterMurderPatch
         }
         return true;
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

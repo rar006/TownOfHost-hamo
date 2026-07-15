@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /*using System.Collections.Generic;
+=======
+using System.Collections.Generic;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
@@ -69,6 +73,12 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
     public bool CanUseImpostorVentButton() => true;
     bool IUsePhantomButton.IsPhantomRole => true;
     bool IUsePhantomButton.IsresetAfterKill => false;
+<<<<<<< HEAD
+=======
+
+    bool IUsePhantomButton.SyncAbilityCooldownWithKillCooldown => false;
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
         AdjustKillCooldown = false;
@@ -123,9 +133,25 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
     void OnPetAction()
     {
         if (!Player.IsAlive()) return;
+<<<<<<< HEAD
         if (!AmongUsClient.Instance.AmHost) return;
         if (cooldownTimer > 0f) return;
 
+=======
+        if (cooldownTimer > 0f) return;
+
+        if (!AmongUsClient.Instance.AmHost)
+        {
+            SendActionRpc();
+            return;
+        }
+
+        PerformPlacePortal();
+    }
+
+    void PerformPlacePortal()
+    {
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         var pos = Player.transform.position;
 
         if (pendingDummy == null)
@@ -136,7 +162,11 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
             var pair = new LinkPair
             {
                 ColorId = colorId,
+<<<<<<< HEAD
                 DummyA = new EvilLinkerDummy(pos, Player, PendingColor, activated: false),
+=======
+                DummyA = new EvilLinkerDummy((Vector2)pos, Player, PendingColor, activated: false),
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 Activated = false,
             };
             pendingDummy = pair;
@@ -147,7 +177,11 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
         }
         else
         {
+<<<<<<< HEAD
             pendingDummy.DummyB = new EvilLinkerDummy(pos, Player, PendingColor, activated: false);
+=======
+            pendingDummy.DummyB = new EvilLinkerDummy((Vector2)pos, Player, PendingColor, activated: false);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             pendingDummy = null;
             placedCount++;
 
@@ -161,6 +195,15 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
 
     public override void OnFixedUpdate(PlayerControl player)
     {
+<<<<<<< HEAD
+=======
+        if (cooldownTimer > 0f)
+        {
+            cooldownTimer -= Time.fixedDeltaTime;
+            if (cooldownTimer < 0f) cooldownTimer = 0f;
+        }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         if (!AmongUsClient.Instance.AmHost) return;
         if (!GameStates.IsInTask || GameStates.IsMeeting) return;
 
@@ -176,12 +219,15 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
             return;
         }
 
+<<<<<<< HEAD
         if (cooldownTimer > 0f)
         {
             cooldownTimer -= Time.fixedDeltaTime;
             if (cooldownTimer < 0f) cooldownTimer = 0f;
         }
 
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         foreach (var pid in warpCooldowns.Keys.ToArray())
         {
             warpCooldowns[pid] -= Time.fixedDeltaTime;
@@ -278,7 +324,15 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
         }
 
         cooldownTimer = PlaceCooldown;
+<<<<<<< HEAD
         Player.RpcResetAbilityCooldown(Sync: true);
+=======
+
+        Player.MarkDirtySettings();
+        Player.RpcResetAbilityCooldown(Sync: true);
+        Main.AllPlayerKillCooldown[Player.PlayerId] = CalculateKillCooldown();
+        Player.SetKillCooldown(CalculateKillCooldown());
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         foreach (var pair in linkPairs)
         {
@@ -326,16 +380,44 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
     {
         if (!AmongUsClient.Instance.AmHost) return;
         using var sender = CreateSender();
+<<<<<<< HEAD
+=======
+        sender.Writer.Write((byte)0);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         sender.Writer.Write(placedCount);
         sender.Writer.Write(cooldownTimer);
         sender.Writer.Write(pendingDummy != null);
     }
 
+<<<<<<< HEAD
     public override void ReceiveRPC(MessageReader reader)
     {
         placedCount = reader.ReadInt32();
         cooldownTimer = reader.ReadSingle();
         reader.ReadBoolean();
+=======
+    void SendActionRpc()
+    {
+        using var sender = CreateSender();
+        sender.Writer.Write((byte)1);
+    }
+
+    public override void ReceiveRPC(MessageReader reader)
+    {
+        byte rpcType = reader.ReadByte();
+
+        if (rpcType == 0)
+        {
+            placedCount = reader.ReadInt32();
+            cooldownTimer = reader.ReadSingle();
+            reader.ReadBoolean();
+        }
+        else if (rpcType == 1)
+        {
+            if (AmongUsClient.Instance.AmHost)
+                PerformPlacePortal();
+        }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 }
 
@@ -359,7 +441,18 @@ public sealed class EvilLinkerDummy : CustomNetObject
     {
         if (PlayerControl == null) return;
 
+<<<<<<< HEAD
         SetAppearance(_colorId, "", "", "", "");
+=======
+        var hostPlayer = PlayerControl.LocalPlayer;
+        byte hostColor = (byte)(hostPlayer?.Data?.DefaultOutfit.ColorId ?? 0);
+
+        PlayerControl.RpcSetColor((byte)_colorId);
+        if (hostPlayer != null)
+            hostPlayer.RpcSetColor(hostColor);
+        PlayerControl.RawSetColor((byte)_colorId);
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         SetName("ポータル");
         SnapToPosition(_pos);
 
@@ -372,7 +465,21 @@ public sealed class EvilLinkerDummy : CustomNetObject
                     Hide(pc);
             }
         }
+<<<<<<< HEAD
     }
 
     public override void OnMeeting() { }
 }*/
+=======
+
+        var capturedDummy = PlayerControl;
+        _ = new LateTask(() =>
+        {
+            if (capturedDummy != null)
+                capturedDummy.RawSetColor((byte)_colorId);
+        }, 0.15f, "EvilLinker.ApplyDummyColor", true);
+    }
+
+    public override void OnMeeting() { }
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

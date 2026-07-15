@@ -34,7 +34,12 @@ namespace TownOfHost.Roles.AddOns.Common
             CustomRoles.GM,
             CustomRoles.TaskPlayerB,
             CustomRoles.Fox,
+<<<<<<< HEAD
             CustomRoles.King
+=======
+            CustomRoles.King,
+            CustomRoles.Autocrat
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         };
         static readonly IEnumerable<CustomRoles> ValidRoles = CustomRolesHelper.AllRoles.Where(role => !InvalidRoles.Contains(role));
 
@@ -140,4 +145,8 @@ namespace TownOfHost.Roles.AddOns.Common
             return candidates;
         }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

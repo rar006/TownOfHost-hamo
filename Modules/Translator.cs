@@ -120,6 +120,10 @@ namespace TownOfHost
             if ((Event.OptionLoad.Contains(str) || str is "CakeshopInfoLong" or "CakeshopInfo" or "Cakeshop") && !Event.Special && !Event.CheckRole(CustomRoles.Cakeshop)) return res;
             if (str is "VegaInfoLong" or "VegaInfo" or "Vega" && !Event.CheckRole(CustomRoles.Vega)) return res;
             if (str is "AltairInfoLong" or "AltairInfo" or "Altair" && !Event.CheckRole(CustomRoles.Altair)) return res;
+<<<<<<< HEAD
+=======
+            if (str.StartsWith("Amateras") && !Event.CheckRole(CustomRoles.Amateras)) return res;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             if (translateMaps.TryGetValue(str, out var dic) && (!dic.TryGetValue((int)langId, out res) || res == "")) //strに該当する&無効なlangIdかresが空
             {
                 res = $"*{dic[0]}";
@@ -259,6 +263,18 @@ namespace TownOfHost
                         _ => res
                     };
                 }
+<<<<<<< HEAD
+=======
+                if (Event.Tanabata)
+                {
+                    res = str switch
+                    {
+                        "LoversBreakerInfo" => "二つの星が重なる時、終焉の火花が咲く。",
+                        "ModSettingInfo2" => "今年は織姫と彦星../nあともう一人やってきてるみたいだよ!",
+                        _ => res
+                    };
+                }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             }
             if (!translateMaps.ContainsKey(str)) //translateMapsにない場合、StringNamesにあれば取得する
             {
@@ -341,4 +357,8 @@ namespace TownOfHost
             File.WriteAllText(@$"./{LANGUAGE_FOLDER_NAME}/export_{lang}.dat", sb.ToString());
         }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

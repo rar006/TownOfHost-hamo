@@ -78,7 +78,10 @@ public sealed class MeetingSheriff : RoleBase, ISelfVoter
         OptionMeetingSheriffCanKillMadMate = BooleanOptionItem.Create(RoleInfo, 12, Option.MeetingSheriffCanKillMadMate, true, false);
         OptionMeetingSheriffCanKillNeutrals = BooleanOptionItem.Create(RoleInfo, 13, Option.MeetingSheriffCanKillNeutrals, true, false);
         OptionMeetingSheriffCanKillLovers = BooleanOptionItem.Create(RoleInfo, 15, Option.SheriffCanKillLovers, true, false);
+<<<<<<< HEAD
         SaruWarningOption.AddTo(RoleInfo);
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         Option1MeetingMaximum = IntegerOptionItem.Create(RoleInfo, 14, GeneralOption.MeetingMaxTime, new(0, 99, 1), 0, false)
             .SetValueFormat(OptionFormat.Times).SetZeroNotation(OptionZeroNotation.Infinity);
     }

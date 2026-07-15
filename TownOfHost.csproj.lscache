@@ -13,7 +13,11 @@ primary
 lastDtbSucceeded
 
 [properties]
+<<<<<<< HEAD
 AssemblyName=TownOfHost-hamo
+=======
+AssemblyName=TownOfHost-Pko
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 CommandLineArgsForDesignTimeEvaluation=-langversion:preview -define:TRACE
 CompilerGeneratedFilesOutputPath=
 MaxSupportedLangVersion=10.0
@@ -23,8 +27,13 @@ RunAnalyzers=
 RunAnalyzersDuringLiveAnalysis=
 SolutionPath=<PATH>TownOfHost.sln
 TargetFrameworkIdentifier=.NETCoreApp
+<<<<<<< HEAD
 TargetPath=<PATH>bin/Debug/net6.0/TownOfHost-hamo.dll
 TargetRefPath=<PATH>obj/Debug/net6.0/ref/TownOfHost-hamo.dll
+=======
+TargetPath=<PATH>bin/Debug/net6.0/TownOfHost-Pko.dll
+TargetRefPath=<PATH>obj/Debug/net6.0/ref/TownOfHost-Pko.dll
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 TemporaryDependencyNodeTargetIdentifier=net6.0
 
 [commandLineArguments]
@@ -42,8 +51,13 @@ TemporaryDependencyNodeTargetIdentifier=net6.0
 /debug:portable
 /filealign:512
 /optimize-
+<<<<<<< HEAD
 /out:obj\Debug\net6.0\TownOfHost-hamo.dll
 /refout:obj\Debug\net6.0\refint\TownOfHost-hamo.dll
+=======
+/out:obj\Debug\net6.0\TownOfHost-Pko.dll
+/refout:obj\Debug\net6.0\refint\TownOfHost-Pko.dll
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 /target:library
 /warnaserror-
 /utf8output

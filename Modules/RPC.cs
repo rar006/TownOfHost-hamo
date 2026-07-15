@@ -124,7 +124,11 @@ namespace TownOfHost
 
         public static void Postfix(PlayerControl __instance, [HarmonyArgument(0)] byte callId, [HarmonyArgument(1)] MessageReader reader)
         {
+<<<<<<< HEAD
             if (DebugModeManager.EnableTOHhmDebugMode.GetBool() && callId != (byte)RpcCalls.SetPetStr)
+=======
+            if (DebugModeManager.EnableTOHPDebugMode.GetBool() && callId != (byte)RpcCalls.SetPetStr)
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 Logger.Info(callId + $"{(callId < (byte)CustomRPC.VersionCheck ? (RpcCalls)callId : (CustomRPC)callId)}" + "RPCを受け取りました！", "RPC");
 
             if (callId < (byte)CustomRPC.VersionCheck) return;

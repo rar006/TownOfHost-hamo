@@ -93,6 +93,7 @@ public static class AbilityButtonDoClickPatch
             return false;
         }
         else
+<<<<<<< HEAD
         if (roleInfo?.IsDesyncImpostor == true && roleInfo.BaseRoleType.Invoke() == RoleTypes.Shapeshifter)
         {
             if (!(roleclass?.CanUseAbilityButton() ?? false)) return false;
@@ -118,6 +119,33 @@ public static class AbilityButtonDoClickPatch
             player.Data.Role.Cast<PhantomRole>().UseAbility();
             return true;
         }
+=======
+            if (roleInfo?.IsDesyncImpostor == true && roleInfo.BaseRoleType.Invoke() == RoleTypes.Shapeshifter)
+            {
+                if (!(roleclass?.CanUseAbilityButton() ?? false)) return false;
+                foreach (var pc in PlayerCatch.AllPlayerControls)
+                {
+                    pc.Data.Role.NameColor = Color.white;
+                }
+                player.Data.Role.Cast<ShapeshifterRole>().UseAbility();
+                foreach (var pc in PlayerCatch.AllPlayerControls)
+                {
+                    pc.Data.Role.NameColor = Color.white;
+                }
+                return true;
+            }
+            else
+                if (roleInfo?.IsDesyncImpostor == true && roleInfo?.BaseRoleType.Invoke() == RoleTypes.Phantom)
+                {
+                    if (!(roleclass?.CanUseAbilityButton() ?? false)) return false;
+                    foreach (var pc in PlayerCatch.AllPlayerControls)
+                    {
+                        pc.Data.Role.NameColor = Color.white;
+                    }
+                    player.Data.Role.Cast<PhantomRole>().UseAbility();
+                    return true;
+                }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         return true;
     }
 }

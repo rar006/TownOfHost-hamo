@@ -26,12 +26,20 @@ public enum From
     TownOfHost_Y,
     TownOfHost_K,
     TownOfHost_for_E,
+<<<<<<< HEAD
     TownOfHost_E,
     TownOfHost_Pko,
     Speyrp,
     RevolutionaryHostRoles,
     Love_Couple_Mod,
     TownOfHost_hamo
+=======
+    TownOfHost_Enhanced,
+    TownOfHost_Pko,
+    Speyrp,
+    RevolutionaryHostRoles,
+    Love_Couple_Mod
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 }
 public class SimpleRoleInfo
 {

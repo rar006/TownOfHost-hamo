@@ -189,7 +189,11 @@ namespace TownOfHost.Roles.Impostor
         }
         public void SetSpelled(PlayerControl target)
         {
+<<<<<<< HEAD
             if (target.Is(CustomRoles.King)) return;
+=======
+            if (target.Is(CustomRoles.King) || target.Is(CustomRoles.Autocrat)) return;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
             if (!IsSpelled(target.PlayerId))
             {
@@ -363,4 +367,8 @@ namespace TownOfHost.Roles.Impostor
             achievements.Add(2, sp1);
         }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

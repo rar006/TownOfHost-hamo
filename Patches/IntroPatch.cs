@@ -48,6 +48,7 @@ namespace TownOfHost
 
                     __instance.RoleBlurbText.text = PlayerControl.LocalPlayer.GetRoleDesc();
 
+<<<<<<< HEAD
                     if (SaruWarningOption.ShouldWarn(role) && !(role == CustomRoles.Amnesiac && Amnesiac.IsWolf))
                         __instance.RoleBlurbText.text += "\n<size=75%><color=#ff5555>" + GetString("SaruWarningText") + "</color></size>";
                     else if (role.IsCrewmate()
@@ -55,6 +56,8 @@ namespace TownOfHost
                         && PlayerState.GetByPlayerId(PlayerControl.LocalPlayer.PlayerId).SubRoles.Contains(CustomRoles.Guesser))
                         __instance.RoleBlurbText.text += "\n<size=75%><color=#ff5555>" + GetString("SaruWarningText") + "</color></size>";
 
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     //Amnesiacだった場合シェリフと表示させる
                     if (role == CustomRoles.Amnesiac)
                     {

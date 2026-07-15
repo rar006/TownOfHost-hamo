@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 /*using System;
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
@@ -173,7 +176,10 @@ public sealed class NiceTrapper : RoleBase
         if (!AmongUsClient.Instance.AmHost) return;
         if (!GameStates.IsInTask || GameStates.IsMeeting) return;
 
+<<<<<<< HEAD
         // ★ 死亡時に全トラップを消す
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         if (!Player.IsAlive() && traps.Count > 0)
         {
             DespawnAll();
@@ -224,6 +230,7 @@ public sealed class NiceTrapper : RoleBase
     {
         switch (trap.Type)
         {
+<<<<<<< HEAD
             case NiceTrapperTrapType.Speed:
                 ApplySpeedEffect(target, SpeedBoost);
                 break;
@@ -233,6 +240,11 @@ public sealed class NiceTrapper : RoleBase
             case NiceTrapperTrapType.Notify:
                 NotifyTrapper(trap, target);
                 break;
+=======
+            case NiceTrapperTrapType.Speed: ApplySpeedEffect(target, SpeedBoost); break;
+            case NiceTrapperTrapType.Slow: ApplySpeedEffect(target, SpeedDown); break;
+            case NiceTrapperTrapType.Notify: NotifyTrapper(trap, target); break;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         }
     }
 
@@ -257,6 +269,7 @@ public sealed class NiceTrapper : RoleBase
     void NotifyTrapper(TrapData trap, PlayerControl target)
     {
         var targetPos = trap.Position;
+<<<<<<< HEAD
         GetArrow.Add(Player.PlayerId, targetPos);
 
         int colorId = target.Data.DefaultOutfit.ColorId;
@@ -267,6 +280,16 @@ public sealed class NiceTrapper : RoleBase
         var arrowData = (targetPos, colorCode);
         activeNotifyArrows.Add(arrowData);
 
+=======
+        int colorId = target.Data.DefaultOutfit.ColorId;
+        string colorCode = "#ffffff";
+        if (colorId >= 0 && colorId < Palette.PlayerColors.Length)
+            colorCode = "#" + ColorUtility.ToHtmlStringRGB(Palette.PlayerColors[colorId]);
+
+        GetArrow.Add(Player.PlayerId, targetPos);
+        var arrowData = (targetPos, colorCode);
+        activeNotifyArrows.Add(arrowData);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
 
         _ = new LateTask(() =>
@@ -292,6 +315,7 @@ public sealed class NiceTrapper : RoleBase
         for (int i = 0; i < traps.Count; i++)
         {
             var trap = traps[i];
+<<<<<<< HEAD
             trap.Active = true;
             var oldObj = trap.Obj;
             var pos = trap.Position;
@@ -301,6 +325,17 @@ public sealed class NiceTrapper : RoleBase
             _ = new LateTask(() =>
             {
                 try { oldObj?.Despawn(); } catch { }
+=======
+            var pos = trap.Position;
+            var type = trap.Type;
+            int idx = i;
+            var old = trap.Obj;
+
+            _ = new LateTask(() =>
+            {
+                try { old?.Despawn(); } catch { }
+                trap.Active = true;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 trap.Obj = new TrapNetObject(pos, type, Player, activated: true);
             }, idx * 0.6f + 1.0f, $"NiceTrapper.Activate.{idx}", true);
         }
@@ -317,11 +352,15 @@ public sealed class NiceTrapper : RoleBase
         foreach (var trap in traps) trap.PlayersInRange.Clear();
     }
 
+<<<<<<< HEAD
     // ★ 死亡時にトラップを全消し
     public override void OnMurderPlayerAsTarget(MurderInfo info)
     {
         DespawnAll();
     }
+=======
+    public override void OnMurderPlayerAsTarget(MurderInfo info) => DespawnAll();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
     void DespawnAll()
     {
@@ -330,12 +369,20 @@ public sealed class NiceTrapper : RoleBase
         traps.Clear();
     }
 
+<<<<<<< HEAD
     public override string GetMark(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)
     {
         seen ??= seer;
         if (isForMeeting) return "";
         if (!Player.IsAlive()) return "";
         if (!Is(seer) || !Is(seen)) return "";
+=======
+    public override string GetMark(PlayerControl seer, PlayerControl seen = null,
+        bool isForMeeting = false)
+    {
+        seen ??= seer;
+        if (isForMeeting || !Player.IsAlive() || !Is(seer) || !Is(seen)) return "";
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         var arrows = "";
         foreach (var arrowData in activeNotifyArrows.ToArray())
@@ -358,9 +405,13 @@ public sealed class NiceTrapper : RoleBase
             NiceTrapperTrapType.Notify => "<color=#ffff00>●</color>",
             _ => "?"
         };
+<<<<<<< HEAD
 
         string remain = $"({MaxTraps - placedCount}残)";
         return $"<color={RoleInfo.RoleColorCode}>{remain}</color>{typeIcon}";
+=======
+        return $"<color={RoleInfo.RoleColorCode}>({MaxTraps - placedCount}残)</color>{typeIcon}";
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     void SendRpc()
@@ -405,7 +456,12 @@ public sealed class TrapNetObject : CustomNetObject
     readonly Vector2 _pos;
     readonly bool _activated;
 
+<<<<<<< HEAD
     public TrapNetObject(Vector2 position, NiceTrapperTrapType type, PlayerControl owner, bool activated)
+=======
+    public TrapNetObject(Vector2 position, NiceTrapperTrapType type,
+        PlayerControl owner, bool activated)
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     {
         _type = type;
         _owner = owner;
@@ -418,7 +474,18 @@ public sealed class TrapNetObject : CustomNetObject
     {
         if (PlayerControl == null) return;
 
+<<<<<<< HEAD
         SetAppearance(TrapColorIds[(int)_type], "", "", "", "");
+=======
+        var hostPlayer = PlayerControl.LocalPlayer;
+        byte hostColor = (byte)(hostPlayer?.Data?.DefaultOutfit.ColorId ?? 0);
+        int trapColor = TrapColorIds[(int)_type];
+
+        PlayerControl.RpcSetColor((byte)trapColor);
+        if (hostPlayer != null)
+            hostPlayer.RpcSetColor(hostColor);
+        PlayerControl.RawSetColor((byte)trapColor);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         string label = _type switch
         {
@@ -430,14 +497,36 @@ public sealed class TrapNetObject : CustomNetObject
         SetName(label);
         SnapToPosition(_pos);
 
+<<<<<<< HEAD
         bool showAll = _activated && _type != NiceTrapperTrapType.Notify;
         foreach (var pc in PlayerCatch.AllPlayerControls)
         {
             if (pc.notRealPlayer) continue;
             if (!showAll && pc.PlayerId != _owner.PlayerId)
                 Hide(pc);
+=======
+        var capturedPC = PlayerControl;
+        _ = new LateTask(() =>
+        {
+            if (capturedPC != null) capturedPC.RawSetColor((byte)trapColor);
+        }, 0.15f, "NiceTrapper.ApplyColor", true);
+
+        bool showAll = _activated && _type != NiceTrapperTrapType.Notify;
+        if (!showAll)
+        {
+            foreach (var pc in PlayerCatch.AllPlayerControls)
+            {
+                if (pc.notRealPlayer) continue;
+                if (pc.PlayerId != _owner.PlayerId)
+                    Hide(pc);
+            }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         }
     }
 
     public override void OnMeeting() { }
+<<<<<<< HEAD
 }*/
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

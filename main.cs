@@ -19,7 +19,11 @@ using static Unity.Services.LevelPlay.LevelPlayBannerPosition;
 [assembly: AssemblyInformationalVersionAttribute(TownOfHost.Main.PluginVersion)]
 namespace TownOfHost
 {
+<<<<<<< HEAD
     [BepInPlugin(PluginGuid, "Town Of Host-hamo", BepInExPluginVersion)]
+=======
+    [BepInPlugin(PluginGuid, "Town Of Host-Pko", BepInExPluginVersion)]
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     [BepInIncompatibility("jp.ykundesu.supernewrolesnext")]
     [BepInIncompatibility("jp.ykundesu.supernewroles")]
     [BepInIncompatibility("me.yukieiji.extremeroles")]
@@ -29,6 +33,7 @@ namespace TownOfHost
     {
         // == プログラム設定 / Program Config ==
         // modの名前 / Mod Name (Default: Town Of Host)
+<<<<<<< HEAD
         public static readonly string ModName = "Town Of Host-hamo";
         // modの色 / Mod Color (Default: #00bfff)
         public static readonly string ModColor = "#fb85ff";
@@ -42,6 +47,21 @@ namespace TownOfHost
         public static readonly string DiscordInviteUrl = "https://discord.gg/vjMQ75nU8d";
         public static readonly string MatchmakingRelayUrl = "";
         public static readonly string MatchmakingRelaySecret = "";
+=======
+        public static readonly string ModName = "Town Of Host-Pko";
+        // modの色 / Mod Color (Default: #00bfff)
+        public static readonly string ModColor = "#FF9631";
+        // 公開ルームを許可する / Allow Public Room (Default: true)
+        public static readonly bool AllowPublicRoom = true;
+        // フォークID / ForkId (Default: OriginalTOH)
+        public static readonly string ForkId = "TOH-PKO";
+        // Discordボタンを表示するか / Show Discord Button (Default: true)
+        public static readonly bool ShowDiscordButton = true;
+        // Discordサーバーの招待リンク / Discord Server Invite URL (Default: https://discord.gg/PQ5CrVHC25)
+        public static readonly string DiscordInviteUrl = "https://discord.gg/PQ5CrVHC25";
+        public static readonly string MatchmakingRelayUrl = "https://tohp-relay.oyasai0831ohyasai.workers.dev/";
+        public static readonly string MatchmakingRelaySecret = "6rVp2N8xK5mQ9wA1zL4jS7tB3hG0eD9Y";
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         // ==========
         public const string OriginalForkId = "OriginalTOH"; // Don't Change The Value. / この値を変更しないでください。
         // == 認証設定 / Authentication Config ==
@@ -58,11 +78,19 @@ namespace TownOfHost
         public static ConfigEntry<string> DebugKeyInput { get; private set; }
         public static ConfigEntry<string> ExplosionKeyInput { get; private set; }
 
+<<<<<<< HEAD
         public const string PluginGuid = "com.rar006.TownOfHost-hamo";
         public const string BepInExPluginVersion = "4.00.00.00";
         public const string PluginVersion = "4.00.00.00";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
         public const string PluginShowVersion = "4.00.00.00";
         public const string ModVersion = ".00.00";//リリースver用バージョン変更dc9b79
+=======
+        public const string PluginGuid = "com.satokazoku.TownOfHost-Pko";
+        public const string BepInExPluginVersion = "5.33.18.91";
+        public const string PluginVersion = "5.33.18.91";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
+        public const string PluginShowVersion = "5.33.18.91";
+        public const string ModVersion = ".18.91";//リリースver用バージョン変更dc9b79
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         /// 配布するデバッグ版なのであればtrue。リリース時にはfalseにすること。
         public static bool DebugVersion = false;
@@ -95,7 +123,10 @@ namespace TownOfHost
         public static ConfigEntry<bool> CustomSprite { get; private set; }
         public static ConfigEntry<bool> HideSomeFriendCodes { get; private set; }
         public static ConfigEntry<bool> AutoSaveScreenShot { get; private set; }
+<<<<<<< HEAD
         public static ConfigEntry<bool> ShowPresetInWebhook { get; private set; }
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         public static ConfigEntry<bool> PreloadMapAssets { get; private set; }
         public static ConfigEntry<float> MapTheme { get; private set; }
         public static ConfigEntry<bool> ViewPingDetails { get; private set; }
@@ -184,14 +215,22 @@ namespace TownOfHost
         public static string BaseDirectory
             => Path.GetFullPath(Path.Combine(
                 string.IsNullOrEmpty(BepInEx.Paths.BepInExRootPath) ? Application.persistentDataPath : BepInEx.Paths.BepInExRootPath,
+<<<<<<< HEAD
                 "../TOHhm_DATA"));
+=======
+                "../TOHP_DATA"));
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         public override void Load()
         {
             GameCount = 0;
             Instance = this;
 
             //Client Options
+<<<<<<< HEAD
             HideName = Config.Bind("Client Options", "Hide Game Code Name", "Town Of Host-hamo");
+=======
+            HideName = Config.Bind("Client Options", "Hide Game Code Name", "Town Of Host-Pko");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             HideColor = Config.Bind("Client Options", "Hide Game Code Color", $"{ModColor}");
             ForceJapanese = Config.Bind("Client Options", "Force Japanese", false);
             JapaneseRoleName = Config.Bind("Client Options", "Japanese Role Name", true);
@@ -204,7 +243,10 @@ namespace TownOfHost
             CustomSprite = Config.Bind("Client Options", "CustomSprite", true);
             HideSomeFriendCodes = Config.Bind("Client Options", "Hide Some Friend Codes", false);
             AutoSaveScreenShot = Config.Bind("Client Options", "Auto Save Autro ScreenShot", false);
+<<<<<<< HEAD
             ShowPresetInWebhook = Config.Bind("Client Options", "Show Preset In Webhook", true);
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             PreloadMapAssets = Config.Bind("Client Options", "Preload Map Assets", false);
             MapTheme = Config.Bind("Client Options", "MapTheme", AmongUs.Data.Settings.AudioSettingsData.DEFAULT_MUSIC_VOLUME);
             ViewPingDetails = Config.Bind("Client Options", "View Ping Details", false);
@@ -218,7 +260,11 @@ namespace TownOfHost
             DebugKeyInput = Config.Bind("Authentication", "Debug Key", "");
             ExplosionKeyInput = Config.Bind("Authentication", "Explosion Key", "");
 
+<<<<<<< HEAD
             Logger = BepInEx.Logging.Logger.CreateLogSource("TownOfHost-hamo");
+=======
+            Logger = BepInEx.Logging.Logger.CreateLogSource("TownOfHost-Pko");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             TownOfHost.Logger.Enable();
             TownOfHost.Logger.Disable("NotifyRoles");
             TownOfHost.Logger.Disable("SendRPC");
@@ -318,7 +364,12 @@ namespace TownOfHost
             Application.quitting += new Action(SaveStatistics.Save);
             Application.quitting += new Action(AchievementSaver.Save);
             Statistics.NowStatistics = SaveStatistics.Load();
+<<<<<<< HEAD
             //GlobalChatManager.Initialize("wss://catwalk-skimming-lapel.ngrok-free.dev");
+=======
+            //このModをフォークした皆さんできれば下の行(320行)は消してください
+            GlobalChatManager.Initialize("wss://catwalk-skimming-lapel.ngrok-free.dev");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             AchievementSaver.Load();
         }
 
@@ -396,6 +447,10 @@ namespace TownOfHost
         Launch,
         Compression,
         Evaporation,
+<<<<<<< HEAD
+=======
+        Retaliation,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         etc = -1
     }
     //WinData
@@ -407,6 +462,10 @@ namespace TownOfHost
         Impostor = CustomRoles.Impostor,
         Crewmate = CustomRoles.Crewmate,
         Jester = CustomRoles.Jester,
+<<<<<<< HEAD
+=======
+        HappyJester = CustomRoles.HappyJester,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         PlagueDoctor = CustomRoles.PlagueDoctor,
         Terrorist = CustomRoles.Terrorist,
         Lovers = CustomRoles.Lovers,
@@ -461,12 +520,20 @@ namespace TownOfHost
         PokerFace = CustomRoles.PokerFace,
         Lawyer = CustomRoles.Lawyer,
         Pirate = CustomRoles.Pirate,
+<<<<<<< HEAD
 
         HASTroll = CustomRoles.HASTroll,
         TaskPlayerB = CustomRoles.TaskPlayerB,
         Sleeper = CustomRoles.Sleeper,
         Null = CustomRoles.Null,
         VillainWolf = CustomRoles.VillainWolf,
+=======
+        Victim = CustomRoles.Victim,
+        Amateras = CustomRoles.Amateras,
+
+        HASTroll = CustomRoles.HASTroll,
+        TaskPlayerB = CustomRoles.TaskPlayerB,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         SuddenDeathRed = 1000, SuddenDeathBlue = 1001, SuddenDeathYellow = 1002, SuddenDeathGreen = 1003, SuddenDeathPurple = 1004
     }
     /*public enum CustomRoles : byte
@@ -507,6 +574,10 @@ namespace TownOfHost
         DriverandBraid,
         FoolandNue,
         VegaandAltair,
+<<<<<<< HEAD
+=======
+        AbuserandVictim,
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         PokerFace,
         TheThreeLittlePigs
     }

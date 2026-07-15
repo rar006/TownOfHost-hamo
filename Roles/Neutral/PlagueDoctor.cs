@@ -151,6 +151,10 @@ public sealed class PlagueDoctor : RoleBase, IKiller
         var count = PlagueDoctors.FirstOrDefault(x => x.Player.PlayerId == targetId)?.InfectCount;
 
         using var sender = CreateSender();
+<<<<<<< HEAD
+=======
+        sender.Writer.Write(InfectCount);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         sender.Writer.Write(targetId);
         sender.Writer.Write(rate);
         sender.Writer.Write(count.HasValue);
@@ -161,6 +165,10 @@ public sealed class PlagueDoctor : RoleBase, IKiller
     }
     public override void ReceiveRPC(MessageReader reader)
     {
+<<<<<<< HEAD
+=======
+        InfectCount = reader.ReadInt32();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         var targetId = reader.ReadByte();
         var rate = reader.ReadSingle();
         var hasCount = reader.ReadBoolean();

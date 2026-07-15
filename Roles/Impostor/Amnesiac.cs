@@ -104,7 +104,10 @@ public sealed class Amnesiac : RoleBase, IImpostor
         OptCanUseVent = BooleanOptionItem.Create(RoleInfo, 16, Options.AmnesiacCanUseVent, false, false, OptRealize);
         OptCanUseSabotage = BooleanOptionItem.Create(RoleInfo, 17, Options.AmnesiacCanUseSabotage, false, false, OptRealize);
         OptIsWolfBoy = BooleanOptionItem.Create(RoleInfo, 20, Options.AmnesiacIsWolfboy, false, false);
+<<<<<<< HEAD
         SaruWarningOption.AddTo(RoleInfo);
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     public float CalculateKillCooldown() => MatchSettingstoSheriff && !Realized ? ShKillCooldown : TownOfHost.Options.DefaultKillCooldown;

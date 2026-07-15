@@ -8,6 +8,7 @@
 この Mod は非公式のものであり、この Mod の開発に関して Among Us の開発元である"Innersloth"は一切関与していません。<br>
 この Mod の問題などに関して公式に問い合わせないでください。<br>
 
+<<<<<<< HEAD
 この Mod はTOH,TOHK,TOHPkoに役職や機能など追加したModです
 TOH-hamoで起きたバグは本家や他MODには報告しないでまずはTOH-hamoに報告してください。<br>
 
@@ -15,6 +16,15 @@ TOH-hamoで起きたバグは本家や他MODには報告しないでまずはTOH
 
 [本家TOHはこちら](https://github.com/tukasa0001/TownOfHost)<br>
 [TOHPkoはこちら](https://github.com/satokazoku/TownOfHost-Pko)<br>
+=======
+この Mod はTOH,TOHK,TOHPKOに役職や機能など追加したModです
+TOH-hamoで起きたバグは本家や他MODには報告しないでまずはTOH-hamoに報告してください。<br>
+
+また、TOH-hamoに関する質問、バグ報告は基本、[DiscordServer](https://discord.gg/AFa66yKC)でのみ受け付けております。<br>
+
+[本家TOHはこちら](https://github.com/tukasa0001/TownOfHost)<br>
+[TOHPKOはこちら](https://github.com/satokazoku/TownOfHost-Pko)<br>
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
 ## リリース
 AmongUsバージョン : **17.3.0**~<br>
@@ -102,11 +112,21 @@ Modが使えなくなるよ!<br>
 フォーク元です。TownOfHost_PKO様にある機能もTownOfHost-hamoにはだいたい実装されています。<br>
 
 [Town Of Host_Y](https://github.com/Yumenopai/TownOfHost_Y)<br>
+<<<<<<< HEAD
 　会議時の役職表示、会議拡張、ワーカホリック,ラビット,チェイサー,ニムロッド,鬼,弁護士(追跡者),決闘者,海賊,属性名、一部役職を参考/移植させて頂きました！<br>
+=======
+　会議時の役職表示、会議拡張、ワーカホリック,ラビット,チェイサー,ニムロッド,鬼,決闘者,海賊,属性名、一部役職を参考/移植させて頂きました！<br>
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
 [Town Of Host For E](https://github.com/AsumuAkaguma/TownOfHost_ForE) <br>
 　機能やコメント取得一部処理の参考にさせて頂きました！<br>
 
+<<<<<<< HEAD
+=======
+[Town Of Host_Enhanced](https://github.com/EnhancedNetwork/TownofHost-Enhanced)<br>
+　Swooperを移植させて頂きました！<br>
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 [Endless Host Roles](https://github.com/Gurge44/EndlessHostRoles) <br>
 　ペットの自動付与、タスクターン中のチャット表示を参考にさせて頂きました！<br>
 
@@ -117,11 +137,19 @@ Modが使えなくなるよ!<br>
 　10.24アプデの対応で参考にさせていただきました！<br>
 
 [SuperNewRoles](https://github.com/ykundesu/SuperNewRoles) <br>
+<<<<<<< HEAD
 　ナイス赤ずきん、ポーカーフェイス、三匹の子豚、ミニマリスト、ナイステレポーター、テレポーター、さつまといも、ムービング、イビルムービング、ロケット、自殺願望者、爆ぜ師、ジャッカルシーア、侍、パブロフの犬、モイラ、キューピッド、スペランカー、神、フリーター、マグロ、陰陽師、忘却者、波動砲ジャッカル、弾、波動砲、ダブルキラー、自爆魔、サンタ、村長、天秤、ミーティングシェリフ、トイレファン、イビルギャンブラー、ペンギン、マッドスーサイドを移植/参考<br>
 　ブラックリスト等や様々な部分を参考にさせて頂きました！<br>
 
 [TheOtherRoles](https://github.com/TheOtherRolesAU/TheOtherRoles)<br>
 　カモフラージャー、ゲッサー等を参考/移植させていただきました<br>
+=======
+　スパイダー、ナイス猫又、黒猫、ナイス赤ずきん、ポーカーフェイス、三匹の子豚、ミニマリスト、ナイステレポーター、テレポーター、さつまといも、ムービング、イビルムービング、ロケット、自殺願望者、爆ぜ師、ジャッカルシーア、侍、パブロフの犬、モイラ、キューピッド、スペランカー、神、フリーター、マグロ、陰陽師、忘却者、波動砲ジャッカル、弾、波動砲、ダブルキラー、自爆魔、サンタ、村長、天秤、ミーティングシェリフ、トイレファン、イビルギャンブラー、ペンギン、マッドスーサイドを移植/参考<br>
+　ブラックリスト等や様々な部分を参考にさせて頂きました！<br>
+
+[TheOtherRoles](https://github.com/TheOtherRolesAU/TheOtherRoles)<br>
+　カモフラージャー、弁護士、ゲッサー等を参考/移植させていただきました<br>
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
 [TheOtherRole GM](https://github.com/yukinogatari/TheOtherRoles-GM)<br>
 　一部役職を参考/移植させていただきました<br>
@@ -130,10 +158,18 @@ TOR_GM_Haoming_Edition<br>
 　イビルトラッカー、シュレディンガーの猫等を参考/移植させていただきました<br>
 
 [Nebula On The Ship](https://github.com/Dolly1016/Nebula/)<br>
+<<<<<<< HEAD
 　ナイストラッパー、ドクター、スナイパーを参考/移植させていただきました<br>
+=======
+　ナイストラッパー、イビルトラッパー、ドクター、スナイパーを参考/移植させていただきました<br>
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
 [au.libhalt.net](https://au.libhalt.net/)<br>
 　マッドジェスターの参考/移植させていただきました<br>
 
 [ExtremeRoles](https://github.com/yukieiji/ExtremeRoles)<br>
+<<<<<<< HEAD
 　アサシンとマーリンの参考/移植、イーター、エボルバーの移植をさせていただきました。<br>
+=======
+　アサシンとマーリンの参考/移植、イーター、エボルバーの移植をさせていただきました。<br>
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

@@ -645,8 +645,11 @@ namespace TownOfHost
                 }
                 //addon(一回これで応急手当。)
                 GetAddonsHelp(player);
+<<<<<<< HEAD
                 if (SaruWarningOption.ShouldWarn(role) && !(role == CustomRoles.Amnesiac && Amnesiac.IsWolf))
                     SendMessage(GetString("SaruWarningText"), player.PlayerId);
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 return;
             }
 
@@ -657,8 +660,11 @@ namespace TownOfHost
                 string RoleInfoTitle = $"<{RoleTextData}>{RoleInfoTitleString}</color>";
                 SendMessage(description.FullFormatHelp, player.PlayerId, title: RoleInfoTitle, checkl: true);
                 GetAddonsHelp(player);
+<<<<<<< HEAD
                 if (SaruWarningOption.ShouldWarn(role) && !(role == CustomRoles.Amnesiac && Amnesiac.IsWolf))
                     SendMessage(GetString("SaruWarningText"), player.PlayerId);
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 return;
             }
             else
@@ -700,6 +706,10 @@ namespace TownOfHost
             if (player.Is(CustomRoles.Revenger)) SendMessage(GetAddonsHelp(CustomRoles.Revenger), player.PlayerId, AddRoleInfoTitle);
             if (player.Is(CustomRoles.Speeding)) SendMessage(GetAddonsHelp(CustomRoles.Speeding), player.PlayerId, AddRoleInfoTitle);
             if (player.Is(CustomRoles.Guarding)) SendMessage(GetAddonsHelp(CustomRoles.Guarding), player.PlayerId, AddRoleInfoTitle);
+<<<<<<< HEAD
+=======
+            if (player.Is(CustomRoles.Absorb)) SendMessage(GetAddonsHelp(CustomRoles.Absorb), player.PlayerId, AddRoleInfoTitle);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             if (player.Is(CustomRoles.Management)) SendMessage(GetAddonsHelp(CustomRoles.Management), player.PlayerId, AddRoleInfoTitle);
             if (player.Is(CustomRoles.Opener)) SendMessage(GetAddonsHelp(CustomRoles.Opener), player.PlayerId, AddRoleInfoTitle);
             if (player.Is(CustomRoles.Seeing)) SendMessage(GetAddonsHelp(CustomRoles.Seeing), player.PlayerId, AddRoleInfoTitle);
@@ -720,8 +730,11 @@ namespace TownOfHost
             if (player.Is(CustomRoles.Sunglasses)) SendMessage(GetAddonsHelp(CustomRoles.Sunglasses), player.PlayerId, AddRoleInfoTitle);
             if (player.Is(CustomRoles.Securer)) SendMessage(GetAddonsHelp(CustomRoles.Securer), player.PlayerId, AddRoleInfoTitle);
             if (player.Is(CustomRoles.Sealer)) SendMessage(GetAddonsHelp(CustomRoles.Sealer), player.PlayerId, AddRoleInfoTitle);
+<<<<<<< HEAD
             if (player.Is(CustomRoles.Surrender)) SendMessage(GetAddonsHelp(CustomRoles.Surrender), player.PlayerId, AddRoleInfoTitle);
             if (player.Is(CustomRoles.Reporting)) SendMessage(GetAddonsHelp(CustomRoles.Reporting), player.PlayerId, AddRoleInfoTitle);
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
             //第三
             var lover = player.GetLoverRole();
@@ -767,6 +780,11 @@ namespace TownOfHost
                 CustomRoles.Revenger => AddonInfo(role, "Я", From.TownOfHost_Y),
                 CustomRoles.Speeding => AddonInfo(role, "∈"),
                 CustomRoles.Guarding => AddonInfo(role, "ζ", From.TownOfHost_Y),
+<<<<<<< HEAD
+=======
+                CustomRoles.Absorb => AddonInfo(role, "Г"),
+                CustomRoles.VoteTracker => AddonInfo(role, "ν"),
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 CustomRoles.Management => AddonInfo(role, "θ", From.TownOfHost_Y),
                 CustomRoles.Opener => AddonInfo(role, "п"),
                 //CustomRoles.AntiTeleporter => AddonInfo(role, "t", From.RevolutionaryHostRoles),
@@ -788,8 +806,11 @@ namespace TownOfHost
                 CustomRoles.Jumbo => AddonInfo(role, "Ｊ"),
                 CustomRoles.Securer => AddonInfo(role, "ＳＵ"),
                 CustomRoles.Sealer => AddonInfo(role, "ＳＥ"),
+<<<<<<< HEAD
                 CustomRoles.Surrender => AddonInfo(role, "s", From.TownOfHost_hamo),
                 CustomRoles.Reporting => AddonInfo(role, "Ⓡ", From.TownOfHost_hamo),
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 CustomRoles.News => AddonInfo(role, "Ｎ"),
                 CustomRoles.Sunglasses => AddonInfo(role, "Ｓ", From.TheOtherRoles),
                 //第三属性
@@ -805,6 +826,11 @@ namespace TownOfHost
                 CustomRoles.Stack => AddonInfo(role),
                 //幽霊役職
                 CustomRoles.Ghostbuttoner => AddonInfo(role),
+<<<<<<< HEAD
+=======
+                CustomRoles.GhostFloodlight => AddonInfo(role),
+                CustomRoles.GhostSaboteur => AddonInfo(role),
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 CustomRoles.GhostNoiseSender => AddonInfo(role),
                 CustomRoles.GhostReseter => AddonInfo(role),
                 CustomRoles.GhostRumour => AddonInfo(role),
@@ -940,11 +966,18 @@ namespace TownOfHost
                 case From.TownOfHost_K: Fromtext += $"<#00bfff>TownOfHost K</color>"; break;
                 case From.TownOfHost_for_E: Fromtext += $"<#18e744>TownOfHost for E</color>"; break;
                 case From.Speyrp: Fromtext = $"<#7fffbf>From:Yoran★</color>"; break;
+<<<<<<< HEAD
                 case From.TownOfHost_E: Fromtext += $"<#ffc0cb>TownOfHost E</color>"; break;
                 case From.TownOfHost_Pko: Fromtext += $"<#FF9631>TownOfHost Pko</color>"; break;
                 case From.RevolutionaryHostRoles: Fromtext += $"<#3cb371>RevolutionaryHostRoles</color>"; break;
                 case From.Love_Couple_Mod: Fromtext += "<#ff6be4>Love Couple Mod</color>"; break;
                 case From.TownOfHost_hamo: Fromtext += $"<#fb85ff>TownOfHost_hamo</color>"; break;
+=======
+                case From.TownOfHost_Enhanced: Fromtext += $"<#ffc0cb>TownOfHost Enhanced</color>"; break;
+                case From.TownOfHost_Pko: Fromtext += $"<#FF9631>TownOfHost Pko</color>"; break;
+                case From.RevolutionaryHostRoles: Fromtext += $"<#3cb371>RevolutionaryHostRoles</color>"; break;
+                case From.Love_Couple_Mod: Fromtext += "<#ff6be4>Love Couple Mod</color>"; break;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             }
             if (role is CustomRoles.MadSuicide) Fromtext += "  <#000000>(<#ff1919>崇拝者</color>)</color>";
             return Fromtext;

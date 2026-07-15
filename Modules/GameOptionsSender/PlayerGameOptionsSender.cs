@@ -352,6 +352,11 @@ namespace TownOfHost.Modules
                     switch (gr)
                     {
                         case CustomRoles.Ghostbuttoner: AURoleOptions.GuardianAngelCooldown = CoolDown(Ghostbuttoner.CoolDown.GetFloat()); break;
+<<<<<<< HEAD
+=======
+                        case CustomRoles.GhostFloodlight: AURoleOptions.GuardianAngelCooldown = CoolDown(GhostFloodlight.CoolDown.GetFloat()); break;
+                        case CustomRoles.GhostSaboteur: AURoleOptions.GuardianAngelCooldown = CoolDown(GhostSaboteur.CoolDown.GetFloat()); break;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         case CustomRoles.GhostNoiseSender: AURoleOptions.GuardianAngelCooldown = CoolDown(GhostNoiseSender.CoolDown.GetFloat()); break;
                         case CustomRoles.GhostReseter: AURoleOptions.GuardianAngelCooldown = CoolDown(GhostReseter.CoolDown.GetFloat()); break;
                         case CustomRoles.GhostRumour: AURoleOptions.GuardianAngelCooldown = CoolDown(GhostRumour.CoolDown.GetFloat()); break;

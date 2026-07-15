@@ -122,7 +122,11 @@ public class CustomSpawnEditor
             {
                 if (Text != null) Text.transform.SetParent(Marker.transform);
 
+<<<<<<< HEAD
                 Marker.sprite = UtilsSprite.LoadSprite("TownOfHost.Resources.TOHhm.SpawnMark.png", 300f);
+=======
+                Marker.sprite = UtilsSprite.LoadSprite("TownOfHost.Resources.TOHP.SpawnMark.png", 300f);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             }
 
             public void SetSpawn(CustomSpawnPoint spawnPoint)

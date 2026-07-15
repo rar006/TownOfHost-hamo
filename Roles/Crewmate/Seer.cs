@@ -320,6 +320,10 @@ public sealed class SoulObject : CustomNetObject
 
     public override void OnMeeting() { }
 }*/
+<<<<<<< HEAD
+=======
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 using System;
 using System.Collections.Generic;
 using AmongUs.GameOptions;
@@ -394,7 +398,10 @@ public sealed class Seer : RoleBase, IKillFlashSeeable
         OptionFirstMaxdelay = FloatOptionItem.Create(RoleInfo, 13, OptionName.SeerFirstMaxdelay, new(0, 60, 0.5f), 7f, false, OptionDelay).SetValueFormat(OptionFormat.Seconds);
         OptionLastMindelay = FloatOptionItem.Create(RoleInfo, 14, OptionName.SeerLastMindelay, new(0, 60, 0.5f), 0f, false, OptionDelay).SetValueFormat(OptionFormat.Seconds);
         OptionLastMaxdelay = FloatOptionItem.Create(RoleInfo, 15, OptionName.SeerLastMaxdelay, new(0, 60, 0.5f), 5f, false, OptionDelay).SetValueFormat(OptionFormat.Seconds);
+<<<<<<< HEAD
         SaruWarningOption.AddTo(RoleInfo);
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
     public bool? CheckKillFlash(MurderInfo info) // IKillFlashSeeable
     {

@@ -11,7 +11,11 @@ namespace TownOfHost.Modules;
 public static class OptionSerializer
 {
     private static LogHandler logger = Logger.Handler(nameof(OptionSerializer));
+<<<<<<< HEAD
     private const string Header = "%TOH-hamoOptions%", Footer = "%End%";
+=======
+    private const string Header = "%TOH-POptions%", Footer = "%End%";
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     private static readonly DirectoryInfo exportDir = new(Main.BaseDirectory + "/OptionOutputs");
     public static void SaveToClipboard()
     {

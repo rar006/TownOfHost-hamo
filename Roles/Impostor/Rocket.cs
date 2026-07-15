@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /*using System.Collections.Generic;
+=======
+using System.Collections.Generic;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
@@ -50,11 +54,14 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
     }
 
     public readonly List<PlayerControl> GrabbedPlayers;
+<<<<<<< HEAD
 
     /// <summary>
     /// CheckMurderでキルをブロックするために使用するグローバルセット。
     /// CustomNetObject.DummyKillPatchから参照される。
     /// </summary>
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     public static readonly HashSet<byte> GrabbedPlayerIds = new();
 
     bool launchPending;
@@ -94,7 +101,10 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
     public override void ApplyGameOptions(IGameOptions opt)
         => AURoleOptions.PhantomCooldown = LaunchCooldown;
 
+<<<<<<< HEAD
     // ─── キルボタン → 掴む ───────────────────────────────────────
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     public void OnCheckMurderAsKiller(MurderInfo info)
     {
         var target = info.AttemptTarget;
@@ -102,19 +112,40 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         if (GrabbedPlayers.Contains(target)) { info.DoKill = false; return; }
 
         info.DoKill = false;
+<<<<<<< HEAD
         if (!AmongUsClient.Instance.AmHost) return;
         GrabPlayer(target);
+=======
+
+        if (AmongUsClient.Instance.AmHost)
+        {
+            GrabPlayer(target);
+        }
+        else
+        {
+            using var sender = CreateSender();
+            sender.Writer.Write((byte)0);
+            sender.Writer.Write(target.PlayerId);
+        }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     void GrabPlayer(PlayerControl target)
     {
         GrabbedPlayers.Add(target);
+<<<<<<< HEAD
+=======
+        GrabbedPlayerIds.Add(target.PlayerId);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         PlayerState.GetByPlayerId(target.PlayerId).CanMove = false;
         target.MarkDirtySettings();
 
+<<<<<<< HEAD
         // ★ ホストはIsDead一時フラグでキルターゲットから外す
         // ★ 非ホストはSetRole偽装RPCを送る
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         if (Player.AmOwner)
             target.Data.IsDead = true;
         else
@@ -127,16 +158,27 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         Player.SetKillCooldown(killCDOverride, force: false);
         Player.KillFlash();
 
+<<<<<<< HEAD
         SendRpc();
+=======
+        SendSyncRpc();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         UtilsNotifyRoles.NotifyRoles();
         Logger.Info($"{Player.Data.GetLogPlayerName()} が {target.Data.GetLogPlayerName()} を掴んだ", "Rocket");
     }
 
+<<<<<<< HEAD
     // ★ 非ホストのロケットプレイヤーの視点でのみターゲットをインポスターに見せる
     void SetAppearsAsImpostorForRocket(PlayerControl target, bool asImpostor)
     {
         if (!AmongUsClient.Instance.AmHost) return;
         if (Player.AmOwner) return; // ★ ホストには送らない
+=======
+    void SetAppearsAsImpostorForRocket(PlayerControl target, bool asImpostor)
+    {
+        if (!AmongUsClient.Instance.AmHost) return;
+        if (Player.AmOwner) return;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         var fakeRole = asImpostor ? RoleTypes.Impostor : target.Data.RoleType;
         var writer = AmongUsClient.Instance.StartRpcImmediately(
@@ -149,6 +191,10 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
     void ReleasePlayer(PlayerControl target)
     {
         if (!GrabbedPlayers.Remove(target)) return;
+<<<<<<< HEAD
+=======
+        GrabbedPlayerIds.Remove(target.PlayerId);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         PlayerState.GetByPlayerId(target.PlayerId).CanMove = true;
         target.MarkDirtySettings();
         if (Player.AmOwner)
@@ -169,9 +215,15 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
                 SetAppearsAsImpostorForRocket(p, false);
         }
         GrabbedPlayers.Clear();
+<<<<<<< HEAD
     }
 
     // ─── ファントムボタン → 打ち上げ ─────────────────────────────
+=======
+        GrabbedPlayerIds.Clear();
+    }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
         if (GrabbedPlayers.Count == 0)
@@ -186,6 +238,24 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
 
         if (!Player.IsAlive()) return;
 
+<<<<<<< HEAD
+=======
+        if (AmongUsClient.Instance.AmHost)
+        {
+            ExecuteLaunch();
+        }
+        else
+        {
+            using var sender = CreateSender();
+            sender.Writer.Write((byte)1);
+        }
+    }
+
+    void ExecuteLaunch()
+    {
+        if (!Player.IsAlive()) return;
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         LaunchAll(Player.GetTruePosition());
 
         killCDOverride = InitialGrabCooldown;
@@ -201,7 +271,11 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
             Player.RpcResetAbilityCooldown();
         }, 0.1f, "Rocket.ResetCD", true);
 
+<<<<<<< HEAD
         SendRpc();
+=======
+        SendSyncRpc();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     void LaunchAll(Vector2 launchPos)
@@ -209,7 +283,11 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         if (!AmongUsClient.Instance.AmHost) return;
 
         var targets = GrabbedPlayers.ToArray();
+<<<<<<< HEAD
         ReleaseAll(); // ★ GrabbedPlayerIds も全削除
+=======
+        ReleaseAll();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         UtilsNotifyRoles.NotifyRoles();
 
         for (int i = 0; i < targets.Length; i++)
@@ -227,7 +305,10 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
             UtilsGameLog.AddGameLog("Rocket",
                 $"{UtilsName.GetPlayerColor(Player)}が{UtilsName.GetPlayerColor(target)}を打ち上げた");
 
+<<<<<<< HEAD
             // ★ 0.6秒ずつずらしてスポーン（IsSpawning競合防止）
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             var capturedTarget = target;
             var capturedPos = spawnPos;
             int idx = i;
@@ -272,7 +353,10 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         return "";
     }
 
+<<<<<<< HEAD
     // ─── FixedUpdate ─────────────────────────────────────────────
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     public override void OnFixedUpdate(PlayerControl player)
     {
         if (LaunchNotifications.Count > 0)
@@ -292,10 +376,25 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         if (!AmongUsClient.Instance.AmHost) return;
         if (!GameStates.IsInTask) return;
         if (GrabbedPlayers.Count == 0) return;
+<<<<<<< HEAD
         if (!Player.IsAlive()) { ReleaseAll(); SendRpc(); return; }
 
         foreach (var p in GrabbedPlayers.ToArray())
             if (p == null || !p.IsAlive()) ReleasePlayer(p);
+=======
+        if (!Player.IsAlive()) { ReleaseAll(); SendSyncRpc(); return; }
+
+        bool removed = false;
+        foreach (var p in GrabbedPlayers.ToArray())
+        {
+            if (p == null || !p.IsAlive())
+            {
+                ReleasePlayer(p);
+                removed = true;
+            }
+        }
+        if (removed) SendSyncRpc();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         snapFrame++;
         if (snapFrame % 3 != 0) return;
@@ -315,7 +414,10 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         }
     }
 
+<<<<<<< HEAD
     // ─── 会議関連 ─────────────────────────────────────────────────
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
     {
         if (!AmongUsClient.Instance.AmHost) return;
@@ -327,10 +429,17 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         {
             PlayerState.GetByPlayerId(p.PlayerId).CanMove = true;
             p.MarkDirtySettings();
+<<<<<<< HEAD
             // ★ 会議中はSetRole偽装を解除（ホストはData.IsDead不使用なので不要）
             if (!Player.AmOwner)
                 SetAppearsAsImpostorForRocket(p, false);
         }
+=======
+            if (!Player.AmOwner)
+                SetAppearsAsImpostorForRocket(p, false);
+        }
+        SendSyncRpc();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     public override void OnStartMeeting()
@@ -342,12 +451,20 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
             if (!Player.AmOwner)
                 SetAppearsAsImpostorForRocket(p, false);
         }
+<<<<<<< HEAD
+=======
+        SendSyncRpc();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     public override void AfterMeetingTasks()
     {
         if (!AmongUsClient.Instance.AmHost) return;
+<<<<<<< HEAD
         if (!Player.IsAlive()) { ReleaseAll(); SendRpc(); return; }
+=======
+        if (!Player.IsAlive()) { ReleaseAll(); SendSyncRpc(); return; }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         if (launchPending && GrabbedPlayers.Count > 0)
         {
@@ -360,7 +477,11 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
                 var afterMeetingState = PlayerState.GetByPlayerId(Player.PlayerId);
                 if (afterMeetingState != null) afterMeetingState.Is10secKillButton = false;
                 Player.SetKillCooldown(killCDOverride, force: false);
+<<<<<<< HEAD
                 SendRpc();
+=======
+                SendSyncRpc();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             }, 1.5f, "Rocket.LaunchAfterMeeting", true);
         }
         else
@@ -371,8 +492,13 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
                 p.MarkDirtySettings();
                 if (!Player.AmOwner)
                     SetAppearsAsImpostorForRocket(p, true);
+<<<<<<< HEAD
                 // ★ ホストは GrabbedPlayerIds に入ったままなのでCheckMurderがブロックされる
             }
+=======
+            }
+            SendSyncRpc();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         }
         launchPending = false;
 
@@ -384,7 +510,10 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         }, 0.3f, "Rocket.AfterMeeting.CD", true);
     }
 
+<<<<<<< HEAD
     // ─── テキスト ─────────────────────────────────────────────────
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     public override string GetMark(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)
     {
         seen ??= seer;
@@ -415,10 +544,18 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         return $"<color=#ff6600>({count}人)</color>";
     }
 
+<<<<<<< HEAD
     // ─── RPC ─────────────────────────────────────────────────────
     void SendRpc()
     {
         using var sender = CreateSender();
+=======
+    void SendSyncRpc()
+    {
+        if (!AmongUsClient.Instance.AmHost) return;
+        using var sender = CreateSender();
+        sender.Writer.Write((byte)2);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         sender.Writer.Write(GrabbedPlayers.Count);
         foreach (var p in GrabbedPlayers)
             sender.Writer.Write(p?.PlayerId ?? byte.MaxValue);
@@ -428,6 +565,7 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
 
     public override void ReceiveRPC(MessageReader reader)
     {
+<<<<<<< HEAD
         int count = reader.ReadInt32();
         // ★ 受信時もGrabbedPlayerIdsを同期
         foreach (var old in GrabbedPlayers) GrabbedPlayerIds.Remove(old.PlayerId);
@@ -445,6 +583,43 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
         }
         launchPending = reader.ReadBoolean();
         killCDOverride = reader.ReadSingle();
+=======
+        byte rpcType = reader.ReadByte();
+        if (rpcType == 0)
+        {
+            if (!AmongUsClient.Instance.AmHost) return;
+            byte targetId = reader.ReadByte();
+            var target = PlayerCatch.GetPlayerById(targetId);
+            if (target != null && !GrabbedPlayers.Contains(target))
+            {
+                GrabPlayer(target);
+            }
+        }
+        else if (rpcType == 1)
+        {
+            if (!AmongUsClient.Instance.AmHost) return;
+            ExecuteLaunch();
+        }
+        else if (rpcType == 2)
+        {
+            int count = reader.ReadInt32();
+            foreach (var old in GrabbedPlayers) GrabbedPlayerIds.Remove(old.PlayerId);
+            GrabbedPlayers.Clear();
+
+            for (int i = 0; i < count; i++)
+            {
+                var id = reader.ReadByte();
+                var pc = PlayerCatch.GetPlayerById(id);
+                if (pc != null)
+                {
+                    GrabbedPlayers.Add(pc);
+                    GrabbedPlayerIds.Add(id);
+                }
+            }
+            launchPending = reader.ReadBoolean();
+            killCDOverride = reader.ReadSingle();
+        }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     public override string GetAbilityButtonText() =>
@@ -457,7 +632,10 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
     }
 }
 
+<<<<<<< HEAD
 // ─── 打ち上げアニメーションダミー ────────────────────────────────────
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 public class RocketFlyDummy : CustomNetObject
 {
     private static readonly List<RocketFlyDummy> ActiveDummies = new();
@@ -563,5 +741,9 @@ public class RocketFlyDummy : CustomNetObject
             d.RequestDespawn();
         ActiveDummies.Clear();
     }
+<<<<<<< HEAD
 }
 */
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

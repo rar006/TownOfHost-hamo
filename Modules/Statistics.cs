@@ -372,7 +372,11 @@ namespace TownOfHost
             if (SaveStatistics.IsOldVersion) return GetString("StatisticsError.Oldversion");
             if (CustomWinnerHolder.WinnerTeam == CustomWinner.Default && !InLoby) return GetString("StatisticsError.forceend");
 #if DEBUG
+<<<<<<< HEAD
             if (DebugModeManager.EnableDebugMode.GetBool() || DebugModeManager.EnableTOHhmDebugMode.GetBool()) return GetString("StatisticsError.Debug");
+=======
+            if (DebugModeManager.EnableDebugMode.GetBool() || DebugModeManager.EnableTOHPDebugMode.GetBool()) return GetString("StatisticsError.Debug");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 #endif
             if (GameStates.IsLocalGame) return GetString("StatisticsError.Local");
             if (UtilsGameLog.LastLogRole.Count <= 4 && !InLoby) return GetString("StatisticsError.insufficient");

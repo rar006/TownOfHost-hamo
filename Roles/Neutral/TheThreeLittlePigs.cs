@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /*using System.Collections.Generic;
+=======
+using System.Collections.Generic;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
@@ -533,4 +537,8 @@ public sealed class TheThirdLittlePig : RoleBase, IAdditionalWinner
     {
         remainCounters = reader.ReadInt32();
     }
+<<<<<<< HEAD
 }*/
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

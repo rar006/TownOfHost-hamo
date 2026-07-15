@@ -19,8 +19,13 @@ namespace TownOfHost.Modules;
 [HarmonyPatch]
 class VersionInfoManager
 {
+<<<<<<< HEAD
     public static readonly string URL = "https://raw.githubusercontent.com/rar006/TownOfHost-hamo/main/versions.json";
     //public static readonly string URL = "https://raw.githubusercontent.com/KYMario/TOHhm-Test/main/versions.json";
+=======
+    public static readonly string URL = "https://raw.githubusercontent.com/KYMario/TownOfHost-Pko/main/versions.json";
+    //public static readonly string URL = "https://raw.githubusercontent.com/KYMario/TOHP-Test/main/versions.json";
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     public static Dictionary<string, VersionInfo> Versions { get; protected set; }
     public static VersionInfo version { get; protected set; }
     public static VersionInfo allversion { get; protected set; }
@@ -90,7 +95,11 @@ class VersionInfoManager
         {
             var announceText = new GameObject("ModAnnounceText").AddComponent<TextMeshPro>();
 
+<<<<<<< HEAD
             announceText.transform.SetParent(CredentialsPatch.TOHhmLogo.transform);
+=======
+            announceText.transform.SetParent(CredentialsPatch.TOHPLogo.transform);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             announceText.transform.localPosition = new(0f, 1f, 0f);
             announceText.fontSize =
             announceText.fontSizeMax =
@@ -125,7 +134,10 @@ class VersionInfoManager
                     ModUpdater.downloadUrl = release.DownloadUrl;
                     ModUpdater.latestVersion = new(release.TagName.TrimStart('v')?.Trim('S')?.Trim('s'));
                     ModUpdater.latestTitle = $"Ver. {ModUpdater.latestVersion}";
+<<<<<<< HEAD
                     MainMenuManagerPatch.UpdateButton2.Button.gameObject.SetActive(false);
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 }
             }
 
@@ -278,7 +290,11 @@ class VersionInfoManager
         try
         {
             UnityWebRequest request = UnityWebRequest.Get(URL);
+<<<<<<< HEAD
             request.SetRequestHeader("User-Agent", "TownOfHost-hamo VersionChecker");
+=======
+            request.SetRequestHeader("User-Agent", "TownOfHost-Pko VersionChecker");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
             var co = request.SendWebRequest();
             while (!co.isDone) { System.Threading.Thread.Sleep(10); }

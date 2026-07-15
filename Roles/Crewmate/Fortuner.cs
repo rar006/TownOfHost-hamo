@@ -86,7 +86,12 @@ public sealed class Fortuner : RoleBase, IKiller
         CustomRoles.Triplets,
         CustomRoles.OneWolf,
         CustomRoles.Stack,
+<<<<<<< HEAD
         CustomRoles.Connecting
+=======
+        CustomRoles.Connecting,
+        CustomRoles.Absorb
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     ];
 
     public static void SetUpOptionItem()

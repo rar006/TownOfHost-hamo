@@ -4,6 +4,10 @@ using System.Linq;
 using AmongUs.GameOptions;
 using TownOfHost.Modules;
 using TownOfHost.Roles.Core;
+<<<<<<< HEAD
+=======
+using TownOfHost.Roles.Neutral;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 using static TownOfHost.Translator;
 
 namespace TownOfHost.Roles
@@ -175,6 +179,18 @@ namespace TownOfHost.Roles
                     break;
             }
 
+<<<<<<< HEAD
+=======
+            if (AssignRoleList.Contains(CustomRoles.LoversBreaker)
+                && LoversBreaker.ShouldRemoveFromAssignment(AssignRoleList))
+            {
+                int removedCount = AssignRoleList.RemoveAll(role => role == CustomRoles.LoversBreaker);
+                if (AssignCount.TryGetValue(CustomRoleTypes.Neutral, out var neutralCount))
+                    AssignCount[CustomRoleTypes.Neutral] = Math.Max(0, neutralCount - removedCount);
+                Logger.Info($"ラバーズ系役職が配役されなかったため爆ぜ師を{removedCount}人分除外", "AssignRoleList");
+            }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             AssignRoleList.Sort();
 
             if (SuddenDeathMode.SuddenSharingRoles.GetBool())
@@ -545,4 +561,8 @@ namespace TownOfHost.Roles
         /// </summary>
         public CustomRoles[] AssignUnitRoles { get; init; }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

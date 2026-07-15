@@ -14,7 +14,11 @@ namespace TownOfHost.Patches
             if (GameStates.IsInGame)
             {
                 if (!__instance.playerInfo._object) return;
+<<<<<<< HEAD
                 if (__instance.TextArea.text != string.Empty && IsSystemMeg is false) //投票通知ではないなら
+=======
+                if (__instance.TextArea.text != string.Empty && __instance.TextArea.text.Length <= 0 && Utils.IsRestriction()) //投票通知ではないなら
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 {
                     if (__instance.playerInfo._object.PlayerId == PlayerControl.LocalPlayer.PlayerId)
                     {

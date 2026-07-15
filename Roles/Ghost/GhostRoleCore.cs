@@ -22,6 +22,11 @@ class GhostRoleCore
         GhostReseter.Init();
         GhostRumour.Init();
         GuardianAngel.Init();
+<<<<<<< HEAD
+=======
+        GhostFloodlight.Init();
+        GhostSaboteur.Init();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         //アドオンもここ置かせて( ᐛ )
         LastImpostor.Init();
@@ -66,6 +71,10 @@ class GhostRoleCore
         Stack.Init();
         Sunglasses.Init();
         Powerful.Init();
+<<<<<<< HEAD
+=======
+        Absorb.Init();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
     public static void SetupCustomOptionAddonAndIsGhostRole()
     {
@@ -91,6 +100,10 @@ class GhostRoleCore
         Revenger.SetupCustomOption();
         Speeding.SetupCustomOption();
         Guarding.SetupCustomOption();
+<<<<<<< HEAD
+=======
+        Absorb.SetupCustomOption();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         Management.SetupCustomOption();
         Seeing.SetupCustomOption();
         Opener.SetupCustomOption();
@@ -117,8 +130,11 @@ class GhostRoleCore
         Slacker.SetupCustomOption();
         Stamina.SetupCustomOption();
         Jumbo.SetupCustomOption();
+<<<<<<< HEAD
         Surrender.SetupCustomOption();
         Reporting.SetupCustomOption();
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         //ゆーれーやくしょく
         ObjectOptionitem.Create(1_000_118, "Madmate", true, null, TabGroup.GhostRoles)
             .SetOptionName(() => "Mad Ghost").SetColor(ModColors.MadMateOrenge).SetTag(CustomOptionTags.Role);
@@ -132,9 +148,18 @@ class GhostRoleCore
         ObjectOptionitem.Create(1_000_120, "Madmate", true, null, TabGroup.GhostRoles)
             .SetOptionName(() => "Crew Ghost").SetColor(ModColors.CrewMateBlue).SetTag(CustomOptionTags.Role);
         Ghostbuttoner.SetupCustomOption();
+<<<<<<< HEAD
+=======
+        GhostSaboteur.SetupCustomOption();
+        GhostFloodlight.SetupCustomOption();
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         GhostNoiseSender.SetupCustomOption();
         GhostReseter.SetupCustomOption();
         GhostRumour.SetupCustomOption();
         GuardianAngel.SetupCustomOption();
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

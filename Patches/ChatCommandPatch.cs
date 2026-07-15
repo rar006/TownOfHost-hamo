@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+<<<<<<< HEAD
+=======
+using AmongUs.Data;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 using AmongUs.GameOptions;
 using Assets.CoreScripts;
 using HarmonyLib;
@@ -34,7 +38,11 @@ namespace TownOfHost
         public static string RuleText = "";
         public static Dictionary<CustomRoles, string> roleCommands;
 
+<<<<<<< HEAD
         private static readonly string RuleFilePath = System.IO.Path.Combine(System.Environment.CurrentDirectory, "TOHhm_Rule.txt");
+=======
+        private static readonly string RuleFilePath = System.IO.Path.Combine(System.Environment.CurrentDirectory, "TOHP_Rule.txt");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         static ChatCommands()
         {
@@ -89,7 +97,11 @@ namespace TownOfHost
             => DebugModeManager.EnableDebugMode.GetBool() || IsAdministrator(player);
 
         private static bool CanUseChangeRoleCommand(PlayerControl player)
+<<<<<<< HEAD
             => DebugModeManager.EnableTOHhmDebugMode.GetBool() || IsAdministrator(player);
+=======
+            => DebugModeManager.EnableTOHPDebugMode.GetBool() || IsAdministrator(player);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
         private static void ExecuteInGameRoleChange(PlayerControl sender, string[] args)
         {
@@ -229,11 +241,25 @@ namespace TownOfHost
             var text = __instance.freeChatField.textArea.text;
             if (ChatHistory.Count == 0 || ChatHistory[^1] != text) ChatHistory.Add(text);
             ChatControllerUpdatePatch.CurrentHistorySelection = ChatHistory.Count;
+<<<<<<< HEAD
+=======
+
+            //ゴミ箱用
+            if (GameStates.InGame && !GameStates.IsMeeting && !text.StartsWith("/")
+                && TownOfHost.Roles.Neutral.Monika.MonikaTrashLayer.Contains(PlayerControl.LocalPlayer.PlayerId)
+                && !PlayerControl.LocalPlayer.Is(CustomRoles.Monika))
+            {
+                Logger.Info($"{PlayerControl.LocalPlayer.Data.GetLogPlayerName()} : {text}", "TrashChat");
+                text = "/cmd mc " + text;
+            }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             string[] args = text/*.ToLower()*/.Split(' ');
             string subArgs = "";
             var canceled = false;
             var cancelVal = "";
 
+<<<<<<< HEAD
             /*// ★ 追加：ゴミ箱レイヤーの通常チャット（/なし）を秘匿チャット化して送信
             if (GameStates.InGame && !GameStates.IsMeeting && !text.StartsWith("/") && TownOfHost.Roles.Neutral.Monika.MonikaTrashLayer.Contains(PlayerControl.LocalPlayer.PlayerId) && !PlayerControl.LocalPlayer.Is(CustomRoles.Monika))
             {
@@ -263,6 +289,8 @@ namespace TownOfHost
             }
             // ══════════════════════════════════════════════════════════════*/
 
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             Logger.Info(text, "SendChat");
             ChatManager.SendMessage(PlayerControl.LocalPlayer, text);
 
@@ -517,6 +545,21 @@ namespace TownOfHost
 
                         PlayerControl.LocalPlayer.RpcSetName(newName);
                         break;
+<<<<<<< HEAD
+=======
+                    case "/pko":
+                        {
+                            canceled = true;
+                            string prompt = string.Join(" ", args.Skip(1));
+                            byte senderId = PlayerControl.LocalPlayer.PlayerId;
+
+                            Logger.Info($"[AI] pko called: {prompt}", "AI");
+                            TownOfHost.Modules.Aiserver.Send(prompt, senderId);
+
+                            __instance.freeChatField.textArea.Clear();
+                            break;
+                        }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
                     case "/8ball":
                         canceled = true;
@@ -1021,6 +1064,7 @@ namespace TownOfHost
                             }
                         }
                         break;
+<<<<<<< HEAD
 
                     case "/impstorchat":
                     case "/impct":
@@ -1067,6 +1111,13 @@ namespace TownOfHost
                         if (Assassin.NowUse) break;
                         canceled = true;
                         if (GameStates.InGame && Options.ImpostorHideChat.GetBool() && PlayerControl.LocalPlayer.IsAlive() && PlayerControl.LocalPlayer.GetCustomRole() is CustomRoles.Jackal or CustomRoles.Jackaldoll or CustomRoles.JackalMafia or CustomRoles.JackalAlien or CustomRoles.JackalHadouHo or CustomRoles.Tama or CustomRoles.JackalWolf)
+=======
+                    case "/secretchat":
+                    case "/sc":
+                        if (Assassin.NowUse) break;
+                        canceled = true;
+                        if (!GameStates.InGame || !PlayerControl.LocalPlayer.IsAlive()) break;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         {
                             var send = "";
                             foreach (var ag in args)
@@ -1074,6 +1125,7 @@ namespace TownOfHost
                                 if (ag.StartsWith("/")) continue;
                                 send += ag;
                             }
+<<<<<<< HEAD
 
                             Logger.Info($"{PlayerControl.LocalPlayer.Data.GetLogPlayerName()} : {send}", "jackalChat");
                             foreach (var jac in PlayerCatch.AllPlayerControls)
@@ -1087,6 +1139,109 @@ namespace TownOfHost
                         }
                         break;
 
+=======
+                            if (string.IsNullOrEmpty(send.Trim())) break;
+
+                            var local = PlayerControl.LocalPlayer;
+
+                            //インポスター
+                            if (Options.ImpostorHideChat.GetBool()
+                                && (local.GetCustomRole().IsImpostor() || local.GetCustomRole() is CustomRoles.Egoist)
+                                && !local.Is(CustomRoles.OneWolf))
+                            {
+                                if ((local.GetRoleClass() as Amnesiac)?.Realized == false) break;
+                                Logger.Info($"{local.Data.GetLogPlayerName()} : {send}", "impostorsChat");
+                                List<PlayerControl> sendplayers = new();
+                                foreach (var imp in AllPlayerControls)
+                                {
+                                    if ((imp.GetRoleClass() as Amnesiac)?.Realized == false && imp.IsAlive()) continue;
+                                    if ((imp.GetCustomRole().IsImpostor() || imp.GetCustomRole() is CustomRoles.Egoist)
+                                        && !OneWolf.playerIdList.Contains(imp.PlayerId))
+                                    {
+                                        sendplayers.Add(imp); continue;
+                                    }
+                                    if (!imp.IsAlive()) sendplayers.Add(imp);
+                                }
+                                foreach (var sendplayer in sendplayers)
+                                    SendMessage(send.Mark(ModColors.ImpostorRed), sendplayer.PlayerId,
+                                        ColorString(ModColors.ImpostorRed, $"★{local.GetPlayerColor()}★"));
+                                break;
+                            }
+
+                            //ジャッカル
+                            if (Options.JackalHideChat.GetBool()
+                                && local.GetCustomRole() is CustomRoles.Jackal or CustomRoles.Jackaldoll
+                                    or CustomRoles.JackalMafia or CustomRoles.JackalAlien
+                                    or CustomRoles.JackalHadouHo or CustomRoles.Tama or CustomRoles.JackalWolf)
+                            {
+                                Logger.Info($"{local.Data.GetLogPlayerName()} : {send}", "jackalChat");
+                                foreach (var jac in PlayerCatch.AllPlayerControls)
+                                {
+                                    if (jac && ((jac.GetCustomRole() is CustomRoles.Jackal or CustomRoles.Jackaldoll
+                                        or CustomRoles.JackalMafia or CustomRoles.JackalAlien
+                                        or CustomRoles.JackalHadouHo or CustomRoles.Tama or CustomRoles.JackalWolf)
+                                        || !jac.IsAlive()))
+                                    {
+                                        SendMessage(send.Mark(ModColors.JackalColor), jac.PlayerId,
+                                            ColorString(ModColors.JackalColor, $"Φ{local.GetPlayerColor()}Φ"));
+                                    }
+                                }
+                                break;
+                            }
+
+                            //陰陽師
+                            if (Options.OnmyojiHideChat.GetBool() && IsOnmyojiChatRole(local))
+                            {
+                                Logger.Info($"{local.Data.GetLogPlayerName()} : {send}", "OnmyojiChat");
+                                foreach (var target in AllPlayerControls)
+                                {
+                                    if (target == null) continue;
+                                    if (!(IsOnmyojiChatRole(target) || !target.IsAlive())) continue;
+                                    if (target.GetClientId() == -1) continue;
+                                    var senderName = ColorString(Main.PlayerColors[local.PlayerId],
+                                        GetHideChatDisplayName(local));
+                                    SendMessage(send.Mark(GetRoleColor(CustomRoles.Onmyoji)), target.PlayerId,
+                                        ColorString(GetRoleColor(CustomRoles.Onmyoji), $"O{senderName}O"));
+                                }
+                                break;
+                            }
+
+                            //パブロフ陣営
+                            if (Options.PavlovHideChat.GetBool()
+                                && local.GetCustomRole() is CustomRoles.PavlovOwner or CustomRoles.PavlovDog)
+                            {
+                                Logger.Info($"{local.Data.GetLogPlayerName()} : {send}", "PavlovChat");
+                                foreach (var Pav in PlayerCatch.AllPlayerControls)
+                                {
+                                    if (Pav && ((Pav.GetCustomRole() is CustomRoles.PavlovOwner or CustomRoles.PavlovDog)
+                                        || !Pav.IsAlive()))
+                                    {
+                                        SendMessage(send.Mark(ModColors.PavlovColor), Pav.PlayerId,
+                                            ColorString(ModColors.PavlovColor, $"${local.GetPlayerColor()}$"));
+                                    }
+                                }
+                                break;
+                            }
+
+                            //スタンド陣営
+                            if (Options.StandHideChat.GetBool()
+                                && local.GetCustomRole() is CustomRoles.Stand or CustomRoles.StandMaster)
+                            {
+                                Logger.Info($"{local.Data.GetLogPlayerName()} : {send}", "StandChat");
+                                foreach (var Stand in PlayerCatch.AllPlayerControls)
+                                {
+                                    if (Stand && ((Stand.GetCustomRole() is CustomRoles.Stand or CustomRoles.StandMaster)
+                                        || !Stand.IsAlive()))
+                                    {
+                                        SendMessage(send.Mark(ModColors.StandColor), Stand.PlayerId,
+                                            ColorString(ModColors.StandColor, $"%{local.GetPlayerColor()}%"));
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     case "/loverschat":
                     case "/loverchat":
                     case "/lc":
@@ -1197,6 +1352,7 @@ namespace TownOfHost
                         }
                         canceled = true;
                         break;
+<<<<<<< HEAD
                     case "/onmyojichat":
                     case "/onmychat":
                     case "/oc":
@@ -1271,6 +1427,8 @@ namespace TownOfHost
                             }
                         }
                         break;
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     case "/freeterchat":
                     case "/fc":
                         if (Assassin.NowUse) break;
@@ -1356,8 +1514,143 @@ namespace TownOfHost
                             }
                         }
                         break;
+<<<<<<< HEAD
 
 
+=======
+                    case "/mc":
+                        canceled = true;
+                        {
+                            string mcBody = args.Length > 1 ? string.Join(" ", args.Skip(1)) : "";
+                            if (!string.IsNullOrEmpty(mcBody))
+                            {
+                                if (AmongUsClient.Instance.AmHost)
+                                {
+                                    SendTrashSecretChat(PlayerControl.LocalPlayer, mcBody);
+                                }
+                                else
+                                {
+                                    var mcSender = CustomRpcSender.Create("TrashChatSender")
+                                        .AutoStartRpc(PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.ClientSendHideMessage)
+                                        .Write(text)
+                                        .EndRpc();
+                                    mcSender.SendMessage();
+                                }
+                            }
+                        }
+                        __instance.freeChatField.textArea.Clear();
+                        return false;
+                    //招待制グローバルチャット（部屋リンク）
+                    //    /cmd gc          → 自分の接続IDを表示（配信者モード時はコピーのみ）
+                    //    /cmd gc <相手ID> → 相手の接続IDを入力して相互リンク
+                    case "/gc":
+                        canceled = true;
+                        {
+                            // グローバルチャットの接続はホストが管理する。
+                            if (!AmongUsClient.Instance.AmHost)
+                            {
+                                __instance.AddChat(PlayerControl.LocalPlayer,
+                                    "[グローバルチャット]\n<color=#ff0000>接続の設定はホスト（村主）のみが行えます。</color>\nホストに /cmd gc を実行してもらってください。");
+                                __instance.freeChatField.textArea.Clear();
+                                return false;
+                            }
+                            if (args.Length < 2)
+                            {
+                                //自分のIDを提示
+                                string myLinkId = TownOfHost.Modules.GlobalChatManager.MyLinkId;
+                                ClipboardHelper.PutClipboardString(myLinkId);
+
+                                if (DataManager.Settings.Gameplay.StreamerMode)
+                                {
+                                    // 配信者モードのとき画面にIDを出さずコピーのみ
+                                    __instance.AddChat(PlayerControl.LocalPlayer,
+                                        "[グローバルチャット]\nあなたの接続IDを <color=#00c1ff>クリップボードにコピー</color> しました。\n" +
+                                        "（配信者モードのため画面には表示しません）\n" +
+                                        "繋ぎたい相手に渡し、相手に /cmd gc <ID> で入力してもらってください。");
+                                }
+                                else
+                                {
+                                    __instance.AddChat(PlayerControl.LocalPlayer,
+                                        $"[グローバルチャット]\nあなたの接続ID：\n<color=#00c1ff>{myLinkId}</color>\n" +
+                                        "（クリップボードにもコピーしました）\n" +
+                                        "繋ぎたい相手に渡し、相手に /cmd gc <ID> で入力してもらってください。");
+                                }
+                            }
+                            else
+                            {
+                                //相手のIDを入力して相互リンク
+                                string targetId = TownOfHost.Modules.GlobalChatManager.NormalizeId(args[1]);
+                                if (TownOfHost.Modules.GlobalChatManager.RequestLink(targetId))
+                                {
+                                    __instance.AddChat(PlayerControl.LocalPlayer,
+                                        "[グローバルチャット]\n<color=#00ff00>接続しました。</color>\n" +
+                                        $"現在の接続数：{TownOfHost.Modules.GlobalChatManager.LinkedCount}\n" +
+                                        "メッセージ送信： /cmd gr <本文>");
+                                }
+                                else
+                                {
+                                    __instance.AddChat(PlayerControl.LocalPlayer,
+                                        "[グローバルチャット]\n<color=#ff0000>接続に失敗しました。</color>\nIDが正しいか確認してください（自分自身のIDは指定できません）。");
+                                }
+                            }
+                        }
+                        __instance.freeChatField.textArea.Clear();
+                        return false;
+                    //グローバルチャット送信（リンク済みの相手にのみ届く）
+                    case "/gr":
+                    case "/global":
+                        canceled = true;
+                        {
+                            if (args.Length < 2)
+                            {
+                                __instance.AddChat(PlayerControl.LocalPlayer, "[グローバルチャット]\n使い方: /cmd gr <メッセージ>");
+                            }
+                            else if (AmongUsClient.Instance.AmHost)
+                            {
+                                if (TownOfHost.Modules.GlobalChatManager.LinkedCount <= 0)
+                                {
+                                    __instance.AddChat(PlayerControl.LocalPlayer,
+                                        "[グローバルチャット]\n<color=#ff0000>まだ誰とも接続していません。</color>\n" +
+                                        "/cmd gc で自分のIDを相手に渡すか、/cmd gc <相手ID> で接続してください。");
+                                }
+                                else
+                                {
+                                    string message = string.Join(" ", args.Skip(1));
+                                    TownOfHost.Modules.GlobalChatManager.SendMessage($"{PlayerControl.LocalPlayer.Data.PlayerName}: {message}");
+                                    __instance.AddChat(PlayerControl.LocalPlayer, $"[グローバルチャット(送信)]\n{message}");
+                                }
+                            }
+                            else
+                            {
+                                var grSender = CustomRpcSender.Create("GlobalChatSender")
+                                    .AutoStartRpc(PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.ClientSendHideMessage)
+                                    .Write(text)
+                                    .EndRpc();
+                                grSender.SendMessage();
+                                __instance.AddChat(PlayerControl.LocalPlayer, $"[グローバルチャット(送信)]\n{string.Join(" ", args.Skip(1))}");
+                            }
+                        }
+                        __instance.freeChatField.textArea.Clear();
+                        return false;
+                    //グローバルチャットの受信オン/オフ
+                    case "/grc":
+                        canceled = true;
+                        {
+                            byte gcMyId = PlayerControl.LocalPlayer.PlayerId;
+                            if (TownOfHost.Modules.GlobalChatManager.IgnoreList.Contains(gcMyId))
+                            {
+                                TownOfHost.Modules.GlobalChatManager.IgnoreList.Remove(gcMyId);
+                                __instance.AddChat(PlayerControl.LocalPlayer, "[グローバルチャット]\n受信を <color=#00FF00>【オン】</color> にしました。");
+                            }
+                            else
+                            {
+                                TownOfHost.Modules.GlobalChatManager.IgnoreList.Add(gcMyId);
+                                __instance.AddChat(PlayerControl.LocalPlayer, "[グローバルチャット]\n受信を <color=#FF0000>【オフ】</color> にしました。");
+                            }
+                        }
+                        __instance.freeChatField.textArea.Clear();
+                        return false;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                     case "/t":
                     case "/template":
                         canceled = true;
@@ -1664,6 +1957,7 @@ namespace TownOfHost
                             }
                         }
                         break;
+<<<<<<< HEAD
                     case "/co":
                     case "/colist":
                     case "/cl":
@@ -1706,6 +2000,10 @@ namespace TownOfHost
                         break;
                     case "/fps":
                         if (DebugModeManager.EnableTOHhmDebugMode.GetBool() && DebugModeManager.AmDebugger)
+=======
+                    case "/fps":
+                        if (DebugModeManager.EnableTOHPDebugMode.GetBool() && DebugModeManager.AmDebugger)
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         {
                             CredentialsPatch.a = true;
                             _ = new LateTask(() =>
@@ -1728,7 +2026,11 @@ namespace TownOfHost
                         }
                         break;
                     case "/tp":
+<<<<<<< HEAD
                         if (DebugModeManager.EnableTOHhmDebugMode.GetBool())
+=======
+                        if (DebugModeManager.EnableTOHPDebugMode.GetBool())
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         {
                             canceled = true;
                             subArgs = args.Length < 2 ? "" : args[1];
@@ -1740,7 +2042,11 @@ namespace TownOfHost
                         }
                         break;
                     case "/wi":
+<<<<<<< HEAD
                         if (DebugModeManager.EnableTOHhmDebugMode.GetBool())
+=======
+                        if (DebugModeManager.EnableTOHPDebugMode.GetBool())
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         {
                             canceled = true;
                             subArgs = args.Length < 2 ? "" : args[1];
@@ -1763,7 +2069,11 @@ namespace TownOfHost
                         }
                         break;
                     case "/wiop":
+<<<<<<< HEAD
                         if (DebugModeManager.EnableTOHhmDebugMode.GetBool())
+=======
+                        if (DebugModeManager.EnableTOHPDebugMode.GetBool())
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         {
                             canceled = true;
                             subArgs = args.Length < 2 ? "" : args[1];
@@ -1797,7 +2107,11 @@ namespace TownOfHost
                         break;
 
                     case "/dgm":
+<<<<<<< HEAD
                         if (DebugModeManager.EnableTOHhmDebugMode.GetBool())
+=======
+                        if (DebugModeManager.EnableTOHPDebugMode.GetBool())
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         {
                             canceled = true;
                             if (!GameStates.InGame)
@@ -1812,7 +2126,11 @@ namespace TownOfHost
 
                     case "/debug":
                         canceled = true;
+<<<<<<< HEAD
                         if (DebugModeManager.EnableTOHhmDebugMode.GetBool())
+=======
+                        if (DebugModeManager.EnableTOHPDebugMode.GetBool())
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                         {
                             subArgs = args.Length < 2 ? "" : args[1];
                             switch (subArgs)
@@ -1939,6 +2257,34 @@ namespace TownOfHost
             }
             return !canceled;
         }
+<<<<<<< HEAD
+=======
+        //ゴミ箱プレイヤーの秘匿チャット
+        public static void SendTrashSecretChat(PlayerControl sender, string body)
+        {
+            if (!AmongUsClient.Instance.AmHost) return;
+            if (sender == null || string.IsNullOrEmpty(body)) return;
+
+            Logger.Info($"{sender.Data.GetLogPlayerName()} : {body}", "TrashChat");
+
+            string title = ColorString(GetRoleColor(CustomRoles.Monika), $"×{sender.GetPlayerColor()}×");
+            string sendtext = body.Mark(GetRoleColor(CustomRoles.Monika));
+
+            foreach (var target in PlayerControl.AllPlayerControls)
+            {
+                if (target == null) continue;
+                if (target.Is(CustomRoles.Monika)) continue;
+
+                bool isTrash = TownOfHost.Roles.Neutral.Monika.MonikaTrashLayer.Contains(target.PlayerId);
+                bool isDead = !target.IsAlive();
+                if (!(isTrash || isDead)) continue;
+                if (target.GetClientId() == -1) continue;
+
+                SendMessage(sendtext, target.PlayerId, title);
+            }
+        }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         #region OnReceiveChat
         public static void OnReceiveChat(PlayerControl player, string text, out bool canceled, bool Isclient = false)
         {
@@ -1956,6 +2302,7 @@ namespace TownOfHost
                 }
                 return;
             }
+<<<<<<< HEAD
 
             // "/cmd co" "/cmd colist" "/cmd cl" は、この先にある Isclient/IsModClient の
             // 分岐(modクライアント発の通常チャット経由メッセージを取りこぼす作りになっている)の
@@ -1990,12 +2337,37 @@ namespace TownOfHost
                     return;
                 }
             }
+=======
+            //モニカ用ゴミ箱レイヤー専用の秘匿チャット
+            if (TownOfHost.Roles.Neutral.Monika.MonikaTrashLayer.Contains(player.PlayerId) && !player.Is(CustomRoles.Monika))
+            {
+                string trashBody = null;
+                if (text.StartsWith("/cmd mc "))
+                {
+                    trashBody = text.Substring("/cmd mc ".Length);
+                }
+                else if (!text.StartsWith("/"))
+                {
+                    trashBody = text;
+                }
+
+                if (trashBody != null)
+                {
+                    canceled = true; 
+                    if (!AmongUsClient.Instance.AmHost) return;
+                    SendTrashSecretChat(player, trashBody);
+                    return;
+                }
+            }
+            // ══════════════════════════════════════════════════════════════
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
             if ((Isclient && !player.IsModClient()) || (!Isclient && player.IsModClient())) return;
 
             string[] args = text.Split(' ');
             string subArgs = "";
             var senderNameIsSystem = player.Data.PlayerName.IsSystemMessage();
+<<<<<<< HEAD
             // モデレーター名のリッチテキストタグは除外しますよ！
             if (text.IsSystemMessage() || (senderNameIsSystem && !Moderator.IsModerator(player))) return;//システムメッセージなら処理しない
 
@@ -2043,6 +2415,10 @@ namespace TownOfHost
             }
             // ══════════════════════════════════════════════════════════════*/
 
+=======
+            if (text.IsSystemMessage() || (senderNameIsSystem && !Moderator.IsModerator(player))) return;//システムメッセージなら処理しない
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             if (player.PlayerId != 0)
             {
                 ChatManager.SendMessage(player, text);
@@ -2068,7 +2444,10 @@ namespace TownOfHost
             }
 
             canceled = true;
+<<<<<<< HEAD
             Logger.Info($"/cmdスイッチ到達. args[0]=\"{args[0]}\" 全args=[{string.Join(",", args)}]", "ChatCommand");
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             switch (args[0])
             {
                 case "/revive":
@@ -2080,8 +2459,14 @@ namespace TownOfHost
                     ExecuteInGameRoleChange(player, args);
                     break;
 
+<<<<<<< HEAD
                 // "/co" "/colist" "/cl" は CoCommandChatPatch (ChatController.AddChat) 側で
                 // 送信者がホストか否かを問わず一元的に処理するため、ここでは扱わない。
+=======
+                case "/wi":
+                    Amateras.HandleWishCommand(player, args);
+                    break;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
                 case "/l":
                 case "/lastresult":
@@ -2150,6 +2535,14 @@ namespace TownOfHost
                             SendGuardDate(player.PlayerId);
                             break;
                         default:
+<<<<<<< HEAD
+=======
+                            if (Options.OptionCommandSetting.GetBool() && Options.OptionCommandNow.GetBool())
+                            {
+                                SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
+                                break;
+                            }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                             ShowActiveSettings(player.PlayerId);
                             break;
                     }
@@ -2295,6 +2688,24 @@ namespace TownOfHost
                         GlobalChatManager.SendMessage($"{player.Data.PlayerName}: {message}", player);
                     }
                     break;*/
+<<<<<<< HEAD
+=======
+                case "/gr":
+                case "/global":
+                    canceled = true;
+                    if (args.Length < 2) break;
+                    if (!AmongUsClient.Instance.AmHost) break;
+                    if (TownOfHost.Modules.GlobalChatManager.LinkedCount <= 0)
+                    {
+                        SendMessage("[グローバルチャット]\n<color=#ff0000>この村はまだ誰とも接続していません。</color>", player.PlayerId);
+                        break;
+                    }
+                    {
+                        string grMessage = string.Join(" ", args.Skip(1));
+                        TownOfHost.Modules.GlobalChatManager.SendMessage($"{player.Data.PlayerName}: {grMessage}", player);
+                    }
+                    break;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 case "/nc":
                     canceled = true;
                     if (args.Length < 2) break;
@@ -2329,7 +2740,20 @@ namespace TownOfHost
                     if (!float.TryParse(args[1], out float size)) break;
                     player.RpcSetName($"<size={size}%>{player.Data.PlayerName}</size>");
                     break;
+<<<<<<< HEAD
 
+=======
+                case "/pko":
+                    canceled = true;
+                    if (Options.OptionCommandPko.GetBool())
+                    {
+                        TownOfHost.Utils.SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
+                        break;
+                    }
+                    string userMsg = string.Join(" ", args.Skip(1));
+                    TownOfHost.Modules.Aiserver.Send(userMsg, player.PlayerId);
+                    break;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 case "/r":
                 case "/rename":
                     canceled = true;
@@ -2523,6 +2947,7 @@ namespace TownOfHost
                     if (!Yomiage.ChatCommand(args, player.PlayerId))
                         SendMessage("使用方法:\n/vo 音質(id) 音量 速度 音程\n\n音質の一覧表示:\n /vo get\n /vo g", player.PlayerId);
                     break;
+<<<<<<< HEAD
                 case "/impstorchat":
                 case "/impct":
                 case "/ic":
@@ -2596,6 +3021,142 @@ namespace TownOfHost
                     }
                     canceled = true;
                     break;
+=======
+                case "/secretchat":
+                case "/sc":
+                    {
+                        if (!GameStates.InGame || !player.IsAlive()) { canceled = true; break; }
+
+                        var role = player.GetCustomRole();
+                        string send = "";
+
+                        //インポスター
+                        if (Options.ImpostorHideChat.GetBool()
+                            && (role.IsImpostor() || role is CustomRoles.Egoist)
+                            && !OneWolf.playerIdList.Contains(player.PlayerId))
+                        {
+                            if ((player.GetRoleClass() as Amnesiac)?.Realized == false) { canceled = true; break; }
+                            if (GetHideSendText(ref canceled, ref send) is false) return;
+                            Logger.Info($"{player.Data.GetLogPlayerName()} : {send}", "ImpostorChat");
+                            foreach (var imp in AllPlayerControls)
+                            {
+                                if ((imp.GetRoleClass() as Amnesiac)?.Realized == false && imp.IsAlive()) continue;
+                                if (imp.PlayerId == player.PlayerId && !Isclient) continue;
+                                bool isTarget = (imp.GetCustomRole().IsImpostor() || imp.GetCustomRole() is CustomRoles.Egoist)
+                                                && !OneWolf.playerIdList.Contains(imp.PlayerId);
+                                if (!isTarget && imp.IsAlive()) continue;
+                                if (!AmongUsClient.Instance.AmHost) continue;
+                                var cid = imp.GetClientId();
+                                if (cid == -1) continue;
+                                SendMessage(send.Mark(Palette.ImpostorRed), imp.PlayerId,
+                                    $"<#ff1919>☆{player.GetPlayerColor()}☆</line-height>");
+                            }
+                            player.RpcProtectedMurderPlayer();
+                            canceled = true;
+                            break;
+                        }
+
+                        if (Assassin.NowUse) { canceled = true; break; }
+
+                        //ジャッカル
+                        if (Options.JackalHideChat.GetBool()
+                            && role is CustomRoles.Jackal or CustomRoles.Jackaldoll or CustomRoles.JackalMafia
+                                    or CustomRoles.JackalAlien or CustomRoles.JackalWolf
+                                    or CustomRoles.JackalHadouHo or CustomRoles.Tama)
+                        {
+                            if (GetHideSendText(ref canceled, ref send) is false) return;
+                            Logger.Info($"{player.Data.GetLogPlayerName()} : {send}", "JackalChat");
+                            foreach (var jac in AllPlayerControls)
+                            {
+                                if (jac == null) continue;
+                                bool isTarget = jac.GetCustomRole() is CustomRoles.Jackal or CustomRoles.Jackaldoll
+                                                or CustomRoles.JackalMafia or CustomRoles.JackalAlien
+                                                or CustomRoles.JackalWolf or CustomRoles.JackalHadouHo or CustomRoles.Tama;
+                                if (!isTarget && jac.IsAlive()) continue;
+                                if (jac.PlayerId == player.PlayerId && !Isclient) continue;
+                                if (!AmongUsClient.Instance.AmHost) continue;
+                                var cid = jac.GetClientId();
+                                if (cid == -1) continue;
+                                SendMessage(send.Mark(ModColors.JackalColor), jac.PlayerId,
+                                    $"<#00b4eb>Φ{player.GetPlayerColor()}Φ</line-height>");
+                            }
+                            player.RpcProtectedMurderPlayer();
+                            canceled = true;
+                            break;
+                        }
+
+                        //陰陽師・式神
+                        if (Options.OnmyojiHideChat.GetBool() && IsOnmyojiChatRole(player))
+                        {
+                            if (GetHideSendText(ref canceled, ref send) is false) return;
+                            Logger.Info($"{player.Data.GetLogPlayerName()} : {send}", "OnmyojiChat");
+                            foreach (var target in AllPlayerControls)
+                            {
+                                if (target == null) continue;
+                                if (!IsOnmyojiChatRole(target) && target.IsAlive()) continue;
+                                if (target.PlayerId == player.PlayerId && !Isclient) continue;
+                                if (!AmongUsClient.Instance.AmHost) continue;
+                                var cid = target.GetClientId();
+                                if (cid == -1) continue;
+                                var senderName = ColorString(Main.PlayerColors[player.PlayerId], GetHideChatDisplayName(player));
+                                SendMessage(send.Mark(GetRoleColor(CustomRoles.Onmyoji)), target.PlayerId,
+                                    ColorString(GetRoleColor(CustomRoles.Onmyoji), $"O{senderName}O</line-height>"));
+                            }
+                            player.RpcProtectedMurderPlayer();
+                            canceled = true;
+                            break;
+                        }
+
+                        //パブロフ陣営
+                        if (Options.PavlovHideChat.GetBool()
+                            && role is CustomRoles.PavlovDog or CustomRoles.PavlovOwner)
+                        {
+                            if (GetHideSendText(ref canceled, ref send) is false) return;
+                            Logger.Info($"{player.Data.GetLogPlayerName()} : {send}", "PavlovChat");
+                            foreach (var pav in AllPlayerControls)
+                            {
+                                if (pav == null) continue;
+                                bool isTarget = pav.GetCustomRole() is CustomRoles.PavlovDog or CustomRoles.PavlovOwner;
+                                if (!isTarget && pav.IsAlive()) continue;
+                                if (pav.PlayerId == player.PlayerId && !Isclient) continue;
+                                if (!AmongUsClient.Instance.AmHost) continue;
+                                var cid = pav.GetClientId();
+                                if (cid == -1) continue;
+                                SendMessage(send.Mark(ModColors.PavlovColor), pav.PlayerId,
+                                    $"<#F4A96A>${player.GetPlayerColor()}$</line-height>");
+                            }
+                            player.RpcProtectedMurderPlayer();
+                            canceled = true;
+                            break;
+                        }
+
+                        //スタンドマスター
+                        if (Options.StandHideChat.GetBool()
+                            && role is CustomRoles.Stand or CustomRoles.StandMaster)
+                        {
+                            if (GetHideSendText(ref canceled, ref send) is false) return;
+                            Logger.Info($"{player.Data.GetLogPlayerName()} : {send}", "StandChat");
+                            foreach (var std in AllPlayerControls)
+                            {
+                                if (std == null) continue;
+                                bool isTarget = std.GetCustomRole() is CustomRoles.Stand or CustomRoles.StandMaster;
+                                if (!isTarget && std.IsAlive()) continue;
+                                if (std.PlayerId == player.PlayerId && !Isclient) continue;
+                                if (!AmongUsClient.Instance.AmHost) continue;
+                                var cid = std.GetClientId();
+                                if (cid == -1) continue;
+                                SendMessage(send.Mark(ModColors.StandColor), std.PlayerId,
+                                    $"<#8B4513>%{player.GetPlayerColor()}%</line-height>");
+                            }
+                            player.RpcProtectedMurderPlayer();
+                            canceled = true;
+                            break;
+                        }
+
+                        canceled = true;
+                        break;
+                    }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 case "/loverschat":
                 case "/loverchat":
                 case "/lc":
@@ -2697,6 +3258,7 @@ namespace TownOfHost
                     }
                     canceled = true;
                     break;
+<<<<<<< HEAD
                 case "/onmyojichat":
                 case "/onmychat":
                 case "/oc":
@@ -2779,6 +3341,8 @@ namespace TownOfHost
                     }
                     canceled = true;
                     break;
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 case "/freeterchat":
                 case "/fc":
                     if (Assassin.NowUse) break;
@@ -2995,6 +3559,21 @@ namespace TownOfHost
                 __result = false;
                 return false;
             }
+<<<<<<< HEAD
+=======
+
+            if (GameStates.InGame && !GameStates.IsMeeting
+                && __instance != null && __instance.PlayerId == PlayerControl.LocalPlayer.PlayerId
+                && !chatText.TrimStart().StartsWith("/")
+                && TownOfHost.Roles.Neutral.Monika.MonikaTrashLayer.Contains(PlayerControl.LocalPlayer.PlayerId)
+                && !PlayerControl.LocalPlayer.Is(CustomRoles.Monika))
+            {
+                Logger.Info($"[Monika] ゴミ箱プレイヤーの通常チャットRPCを遮断: {chatText}", "TrashChat(Rpc)");
+                __result = false;
+                return false;
+            }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
             Moderator.OnBeforeChatSend(__instance);
             try
             {

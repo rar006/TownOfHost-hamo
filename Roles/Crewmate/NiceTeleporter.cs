@@ -63,7 +63,11 @@ public sealed class NiceTeleporter : RoleBase
     static void SetupOptionItem()
     {
         OptionCooldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.NiceTeleporterCooldown,
+<<<<<<< HEAD
             new(5f, 120f, 5f), 45f, false).SetValueFormat(OptionFormat.Seconds);
+=======
+            new(5f, 120f, 2.5f), 45f, false).SetValueFormat(OptionFormat.Seconds);
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         OptionWaitingTime = FloatOptionItem.Create(RoleInfo, 11, OptionName.NiceTeleporterWaitingTime,
             new(0f, 10f, 1f), 3f, false).SetValueFormat(OptionFormat.Seconds);
     }
@@ -99,6 +103,13 @@ public sealed class NiceTeleporter : RoleBase
         if (pc.MyPhysics.Animations.IsPlayingAnyLadderAnimation()) return true;
         if (pc.onLadder) return true;
         if (pc.inMovingPlat) return true;
+<<<<<<< HEAD
+=======
+        if (pc.inVent) return true;
+        if (pc.walkingToVent) return true;
+        if (pc.MyPhysics.Animations.IsPlayingEnterVentAnimation()) return true;
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         if ((MapNames)Main.NormalOptions.MapId == MapNames.Airship &&
             Vector2.Distance(pc.GetTruePosition(), LIFT_POSITION) <= 1.9f) return true;
         return false;
@@ -196,7 +207,11 @@ public sealed class NiceTeleporter : RoleBase
         if (destPlayer == null || !destPlayer.IsAlive() || !Player.IsAlive())
         { SendRpc(); UtilsNotifyRoles.NotifyRoles(); return; }
 
+<<<<<<< HEAD
         if (IsBeamingOrCharging(Player))
+=======
+        if (IsOnRestrictedMove(Player) || IsBeamingOrCharging(Player))
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         { SendRpc(); UtilsNotifyRoles.NotifyRoles(); return; }
 
         if (IsOnRestrictedMove(destPlayer) || IsBeamingOrCharging(destPlayer))
@@ -306,4 +321,8 @@ public sealed class NiceTeleporter : RoleBase
         pendingTimer = reader.ReadSingle();
         destPlayerId = reader.ReadByte();
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56

@@ -20,7 +20,10 @@ public static class Guesser
     public static OptionItem CCanGuessVanilla;
     public static OptionItem CCanGuessNakama;
     public static OptionItem CCanWhiteCrew;
+<<<<<<< HEAD
     public static OptionItem WarnIfCrewmate;
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     //imp
     public static OptionItem impset;
     public static OptionItem ICanGuessVanilla;
@@ -56,7 +59,10 @@ public static class Guesser
         CCanGuessVanilla = BooleanOptionItem.Create(Id + 53, "CanGuessVanilla", true, TabGroup.Addons, false).SetSubRoleOptionItem(CustomRoles.Guesser).SetColor(ModColors.CrewMateBlue); ;
         CCanGuessNakama = BooleanOptionItem.Create(Id + 54, "CanGuessNakama", true, TabGroup.Addons, false).SetSubRoleOptionItem(CustomRoles.Guesser).SetColor(ModColors.CrewMateBlue); ;
         CCanWhiteCrew = BooleanOptionItem.Create(Id + 55, "CanWhiteCrew", false, TabGroup.Addons, false).SetSubRoleOptionItem(CustomRoles.Guesser).SetColor(ModColors.CrewMateBlue); ;
+<<<<<<< HEAD
         WarnIfCrewmate = BooleanOptionItem.Create(Id + 56, "GuesserWarnIfCrewmate", false, TabGroup.Addons, false).SetSubRoleOptionItem(CustomRoles.Guesser).SetColor(ModColors.CrewMateBlue); ;
+=======
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         //imp
         ObjectOptionitem.Create(Id + 51, "AddonOption", true, "", TabGroup.Addons).SetOptionName(() => "Imposotr Option").SetSubRoleOptionItem(CustomRoles.Guesser).SetColor(ModColors.ImpostorRed);
         ICanGuessVanilla = BooleanOptionItem.Create(Id + 57, "CanGuessVanilla", true, TabGroup.Addons, false).SetSubRoleOptionItem(CustomRoles.Guesser).SetColor(ModColors.ImpostorRed);

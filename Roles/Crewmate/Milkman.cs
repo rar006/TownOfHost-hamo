@@ -298,6 +298,29 @@ public sealed class Milkman : RoleBase, IKiller
     {
         if (info.IsSuicide) return;
         diedThisRound = true;
+<<<<<<< HEAD
+=======
+
+        if (!deliveryMode) return;
+        if (!AmongUsClient.Instance.AmHost) return;
+
+        deliveryMode = false;
+
+        Player.RpcSetRoleDesync(RoleTypes.Engineer, Player.GetClientId());
+
+        foreach (var pc in PlayerCatch.AllAlivePlayerControls)
+        {
+            var role = pc.GetCustomRole();
+            if (role.IsImpostor())
+                pc.RpcSetRoleDesync(role.GetRoleTypes(), Player.GetClientId());
+        }
+
+        SendRpc();
+
+        Logger.Info(
+            $"[Milkman] {Player.Data?.GetLogPlayerName()} が配達モードで死亡 → タスクモードに切替",
+            "Milkman");
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
     }
 
     public override void OnFixedUpdate(PlayerControl player)

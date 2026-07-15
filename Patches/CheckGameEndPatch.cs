@@ -28,7 +28,16 @@ namespace TownOfHost
         {
             if (!AmongUsClient.Instance.AmHost) return true;
 
+<<<<<<< HEAD
             if (predicate == null) return false;
+=======
+            if (predicate == null)
+            {
+                Logger.Warn("ゲーム終了判定が未初期化のため、現在のゲームモードに合わせて初期化します", "GameEndChecker");
+                EnsurePredicate();
+                return false;
+            }
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
 
             if (Main.DontGameSet && CustomWinnerHolder.WinnerTeam != CustomWinner.Draw) return false;
 
@@ -135,6 +144,16 @@ namespace TownOfHost
                 foreach (var beginner in CustomRoleManager.AllActiveRoles.Values.OfType<BeginnerImpostor>())
                     beginner.EnforceDummyKillWinRequirement();
 
+<<<<<<< HEAD
+=======
+                // 勝者固定経路でも、加虐者・被虐者の個別条件を必ず反映する。
+                foreach (var abuser in CustomRoleManager.AllActiveRoles.Values.OfType<Abuser>())
+                    abuser.EnforceWinRequirement();
+                foreach (var victim in CustomRoleManager.AllActiveRoles.Values.OfType<Victim>())
+                    victim.EnforceFactionWin();
+
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 if (!lockWinner && SuddenDeathMode.NowSuddenDeathTemeMode && !(CustomWinnerHolder.WinnerTeam is CustomWinner.SuddenDeathRed or CustomWinner.SuddenDeathBlue or CustomWinner.SuddenDeathGreen or CustomWinner.SuddenDeathYellow or CustomWinner.PurpleLovers))
                 {
                     SuddenDeathMode.TeamAllWin();
@@ -381,7 +400,11 @@ namespace TownOfHost
                 if (pc == null) continue;
                 var target = (winnerList.Contains(pc.PlayerId) ? pc : (winnerList.Count == 0 ? pc : PlayerCatch.GetPlayerById(winnerList.OrderBy(pc => pc).FirstOrDefault()) ?? pc)) ?? pc;
                 var targetname = Main.AllPlayerNames[target.PlayerId];
+<<<<<<< HEAD
                 var text = $"<voffset=25>{CustomWinnerText}\n<voffset=0>{targetname}\n\n<voffset=24><size=40%><{Main.ModColor}>TownOfHost-hamo</color><#ffffff>v.{Main.PluginShowVersion}</size>";// sb.ToString() +$"\n</align><voffset=23>{CustomWinnerText}\n<voffset=45><size=1.75>{targetname}";
+=======
+                var text = $"<voffset=25>{CustomWinnerText}\n<voffset=0>{targetname}\n\n<voffset=24><size=40%><{Main.ModColor}>TownOfHost-Pko</color><#ffffff>v.{Main.PluginShowVersion}</size>";// sb.ToString() +$"\n</align><voffset=23>{CustomWinnerText}\n<voffset=45><size=1.75>{targetname}";
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 if (text.Length > 320)
                 {
                     Logger.Warn($"Gamelog:{text}", "SetRoleSummary");
@@ -407,6 +430,31 @@ namespace TownOfHost
         }
         private const float EndGameDelay = 0.2f;
 
+<<<<<<< HEAD
+=======
+        private static void EnsurePredicate()
+        {
+            switch (Options.CurrentGameMode)
+            {
+                case CustomGameMode.SuddenDeath:
+                    SetPredicateToSadness();
+                    break;
+                case CustomGameMode.MurderMystery:
+                    SetPredicateToMurderMystery();
+                    break;
+                case CustomGameMode.HideAndSeek:
+                    SetPredicateToHideAndSeek();
+                    break;
+                case CustomGameMode.TaskBattle:
+                    SetPredicateToTaskBattle();
+                    break;
+                default:
+                    SetPredicateToNormal();
+                    break;
+            }
+        }
+
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         public static void SetPredicateToNormal() => predicate = new NormalGameEndPredicate();
         public static void SetPredicateToHideAndSeek() => predicate = new HideAndSeekGameEndPredicate();
         public static void SetPredicateToTaskBattle() => predicate = new TaskBattle.TaskBattleGameEndPredicate();

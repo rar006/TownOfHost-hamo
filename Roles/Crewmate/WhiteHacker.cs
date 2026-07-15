@@ -133,7 +133,11 @@ public sealed class WhiteHacker : RoleBase
     {
         if (targetId == byte.MaxValue) return "";
         seen ??= seer;
+<<<<<<< HEAD
         if (GameStates.CalledMeeting && targetId == seen.PlayerId && MyTaskState.HasCompletedEnoughCountOfTasks(cantaskcount))
+=======
+        if (isForMeeting && targetId == seen.PlayerId && MyTaskState.HasCompletedEnoughCountOfTasks(cantaskcount))
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         {
             var roomName = GetLastRoom(seen);
             // 空のときにタグを付けると，suffixが空ではない判定となりなにもない3行目が表示される

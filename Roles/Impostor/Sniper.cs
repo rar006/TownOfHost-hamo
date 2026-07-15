@@ -310,6 +310,7 @@ public sealed class Sniper : RoleBase, IImpostor
             }
             SendRPC();
             _ = new LateTask(() =>
+<<<<<<< HEAD
                 {
                     snList.Clear();
                     if (targets.Count != 0)
@@ -321,6 +322,19 @@ public sealed class Sniper : RoleBase, IImpostor
                         SendRPC();
                     }
                 },
+=======
+            {
+                snList.Clear();
+                if (targets.Count != 0)
+                {
+                    foreach (var otherPc in targets.Keys)
+                    {
+                        UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: otherPc);
+                    }
+                    SendRPC();
+                }
+            },
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
                 0.5f, "Sniper shot Notify");
         }
         else

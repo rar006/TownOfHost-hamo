@@ -620,6 +620,11 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter
     {
         if (target == null) return false;
         if (target.Is(CustomRoleTypes.Impostor)) return true;
+<<<<<<< HEAD
+=======
+        if (target.Is(CustomRoles.StandMaster) && StandMaster.EnableKillAbility) return true;
+        if (target.Is(CustomRoles.Opportunist) && Opportunist.HasKillButton) return true;
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
         return target.GetCustomRole() is
             CustomRoles.CountKiller or CustomRoles.Strawdoll or
             CustomRoles.Jackal or CustomRoles.JackalHadouHo or CustomRoles.JackalMafia or CustomRoles.JackalAlien or
@@ -888,4 +893,8 @@ public sealed class Shikigami : RoleBase, IUsePhantomButton, IKillFlashSeeable
     bool HasOnmyojiLink() { foreach (var pc in AllPlayerControls) { if (pc?.GetRoleClass() is Onmyoji o && o.ShikigamiIds.Contains(Player.PlayerId)) return true; } return false; }
 
     void TryResolveOwnerFromOnmyoji() { foreach (var pc in AllPlayerControls) { if (pc?.GetRoleClass() is Onmyoji o && o.ShikigamiIds.Contains(Player.PlayerId)) { SetOwner(pc.PlayerId); return; } } }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 980a20702729bba1cb2fbe62af4d17929491dd56
