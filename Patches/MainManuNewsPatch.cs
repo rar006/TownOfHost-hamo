@@ -50,7 +50,11 @@ public class ModNewsHistory
             {
                 var news = new ModNews
                 {
-                    Date = "2020-01-01T00:00:00Z",
+                    Number = 100001,
+                    Title = "新リリースだよ",
+                    SubTitle = "<color=#fb85ff>Town Of Host-hamo v4.00.00.00</color>",
+                    ShortTitle = "<color=#fb85ff>●TOH-hamo v4.00.00.00</color>",
+                    Date = "2026-07-15T19:00:00Z",
                 };
                 AllModNews.Add(news);
             }
