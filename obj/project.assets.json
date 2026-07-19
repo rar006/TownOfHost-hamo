@@ -1,0 +1,395 @@
+{
+  "version": 4,
+  "targets": {
+    "net6.0": {
+      "Costura.Fody/6.2.0": {
+        "type": "package",
+        "dependencies": {
+          "Fody": "6.9.3"
+        },
+        "compile": {
+          "lib/netstandard2.0/Costura.dll": {
+            "related": ".pdb;.xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Costura.dll": {
+            "related": ".pdb;.xml"
+          }
+        },
+        "build": {
+          "build/Costura.Fody.props": {},
+          "build/Costura.Fody.targets": {}
+        }
+      },
+      "Csv/2.0.245": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/Csv.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Csv.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Fody/6.9.3": {
+        "type": "package",
+        "build": {
+          "build/Fody.targets": {}
+        }
+      },
+      "GitInfo/3.6.0": {
+        "type": "package",
+        "dependencies": {
+          "ThisAssembly.Constants": "2.1.2"
+        },
+        "build": {
+          "buildTransitive/GitInfo.targets": {}
+        },
+        "buildMultiTargeting": {
+          "buildMultiTargeting/GitInfo.targets": {}
+        }
+      },
+      "Microsoft.CSharp/4.7.0": {
+        "type": "package",
+        "compile": {
+          "ref/netcoreapp2.0/_._": {}
+        },
+        "runtime": {
+          "lib/netcoreapp2.0/_._": {}
+        }
+      },
+      "System.Threading.Tasks.Extensions/4.6.3": {
+        "type": "package",
+        "compile": {
+          "lib/netcoreapp2.1/_._": {}
+        },
+        "runtime": {
+          "lib/netcoreapp2.1/_._": {}
+        }
+      },
+      "ThisAssembly.Constants/2.1.2": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.CSharp": "4.7.0",
+          "System.Threading.Tasks.Extensions": "4.6.3"
+        },
+        "compile": {
+          "lib/netstandard2.0/_._": {}
+        },
+        "runtime": {
+          "lib/netstandard2.0/_._": {}
+        },
+        "build": {
+          "build/netstandard2.0/ThisAssembly.Constants.targets": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Costura.Fody/6.2.0": {
+      "sha512": "jaX+A6sw6pI7lkLDTvxN7zU8Ja/a50N2xPKF6RYy0J6QF62wVg+hJMXJph2K8XarDaAlxQ82EaKv3fAvUNyRpg==",
+      "type": "package",
+      "path": "costura.fody/6.2.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "build/Costura.Fody.props",
+        "build/Costura.Fody.targets",
+        "costura.fody.6.2.0.nupkg.sha512",
+        "costura.fody.nuspec",
+        "icon.png",
+        "lib/netstandard2.0/Costura.dll",
+        "lib/netstandard2.0/Costura.pdb",
+        "lib/netstandard2.0/Costura.xml",
+        "netclassicweaver/Costura.Fody.dll",
+        "netclassicweaver/Costura.Fody.xcf",
+        "netstandardweaver/Costura.Fody.dll",
+        "netstandardweaver/Costura.Fody.xcf"
+      ]
+    },
+    "Csv/2.0.245": {
+      "sha512": "0PweavSpWDLemXzGWsoi44RkJU686ZUDxCC7osVh+wsitby0NdBbMG7WSjLA0cRworhX93otb0fYCcdlNHhIsg==",
+      "type": "package",
+      "path": "csv/2.0.245",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "csv.2.0.245.nupkg.sha512",
+        "csv.nuspec",
+        "icon.png",
+        "lib/net8.0/Csv.dll",
+        "lib/net8.0/Csv.xml",
+        "lib/net9.0/Csv.dll",
+        "lib/net9.0/Csv.xml",
+        "lib/netstandard2.0/Csv.dll",
+        "lib/netstandard2.0/Csv.xml"
+      ]
+    },
+    "Fody/6.9.3": {
+      "sha512": "1CUGgFdyECDKgi5HaUBhdv6k+VG9Iy4OCforGfHyar3xQXAJypZkzymgKtWj/4SPd6nSG0Qi7NH71qHrDSZLaA==",
+      "type": "package",
+      "path": "fody/6.9.3",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "build/Fody.targets",
+        "fody.6.9.3.nupkg.sha512",
+        "fody.nuspec",
+        "package_icon.png",
+        "package_readme.md",
+        "tasks/net472/FodyCommon.dll",
+        "tasks/net472/FodyHelpers.dll",
+        "tasks/net472/FodyHelpers.xml",
+        "tasks/net472/FodyIsolated.dll",
+        "tasks/net472/FodyTasks.dll",
+        "tasks/net472/Mono.Cecil.Pdb.dll",
+        "tasks/net472/Mono.Cecil.Pdb.pdb",
+        "tasks/net472/Mono.Cecil.Rocks.dll",
+        "tasks/net472/Mono.Cecil.Rocks.pdb",
+        "tasks/net472/Mono.Cecil.dll",
+        "tasks/net472/Mono.Cecil.pdb",
+        "tasks/netstandard2.0/FodyCommon.dll",
+        "tasks/netstandard2.0/FodyHelpers.dll",
+        "tasks/netstandard2.0/FodyHelpers.xml",
+        "tasks/netstandard2.0/FodyIsolated.dll",
+        "tasks/netstandard2.0/FodyTasks.dll",
+        "tasks/netstandard2.0/Mono.Cecil.Pdb.dll",
+        "tasks/netstandard2.0/Mono.Cecil.Pdb.pdb",
+        "tasks/netstandard2.0/Mono.Cecil.Rocks.dll",
+        "tasks/netstandard2.0/Mono.Cecil.Rocks.pdb",
+        "tasks/netstandard2.0/Mono.Cecil.dll",
+        "tasks/netstandard2.0/Mono.Cecil.pdb"
+      ]
+    },
+    "GitInfo/3.6.0": {
+      "sha512": "Nw3TZP1GbDqEsV4hk34iL9YnOLZRDAiosH/IgWXtjv+KTNVJXCEWkDTBmUamWuP9QOShin79c1FudnbT2AV5dA==",
+      "type": "package",
+      "path": "gitinfo/3.6.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "OSMFEULA.txt",
+        "build/.gitignore",
+        "build/GitInfo.AssemblyInfo.targets",
+        "build/GitInfo.AssemblyMetadata.targets",
+        "build/GitInfo.CI.targets",
+        "build/GitInfo.ThisAssembly.targets",
+        "build/GitInfo.cache.pp",
+        "build/GitInfo.cs.pp",
+        "build/GitInfo.fs.pp",
+        "build/GitInfo.targets",
+        "build/GitInfo.vb.pp",
+        "build/wslpath.cmd",
+        "build/wslrun.cmd",
+        "buildMultiTargeting/GitInfo.targets",
+        "buildTransitive/GitInfo.targets",
+        "gitinfo.3.6.0.nupkg.sha512",
+        "gitinfo.nuspec",
+        "icon.png",
+        "readme.md"
+      ]
+    },
+    "Microsoft.CSharp/4.7.0": {
+      "sha512": "pTj+D3uJWyN3My70i2Hqo+OXixq3Os2D1nJ2x92FFo6sk8fYS1m1WLNTs0Dc1uPaViH0YvEEwvzddQ7y4rhXmA==",
+      "type": "package",
+      "path": "microsoft.csharp/4.7.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.TXT",
+        "THIRD-PARTY-NOTICES.TXT",
+        "lib/MonoAndroid10/_._",
+        "lib/MonoTouch10/_._",
+        "lib/net45/_._",
+        "lib/netcore50/Microsoft.CSharp.dll",
+        "lib/netcoreapp2.0/_._",
+        "lib/netstandard1.3/Microsoft.CSharp.dll",
+        "lib/netstandard2.0/Microsoft.CSharp.dll",
+        "lib/netstandard2.0/Microsoft.CSharp.xml",
+        "lib/portable-net45+win8+wp8+wpa81/_._",
+        "lib/uap10.0.16299/_._",
+        "lib/win8/_._",
+        "lib/wp80/_._",
+        "lib/wpa81/_._",
+        "lib/xamarinios10/_._",
+        "lib/xamarinmac20/_._",
+        "lib/xamarintvos10/_._",
+        "lib/xamarinwatchos10/_._",
+        "microsoft.csharp.4.7.0.nupkg.sha512",
+        "microsoft.csharp.nuspec",
+        "ref/MonoAndroid10/_._",
+        "ref/MonoTouch10/_._",
+        "ref/net45/_._",
+        "ref/netcore50/Microsoft.CSharp.dll",
+        "ref/netcore50/Microsoft.CSharp.xml",
+        "ref/netcore50/de/Microsoft.CSharp.xml",
+        "ref/netcore50/es/Microsoft.CSharp.xml",
+        "ref/netcore50/fr/Microsoft.CSharp.xml",
+        "ref/netcore50/it/Microsoft.CSharp.xml",
+        "ref/netcore50/ja/Microsoft.CSharp.xml",
+        "ref/netcore50/ko/Microsoft.CSharp.xml",
+        "ref/netcore50/ru/Microsoft.CSharp.xml",
+        "ref/netcore50/zh-hans/Microsoft.CSharp.xml",
+        "ref/netcore50/zh-hant/Microsoft.CSharp.xml",
+        "ref/netcoreapp2.0/_._",
+        "ref/netstandard1.0/Microsoft.CSharp.dll",
+        "ref/netstandard1.0/Microsoft.CSharp.xml",
+        "ref/netstandard1.0/de/Microsoft.CSharp.xml",
+        "ref/netstandard1.0/es/Microsoft.CSharp.xml",
+        "ref/netstandard1.0/fr/Microsoft.CSharp.xml",
+        "ref/netstandard1.0/it/Microsoft.CSharp.xml",
+        "ref/netstandard1.0/ja/Microsoft.CSharp.xml",
+        "ref/netstandard1.0/ko/Microsoft.CSharp.xml",
+        "ref/netstandard1.0/ru/Microsoft.CSharp.xml",
+        "ref/netstandard1.0/zh-hans/Microsoft.CSharp.xml",
+        "ref/netstandard1.0/zh-hant/Microsoft.CSharp.xml",
+        "ref/netstandard2.0/Microsoft.CSharp.dll",
+        "ref/netstandard2.0/Microsoft.CSharp.xml",
+        "ref/portable-net45+win8+wp8+wpa81/_._",
+        "ref/uap10.0.16299/_._",
+        "ref/win8/_._",
+        "ref/wp80/_._",
+        "ref/wpa81/_._",
+        "ref/xamarinios10/_._",
+        "ref/xamarinmac20/_._",
+        "ref/xamarintvos10/_._",
+        "ref/xamarinwatchos10/_._",
+        "useSharedDesignerContext.txt",
+        "version.txt"
+      ]
+    },
+    "System.Threading.Tasks.Extensions/4.6.3": {
+      "sha512": "7sCiwilJLYbTZELaKnc7RecBBXWXA+xMLQWZKWawBxYjp6DBlSE3v9/UcvKBvr1vv2tTOhipiogM8rRmxlhrVA==",
+      "type": "package",
+      "path": "system.threading.tasks.extensions/4.6.3",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "PACKAGE.md",
+        "buildTransitive/net461/System.Threading.Tasks.Extensions.targets",
+        "buildTransitive/net462/_._",
+        "lib/net462/System.Threading.Tasks.Extensions.dll",
+        "lib/net462/System.Threading.Tasks.Extensions.xml",
+        "lib/netcoreapp2.1/_._",
+        "lib/netstandard2.0/System.Threading.Tasks.Extensions.dll",
+        "lib/netstandard2.0/System.Threading.Tasks.Extensions.xml",
+        "lib/netstandard2.1/_._",
+        "system.threading.tasks.extensions.4.6.3.nupkg.sha512",
+        "system.threading.tasks.extensions.nuspec"
+      ]
+    },
+    "ThisAssembly.Constants/2.1.2": {
+      "sha512": "rq7HoR45a4H1NM8KPG+rOPhv6z36wpB088+tB6KCbltBsnx1uwCpS3IvLmMZh3EOnZarRjXE9oiVgGMFCCJ1Wg==",
+      "type": "package",
+      "path": "thisassembly.constants/2.1.2",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "OSMFEULA.txt",
+        "analyzers/dotnet/roslyn4.0/cs/ThisAssembly.Constants.dll",
+        "build/netstandard2.0/ThisAssembly.Constants.targets",
+        "icon.png",
+        "lib/netstandard2.0/_._",
+        "readme.md",
+        "thisassembly.constants.2.1.2.nupkg.sha512",
+        "thisassembly.constants.nuspec"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net6.0": [
+      "Costura.Fody >= 6.2.0",
+      "GitInfo >= 3.6.0",
+      "csv >= 2.0.245"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\haru0\\.nuget\\packages\\": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "C:\\Users\\haru0\\Downloads\\TOHhamo_sors\\TOHhamososudayo\\TownOfHost.csproj",
+      "projectName": "TownOfHost-hamo",
+      "projectPath": "C:\\Users\\haru0\\Downloads\\TOHhamo_sors\\TOHhamososudayo\\TownOfHost.csproj",
+      "packagesPath": "C:\\Users\\haru0\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\haru0\\Downloads\\TOHhamo_sors\\TOHhamososudayo\\obj\\",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "C:\\Users\\haru0\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+      ],
+      "originalTargetFrameworks": [
+        "net6.0"
+      ],
+      "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net6.0": {
+          "framework": "net6.0",
+          "targetAlias": "net6.0",
+          "projectReferences": {}
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      },
+      "SdkAnalysisLevel": "10.0.300"
+    },
+    "frameworks": {
+      "net6.0": {
+        "framework": "net6.0",
+        "targetAlias": "net6.0",
+        "dependencies": {
+          "Costura.Fody": {
+            "suppressParent": "All",
+            "target": "Package",
+            "version": "[6.2.0, )"
+          },
+          "GitInfo": {
+            "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+            "suppressParent": "All",
+            "target": "Package",
+            "version": "[3.6.0, )"
+          },
+          "csv": {
+            "target": "Package",
+            "version": "[2.0.245, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301\\RuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}

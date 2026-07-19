@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+		<GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
+		<!-- gitリポジトリが無い/コミットが無い環境だとGitInfoが不正なバージョン文字列(例: 0.0.0+main.)を
+		     生成し NETSDK1018 でビルドが失敗するため、明示的に固定バージョンを指定して上書きする -->
+		<Version>1.0.0</Version>
+		<AssemblyVersion>1.0.0.0</AssemblyVersion>
+		<FileVersion>1.0.0.0</FileVersion>
+		<InformationalVersion>1.0.0-local</InformationalVersion>
+		<Description>fork by Town Of Host</Description>
+		<Authors>tukasa0001(EmptyBottle), integral0131</Authors>
+		<langVersion>preview</langVersion>
+		<AssemblyName>TownOfHost-hamo</AssemblyName>
+		<NoWarn>MSB3246</NoWarn>
+		<AmongUs>C:\Program Files (x86)\Steam\steamapps\common\Among Us</AmongUs>
+		<CopyToAmongUs Condition="'$(CopyToAmongUs)' == ''">true</CopyToAmongUs>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="Roles\Madmate\MadSheriff_Sample.cs" />
+		<Reference Include="$(AmongUs)\BepInEx\core\*.dll" />
+		<Reference Include="$(AmongUs)\BepInEx\interop\*.dll" />
+		<EmbeddedResource Include=".\Resources\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Costura.Fody" Version="6.2.0">
+			<IncludeAssets>runtime; compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="csv" Version="2.0.245" />
+		<PackageReference Include="GitInfo" Version="3.6.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="ChatServer\" />
+	</ItemGroup>
+
+	<Target Name="Copy" AfterTargets="Build" Condition="'$(CopyToAmongUs)' == 'true' And 'C:\Program Files (x86)\Steam\steamapps\common\Among Us' != ''">
+		<Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="C:\Program Files (x86)\Steam\steamapps\common\Among Us\BepInEx\plugins/" />
+	</Target>
+</Project>

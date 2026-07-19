@@ -1,0 +1,175 @@
+is_global = true
+build_property.ThisAssemblyNamespace = 
+build_property.ThisAssemblyNamespace = 
+build_property.ThisAssemblyVisibility = 
+build_property.GitIsDirty = 0
+build_property.GitThisAssembly = true
+build_property.TargetFramework = net6.0
+build_property.TargetFrameworkIdentifier = .NETCoreApp
+build_property.TargetFrameworkVersion = v6.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = 
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property.EntryPointFilePath = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = TownOfHost
+build_property.ProjectDir = C:\Users\haru0\Downloads\TOHhamo_sors\TOHhamososudayo\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.EffectiveAnalysisLevelStyle = 6.0
+build_property.EnableCodeStyleSeverity = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/IsDirtyString]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = false
+build_metadata.Constant.Type = 
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/IsDirty]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = false
+build_metadata.Constant.Type = bool
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/RepositoryUrl]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = 
+build_metadata.Constant.Type = 
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/Branch]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = main
+build_metadata.Constant.Type = 
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/Commit]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = 
+build_metadata.Constant.Type = 
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/Sha]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = 
+build_metadata.Constant.Type = 
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/CommitDate]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = 
+build_metadata.Constant.Type = 
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/Commits]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = 0
+build_metadata.Constant.Type = 
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/Tag]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = 
+build_metadata.Constant.Type = 
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/BaseTag]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = 
+build_metadata.Constant.Type = 
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/BaseVersion.Major]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = 0
+build_metadata.Constant.Type = 
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/BaseVersion.Minor]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = 0
+build_metadata.Constant.Type = 
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/BaseVersion.Patch]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = 0
+build_metadata.Constant.Type = 
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/SemVer.Major]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = 0
+build_metadata.Constant.Type = 
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/SemVer.Minor]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = 0
+build_metadata.Constant.Type = 
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/SemVer.Patch]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = 0
+build_metadata.Constant.Type = 
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/SemVer.Label]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = 
+build_metadata.Constant.Type = 
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/SemVer.DashLabel]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = 
+build_metadata.Constant.Type = 
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
+
+[C:/Users/haru0/Downloads/TOHhamo_sors/TOHhamososudayo/SemVer.Source]
+build_metadata.Constant.ItemType = Constant
+build_metadata.Constant.Comment = 
+build_metadata.Constant.Value = Default
+build_metadata.Constant.Type = 
+build_metadata.Constant.Root = Git
+build_metadata.Constant.RootComment = 
