@@ -1,8 +1,10 @@
 # Town Of Host-hamo
 
-# 注意！！！
-このmodは開発中のmodです。バグが多いですがお許しください！
+# 注意！！
+こちらは開発段階のmodです！このmodを使用する場合、バグが起きる可能性があります！
 
+
+# Wikiはこちら！↪︎↪︎↪︎[TOH-hm Wiki](https://github.com/rar006/TownOfHost-hamo/wiki)
 ## この Mod について
 
 この Mod は非公式のものであり、この Mod の開発に関して Among Us の開発元である"Innersloth"は一切関与していません。<br>
