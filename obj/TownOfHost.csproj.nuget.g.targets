@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Import Project="$(NuGetPackageRoot)thisassembly.constants\2.1.2\build\netstandard2.0\ThisAssembly.Constants.targets" Condition="Exists('$(NuGetPackageRoot)thisassembly.constants\2.1.2\build\netstandard2.0\ThisAssembly.Constants.targets')" />
+    <Import Project="$(NuGetPackageRoot)gitinfo\3.6.0\buildTransitive\GitInfo.targets" Condition="Exists('$(NuGetPackageRoot)gitinfo\3.6.0\buildTransitive\GitInfo.targets')" />
+    <Import Project="$(NuGetPackageRoot)fody\6.9.3\build\Fody.targets" Condition="Exists('$(NuGetPackageRoot)fody\6.9.3\build\Fody.targets')" />
+    <Import Project="$(NuGetPackageRoot)costura.fody\6.2.0\build\Costura.Fody.targets" Condition="Exists('$(NuGetPackageRoot)costura.fody\6.2.0\build\Costura.Fody.targets')" />
+  </ImportGroup>
+</Project>
