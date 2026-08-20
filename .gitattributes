@@ -1,0 +1,32 @@
+# テキストファイルだけをWindows向けCRLFとして扱う
+*.cs text eol=crlf
+*.csproj text eol=crlf
+*.sln text eol=crlf
+*.xml text eol=crlf
+*.xsd text eol=crlf
+*.resx text eol=crlf
+*.json text eol=crlf
+*.jsonc text eol=crlf
+*.md text eol=crlf
+*.txt text eol=crlf
+*.yml text eol=crlf
+*.yaml text eol=crlf
+*.config text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.toml text eol=crlf
+
+# 画像・実行ファイル・アーカイブは改行変換しない
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.dll binary
+*.exe binary
+*.zip binary
+*.7z binary
+*.mp3 binary
+*.wav binary
+*.ttf binary
+*.otf binary
