@@ -28,7 +28,7 @@
 
 		<AssemblyName>TownOfHost-hamo</AssemblyName>
 
-		<NoWarn>MSB3246;CS0162;CS0169;CS0184;CS0649;CS0414;GI001</NoWarn>
+		<NoWarn>MSB3246;CS0162;CS0169;CS0184;CS0649;CS0414;GI001,IDE0017</NoWarn>
 
 		<AmongUs>C:\Program Files (x86)\Steam\steamapps\common\Among Us</AmongUs>
 
