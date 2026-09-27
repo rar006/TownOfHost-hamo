@@ -64,6 +64,7 @@ public sealed class Obolus : RoleBase, ILNKiller, IAdditionalWinner
     int Daycount;
     int NeedCount;
     bool KilledOnThisTurn;
+    bool IKiller.CanKill => !KilledOnThisTurn;
 
     // 追加: ターゲット役職ごとの「このキルで勝利可能」トグル
     public static Dictionary<CustomRoles, OptionItem> ExtraWinKillTargetOptions = new();
@@ -139,7 +140,7 @@ public sealed class Obolus : RoleBase, ILNKiller, IAdditionalWinner
         NeedCount = reader.ReadInt32();
         KilledOnThisTurn = reader.ReadBoolean();
     }
-    public bool CanUseKillButton() => KillCount > 0 && Daycount > OptionKillLockTurn.GetInt();
+    public bool CanUseKillButton() => KillCount > 0 && Daycount > OptionKillLockTurn.GetInt() && !KilledOnThisTurn;
     public bool CanUseSabotageButton() => false;
     public bool CanUseImpostorVentButton() => CanVent;
     public bool IstargetRole(CustomRoles role)
@@ -153,7 +154,12 @@ public sealed class Obolus : RoleBase, ILNKiller, IAdditionalWinner
 
     public void OnMurderPlayerAsKiller(MurderInfo info)
     {
-        if (Daycount <= OptionKillLockTurn.GetInt() || KilledOnThisTurn)
+        if (Daycount <= OptionKillLockTurn.GetInt())
+        {
+            info.DoKill = false;
+            return;
+        }
+        if (KilledOnThisTurn is true)
         {
             info.DoKill = false;
             return;
@@ -178,7 +184,7 @@ public sealed class Obolus : RoleBase, ILNKiller, IAdditionalWinner
                 KilledOnThisTurn = false;
                 SendRPC();
             }
-        }, Main.LagTime + 0.2f, "Setname", true);
+        }, Main.LagTime, "", true);
     }
     private void ForceSoloWin()
     {
