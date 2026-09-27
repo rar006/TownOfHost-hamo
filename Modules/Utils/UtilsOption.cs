@@ -2015,6 +2015,7 @@ namespace TownOfHost
             }
 
             if (role is CustomRoles.MadSuicide) Fromtext += "  <#000000>(<#ff1919>崇拝者</color>)</color>";
+            if (role is CustomRoles.Obolus) Fromtext += "  <#000000>(<#0065f4>Uchu Addon</color>)</color>";
 
             return Fromtext;
 

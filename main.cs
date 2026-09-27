@@ -148,7 +148,7 @@ namespace TownOfHost
 
         /// 配布するデバッグ版なのであればtrue。リリース時にはfalseにすること。
 
-        public static bool DebugVersion = false;
+        public static bool DebugVersion = true;
 
 
 

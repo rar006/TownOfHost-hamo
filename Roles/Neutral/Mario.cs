@@ -1,4 +1,5 @@
 using AmongUs.GameOptions;
+using Hazel;
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
 using UnityEngine;
@@ -71,7 +72,7 @@ public sealed class Mario : RoleBase, IKiller, IUsePhantomButton
     bool IUsePhantomButton.IsresetAfterKill => false;
     public override void OnFixedUpdate(PlayerControl player)
     {
-        if (VentCooldownTimer != null)
+        if (VentCooldownTimer != null && VentCooldownTimer > 0f)
         {
             VentCooldownTimer -= Time.fixedDeltaTime;
             if (OptionVentCooldown.GetFloat() >= 2f) return;
@@ -83,6 +84,7 @@ public sealed class Mario : RoleBase, IKiller, IUsePhantomButton
     {
         if (VentCooldownTimer > 0.1f) return false;
         --Count;
+        SendRPC();
         if (Count <= 0)
         {
             ForceSoloWin();
@@ -109,5 +111,20 @@ public sealed class Mario : RoleBase, IKiller, IUsePhantomButton
     {
         AdjustKillCooldown = false;
         ResetCooldown = false;
+    }
+    private void SendRPC()
+    {
+        using var sender = CreateSender();
+        sender.Writer.Write(Count);
+    }
+    public override void ReceiveRPC(MessageReader reader)
+    {
+        Count = reader.ReadInt32();
+    }
+    public override string GetAbilityButtonText() => GetString("TriggerVent");
+    public override bool OverrideAbilityButton(out string text)
+    {
+        text = "Comebacker_Ability";
+        return true;
     }
 }
