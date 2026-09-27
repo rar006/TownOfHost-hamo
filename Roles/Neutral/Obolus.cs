@@ -4,6 +4,7 @@ using AmongUs.GameOptions;
 using Hazel;
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
+using UnityEngine;
 
 namespace TownOfHost.Roles.Neutral;
 
@@ -37,6 +38,7 @@ public sealed class Obolus : RoleBase, ILNKiller, IAdditionalWinner
         WinFlag = false;
         Daycount = 1;
         NeedCount = OptionNeedKillCount.GetInt();
+        KilledOnThisTurn = false;
     }
     static OptionItem OptionKillCooldown;
     static OptionItem OptionAddWin;
@@ -61,6 +63,7 @@ public sealed class Obolus : RoleBase, ILNKiller, IAdditionalWinner
     bool WinFlag;
     int Daycount;
     int NeedCount;
+    bool KilledOnThisTurn;
 
     // 追加: ターゲット役職ごとの「このキルで勝利可能」トグル
     public static Dictionary<CustomRoles, OptionItem> ExtraWinKillTargetOptions = new();
@@ -126,6 +129,7 @@ public sealed class Obolus : RoleBase, ILNKiller, IAdditionalWinner
         sender.Writer.Write(WinFlag);
         sender.Writer.Write(Daycount);
         sender.Writer.Write(NeedCount);
+        sender.Writer.Write(KilledOnThisTurn);
     }
     public override void ReceiveRPC(MessageReader reader)
     {
@@ -133,7 +137,7 @@ public sealed class Obolus : RoleBase, ILNKiller, IAdditionalWinner
         WinFlag = reader.ReadBoolean();
         Daycount = reader.ReadInt32();
         NeedCount = reader.ReadInt32();
-
+        KilledOnThisTurn = reader.ReadBoolean();
     }
     public bool CanUseKillButton() => KillCount > 0 && Daycount > OptionKillLockTurn.GetInt();
     public bool CanUseSabotageButton() => false;
@@ -149,14 +153,13 @@ public sealed class Obolus : RoleBase, ILNKiller, IAdditionalWinner
 
     public void OnMurderPlayerAsKiller(MurderInfo info)
     {
-        if (Daycount <= OptionKillLockTurn.GetInt())
+        if (Daycount <= OptionKillLockTurn.GetInt() || KilledOnThisTurn)
         {
             info.DoKill = false;
             return;
         }
-
         (var killer, var target) = info.AttemptTuple;
-
+        KilledOnThisTurn = true;
         --KillCount;
         SendRPC();
         if (IstargetRole(target.GetCustomRole()))
@@ -167,6 +170,15 @@ public sealed class Obolus : RoleBase, ILNKiller, IAdditionalWinner
                 ForceSoloWin();
             }
         }
+        _ = new LateTask(() =>
+        {
+            if (target.IsAlive())
+            {
+                //脳筋だけどこれで（）
+                KilledOnThisTurn = false;
+                SendRPC();
+            }
+        }, Main.LagTime + 0.2f, "Setname", true);
     }
     private void ForceSoloWin()
     {
@@ -182,9 +194,9 @@ public sealed class Obolus : RoleBase, ILNKiller, IAdditionalWinner
     public override void AfterMeetingTasks()
     {
         ++Daycount;
+        KilledOnThisTurn = false;
         SendRPC();
     }
-    public override string GetProgressText(bool comms = false, bool gamelog = false)
-    => Utils.ColorString(RoleInfo.RoleColor, $"({KillCount})");
+    public override string GetProgressText(bool comms = false, bool gamelog = false) => Utils.ColorString(KillCount > 0 ? Color.yellow : Color.gray, $"({KillCount})");
     public bool CheckWin(ref CustomRoles winnerRole) => OptionAddWin.GetBool() && WinFlag;
 }
