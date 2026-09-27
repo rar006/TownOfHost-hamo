@@ -216,11 +216,11 @@ namespace TownOfHost
 
 
 
-            // 超軽量化ON時は方角計算・全件走査・NotifyRolesを毎秒5回に制限する。
-
-            // 矢印の追従は維持しつつ、役職数が多い時の負荷とRPC発行回数を抑える。
-
-            float updateInterval = Options.OptionUltraLightweightMode?.GetBool() == true ? 0.2f : 0.1f;
+            // ターゲット矢印の更新間隔。
+            // 従来は「通常0.1秒 / 超軽量化ON時のみ0.2秒」だったが、矢印の追従間隔としては
+            // 0.2秒でも体感の差はほぼ無く、常時この間隔にすることで軽量化モードを
+            // 意識させずに常に負荷を抑えられるようにした(超軽量化ON時はさらに0.3秒に)。
+            float updateInterval = Options.OptionUltraLightweightMode?.GetBool() == true ? 0.3f : 0.2f;
             if (true
 
                 && LastUpdateTime.TryGetValue(seer.PlayerId, out var lastUpdate)
@@ -237,8 +237,13 @@ namespace TownOfHost
 
 
 
-            var arrowList = new List<ArrowInfo>(TargetArrows.Keys.Where(a => a.From == seer.PlayerId));
-
+            // 軽量化: LINQ(Where + List変換)は呼び出しのたびにイテレータ/クロージャの
+            // アロケーションが発生するため、素直なforeachに置き換えて確保を減らす。
+            var arrowList = new List<ArrowInfo>();
+            foreach (var key in TargetArrows.Keys)
+            {
+                if (key.From == seerId) arrowList.Add(key);
+            }
             if (arrowList.Count == 0) return;
 
 
@@ -529,11 +534,11 @@ namespace TownOfHost
 
 
 
-            // 超軽量化ON時は方角計算・全件走査・NotifyRolesを毎秒5回に制限する。
-
-            // 矢印の追従は維持しつつ、役職数が多い時の負荷とRPC発行回数を抑える。
-
-            float updateInterval = Options.OptionUltraLightweightMode?.GetBool() == true ? 0.2f : 0.1f;
+            // ターゲット矢印の更新間隔。
+            // 従来は「通常0.1秒 / 超軽量化ON時のみ0.2秒」だったが、矢印の追従間隔としては
+            // 0.2秒でも体感の差はほぼ無く、常時この間隔にすることで軽量化モードを
+            // 意識させずに常に負荷を抑えられるようにした(超軽量化ON時はさらに0.3秒に)。
+            float updateInterval = Options.OptionUltraLightweightMode?.GetBool() == true ? 0.3f : 0.2f;
             if (true
 
                 && LastUpdateTime.TryGetValue(seer.PlayerId, out var lastUpdate)
@@ -550,8 +555,13 @@ namespace TownOfHost
 
 
 
-            var arrowList = new List<ArrowInfo>(TargetArrows.Keys.Where(a => a.From == seer.PlayerId));
-
+            // 軽量化: LINQ(Where + List変換)は呼び出しのたびにイテレータ/クロージャの
+            // アロケーションが発生するため、素直なforeachに置き換えて確保を減らす。
+            var arrowList = new List<ArrowInfo>();
+            foreach (var key in TargetArrows.Keys)
+            {
+                if (key.From == seerId) arrowList.Add(key);
+            }
             if (arrowList.Count == 0) return;
 
 

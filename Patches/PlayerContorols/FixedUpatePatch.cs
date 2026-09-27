@@ -598,10 +598,10 @@ namespace TownOfHost
                 {
 
                     // 役職表示の生成は文字列連結・役職判定・全プレイヤー参照を多く行うため、
-
-                    // 通常は従来どおり15tickごと、超軽量化ON時は60tickごとに更新する。
-
-                    int roleTextRefreshInterval = Options.OptionUltraLightweightMode?.GetBool() == true ? 60 : 15;
+                    // 頻繁に再描画する必要は薄い。従来は「通常15tick/超軽量化ON時60tick」
+                    // だったが、通常時も30tick(約0.5秒間隔)に統一することで、
+                    // モードを意識せず常に負荷を抑えられるようにした。
+                    int roleTextRefreshInterval = Options.OptionUltraLightweightMode?.GetBool() == true ? 60 : 30;
 
                     bool shouldRefreshRoleText = !lastRoleTextUpdateTick.TryGetValue(__instance.PlayerId, out var lastTick)
 

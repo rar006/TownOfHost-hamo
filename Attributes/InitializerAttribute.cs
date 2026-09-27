@@ -63,6 +63,28 @@ public abstract class InitializerAttribute<T> : Attribute
             initializer.Invoke(null, null);
         }
     }
+
+    /// <summary>
+    /// 起動時ロード画面から呼ぶための、進行状況を取得しながら初期化するイテレータ。
+    /// 1回のMoveNext()で初期化メソッドを1つだけ実行し、(処理した数, 全体数)を返す。
+    /// 呼び出し側でコルーチン(1フレームに数回MoveNext)にすることで、
+    /// 数百件の初期化処理を1フレームで一気に実行してフリーズして見えるのを防げる。
+    /// </summary>
+    public static System.Collections.Generic.IEnumerable<(int done, int total)> InitializeAllStepwise()
+    {
+        if (allInitializers == null)
+        {
+            FindInitializers();
+        }
+        var total = allInitializers.Length;
+        for (var i = 0; i < total; i++)
+        {
+            var initializer = allInitializers[i];
+            if (initializer.Name is not "Load") logger.Info($"初期化: {initializer.DeclaringType.Name}.{initializer.Name}");
+            initializer.Invoke(null, null);
+            yield return (i + 1, total);
+        }
+    }
 }
 
 public enum InitializePriority

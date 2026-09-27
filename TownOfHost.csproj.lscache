@@ -24,8 +24,8 @@ RootNamespace=TownOfHost
 TargetFramework=net6.0
 TargetFrameworkIdentifier=.NETCoreApp
 TargetFrameworkVersion=v6.0
-TargetPath=<PATH>bin/Release/net6.0/TownOfHost-hamo.dll
-TargetRefPath=<PATH>obj/Release/net6.0/ref/TownOfHost-hamo.dll
+TargetPath=<PATH>bin/Debug/net6.0/TownOfHost-hamo.dll
+TargetRefPath=<PATH>obj/Debug/net6.0/ref/TownOfHost-hamo.dll
 TemporaryDependencyNodeTargetIdentifier=net6.0
 
 [commandLineArguments]
@@ -37,14 +37,14 @@ TemporaryDependencyNodeTargetIdentifier=net6.0
 /nostdlib+
 /errorreport:prompt
 /warn:6
-/define:TRACE;RELEASE;NET;NET6_0;NETCOREAPP;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NETCOREAPP1_0_OR_GREATER;NETCOREAPP1_1_OR_GREATER;NETCOREAPP2_0_OR_GREATER;NETCOREAPP2_1_OR_GREATER;NETCOREAPP2_2_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER
+/define:TRACE;DEBUG;NET;NET6_0;NETCOREAPP;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NETCOREAPP1_0_OR_GREATER;NETCOREAPP1_1_OR_GREATER;NETCOREAPP2_0_OR_GREATER;NETCOREAPP2_1_OR_GREATER;NETCOREAPP2_2_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER
 /highentropyva+
-/debug-
+/debug+
 /debug:portable
 /filealign:512
-/optimize+
-/out:obj/Release/net6.0/TownOfHost-hamo.dll
-/refout:obj/Release/net6.0/refint/TownOfHost-hamo.dll
+/optimize-
+/out:obj/Debug/net6.0/TownOfHost-hamo.dll
+/refout:obj/Debug/net6.0/refint/TownOfHost-hamo.dll
 /target:library
 /warnaserror-
 /utf8output
@@ -220,7 +220,7 @@ Modules/
  Win32FileDialog.cs
  Yomiage.cs
  Zoom.cs
-obj/Release/net6.0/
+obj/Debug/net6.0/
  .NETCoreApp,Version=v6.0.AssemblyAttributes.cs
  TownOfHost.AssemblyInfo.cs
 Patches/
@@ -298,6 +298,7 @@ Patches/
  JoinGameButtonPatch.cs
  LadderPatch.cs
  LoadingBarManagerPatch.cs
+ LoadingScreenPatch.cs
  LobbyInfoPanePatch.cs
  MainManuNewsPatchs.cs
  MainMenuManagerPatch.cs
@@ -933,7 +934,7 @@ Microsoft.NETCore.App.Ref
 Microsoft.NET.Sdk/analyzers
 
 [analyzerConfigFiles]
-obj/Release/net6.0/TownOfHost.GeneratedMSBuildEditorConfig.editorconfig
+obj/Debug/net6.0/TownOfHost.GeneratedMSBuildEditorConfig.editorconfig
 .editorconfig
 
 [additionalFiles]
