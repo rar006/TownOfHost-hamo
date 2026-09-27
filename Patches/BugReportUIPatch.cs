@@ -470,7 +470,7 @@ namespace TownOfHost.Patches
                     action: () => BugReportWizard.Close(),
                     label: "X"); // 「✕」は絵文字扱いで表示できないフォントがあるため通常のXにする
                 _closeButton.Scale = new Vector2(0.4f, 0.4f);
-                _closeButton.FontSize = 2.8f;
+                _closeButton.FontSize = 3f;
 
                 _panelRoot.SetActive(false);
                 return true;

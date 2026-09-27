@@ -1,11 +1,12 @@
 using AmongUs.GameOptions;
+using Hazel;
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
 using UnityEngine;
 
 namespace TownOfHost.Roles.Neutral;
 
-public sealed class Mario : RoleBase, IKiller
+public sealed class Mario : RoleBase, IKiller, IUsePhantomButton
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
@@ -13,7 +14,7 @@ public sealed class Mario : RoleBase, IKiller
             player => new Mario(player),
             CustomRoles.Mario,
             //ベントクール2秒未満にできない制限突破するため。
-            () => OptionVentCooldown.GetFloat() < 2f ? RoleTypes.Impostor : RoleTypes.Engineer,
+            () => OptionVentCooldown.GetFloat() < 2f ? RoleTypes.Phantom : RoleTypes.Engineer,
             CustomRoleTypes.Neutral,
             552900,
             SetupOptionItem,
@@ -60,28 +61,33 @@ public sealed class Mario : RoleBase, IKiller
         opt.SetVision(false);
         AURoleOptions.EngineerCooldown = OptionVentCooldown.GetFloat();
         AURoleOptions.EngineerInVentMaxTime = 0.1f;
+        AURoleOptions.PhantomCooldown = (float)VentCooldownTimer;
     }
     bool IKiller.CanUseSabotageButton() => false;
     bool IKiller.CanUseImpostorVentButton() => true;
     bool IKiller.CanUseKillButton() => false;
     bool IKiller.CanKill => false;
     public override bool CanVentMoving(PlayerPhysics physics, int ventId) => false;
+    bool IUsePhantomButton.IsPhantomRole => true;
+    bool IUsePhantomButton.IsresetAfterKill => false;
     public override void OnFixedUpdate(PlayerControl player)
     {
-        if (VentCooldownTimer != null)
+        if (VentCooldownTimer != null && VentCooldownTimer > 0f)
         {
             VentCooldownTimer -= Time.fixedDeltaTime;
+            if (OptionVentCooldown.GetFloat() >= 2f) return;
+            AURoleOptions.PhantomCooldown = (float)VentCooldownTimer;
+            Player.RpcResetAbilityCooldown();
         }
     }
     public override bool OnEnterVent(PlayerPhysics physics, int ventId)
     {
-        if (VentCooldownTimer <= 0.1f || OptionVentCooldown.GetFloat() > 2f)
+        if (VentCooldownTimer > 0.1f) return false;
+        --Count;
+        SendRPC();
+        if (Count <= 0)
         {
-            --Count;
-            if (Count <= 0)
-            {
-                ForceSoloWin();
-            }
+            ForceSoloWin();
         }
         _ = new LateTask(() => Player.MyPhysics.RpcBootFromVent(ventId), 0.9f, "", true);
         VentCooldownTimer = null;
@@ -100,5 +106,25 @@ public sealed class Mario : RoleBase, IKiller
             CustomWinnerHolder.WinnerIds.Add(Player.PlayerId);
             CustomWinnerHolder.NeutralWinnerIds.Add(Player.PlayerId);
         }
+    }
+    void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
+    {
+        AdjustKillCooldown = false;
+        ResetCooldown = false;
+    }
+    private void SendRPC()
+    {
+        using var sender = CreateSender();
+        sender.Writer.Write(Count);
+    }
+    public override void ReceiveRPC(MessageReader reader)
+    {
+        Count = reader.ReadInt32();
+    }
+    public override string GetAbilityButtonText() => GetString("TriggerVent");
+    public override bool OverrideAbilityButton(out string text)
+    {
+        text = "Comebacker_Ability";
+        return true;
     }
 }

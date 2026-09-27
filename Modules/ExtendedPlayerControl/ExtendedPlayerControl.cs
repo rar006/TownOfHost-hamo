@@ -906,7 +906,10 @@ namespace TownOfHost
 
                 CustomRoles.Altair or
 
-                CustomRoles.Eater;
+                CustomRoles.Eater or
+                CustomRoles.Hunter or
+                CustomRoles.Mermaid or
+                CustomRoles.Obolus;
 
         }
 
@@ -918,7 +921,7 @@ namespace TownOfHost
 
             if (player.GetRoleClass() is MadBetrayer) return MadBetrayer.IsMadmate() is false;
 
-
+            if (player.GetRoleClass() is DarkSheriff darkSheriff) return darkSheriff.Awakened;
 
 
 
