@@ -173,7 +173,7 @@ public sealed class PavlovOwner : RoleBase, IKiller, IAdditionalWinner, ISchrodi
             GetOwnerBaseRoleType,
             CustomRoleTypes.Neutral,
             //ID被り解消のためだから許して...()
-            77260,
+            77259,
             SetupOptionItem,
             "pvo",
             "#F4A96A",

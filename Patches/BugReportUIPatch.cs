@@ -435,7 +435,7 @@ namespace TownOfHost.Patches
                     action: () => BugReportWizard.SubmitDescription(_descriptionBox.Text),
                     label: "送信する");
                 _submitButton.Scale = new Vector2(1.8f, 0.42f);
-                _submitButton.FontSize = 1.2f;
+                _submitButton.FontSize = 2.4f;
 
                 // 画像・動画を添付するボタン。送信・戻るボタンと横並びの中央に配置する。
                 _attachButton = new SimpleButton(
@@ -447,7 +447,7 @@ namespace TownOfHost.Patches
                     action: OnAttachButtonClicked,
                     label: "添付");
                 _attachButton.Scale = new Vector2(1.3f, 0.42f);
-                _attachButton.FontSize = 1.1f;
+                _attachButton.FontSize = 2.2f;
 
                 // 要望により、押すとバグ報告全体を閉じる「戻る」ボタン。
                 _descriptionBackButton = new SimpleButton(
@@ -459,7 +459,7 @@ namespace TownOfHost.Patches
                     action: () => BugReportWizard.Close(),
                     label: "戻る");
                 _descriptionBackButton.Scale = new Vector2(1.3f, 0.4f);
-                _descriptionBackButton.FontSize = 1.2f;
+                _descriptionBackButton.FontSize = 2.4f;
 
                 _closeButton = new SimpleButton(
                     parent: _panelRoot.transform,
@@ -470,7 +470,7 @@ namespace TownOfHost.Patches
                     action: () => BugReportWizard.Close(),
                     label: "X"); // 「✕」は絵文字扱いで表示できないフォントがあるため通常のXにする
                 _closeButton.Scale = new Vector2(0.4f, 0.4f);
-                _closeButton.FontSize = 1.4f;
+                _closeButton.FontSize = 2.8f;
 
                 _panelRoot.SetActive(false);
                 return true;

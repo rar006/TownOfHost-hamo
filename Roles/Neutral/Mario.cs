@@ -1,0 +1,104 @@
+using AmongUs.GameOptions;
+using TownOfHost.Roles.Core;
+using TownOfHost.Roles.Core.Interfaces;
+using UnityEngine;
+
+namespace TownOfHost.Roles.Neutral;
+
+public sealed class Mario : RoleBase, IKiller
+{
+    public static readonly SimpleRoleInfo RoleInfo =
+        SimpleRoleInfo.Create(
+            typeof(Mario),
+            player => new Mario(player),
+            CustomRoles.Mario,
+            //ベントクール2秒未満にできない制限突破するため。
+            () => OptionVentCooldown.GetFloat() < 2f ? RoleTypes.Impostor : RoleTypes.Engineer,
+            CustomRoleTypes.Neutral,
+            552900,
+            SetupOptionItem,
+            "Mi",
+            "#ff6201",
+            (5, 7),
+            from: From.TownOfHost_Enhanced,
+            isNewRole: true,
+            Desc: () =>
+            {
+                return string.Format(GetString("MarioDesc"), OptionWinVentCount.GetInt());
+            }
+        );
+
+    public Mario(PlayerControl player)
+        : base(RoleInfo, player)
+    {
+        VentCooldownTimer = OptionVentCooldown.GetFloat();
+        Count = OptionWinVentCount.GetInt();
+    }
+    static OptionItem OptionVentCooldown;
+    static OptionItem OptionWinVentCount;
+
+    float? VentCooldownTimer;
+    int Count;
+    enum OptionName
+    {
+        MarioVentCooldown,
+        MarioVentCount
+    }
+
+    private static void SetupOptionItem()
+    {
+        SoloWinOption.Create(RoleInfo, 9, defo: 15);
+
+        OptionVentCooldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.MarioVentCooldown, new(0f, 180f, 0.5f), 2f, false)
+            .SetValueFormat(OptionFormat.Seconds);
+
+        OptionWinVentCount = IntegerOptionItem.Create(RoleInfo, 11, OptionName.MarioVentCount, new(1, 999, 1), 30, false)
+            .SetValueFormat(OptionFormat.Times);
+    }
+    public override void ApplyGameOptions(IGameOptions opt)
+    {
+        opt.SetVision(false);
+        AURoleOptions.EngineerCooldown = OptionVentCooldown.GetFloat();
+        AURoleOptions.EngineerInVentMaxTime = 0.1f;
+    }
+    bool IKiller.CanUseSabotageButton() => false;
+    bool IKiller.CanUseImpostorVentButton() => true;
+    bool IKiller.CanUseKillButton() => false;
+    bool IKiller.CanKill => false;
+    public override bool CanVentMoving(PlayerPhysics physics, int ventId) => false;
+    public override void OnFixedUpdate(PlayerControl player)
+    {
+        if (VentCooldownTimer != null)
+        {
+            VentCooldownTimer -= Time.fixedDeltaTime;
+        }
+    }
+    public override bool OnEnterVent(PlayerPhysics physics, int ventId)
+    {
+        if (VentCooldownTimer <= 0.1f || OptionVentCooldown.GetFloat() > 2f)
+        {
+            --Count;
+            if (Count <= 0)
+            {
+                ForceSoloWin();
+            }
+        }
+        _ = new LateTask(() => Player.MyPhysics.RpcBootFromVent(ventId), 0.9f, "", true);
+        VentCooldownTimer = null;
+        _ = new LateTask(() => VentCooldownTimer = OptionVentCooldown.GetFloat(), 1.2f, "", true);
+        return true;
+    }
+    public override string GetProgressText(bool comms = false, bool gamelog = false)
+    {
+        var progress = Utils.ColorString(RoleInfo.RoleColor, $"({Count})");
+        return progress;
+    }
+    private void ForceSoloWin()
+    {
+        if (CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Mario, Player.PlayerId))
+        {
+            CustomWinnerHolder.WinnerIds.Add(Player.PlayerId);
+            CustomWinnerHolder.NeutralWinnerIds.Add(Player.PlayerId);
+        }
+    }
+}

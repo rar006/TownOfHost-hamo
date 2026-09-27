@@ -2114,7 +2114,8 @@ public enum CustomRoles
     Reporting,
     IceOni,
     // ===== N移植役職 =====
-    Survivor = 326
+    Survivor = 326,
+    Mario
 }
 
 public enum CustomRoleTypes

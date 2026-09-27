@@ -14,7 +14,7 @@ public sealed class Professional : RoleBase, IImpostor, IKiller, IUsePhantomButt
             CustomRoles.Professional,
             () => RoleTypes.Phantom,
             CustomRoleTypes.Impostor,
-            77123,
+            77251,
             SetupOptionItem,
             "pf",
             "#FF1919",

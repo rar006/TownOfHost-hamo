@@ -2237,7 +2237,7 @@
 "StrawdollDescDistance","<u>If you approach the target while transformed, you will die.</u>","<u>変身した状態でターゲットに近づくと自身が死亡する。\n</u>"
 
 "StrawdollDescVent","<u>Inside the vent near</u>","<u>の近くにあるベント内</u>"
-
+"MarioDesc","Enter the vents <b>{0}</b> times to secure victory.","<b>{0}</b>回ベントに入ると勝利する。"
 
 
 "# HideAndSeek"
@@ -7763,9 +7763,11 @@
 
 "MadKaiserRequiredTaskPercent","Task % Required to Reveal","マッドカイザー認識に必要なタスク割合"
 
-"MadKaiserDisguiseTitle","The Reigning One","君臨者"
+"MadKaiserDisguiseTitle","King","君臨者"
 
 "MadKaiserRevealedTitle","Mad Kaiser","マッドカイザー"
+
+"MarioInfo","That Jump That Throws Everything Off Course","全てを狂わすそのジャンプ"
 
 "ShowPresetInWebhook","Attach Preset File to Webhook Result","Webhook試合結果にプリセットファイルを添付する"
 
@@ -8140,6 +8142,8 @@
 "Typewriter","Typewriter","タイプライター"
 
 "twr","Typewriter","タイプライター"
+
+"Mario","Mario","マリオ"
 
 "TypewriterInfo","Clack clack clack...","カタカタカタ..."
 
@@ -9012,6 +9016,8 @@
 "DancerFollowingSuicide","Following Suicide on Death","死亡時の道連れ"
 "DancerLastDanceMode","Last Dance Mode","ラストダンスモード"
 "DancerDeathNotification","Death Notification","死体発生の通知"
+"MarioVentCooldown","Vent Cooldown","ベントクールダウン"
+"MarioVentCount","Number of Wins Using Vent","勝利するベント使用回数"
 
 "## Unit Role Setting"
 "BraidKillCooldown","Bread Task Complete Driver Killcool","ブレイドが全タスク完了時のキルクール"
