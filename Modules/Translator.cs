@@ -65,8 +65,14 @@ namespace TownOfHost
                         int id = int.Parse(line.Headers[i]);
                         dic[id] = line.Values[i].Replace("\\n", "\n").Replace("\\r", "\r");
                     }
+                    //鬱陶しいんで非表示で★
                     if (!translateMaps.TryAdd(line.Values[0], dic))
-                        Logger.Warn($"翻訳用CSVに重複があります。{line.Index}行目: \"{line.Values[0]}\"", "Translator");
+                    {
+                        if (Main.WarnDuplicatetranslate)
+                        {
+                            Logger.Warn($"翻訳用CSVに重複があります。{line.Index}行目: \"{line.Values[0]}\"", "Translator");
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {

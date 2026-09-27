@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using System.Collections.Generic;
 
@@ -179,6 +179,10 @@ namespace TownOfHost
         public static bool ExceptionMessageIsShown = false;
 
         public static string credentialsText;
+        /// <summary>
+        /// 翻訳用CSVの重複を警告するか
+        /// </summary>
+        public static readonly bool WarnDuplicatetranslate = false;
 
         public static NormalGameOptionsV11 NormalOptions => GameOptionsManager.Instance.currentNormalGameOptions;
 

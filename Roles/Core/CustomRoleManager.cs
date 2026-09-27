@@ -2113,6 +2113,8 @@ public enum CustomRoles
     Surrender,
     Reporting,
     IceOni,
+    // ===== N移植役職 =====
+    Survivor = 326
 }
 
 public enum CustomRoleTypes

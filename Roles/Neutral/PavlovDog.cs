@@ -172,7 +172,8 @@ public sealed class PavlovOwner : RoleBase, IKiller, IAdditionalWinner, ISchrodi
             CustomRoles.PavlovOwner,
             GetOwnerBaseRoleType,
             CustomRoleTypes.Neutral,
-            77200,
+            //ID被り解消のためだから許して...()
+            77260,
             SetupOptionItem,
             "pvo",
             "#F4A96A",
@@ -351,7 +352,7 @@ public sealed class PavlovDogImprint : PavlovDogBase
             CustomRoles.PavlovDogImprint,
             () => RoleTypes.Shapeshifter,
             CustomRoleTypes.Neutral,
-            77100,
+            77270,
             SetupOptionItem,
             "pvi",
             "#F4A96A",

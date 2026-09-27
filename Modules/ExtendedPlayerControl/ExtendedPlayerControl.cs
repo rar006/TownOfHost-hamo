@@ -1038,7 +1038,7 @@ namespace TownOfHost
 
             var text = role.ToString();
 
-            // ハトホル／セクメトは会議ごとに神格が変わるため、通常の共通Infoではなく
+            // ハトホルとセクメトは会議ごとに神格が変わるため、通常の共通Infoではなく
             // 現在の神格に対応したイントロを表示する。
             if (!InfoLong && role is CustomRoles.HathorSekhmet && roleClass is HathorSekhmet hathorSekhmet)
                 return GetString(hathorSekhmet.IsSekhmetPhase ? "SekhmetIntro" : "HathorIntro");

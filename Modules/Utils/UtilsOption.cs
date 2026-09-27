@@ -1709,7 +1709,7 @@ namespace TownOfHost
                 or CustomRoles.WhiteLovers or CustomRoles.PurpleLovers or CustomRoles.MadonnaLovers or CustomRoles.CupidLovers => AddonInfo(role, "♥", role != CustomRoles.Lovers ? From.None : From.Love_Couple_Mod),
 
                 CustomRoles.OneLove => AddonInfo(role),
-
+                
                 //ラスト系
 
                 CustomRoles.LastImpostor => AddonInfo(role, from: From.TownOfHost),

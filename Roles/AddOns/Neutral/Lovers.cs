@@ -42,22 +42,22 @@ class Lovers
     };
     public static void SetLoversOptions()
     {
-        SetupRoleOptions(77000, TabGroup.Combinations, CustomRoles.OneLove, new(1, 1, 1));
-        AssingImpostor = BooleanOptionItem.Create(77011, "AssingroleType", true, TabGroup.Combinations, false).SetParent(CustomRoleSpawnChances[CustomRoles.OneLove]).SetParentRole(CustomRoles.OneLove).SetEnabled(() => !LoversRole1.GetBool());
-        AssingMadmate = BooleanOptionItem.Create(77012, "AssingroleType", true, TabGroup.Combinations, false).SetParent(CustomRoleSpawnChances[CustomRoles.OneLove]).SetParentRole(CustomRoles.OneLove).SetEnabled(() => !LoversRole1.GetBool());
-        AssingCrewmate = BooleanOptionItem.Create(77013, "AssingroleType", true, TabGroup.Combinations, false).SetParent(CustomRoleSpawnChances[CustomRoles.OneLove]).SetParentRole(CustomRoles.OneLove).SetEnabled(() => !LoversRole1.GetBool());
-        AssingNeutral = BooleanOptionItem.Create(77014, "AssingroleType", true, TabGroup.Combinations, false).SetParent(CustomRoleSpawnChances[CustomRoles.OneLove]).SetParentRole(CustomRoles.OneLove).SetEnabled(() => !LoversRole1.GetBool());
+        SetupRoleOptions(77100, TabGroup.Combinations, CustomRoles.OneLove, new(1, 1, 1));
+        AssingImpostor = BooleanOptionItem.Create(77111, "AssingroleType", true, TabGroup.Combinations, false).SetParent(CustomRoleSpawnChances[CustomRoles.OneLove]).SetParentRole(CustomRoles.OneLove).SetEnabled(() => !LoversRole1.GetBool());
+        AssingMadmate = BooleanOptionItem.Create(77112, "AssingroleType", true, TabGroup.Combinations, false).SetParent(CustomRoleSpawnChances[CustomRoles.OneLove]).SetParentRole(CustomRoles.OneLove).SetEnabled(() => !LoversRole1.GetBool());
+        AssingCrewmate = BooleanOptionItem.Create(77113, "AssingroleType", true, TabGroup.Combinations, false).SetParent(CustomRoleSpawnChances[CustomRoles.OneLove]).SetParentRole(CustomRoles.OneLove).SetEnabled(() => !LoversRole1.GetBool());
+        AssingNeutral = BooleanOptionItem.Create(77114, "AssingroleType", true, TabGroup.Combinations, false).SetParent(CustomRoleSpawnChances[CustomRoles.OneLove]).SetParentRole(CustomRoles.OneLove).SetEnabled(() => !LoversRole1.GetBool());
         AssingImpostor.ReplacementDictionary = new Dictionary<string, string> { { "%roletype%", Utils.ColorString(Palette.ImpostorRed, Translator.GetString("TeamImpostor")) } };
         AssingMadmate.ReplacementDictionary = new Dictionary<string, string> { { "%roletype%", Utils.ColorString(Palette.ImpostorRed, Translator.GetString("Madmate")) } };
         AssingCrewmate.ReplacementDictionary = new Dictionary<string, string> { { "%roletype%", Utils.ColorString(Palette.CrewmateBlue, Translator.GetString("TeamCrewmate")) } };
         AssingNeutral.ReplacementDictionary = new Dictionary<string, string> { { "%roletype%", Utils.ColorString(Palette.AcceptedGreen, Translator.GetString("Neutral")) } };
-        OneLoveRoleAddwin = BooleanOptionItem.Create(77005, "LoversRoleAddwin", false, TabGroup.Combinations, false).SetParent(CustomRoleSpawnChances[CustomRoles.OneLove]).SetParentRole(CustomRoles.OneLove);
-        OneLoveLoversrect = IntegerOptionItem.Create(77006, "OneLoverLovers", new(0, 100, 2), 20, TabGroup.Combinations, false).SetParent(CustomRoleSpawnChances[CustomRoles.OneLove]).SetValueFormat(OptionFormat.Percent).SetParentRole(CustomRoles.OneLove);
-        SoloWinOption.Create(77007, TabGroup.Combinations, CustomRoles.OneLove, () => !OneLoveRoleAddwin.GetBool(), defo: 5);
-        OneLoveSolowin3players = BooleanOptionItem.Create(77008, "LoverSoloWin3players", false, TabGroup.Combinations, false).SetParent(CustomRoleSpawnChances[CustomRoles.OneLove]).SetParentRole(CustomRoles.OneLove);
-        LoverSetRole = BooleanOptionItem.Create(77009, "FixedRole", false, TabGroup.Combinations, false).SetParent(CustomRoleSpawnChances[CustomRoles.OneLove]).SetParentRole(CustomRoles.OneLove);
-        LoversRole1 = (AssignOptionItem)AssignOptionItem.Create(77010, "FixedRole", 0, TabGroup.Combinations, false, true, true, true, true, false, remove).SetParent(LoverSetRole).SetParentRole(CustomRoles.OneLove);
-        ObjectOptionitem.Create(77015, "AddonOption", true, "", TabGroup.Combinations).SetOptionName(() => "Role Option").SetSubRoleOptionItem(CustomRoles.OneLove);
+        OneLoveRoleAddwin = BooleanOptionItem.Create(77120, "LoversRoleAddwin", false, TabGroup.Combinations, false).SetParent(CustomRoleSpawnChances[CustomRoles.OneLove]).SetParentRole(CustomRoles.OneLove);
+        OneLoveLoversrect = IntegerOptionItem.Create(77121, "OneLoverLovers", new(0, 100, 2), 20, TabGroup.Combinations, false).SetParent(CustomRoleSpawnChances[CustomRoles.OneLove]).SetValueFormat(OptionFormat.Percent).SetParentRole(CustomRoles.OneLove);
+        SoloWinOption.Create(77122, TabGroup.Combinations, CustomRoles.OneLove, () => !OneLoveRoleAddwin.GetBool(), defo: 5);
+        OneLoveSolowin3players = BooleanOptionItem.Create(77123, "LoverSoloWin3players", false, TabGroup.Combinations, false).SetParent(CustomRoleSpawnChances[CustomRoles.OneLove]).SetParentRole(CustomRoles.OneLove);
+        LoverSetRole = BooleanOptionItem.Create(77200, "FixedRole", false, TabGroup.Combinations, false).SetParent(CustomRoleSpawnChances[CustomRoles.OneLove]).SetParentRole(CustomRoles.OneLove);
+        LoversRole1 = (AssignOptionItem)AssignOptionItem.Create(77220, "FixedRole", 0, TabGroup.Combinations, false, true, true, true, true, false, remove).SetParent(LoverSetRole).SetParentRole(CustomRoles.OneLove);
+        ObjectOptionitem.Create(77250, "AddonOption", true, "", TabGroup.Combinations).SetOptionName(() => "Role Option").SetSubRoleOptionItem(CustomRoles.OneLove);
 
         new ColorLovers(CustomRoles.Lovers, 76700);
         new ColorLovers(CustomRoles.RedLovers, 77500);
