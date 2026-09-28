@@ -4913,7 +4913,7 @@
 "SuiciderTaskTimeBonus","Task Time Bonus","タスク完了時のタイマー回復量"
 
 "SuiciderFallChance","Fall Death Chance","転落死として処理される確率"
-
+"SuiciderAfterMeetingTimer","Minimum value for the post-meeting suicide timer","会議後の自殺タイマーの最低値"
 "StandMasterSummonCooldown","Summon Cooldown","スタンド召喚クールダウン"
 
 "StandMasterStayTime","Stay Time","ワープの滞在時間"
