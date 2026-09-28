@@ -291,13 +291,15 @@ namespace TownOfHost
 
                 if (!__instance) return;
 
-                // 画面下のバニラのバージョン表記の下に、hamoのバージョンを追記する
+                // 画面下のバニラのバージョン表記の隣に、hamoのバージョンを追記する
                 if (__instance.text != null && !__instance.text.text.Contains(Main.ModName))
                 {
-                    __instance.text.text += $"\n<{Main.ModColor}>{Main.ModName}</color> v{Main.PluginShowVersion}";
+                    string text = __instance.text.text;
+                    int last = text.IndexOf('(');
+                    if (last != -1) text = text.Substring(0, last);
+
+                    __instance.text.text = $"AU {text} + <{Main.ModColor}>{Main.ModName}</color> v{Main.PluginShowVersion}";
                 }
-
-
 
                 TMPTemplate.SetBase(__instance.text);
 
