@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Collections.Generic;
 
@@ -136,11 +136,11 @@ namespace TownOfHost
         public const string BepInExPluginName = "Town Of Host-hamo";
 #endif
 
-        public const string BepInExPluginVersion = "4.00.31.01";
+        public const string BepInExPluginVersion = "4.00.00.30";
 
-        public const string PluginVersion = "4.00.31.01";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
+        public const string PluginVersion = "4.00.00.30";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
 
-        public const string PluginShowVersion = "4.31.01β";
+        public const string PluginShowVersion = "4.31.00α";
 
         public const string ModVersion = ".00.30";//リリースver用バージョン変更dc9b79
 
@@ -148,7 +148,12 @@ namespace TownOfHost
 
         /// 配布するデバッグ版なのであればtrue。リリース時にはfalseにすること。
 
+<<<<<<< HEAD
+        public static bool DebugVersion = false;
+        public static bool WarnDuplicatetranslate = false;
+=======
         public static bool DebugVersion = true;
+>>>>>>> 0612396829af94732bb4b322484a31855f60fd1c
 
 
 
@@ -179,10 +184,6 @@ namespace TownOfHost
         public static bool ExceptionMessageIsShown = false;
 
         public static string credentialsText;
-        /// <summary>
-        /// 翻訳用CSVの重複を警告するか
-        /// </summary>
-        public static readonly bool WarnDuplicatetranslate = false;
 
         public static NormalGameOptionsV11 NormalOptions => GameOptionsManager.Instance.currentNormalGameOptions;
 
@@ -713,6 +714,14 @@ namespace TownOfHost
 
             Application.quitting += new Action(TownOfHost.Modules.WatchdogLauncher.OnGameQuit);
 
+            // ===== 重要 =====
+            // [PluginModuleInitializer]属性が付いたメソッド(各ロール/実績データの初期登録など)は
+            // ここで明示的に呼び出さない限り一度も実行されない。
+            // 呼び出しが漏れていたため、実績用の辞書(NomalAchievement.achievements等)が
+            // 常に空のままになり、「タスク勝ちにならない」「ボタンが動かなくなる」不具合の
+            // 直接的な原因になっていた。
+            Attributes.PluginModuleInitializerAttribute.InitializeAll();
+
             Statistics.NowStatistics = SaveStatistics.Load();
 
             AchievementSaver.Load();
@@ -723,7 +732,21 @@ namespace TownOfHost
 
             // 外部DiscordRPCクライアントはNewtonsoft.Json競合を起こすため初期化しない。
 
+
+
+            // ロード画面(LoadingScreenPatch)がここまでの完了を待って表示を終えられるように、
+            // Load()の完了をここで明示的にマークする。
+            IsLoaded = true;
+
         }
+
+
+
+        /// <summary>
+        /// プラグインの初期化(Load())が完了したかどうか。
+        /// 起動時ロード画面はこれがtrueになるまで表示を続ける。
+        /// </summary>
+        public static bool IsLoaded { get; private set; } = false;
 
 
 
@@ -1044,6 +1067,7 @@ namespace TownOfHost
         VillainWolf = CustomRoles.VillainWolf,
 
         Muter = CustomRoles.Muter,
+
         Mario = CustomRoles.Mario,
 
         SuddenDeathRed = 1000, SuddenDeathBlue = 1001, SuddenDeathYellow = 1002, SuddenDeathGreen = 1003, SuddenDeathPurple = 1004

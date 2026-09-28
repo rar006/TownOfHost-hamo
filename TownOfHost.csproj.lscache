@@ -32,7 +32,7 @@ TemporaryDependencyNodeTargetIdentifier=net6.0
 /noconfig
 /unsafe-
 /checked-
-/nowarn:MSB3246,CS0162,CS0169,CS0184,CS0649,CS0414,GI001,1701,1702,8002
+/nowarn:MSB3246,CS0162,CS0169,CS0184,CS0649,CS0414,GI001,IDE0017,IDE0090,1701,1702,8002
 /fullpaths
 /nostdlib+
 /errorreport:prompt
@@ -290,6 +290,7 @@ Patches/
  GMAutoPossess.cs
  GMSkipAirshipSpawnMinigame.cs
  HadouHoPatch.cs.cs
+ HamoLoadingScreenPatch.cs
  HashRandomPatch.cs
  HauntMenuMinigamePatch.cs
  HideBanButtonPatch.cs
@@ -616,6 +617,7 @@ Roles/
   Spider.cs
   Stealth.cs
   Surrogate.cs
+  Survivor.cs
   Swooper.cs
   Tairou.cs
   Teleporter.cs
@@ -703,6 +705,7 @@ Roles/
   Lawyer.cs
   LoversBreaker.cs
   Madonna.cs
+  Mario.cs
   MassMedia.cs
   Mermaid.cs
   Missioneer.cs
@@ -711,6 +714,7 @@ Roles/
   Muter.cs
   Nautilus.cs
   Null.cs
+  Obolus.cs
   Ogre.cs
   Onmyoji.cs
   Opportunist.cs
