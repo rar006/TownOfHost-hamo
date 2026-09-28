@@ -641,8 +641,10 @@
 "VegaandAltair","Vega And Altair","織姫</color>と<#b0c4de>彦星</color>"
 
 "FoolandNue","FoolandNue","<#8b6d61>愚か者</color>と<#be7c35>鵺</color>"
-
-
+"JekyllandHyde","","<#8cffff>ジキル</color><#ffffff>と</color><#ff1919>ハイド</color>"
+"Jekyll","Jekyll","ジキル"
+"Hyde","Hyde","ハイド"
+"HydeImp","Hyde","ハイド"
 
 "# HideAndSeek"
 
@@ -10250,6 +10252,14 @@
 "VictimAwakened","The Abuser was attacked. You can now kill.","加虐者が襲われた。キルが可能になった"
 "VictimCrewmateMode","The Abuser was exiled. You are now a Crewmate.","加虐者が追放された。クルーメイト陣営になった"
 "VictimForcedKillArmed","You will automatically kill the next player you pass after the delay.","制限時間後、すれ違った相手を自動でキルする"
+"JekyllandHydeInfo","<#8cffff>Good</color><#ffffff>and</color><#ff1919>Evil</color> Personalities","人間のなかの<#8cffff>善</color><#ffffff>と</color><#ff1919>悪</color>"
+"JekyllInfo","The Personality of Good","人間のなかの善"
+"HydeInfo","The Personality of Evil","人間のなかの悪"
+"HydeImpInfo","The Personality of Evil","人間のなかの悪"
+"JekyllandHydeInfoLong","A madman whose faction changes with every meeting. \nThe factions are the Crew's <#8cffff>Jekyll</color> and the Imposter's <#ff1919>Hyde</color>. \nSee the descriptions for each role for more details.","会議のたびに陣営が変化する狂人。\n陣営には、クルーの<#8cffff>ジキル</color>とインポスターの<#ff1919>ハイド</color>がある。\n詳細は各役職の説明に記載。"
+"JekyllInfoLong","Basically, they're regular crew members. \nIf you pet them after completing all their tasks, they'll instantly transform into a Hyde—but only once.","基本的には通常のクルー。\nタスクをすべて完了させた状態でペットを撫でると一度だけハイドに変化できる。"
+"HydeInfoLong","You can only kill a certain number of times per turn. \nIf you kill an Imposter, your role is locked as “Hide,” the counter changes to “Imposter,” and you can use ‘Vent’ and “Sabotage” regardless of the settings.","一ターンにつき一定回数のみキルできる。\nインポスターをキルすると役職がハイドで固定され、\nカウントがインポスターに変化し、ベント・サボタージュが設定によらず使えるようになる。"
+"HydeImpInfoLong","You can only kill a certain number of times per turn. \nIf you kill an Imposter, your role is locked as “Hide,” the counter changes to “Imposter,” and you can use ‘Vent’ and “Sabotage” regardless of the settings.","一ターンにつき一定回数のみキルできる。\nインポスターをキルすると役職がハイドで固定され、\nカウントがインポスターに変化し、ベント・サボタージュが設定によらず使えるようになる。"
 
 "GameModeInfo_DummyHunter","<DummyHunter>\n<size=60%>Dummies spawn at random locations on the map.\nUse the Phantom button to kill nearby dummies (you warp to them).\nKilled dummies respawn elsewhere.\nThe player who kills the most dummies within the time limit wins.","＜ダミーハンター＞\n<size=60%>マップのランダムな場所にダミーが出現します。\nファントムボタンで近くのダミーをキルできます(その場所へワープ)。\nキルされたダミーは別の場所に再出現します。\n制限時間内に一番ダミーをキルしたプレイヤーが勝利です。"
 "DummyHunter","DummyHunter","ダミーハンター","傀儡猎人","傀儡獵人","ОхотникЗаКуклами","ChasseurDeMannequins",""

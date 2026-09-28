@@ -1559,7 +1559,7 @@ namespace TownOfHost
 
             WinOption.SetupCustomOption();
 
-            ObjectOptionitem.Create(1_000_124, "RoleOption", true, null, TabGroup.MainSettings).SetOptionName(() => "Role Setting").SetTag(CustomOptionTags.Role).SetEnabled(() => GameSettingMenuStartPatch.NowRoleTab is not CustomRoles.NotAssigned);
+            ObjectOptionitem.Create(1_000_124, "RoleOption", true, null, TabGroup.MainSettings).SetOptionName(() => "Role Setting").SetTag(CustomOptionTags.Role).SetEnabled(() => GameSettingMenuStartPatch.NowRoleTab is not CustomRoles.NotAssigned && GameSettingMenuStartPatch.NowRoleTab is not CustomRoles.JekyllandHyde);
 
             // ケイドロ
             KedoroKillCooldown = FloatOptionItem.Create(112500, "KedoroKillCooldown", new(0f, 180f, 1f), 10f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Seconds).SetTag(CustomOptionTags.Kedoro);

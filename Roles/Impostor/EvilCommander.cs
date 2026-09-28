@@ -30,7 +30,6 @@ public sealed class EvilCommander : RoleBase, IImpostor, IUsePhantomButton
             "#FF0000",
             (2, 20),
             introSound: () => GetIntroSound(RoleTypes.Phantom),
-            assignInfo: new RoleAssignInfo(CustomRoles.EvilCommander, CustomRoleTypes.Impostor),
             from: From.TownOfHost_hamo
         );
 
