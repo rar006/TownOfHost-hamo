@@ -158,6 +158,7 @@ namespace TownOfHost
                 roleCommands.Add(CustomRoles.Connecting, "Cn");
 
                 roleCommands.Add(CustomRoles.Serial, "Se");
+                roleCommands.Add(CustomRoles.BountyGuesser, "Bg");
 
                 roleCommands.Add(CustomRoles.PlusVote, "Pv");
 

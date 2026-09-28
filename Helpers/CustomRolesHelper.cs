@@ -185,6 +185,7 @@ namespace TownOfHost
                 CustomRoles.Connecting or
 
                 CustomRoles.Serial or
+                CustomRoles.BountyGuesser or
 
                 CustomRoles.PlusVote or
 
@@ -279,6 +280,7 @@ namespace TownOfHost
                 CustomRoles.Connecting or
 
                 CustomRoles.Serial or
+                CustomRoles.BountyGuesser or
 
                 CustomRoles.PlusVote or
 

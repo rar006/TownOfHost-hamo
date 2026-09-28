@@ -607,7 +607,7 @@
 "TheSecondLittlePig","The Second Little Pig","2番目の仔豚"
 
 "TheThirdLittlePig","The Third Little Pig","3番目の仔豚"
-"Obolus","Obolus","オボルス"
+
 "#NeutralName"
 
 
@@ -1426,8 +1426,6 @@
 
 "RaccoonChildInfo","A raccoon in disguise","化けアライグマ"
 
-"ObolusInfo","The Final Blow","最後の一撃"
-
 "#NeutralInfo"
 
 
@@ -2107,8 +2105,6 @@
 "RaccoonParentInfoLong","","アライグマ陣営の親。キルボタンで対象を「掴み」、\n掴んだ相手はペンギンのように常に自分の位置へ引き寄せられる。\nもう一度同じ対象にキルボタンを押すと実際にキルする。\n掴んでいる間に部屋を巡回してタスクを完了すると、掴んでいる相手の役職が分かる。\n透明（ファントム）ボタンで対象を選ぶと、そのクルーメイトを「アライグマの子」に変えられる。\nアライグマ陣営(親・子)は、他のキル可能役職が全滅するか、生存クルーメイト以下の人数になると勝利する。"
 
 "RaccoonChildInfoLong","","アライグマの親が透明（ファントム）ボタンで変えたクルーメイト。\n変えられた当日はまだ自覚がなく、翌会議終了後に自分がアライグマの子であることに気付く(覚醒)。\n覚醒前にアライグマの親を掴もうとすると自殺してしまう。\n覚醒後はアライグマの親と同じように対象を掴み、相手を常に引き寄せてからキルできるようになる。\n勝利条件はアライグマの親と共通。"
-
-"ObolusInfoLong","You win by killing the imposter a set number of times. \nHowever, you can only kill the imposter once per turn.","インポスターを設定数キルすると勝利する。\nただし、キルは1ターンに1度しか行えない。"
 
 "#NeutralInfoLong"
 
@@ -5043,10 +5039,10 @@
 "MonikaSelectMeetingTitle","Monika Victory - Choose an Additional Winner","モニカ勝利 - 追加の勝者を選択"
 
 "MonikaSelectMeetingText","Vote for one player to make them win with you (Skip = no additional winner)","1人に投票すると共に勝利します（スキップ=追加勝者なし）"
-"ObolusNeedKillCont","Number of Kills Required","必要なキル回数"
-"ObolusCanWinOtherKiller","You can win even by killing a Neutral Killer","ニュートラルキラーへのキルでも勝利可能"
-"ObolusKillLockTurn","Number of Turns the Kill Is Sealed","キル封印ターン数"
-"ObolusCanKill%role%","You can win even if you kill %role%","%role%へのキルでも勝利可能"
+
+
+
+
 
 "## Unit Role Setting"
 
@@ -10416,3 +10412,12 @@
 "InfectedTaskCountToActivate","Tasks Needed To Activate Ability","能力が発動するタスク数"
 "InfectedTurnsToTransform","Turns Until Transformation","感染後に役職が変化するターン数"
 "InfectedIncludeImpostor","Impostors Can Be Infected Too","インポスターも感染するか"
+"BountyGuesser","Bounty Guesser","バウンティゲッサー"
+"BountyGuesserInfo","Guess the target","標的を推測しよう"
+"BountyGuesserSuccessKillCooldown","Kill Cooldown on Success","減少するキルクール"
+"BountyGuesserTargetDiesOnSuccess","Guessed Target Dies","推測されたプレイヤーは死ぬか"
+"BountyGuesserTargetPersistsUntilDead","Target Stays Until Dead","ターゲットが死ぬまで標的が変わらない"
+"BountyGuesserInvalidTarget","Invalid target number.","無効なプレイヤー番号です。"
+"BountyGuesserSuccess","Correct! Your target was {0}. Your kill cooldown will be reduced after this meeting.","的中！標的は{0}でした。次のキルクールが減少します。"
+"BountyGuesserFail","Wrong guess. You take your own life...","推測失敗…自ら命を絶った。"
+"BountyGuesserInfoLong","Add-ons:\nGiven to kill-capable roles.\nGuess which player is your target (/cmd bg <player number>).\nIf correct, your kill cooldown after the meeting is reduced.\nIf wrong, you die.\nThe target changes every meeting.","(属性):\nキル可能役職に配布される属性。\n標的に指定されているプレイヤーを推測する(/cmd bg プレイヤー番号)。\n成功すると会議後のキルクールが減少する。\n失敗すると自殺する。\nターゲットは会議ごとに変わる。"

@@ -309,6 +309,39 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
     {
         ForceSoloWin();
     }
+    public bool CanWinByLastSurvivorRule()
+    {
+        if (!Player.IsAlive()) return false;
+        var alivePlayers = PlayerCatch.AllAlivePlayerControls.ToList();
+        if (alivePlayers.Count != 2) return false;
+
+        var other = alivePlayers.FirstOrDefault(pc => pc.PlayerId != Player.PlayerId);
+        if (other == null) return false;
+
+        return IsValidLastOpponent(other);
+    }
+
+    public bool TryWinByLastSurvivorRule()
+    {
+        if (!CanWinByLastSurvivorRule()) return false;
+        if (!CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Eater, Player.PlayerId, true)) return false;
+
+        CustomWinnerHolder.NeutralWinnerIds.Add(Player.PlayerId);
+        CustomWinnerHolder.WinnerIds.Add(Player.PlayerId);
+        return true;
+    }
+
+    static bool IsValidLastOpponent(PlayerControl other)
+    {
+        if (other.Is(CustomRoleTypes.Crewmate)) return true;
+        if (!other.Is(CustomRoleTypes.Neutral)) return false;
+
+        if (other.GetRoleClass() is IKiller killer)
+            return !killer.CanUseKillButton();
+
+        return true;
+    }
+
     private void ForceSoloWin()
     {
         if (CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Eater, Player.PlayerId))

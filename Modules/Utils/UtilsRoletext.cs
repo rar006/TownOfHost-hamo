@@ -376,6 +376,8 @@ namespace TownOfHost
 
                         case CustomRoles.Serial: sb.Append(Serial.SubRoleMark); break;
 
+                        case CustomRoles.BountyGuesser: sb.Append(BountyGuesser.SubRoleMark); break;
+
                         case CustomRoles.Connecting: if (main != CustomRoles.WolfBoy) sb.Append(Connecting.SubRoleMark); break;
 
                         case CustomRoles.Watching: sb.Append(Watching.SubRoleMark); break;

@@ -30,6 +30,8 @@ class AddondataInfo
 
                 CustomRoles.Serial => "∂",
 
+                CustomRoles.BountyGuesser => "؟",
+
                 CustomRoles.MagicHand => "ж",
 
                 CustomRoles.Powerful => "∠",
@@ -191,6 +193,7 @@ class AddondataInfo
                     {CustomRoles.Connecting,"#96514d"},
 
                     {CustomRoles.Serial,"#ff1919"},
+                    {CustomRoles.BountyGuesser,"#F15A22"},
 
                     {CustomRoles.PlusVote,"#93ca76"},
 

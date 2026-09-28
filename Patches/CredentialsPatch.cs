@@ -291,6 +291,12 @@ namespace TownOfHost
 
                 if (!__instance) return;
 
+                // 画面下のバニラのバージョン表記の下に、hamoのバージョンを追記する
+                if (__instance.text != null && !__instance.text.text.Contains(Main.ModName))
+                {
+                    __instance.text.text += $"\n<{Main.ModColor}>{Main.ModName}</color> v{Main.PluginShowVersion}";
+                }
+
 
 
                 TMPTemplate.SetBase(__instance.text);

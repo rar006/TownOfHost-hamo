@@ -63,6 +63,7 @@ class GhostRoleCore
         Watching.Init();
 
         Serial.Init();
+        BountyGuesser.Init();
 
         Management.Init();
 
@@ -181,6 +182,7 @@ class GhostRoleCore
         Guesser.SetupCustomOption();
 
         Serial.SetupCustomOption();
+        BountyGuesser.SetupCustomOption();
 
         MagicHand.SetupCustomOption();
 

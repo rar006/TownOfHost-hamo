@@ -1135,6 +1135,8 @@ public static class CustomRoleManager
 
                 case CustomRoles.Serial: Serial.Add(pc.PlayerId); break;
 
+                case CustomRoles.BountyGuesser: BountyGuesser.Add(pc.PlayerId); break;
+
                 case CustomRoles.PlusVote: PlusVote.Add(pc.PlayerId); break;
 
                 case CustomRoles.Opener: Opener.Add(pc.PlayerId); break;
@@ -1985,6 +1987,7 @@ public enum CustomRoles
     //AddMadmate,
     //バフ
     Guesser,
+    BountyGuesser,
     Serial,
     Connecting,
     Watching,

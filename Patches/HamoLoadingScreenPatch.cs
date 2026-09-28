@@ -46,6 +46,9 @@ namespace TownOfHost.Patches
             // (ClientPatch.SplashLogoAnimatorPatchが即座にシーン遷移を許可する)
             if (DebugModeManager.AmDebugger) return true;
 
+            // ロード画面が終わった後はバニラの通常Updateに完全に戻す(doneLoadingRefdataを触らない)
+            if (finished) return true;
+
             cachedDoneLoadingRefData |= __instance.doneLoadingRefdata;
             __instance.doneLoadingRefdata = false;
 
@@ -72,6 +75,7 @@ namespace TownOfHost.Patches
         public static void PostfixUpdate(SplashManager __instance)
         {
             if (DebugModeManager.AmDebugger) return;
+            if (finished) return;
             __instance.doneLoadingRefdata = cachedDoneLoadingRefData;
         }
 
@@ -88,9 +92,10 @@ namespace TownOfHost.Patches
 
             // ===== 起動時に裏で歩いている緑のクルーメイト(バニラのLoadingBarManager)を非表示に =====
             // 不要とのことなので、ロード画面の間ずっと隠しておく。
+            LoadingBarManager[] loadingBarManagers = Array.Empty<LoadingBarManager>();
             try
             {
-                var loadingBarManagers = UnityEngine.Object.FindObjectsByType<LoadingBarManager>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+                loadingBarManagers = UnityEngine.Object.FindObjectsByType<LoadingBarManager>(FindObjectsInactive.Include, FindObjectsSortMode.None);
                 foreach (var lbm in loadingBarManagers)
                 {
                     if (lbm != null) lbm.gameObject.SetActive(false);
@@ -199,7 +204,7 @@ namespace TownOfHost.Patches
 
             // --- ローディングテキスト (ロゴのすぐ下) ---
             var loadText = GameObject.Instantiate(__instance.errorPopup.InfoText, null);
-            loadText.transform.localPosition = new Vector3(0f, logoY - 1.9f, -10f);
+            loadText.transform.localPosition = new Vector3(0f, logoY - 1.5f, -10f);
             loadText.fontStyle = FontStyles.Bold;
             loadText.text = "";
             loadText.color = new Color(1f, 1f, 1f, 0f);
@@ -256,7 +261,7 @@ namespace TownOfHost.Patches
             var imagePaths = UtilsSprite.GetAllEmbeddedImagePaths();
             var total = Math.Max(imagePaths.Length, 1);
             var loaded = 0;
-            const int perFrame = 3; // 1フレームで読みすぎてカクつかない程度の枚数に抑える
+            const int perFrame = 8; // 1フレームで読みすぎてカクつかない程度の枚数に抑える
 
             foreach (var path in imagePaths)
             {
@@ -334,12 +339,23 @@ namespace TownOfHost.Patches
             }
 
             // --- 不要になった一時リソースの解放(このタイミングで前払いしておく) ---
-            CurrentStatusText = "最終確認中…";
-            loadText.text = BuildLoadingText(CurrentStatusText);
+            // 最終確認は約5秒。その間に不要リソースの解放とGCをまとめて済ませる。
+            const float finalCheckSeconds = 5f;
+            var finalCheckElapsed = 0f;
             var unloadOp = Resources.UnloadUnusedAssets();
-            while (unloadOp != null && !unloadOp.isDone) yield return null;
-            GC.Collect();
-            yield return new WaitForSeconds(0.2f);
+            var gcDone = false;
+            while (finalCheckElapsed < finalCheckSeconds)
+            {
+                if (!gcDone && (unloadOp == null || unloadOp.isDone))
+                {
+                    GC.Collect();
+                    gcDone = true;
+                }
+                CurrentStatusText = $"最終確認中… ({Mathf.CeilToInt(finalCheckSeconds - finalCheckElapsed)})";
+                loadText.text = BuildLoadingText(CurrentStatusText);
+                finalCheckElapsed += Time.deltaTime;
+                yield return null;
+            }
 
             // --- 完了メッセージ ---
             var completeMessages = new[]
@@ -347,7 +363,7 @@ namespace TownOfHost.Patches
                 "準備完了！",
                 "お待たせしました！",
                 "たのしい時間の始まりです！",
-                "hamoの世界へようこそ！",
+                "hamoを楽しんでー！",
                 "さあ、はじめましょう！",
             };
             loadText.text = BuildLoadingText(completeMessages[UnityEngine.Random.Range(0, completeMessages.Length)], isFinal: true);
@@ -394,6 +410,8 @@ namespace TownOfHost.Patches
             // これだけは元に戻さず、消したままにしておく。
             foreach (var c in hiddenCanvases) if (c != null) c.enabled = true;
             foreach (var anim in hiddenAnimators) if (anim != null) anim.enabled = true;
+            foreach (var lbm in loadingBarManagers) if (lbm != null) lbm.gameObject.SetActive(true);
+            foreach (var p in hiddenPlayers) if (p != null) p.gameObject.SetActive(true);
 
             // ここで自前でシーン遷移を確定させると、バニラの「あもあす」ロゴ演出が
             // 一切表示されないまま次のシーンへ飛んでしまう。
@@ -401,6 +419,7 @@ namespace TownOfHost.Patches
             // 出るように」したいので、ここでは強制的にシーン遷移させず、
             // startTime をリセットしてバニラのタイマーを仕切り直したうえで
             // finished = true にして、以降は通常のSplashManager.Updateに処理を戻す。
+            __instance.doneLoadingRefdata = cachedDoneLoadingRefData;
             __instance.startTime = Time.time;
             finished = true;
 
@@ -421,7 +440,7 @@ namespace TownOfHost.Patches
         /// </summary>
         private static IEnumerator CoLoadingWatchdog(SplashManager __instance)
         {
-            const float timeoutSeconds = 25f;
+            const float timeoutSeconds = 75f;
             var elapsed = 0f;
             while (!finished && elapsed < timeoutSeconds)
             {

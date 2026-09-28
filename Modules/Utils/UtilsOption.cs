@@ -1488,6 +1488,8 @@ namespace TownOfHost
 
             if (player.Is(CustomRoles.Serial)) SendMessage(GetAddonsHelp(CustomRoles.Serial), player.PlayerId, AddRoleInfoTitle);
 
+            if (player.Is(CustomRoles.BountyGuesser)) SendMessage(GetAddonsHelp(CustomRoles.BountyGuesser), player.PlayerId, AddRoleInfoTitle);
+
             if (player.Is(CustomRoles.MagicHand)) SendMessage(GetAddonsHelp(CustomRoles.MagicHand), player.PlayerId, AddRoleInfoTitle);
 
             if (player.Is(CustomRoles.Powerful)) SendMessage(GetAddonsHelp(CustomRoles.Powerful), player.PlayerId, AddRoleInfoTitle);
@@ -1625,6 +1627,8 @@ namespace TownOfHost
                 CustomRoles.Guesser => AddonInfo(role, "∮", From.TheOtherRoles),
 
                 CustomRoles.Serial => AddonInfo(role, "∂"),
+
+                CustomRoles.BountyGuesser => AddonInfo(role, "؟"),
 
                 CustomRoles.MagicHand => AddonInfo(role, "ж"),
 
@@ -2015,7 +2019,6 @@ namespace TownOfHost
             }
 
             if (role is CustomRoles.MadSuicide) Fromtext += "  <#000000>(<#ff1919>崇拝者</color>)</color>";
-            if (role is CustomRoles.Obolus) Fromtext += "  <#000000>(<#0065f4>Uchu Addon</color>)</color>";
 
             return Fromtext;
 
