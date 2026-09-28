@@ -53,7 +53,7 @@ public static class SatsumatoImo
 
     public static bool UsesMadmateCommonSettings(CustomRoles role)
     {
-        return role.IsMadmate() && role is not CustomRoles.SatsumatoImoM;
+        return role.IsMadmate() && role is not CustomRoles.SatsumatoImoM && role is not CustomRoles.Hyde;
     }
 
     internal static void HideRoleOptions(CustomRoles role)

@@ -1292,7 +1292,7 @@ namespace TownOfHost
 
                 pc.SetVisor("", pc.CurrentOutfit.ColorId);
 
-                pc.SetPet("");
+                pc.SetPet("", pc.CurrentOutfit.ColorId);
 
                 return;
 

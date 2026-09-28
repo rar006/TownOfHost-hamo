@@ -25,6 +25,7 @@ using TownOfHost.Roles.Impostor;
 using TownOfHost.Roles.Neutral;
 
 using static TownOfHost.Translator;
+using TownOfHost.Roles.Madmate;
 
 
 
@@ -66,8 +67,7 @@ namespace TownOfHost
 
         public static void Postfix(HudManager __instance)
 
-        {
-
+        {            
             // HudManagerの生成途中はUpdateが先行することがあるため、
 
             // UI参照が揃うまで処理を次フレームへ延期して反復例外を防ぐ。

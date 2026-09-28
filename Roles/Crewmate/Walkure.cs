@@ -323,7 +323,7 @@ public sealed class Walkure : RoleBase, ISelfVoter, IKiller
 
     public override bool OnCheckMurderAsTarget(MurderInfo info)
     {
-        info.GuardPower = 99;
+        info.GuardPower = 9;
         var (killer, target) = info.AppearanceTuple;
         killer.SetKillCooldown(target: target);
         return false;

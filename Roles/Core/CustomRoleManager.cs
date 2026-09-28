@@ -1781,6 +1781,7 @@ public enum CustomRoles
     MadSheriff,
     MadWare,
     Madpsycho,
+    Hyde,
     //DEBUG only Madmate
     //Crewmate(Vanilla)
     Engineer,
@@ -1872,6 +1873,8 @@ public enum CustomRoles
     BoostLighter,
     Jizo,
     Fanatic,
+    Jekyll,
+    JekyllandHyde,
     //DEBUG only Crewmate
     Analyzer,
     //Neutral
@@ -2061,9 +2064,9 @@ public enum CustomRoles
     // 値を500未満(空いている283番から)に振り直すことで、他の正規のメイン役職と
     // 同じ扱いになるようにする。283〜323は他のどの役職にも使われていない
     // (列挙体全体を走査して確認済み)。
-    Professional = 283,
+    Professional = 287,
     EvilCommander,
-    DummySpawner,
+    //DummySpawner,
     VillainWolf,
     BlackVisioner,
     MadCount,
@@ -2117,9 +2120,10 @@ public enum CustomRoles
     Reporting,
     IceOni,
     // ===== N移植役職 =====
-    Survivor = 326,
+    Survivor = 329,
     Mario,
     Obolus,
+    HydeImp,
 }
 
 public enum CustomRoleTypes
