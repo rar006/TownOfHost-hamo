@@ -2163,6 +2163,8 @@
 "MareDescNonKill","<u>Cannot perform kills.</u>","<u>キルが行えない。</u>"
 
 "MareDescCanKill","<u>Kill cooldown and movement speed return to normal</u>","<u>キルクールと移動速度が元に戻る</u>"
+"WarlockDesc","Click the button to cast a curse on the target. \nAfter casting the curse, click the button again to teleport the cursed person to the nearest person and kill them.","ワンクリックボタンを使用するとキルターゲットに呪いをかける。\n呪った後ワンクリック再度押すと呪った人が一番近い人の元にテレポートしキルする。"
+"WarlockDescKoutyoku","Click the button once to cast a curse on the target. \nAfter casting the curse, click the button again to teleport the cursed player to the nearest person and kill them. \n<b>After a curse kill, the player is immobilized for {0} seconds. </b>","ワンクリックボタンを使用するとキルターゲットに呪いをかける。\n呪った後ワンクリック再度押すと呪った人が一番近い人の元にテレポートしキルする。\n<b>呪いキル後、{0}秒間動けなくなる。</b>"
 
 "ProBowlerDesc","Shapeshift to dig a hole.\nAfter digging, press the Kill button to {0}<b>{1}</b> the kill target.\n\nAfter the meeting, the hole is filled.\nYou can dig up to <b>{2} times</b>.","シェイプシフトをして穴を掘る。\n穴を掘った後、キルボタンを押すことでキルターゲットを{0}<b>{1}</b>させる。\n\n会議後、穴は埋まる。\n穴は<b>{2}回</b>まで掘れる。"
 
@@ -10417,7 +10419,7 @@
 "InfectInfo","You are already infected","君は既に感染している"
 "InfectInfoLong","Changes the role of whoever reports your body into Infected.\nWhoever reports this role's body will have their role overwritten to Infected at the start of the meeting after a set number of turns pass (they will not know this is happening).\nIf they die before the transformation, no role change occurs.\nHas a one-click 'Suicide' ability. Suicide also triggers infection through the resulting body report.","自身の死体を通報したプレイヤーの役職をインフェクデッドに変化させる。\nこの役職の死体を通報したプレイヤーは設定ターン数が経つとターン開始時にインフェクデッドに役職が上書きされる。\n変化する前に死亡してしまった場合役職の変化はない。\nワンクリックの「自殺」能力を持つ。自殺時の死体通報でも感染は発動する。"
 "InfectTurnsToTransform","Turns Until Transformation","感染後に役職が変化するターン数"
-"InfectIncludeImpostor","Impostors Can Be Infected Too","インポスターも感染するか"
+"InfectIncludeImpostor","Impostors Can Be Infected Too","インポスターもも感染するか"
 "Infect.SuicideButtonText","Suicide","自殺"
 "Infected","Infected","インフェクデッド"
 "Ifd","Infected","インフェクデッド"
