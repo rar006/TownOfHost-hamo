@@ -147,10 +147,6 @@ namespace TownOfHost
 
 
         /// 配布するデバッグ版なのであればtrue。リリース時にはfalseにすること。
-<<<<<<< HEAD
-
-=======
->>>>>>> c290e88ccc56d02532dc17606542571f03dd2ad6
         public static bool DebugVersion = false;
         public static bool WarnDuplicatetranslate = false;
 

@@ -42,8 +42,7 @@ namespace TownOfHost
 
             }
 
-            var player = PlayerCatch.AllPlayerControls.Where(pc => pc.PlayerId == playerId).FirstOrDefault();
-
+            var player = AllPlayerControls.FirstOrDefault(pc => pc.PlayerId == playerId);
             cachedPlayers[playerId] = player;
 
             return player;
