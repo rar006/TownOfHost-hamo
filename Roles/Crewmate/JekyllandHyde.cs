@@ -24,7 +24,8 @@ public sealed class JekyllandHydeRole : RoleBase
             "jah",
             "#ffffff",
             (4, 2),
-            introSound: () => GetIntroSound(RoleTypes.Shapeshifter)
+            introSound: () => GetIntroSound(RoleTypes.Shapeshifter),
+            isNewRole: true
         );
 
     public JekyllandHydeRole(PlayerControl player)
