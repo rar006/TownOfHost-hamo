@@ -509,7 +509,7 @@
 "EvolverInfo","Evolve by eating bodies","死体を喰らい進化せよ"
 "SwooperInfo","Become invisible and kill the crew","透明状態になってクルーを殺ろう!"
 "MassMurderInfo","","君の死に場所はここだ!"
-"ProfessionalInfo","One click, one kill. No report, no evidence.","ワンクリックで仕留める、報告も証拠も残さないプロ"
+"ProfessionalInfo","One click, one kill. No report, no evidence.","人を殺して30年"
 "SurvivorInfo","Survive and get some kills","生き残りながらキルをしよう"
 "#ImpostorInfo"
 
@@ -620,7 +620,7 @@
 "PoliceInfo","","悪は滅びる…"
 "NiceWorkaholicInfo","Task!!! Task!!! Task!!!","クルーのために働かなければならない"
 "JailerInfo","Imprison the impostor","容疑者を拘束し、その手で正義を執行せよ。"
-"AstelInfo","Pet to mark your position with a star","タスクをこなし、ペットで星を出そう"
+"AstelInfo","Pet to mark your position with a star","星のように輝こう"
 "#CrewmateInfo"
 
 "# ニュートラル役職"
@@ -712,9 +712,9 @@
 "TheFirstLittlePigInfo","House， keep us safe!","藁の家でもないよりマシ"
 "TheSecondLittlePigInfo","House， keep us safe!","木の家はそこそこ頼りになる"
 "TheThirdLittlePigInfo","House， keep us safe!","レンガの家は盤石さ"
-"DarkSheriffInfo","Awaken after enough kills","キルを重ねると覚醒する"
-"RaccoonParentInfo","Grab and turn crewmates into raccoons","クルーメイトを掴んでアライグマに変えよう"
-"RaccoonChildInfo","A raccoon in disguise","化けアライグマ"
+"DarkSheriffInfo","Awaken after enough kills","最初からこうすればよかったんだ"
+"RaccoonParentInfo","Grab and turn crewmates into raccoons","洗う？いいえ。調べているの。"
+"RaccoonChildInfo","A raccoon in disguise","もう、独りで生きていける...！"
 "ObolusInfo","The Final Blow","最後の一撃"
 "#NeutralInfo"
 
