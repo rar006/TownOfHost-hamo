@@ -10426,3 +10426,7 @@
 "InfectedTaskCountToActivate","Tasks Needed To Activate Ability","能力が発動するタスク数"
 "InfectedTurnsToTransform","Turns Until Transformation","感染後に役職が変化するターン数"
 "InfectedIncludeImpostor","Impostors Can Be Infected Too","インポスターも感染するか"
+"WarlockDouki","Synchronize normal kills with cooldowns","通常キルとクールタイムを同期するか"
+"WarlockKoutyoku","Should the character be unable to move after a curse kill","呪いキル後硬直するか"
+"WarlockCantMovetime","Stiffening time","硬直時間"
+"WarlockCanKillNakama","can curse the imposter to death","インポスターを能力キルの対象に含める"
