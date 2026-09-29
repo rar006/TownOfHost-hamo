@@ -27,7 +27,8 @@ public sealed class MagicalGirl : RoleBase, ISelfVoter, IKiller, IUsePhantomButt
             SetupOptionItem,
             "mg",
             "#ff66cc",
-            (2, 0)
+            (2, 0),
+            from: From.TownOfHost_Pko
         );
 
     private enum SlotMode

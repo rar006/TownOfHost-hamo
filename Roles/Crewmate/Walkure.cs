@@ -25,8 +25,9 @@ public sealed class Walkure : RoleBase, ISelfVoter, IKiller
             SetupOptionItem,
             "wk",
             "#78d7ff",
-             (3, 6),
-            isDesyncImpostor: true
+            (3, 6),
+            true,
+            from: From.TownOfHost_Pko
         );
 
     private static OptionItem OptionMeetingRevealLimit;

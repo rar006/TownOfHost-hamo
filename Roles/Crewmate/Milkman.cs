@@ -52,8 +52,8 @@ public sealed class Milkman : RoleBase, IKiller
 
             true,
 
-            introSound: () => GetIntroSound(RoleTypes.Crewmate)
-
+            introSound: () => GetIntroSound(RoleTypes.Crewmate),
+            from: From.TownOfHost_Pko
         );
 
 

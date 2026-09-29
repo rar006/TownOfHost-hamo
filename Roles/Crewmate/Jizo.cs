@@ -33,7 +33,8 @@ public sealed class Jizo : RoleBase
             assignInfo: new RoleAssignInfo(CustomRoles.Jizo, CustomRoleTypes.Crewmate)
             {
                 AssignCountRule = new(1, 1, 1) 
-            }
+            },
+            from: From.TownOfHost_Pko
         );
 
     public Jizo(PlayerControl player)

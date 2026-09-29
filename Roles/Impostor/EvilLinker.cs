@@ -46,7 +46,8 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
 
             "el",
 
-            OptionSort: (2, 11)
+            OptionSort: (2, 11),
+            from: From.TownOfHost_Pko
 
         );
 

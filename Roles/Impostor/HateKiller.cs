@@ -24,7 +24,8 @@ public sealed class HateKiller : RoleBase, IImpostor
             assignInfo: new RoleAssignInfo(CustomRoles.HateKiller, CustomRoleTypes.Impostor)
             {
                 AssignCountRule = new(1, 1, 1)
-            }
+            },
+            from: From.TownOfHost_Pko
         );
     public HateKiller(PlayerControl player) : base(RoleInfo, player)
     {

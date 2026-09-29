@@ -25,7 +25,8 @@ public sealed class Fanatic : RoleBase, IKillFlashSeeable, IDeathReasonSeeable
             SetupOptionItem,
             "fnt",
             "#ff1919",
-            (5, 2)
+            (5, 2),
+            from: From.TownOfHost_Pko
         );
     public Fanatic(PlayerControl player)
     : base(

@@ -23,7 +23,8 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton
             "#f8cd46",
             (2, 0),
             true,
-            countType: CountTypes.Crew
+            countType: CountTypes.Crew,
+            from: From.TownOfHost_Pko
         );
 
     public SheriffHadouHo(PlayerControl player)

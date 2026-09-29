@@ -20,7 +20,8 @@ public sealed class NiceWorkaholic : RoleBase
             (1, 9),
             introSound: () => ShipStatus.Instance?.CommonTasks
                 .FirstOrDefault(t => t.TaskType == TaskTypes.FixWiring)
-                ?.MinigamePrefab.OpenSound
+                ?.MinigamePrefab.OpenSound,
+            from: From.TownOfHost_Pko
         );
 
     public NiceWorkaholic(PlayerControl player)

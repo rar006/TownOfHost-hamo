@@ -50,7 +50,8 @@ public sealed class Medium : RoleBase
 
             (3, 5),
 
-            introSound: () => GetIntroSound(RoleTypes.Scientist)
+            introSound: () => GetIntroSound(RoleTypes.Scientist),
+            from: From.TownOfHost_Pko
 
         );
 

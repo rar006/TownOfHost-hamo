@@ -46,7 +46,9 @@ public sealed class EvilGuesser : RoleBase, IImpostor
 
             "#ff1919",
 
-            (2, 1)
+            (2, 1),
+
+            from: From.TheOtherRoles
 
         );
 

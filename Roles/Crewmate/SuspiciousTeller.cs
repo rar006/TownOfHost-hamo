@@ -25,7 +25,8 @@ public sealed class SuspiciousTeller : RoleBase, ISelfVoter
             "spt",
             "#6b3ec3",
             (3, 2),
-            introSound: () => GetIntroSound(RoleTypes.Scientist)
+            introSound: () => GetIntroSound(RoleTypes.Scientist),
+            from: From.TownOfHost_Pko
         );
 
     private static readonly CustomRoles[] ForbiddenChangeRoles =
