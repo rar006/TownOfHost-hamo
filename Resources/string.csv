@@ -2257,7 +2257,7 @@
 "OnmyojiVentDuration","Vent Duration","ベント持続時間"
 "OnmyojiCanCreateShikigami","Can Create Shikigami","式神を作成できる"
 "OnmyojiCreateShikigamiCooldown","Shikigami Creation Cooldown","式神作成クールタイム"
-"OnmyojNeedTaskToWin","Require Tasks To Win","タスクが終わっていないと勝利できない"
+"OnmyojiNeedTaskToWin","Require Tasks To Win","タスクが終わっていないと勝利できない"
 "OnmyojiCanHijackCrewWin","Can Hijack Crew Win","クルー勝利を乗っ取れる"
 "OnmyojiDisableReport","Cannot Report Bodies","死体通報できない"
 "OnmyojiDisableEmergencyMeeting","Cannot Call Emergency","緊急会議ボタンを押せない"
