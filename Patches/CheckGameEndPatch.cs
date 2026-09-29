@@ -33,7 +33,7 @@ using TownOfHost.Roles.Ghost;
 using TownOfHost.Roles.Impostor;
 
 using TownOfHost.Roles.Neutral;
-
+using TownOfHostY.Roles.Neutral;
 using UnityEngine;
 
 
@@ -214,18 +214,18 @@ namespace TownOfHost
 
             var lockWinner = lockSabotageWinner || lockDrawWinner;
 
-
+            var team = CustomWinnerHolder.WinnerTeam;
 
             if (!lockWinner)
 
             {
+                DarkHide.CheckWin(ref reason);
 
-                Zombie.TryTakeOverCrewWin(ref reason);
+                Zombie.TryTakeOverCrewWin(ref reason, team);
 
                 Onmyoji.TryTakeOverCrewWin(ref reason);
 
                 BatGirl.TryTakeOverSoloWin(ref reason);
-
             }
 
 
@@ -441,22 +441,23 @@ namespace TownOfHost
                 if (!lockWinner && CustomWinnerHolder.WinnerTeam is not CustomWinner.Draw)
 
                 {
-
                     CurseMaker.CheckWin();
+
+                    DarkHide.CheckWin(ref reason);
 
                     Fox.SFoxCheckWin(ref reason);
 
                     Tuna.CheckWin(ref reason);
 
-                    TownOfHost.Roles.Neutral.DarkSheriff.CheckWin(ref reason);
+                    DarkSheriff.CheckWin(ref reason);
 
-                    TownOfHost.Roles.Neutral.RaccoonParent.CheckWin(ref reason);
+                    RaccoonParent.CheckWin(ref reason);
 
                     Spelunker.CheckWin(ref reason);
 
                     Chatter.CheckWin(ref reason);
 
-                    Zombie.TryTakeOverCrewWin(ref reason);
+                    Zombie.TryTakeOverCrewWin(ref reason, team);
 
 
 

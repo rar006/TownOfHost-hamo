@@ -623,8 +623,6 @@ Roles/
   Tairou.cs
   Teleporter.cs
   TeleportKiller.cs
-  Test DummySpawner.cs
-  Test Reverser.cs
   TimeSleeper.cs
   TimeThief.cs
   UnFortuner.cs

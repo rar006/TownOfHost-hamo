@@ -2066,7 +2066,6 @@ public enum CustomRoles
     // (列挙体全体を走査して確認済み)。
     Professional = 287,
     EvilCommander,
-    //DummySpawner,
     VillainWolf,
     BlackVisioner,
     MadCount,
@@ -2124,6 +2123,10 @@ public enum CustomRoles
     Mario,
     Obolus,
     HydeImp,
+    //===== Y移植役職 =====
+    DarkHide,
+    Greedier,
+    Administer
 }
 
 public enum CustomRoleTypes

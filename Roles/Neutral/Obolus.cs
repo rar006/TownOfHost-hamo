@@ -52,7 +52,7 @@ public sealed class Obolus : RoleBase, ILNKiller, IAdditionalWinner
     {
         CountKillerAddWin,
         ObolusKillLockTurn,
-        SheriffShotLimit,
+        WolfBoyShotLimit,
         ObolusCanWinOtherKiller,
         ObolusCanKill,
         ObolusNeedKillCont,
@@ -76,7 +76,7 @@ public sealed class Obolus : RoleBase, ILNKiller, IAdditionalWinner
             .SetValueFormat(OptionFormat.Seconds);
         OptionKillLockTurn = IntegerOptionItem.Create(RoleInfo, 11, OptionName.ObolusKillLockTurn, new(0, 99, 1), 2, false)
             .SetValueFormat(OptionFormat.day);
-        OptionCanKillCount = IntegerOptionItem.Create(RoleInfo, 12, OptionName.SheriffShotLimit, new(1, 14, 1), 3, false)
+        OptionCanKillCount = IntegerOptionItem.Create(RoleInfo, 12, OptionName.WolfBoyShotLimit, new(1, 14, 1), 3, false)
             .SetValueFormat(OptionFormat.Times);
         OptionNeedKillCount = IntegerOptionItem.Create(RoleInfo, 70, OptionName.ObolusNeedKillCont, new(1, 14, 1), 1, false)
             .SetValueFormat(OptionFormat.Times);

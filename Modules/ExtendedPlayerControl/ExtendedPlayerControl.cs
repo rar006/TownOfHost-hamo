@@ -909,7 +909,8 @@ namespace TownOfHost
                 CustomRoles.Eater or
                 CustomRoles.Hunter or
                 CustomRoles.Mermaid or
-                CustomRoles.Obolus;
+                CustomRoles.Obolus or
+                CustomRoles.DarkHide;
 
         }
 

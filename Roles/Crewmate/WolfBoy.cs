@@ -59,7 +59,7 @@ public sealed class WolfBoy : RoleBase, IKiller, ISchrodingerCatOwner
     int NowKillcount;
     enum OptionName
     {
-        SheriffShotLimit,
+        WolfBoyShotLimit,
         SheriffCanKillAllAlive,
         WolfBoySchrodingerCatTime,
         Wolfboycanwinkillcount,
@@ -85,7 +85,7 @@ public sealed class WolfBoy : RoleBase, IKiller, ISchrodingerCatOwner
         optcountimpstor = BooleanOptionItem.Create(RoleInfo, 17, OptionName.WolfBoyCountteam, false, false, optcanwinkillcount);
         optcountmadmate = BooleanOptionItem.Create(RoleInfo, 18, OptionName.WolfBoyCountteam, false, false, optcanwinkillcount);
         optcountneutral = BooleanOptionItem.Create(RoleInfo, 19, OptionName.WolfBoyCountteam, false, false, optcanwinkillcount);
-        ShotLimitOpt = IntegerOptionItem.Create(RoleInfo, 11, OptionName.SheriffShotLimit, new(1, 15, 1), 15, false)
+        ShotLimitOpt = IntegerOptionItem.Create(RoleInfo, 11, OptionName.WolfBoyShotLimit, new(1, 15, 1), 15, false)
             .SetValueFormat(OptionFormat.Times);
         CanKillAllAlive = BooleanOptionItem.Create(RoleInfo, 12, OptionName.SheriffCanKillAllAlive, true, false);
         ImpostorVision = BooleanOptionItem.Create(RoleInfo, 13, GeneralOption.ImpostorVision, true, false);

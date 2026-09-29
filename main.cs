@@ -1064,6 +1064,7 @@ namespace TownOfHost
         Muter = CustomRoles.Muter,
 
         Mario = CustomRoles.Mario,
+        DarkHide = CustomRoles.DarkHide,
 
         SuddenDeathRed = 1000, SuddenDeathBlue = 1001, SuddenDeathYellow = 1002, SuddenDeathGreen = 1003, SuddenDeathPurple = 1004
 

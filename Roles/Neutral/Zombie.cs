@@ -131,11 +131,11 @@ public sealed class Zombie : RoleBase
         return false;
     }
 
-    public static bool TryTakeOverCrewWin(ref GameOverReason reason)
+    public static bool TryTakeOverCrewWin(ref GameOverReason reason, CustomWinner winner)
     {
         TryProcessPendingInfections();
 
-        if (CustomWinnerHolder.WinnerTeam is not CustomWinner.Crewmate) return false;
+        if (winner is not CustomWinner.Crewmate) return false;
         if (HasAliveKillerSide()) return false;
 
         var aliveZombies = AllAlivePlayerControls

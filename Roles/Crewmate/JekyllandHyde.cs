@@ -25,7 +25,8 @@ public sealed class JekyllandHydeRole : RoleBase
             "#ffffff",
             (4, 2),
             introSound: () => GetIntroSound(RoleTypes.Shapeshifter),
-            isNewRole: true
+            isNewRole: true,
+            from: From.NebulaontheShip
         );
 
     public JekyllandHydeRole(PlayerControl player)
@@ -64,7 +65,7 @@ public sealed class JekyllandHydeRole : RoleBase
 
         ObjectOptionitem.Create(RoleInfo, 14, "JekyllandHyde", true, null).SetOptionName(() => "Hyde Setting").SetColor(Hyde.RoleInfo.RoleColor);
 
-        OptionAmmo = IntegerOptionItem.Create(RoleInfo, 15, OptionName.SheriffShotLimit, new(1, 15, 1), 1, false)
+        OptionAmmo = IntegerOptionItem.Create(RoleInfo, 15, OptionName.WolfBoyShotLimit, new(1, 15, 1), 1, false)
             .SetValueFormat(OptionFormat.Times);
 
         OptionKillCool = FloatOptionItem.Create(RoleInfo, 16, GeneralOption.KillCooldown, OptionBaseCoolTime, 30f, false)
@@ -82,10 +83,7 @@ public sealed class JekyllandHydeRole : RoleBase
 
     enum OptionName
     {
-        /*
-        ↓設定の英語Ammo!? 狼とかの専用のやつ用意しないと...(
-        */
-        SheriffShotLimit,
+        WolfBoyShotLimit,
         MadmateCanMovedByVent
     }
 }

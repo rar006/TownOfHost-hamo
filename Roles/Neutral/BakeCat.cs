@@ -258,6 +258,7 @@ namespace TownOfHost.Roles.Neutral
                 TeamType.Betrayer => player.Is(CustomRoles.MadBetrayer),
                 TeamType.Pavlov => player.Is(CountTypes.Pavlov),
                 TeamType.Opportunist => player.Is(CustomRoles.Opportunist),
+                TeamType.DarkHide => player.Is(CustomRoles.DarkHide),
                 _ => false,
             };
         }
@@ -344,7 +345,7 @@ namespace TownOfHost.Roles.Neutral
                 TeamType.MilkyWay => CustomWinnerHolder.winners.Contains(CustomWinner.MilkyWay),
                 TeamType.Betrayer => CustomWinnerHolder.winners.Contains(CustomWinner.MadBetrayer),
                 TeamType.Pavlov => CustomWinnerHolder.winners.Contains(CustomWinner.Pavlov),
-
+                TeamType.DarkHide => CustomWinnerHolder.winners.Contains(CustomWinner.DarkHide),
                 _ => null,
             };
             if (!won.HasValue)
@@ -427,6 +428,7 @@ namespace TownOfHost.Roles.Neutral
                 TeamType.Betrayer => UtilsRoleText.GetRoleColor(CustomRoles.MadBetrayer),
                 TeamType.Pavlov => UtilsRoleText.GetRoleColor(CustomRoles.PavlovDog),
                 TeamType.Opportunist => UtilsRoleText.GetRoleColor(CustomRoles.Opportunist),
+                TeamType.DarkHide => UtilsRoleText.GetRoleColor(CustomRoles.DarkHide),
                 _ => null,
             };
             if (!color.HasValue)
