@@ -2014,9 +2014,9 @@ namespace TownOfHost
 
                 case From.Love_Couple_Mod: Fromtext += "<#ff6be4>Love Couple Mod</color>"; break;
 
-                //case From.TownOfHost_hamo: Fromtext = ""; break;
+                case From.TownOfHost_hamo: Fromtext = ""; break;
 
-                case From.TownOfHost_hamo: Fromtext += $"<#fb85ff>TownOfHost_hamo</color>"; break;
+                //case From.TownOfHost_hamo: Fromtext += $"<#fb85ff>TownOfHost_hamo</color>"; break;
 
             }
 

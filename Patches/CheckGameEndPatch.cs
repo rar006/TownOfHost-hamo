@@ -33,7 +33,6 @@ using TownOfHost.Roles.Ghost;
 using TownOfHost.Roles.Impostor;
 
 using TownOfHost.Roles.Neutral;
-using TownOfHostY.Roles.Neutral;
 using UnityEngine;
 
 
