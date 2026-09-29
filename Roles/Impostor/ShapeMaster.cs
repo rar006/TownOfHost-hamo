@@ -35,7 +35,8 @@ public sealed class ShapeMaster : RoleBase, IImpostor
     static bool anime;
     public static void SetupOptionItem()
     {
-        OptionShapeshiftDuration = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.Duration, new(1, 1000, 1), 10, false);
+        OptionShapeshiftDuration = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.Duration, new(0f, 180f, 0.5f), 10f, false)
+        .SetValueFormat(OptionFormat.Seconds).SetZeroNotation(OptionZeroNotation.Infinity);
         OptionShapeAnime = BooleanOptionItem.Create(RoleInfo, 11, GeneralOption.PlayShapeAnimate, false, false);
     }
 
@@ -43,7 +44,7 @@ public sealed class ShapeMaster : RoleBase, IImpostor
     {
         AURoleOptions.ShapeshifterCooldown = 0f;
         AURoleOptions.ShapeshifterLeaveSkin = false;
-        AURoleOptions.ShapeshifterDuration = shapeshiftDuration;
+        AURoleOptions.ShapeshifterDuration = /*shapeshiftDuration is 0 ? 9999f : */shapeshiftDuration;
     }
     public override bool CheckShapeshift(PlayerControl target, ref bool animate)
     {

@@ -9,7 +9,7 @@ using TownOfHost.Roles.Core.Interfaces;
 using TownOfHost.Roles.Neutral;
 using static TownOfHost.Roles.Core.Interfaces.ISchrodingerCatOwner;
 
-namespace TownOfHostY.Roles.Neutral
+namespace TownOfHost.Roles.Neutral
 {
     public sealed class DarkHide : RoleBase, IKiller, ISchrodingerCatOwner
     {

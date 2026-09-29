@@ -25,7 +25,8 @@ public sealed class Shapeshifter : RoleBase, IImpostor, IKiller
     )
     { }
     public static OptionItem ShapeshifterCooldown;
-    public static OptionItem ShapeshifterDuration; public static void SetUpCustomOption()
+    public static OptionItem ShapeshifterDuration;
+    public static void SetUpCustomOption()
     {
         ShapeshifterCooldown = FloatOptionItem.Create(RoleInfo, 33, "ShapeshifterCooldown", new(0f, 180f, 0.5f), 15f, false)
             .SetValueFormat(OptionFormat.Seconds);
