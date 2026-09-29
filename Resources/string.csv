@@ -6307,5 +6307,7 @@
 "GreedierEvenKillCooldown","Even Kill Cooldown","キル偶数回目のキルクール","偶数击杀冷却",
 "Administer","Administer","アドミニスター"
 "AdministerInfo","Get everybody in position","最終位置を監視し優位に付け"
-"AdministerInfoLong","During the meeting, he will know the room all the survivors were in before the meeting.","会議中、生存者全員の会議前にいた部屋を知ることができる。"
+"AdministerInfoLong","During the meeting, he will know the room all the survivors were in before the meeting.\nIt will also appear in the chat when the meeting begins.\nAfter casting your vote, performing the specified action will cause it to reappear in the chat.","会議中、生存者全員の会議前にいた部屋を知ることができる。\n会議開始時チャットにも表示される。\n自投票後所定の操作を行うことで再度チャットに表示される。"
 "AdministerMessage","【Administer List】","【生存者の最終位置リスト】"
+"AdministerModeText1","When you skip, everyone's final position will be displayed in the chat. \nYou can vote for yourself again.","スキップで全員の最終位置がチャットに表示されます。\nもう一度自投票で自投票できます。"
+"AdministerModeText2","The location has been displayed. You can skip it as usual. \nYou can display the location again by selecting “My Vote” → “Skip.”","位置を表示しました。通常のスキップが可能です。\n自投票→スキップで再度位置を表示できます。"

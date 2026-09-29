@@ -52,7 +52,7 @@ public sealed class HathorSekhmet : RoleBase, IKiller
     private static readonly Color SekhmetColor = UtilsRoleText.GetRoleColor(CustomRoles.Impostor);
 
     public HathorSekhmet(PlayerControl player)
-        : base(RoleInfo, player, () => HasTask.False)
+        : base(RoleInfo, player, () => HasTask.ForRecompute)
     {
         // クルーフェーズでもこの役職のタスクはクルーのタスク勝利へ加算しない。
         IsSekhmet = false;
