@@ -107,6 +107,9 @@ namespace TownOfHost
         public static bool Prefix(PlayerControl __instance, ref RoleTypes roleType, ref bool canOverrideRole)
 
         {
+            if (roleType == RoleTypes.SpiritGuide && __instance != null &&
+                PlayerState.GetByPlayerId(__instance.PlayerId) is { } state)
+                state.WasInfluencer = true;
 
             var target = __instance;
 
@@ -217,7 +220,16 @@ namespace TownOfHost
         }
 
     }
-
+    [HarmonyPatch(typeof(RoleManager), nameof(RoleManager.SetRole), new[] { typeof(PlayerControl), typeof(RoleTypes) })]
+    class RememberInfluencerRolePatch
+    {
+        public static void Postfix([HarmonyArgument(0)] PlayerControl player, [HarmonyArgument(1)] RoleTypes roleType)
+        {
+            if (roleType == RoleTypes.SpiritGuide && player != null &&
+                PlayerState.GetByPlayerId(player.PlayerId) is { } state)
+                state.WasInfluencer = true;
+        }
+    }
     [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.MixUpOutfit))]
 
     public static class PlayerControlMixupOutfitPatch

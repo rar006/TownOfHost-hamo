@@ -401,7 +401,7 @@ namespace TownOfHost
                         case CustomRoles.Seeing: sb.Append(Seeing.SubRoleMark); break;
 
                         case CustomRoles.Opener: sb.Append(Opener.SubRoleMark); break;
-
+                        
                         //case CustomRoles.AntiTeleporter: sb.Append(AntiTeleporter.SubRoleMark); break;
 
                         case CustomRoles.Lighting: sb.Append(Lighting.SubRoleMark); break;
@@ -605,7 +605,9 @@ namespace TownOfHost
 
                 }
 
-            var (color, text) = GetRoleNameData(state.MainRole, Subrole, state.GhostRole, showSubRoleMarks);
+            var displayGhostRole = TownOfHost.Roles.Vanilla.Influencer.IsDisplayedAsInfluencer(player)
+                ? CustomRoles.Influencer : state.GhostRole;
+            var (color, text) = GetRoleNameData(state.MainRole, Subrole, displayGhostRole, showSubRoleMarks);
 
 
 

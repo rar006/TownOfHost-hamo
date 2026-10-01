@@ -342,7 +342,9 @@ namespace TownOfHost
 
             if (!player) return null;
 
-            var text = UtilsRoleText.GetRoleName(player.GetCustomRole());
+            var text = TownOfHost.Roles.Vanilla.Influencer.IsDisplayedAsInfluencer(player)
+                ? UtilsRoleText.GetRoleNameData(player.GetCustomRole(), null, CustomRoles.Influencer).text
+                : UtilsRoleText.GetRoleName(player.GetCustomRole());
 
             text += player.GetSubRoleName();
 
@@ -804,7 +806,7 @@ namespace TownOfHost
 
         {
 
-            float killdis = NormalGameOptionsV11.KillDistances[Mathf.Clamp(GameManager.Instance.LogicOptions.currentGameOptions.GetInt(Int32OptionNames.KillDistance), 0, 2)];
+            float killdis = NormalGameOptionsV12.KillDistances[Mathf.Clamp(GameManager.Instance.LogicOptions.currentGameOptions.GetInt(Int32OptionNames.KillDistance), 0, 2)];
 
 
 
@@ -1017,7 +1019,8 @@ namespace TownOfHost
         public static string GetRoleDesc(this PlayerControl player, bool InfoLong = false)
 
         {
-
+            if (TownOfHost.Roles.Vanilla.Influencer.IsDisplayedAsInfluencer(player))
+                return GetString("InfluencerInfo");
             var roleClass = player.GetRoleClass();
 
             var role = player.GetCustomRole();

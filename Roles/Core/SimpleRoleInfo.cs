@@ -258,6 +258,12 @@ public class SimpleRoleInfo
                 customRoleType = CustomRoleTypes.Crewmate;
                 configId = -2;
                 break;
+            case RoleTypes.SpiritGuide:
+                roleName = CustomRoles.Influencer;
+                customRoleType = CustomRoleTypes.Crewmate;
+                configId = 25150;
+                OptionSort = (0, 7);
+                break;
             case RoleTypes.Impostor:
                 roleName = CustomRoles.Impostor;
                 customRoleType = CustomRoleTypes.Impostor;

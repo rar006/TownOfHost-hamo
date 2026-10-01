@@ -876,7 +876,7 @@ namespace TownOfHost
 
                         }
 
-                        else if (player.Data.Role.Role is RoleTypes.CrewmateGhost or RoleTypes.ImpostorGhost or RoleTypes.GuardianAngel)
+                        else if (player.Data.Role.Role is RoleTypes.CrewmateGhost or RoleTypes.ImpostorGhost or RoleTypes.GuardianAngel or RoleTypes.SpiritGuide)
 
                         {
 
@@ -1690,7 +1690,8 @@ namespace TownOfHost
 
             // 役職説明表示
 
-            if (!role.IsVanilla() || player.IsGhostRole())
+            if (!role.IsVanilla() || player.IsGhostRole() ||
+                TownOfHost.Roles.Vanilla.Influencer.IsDisplayedAsInfluencer(player))
 
             {
 

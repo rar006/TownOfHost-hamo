@@ -3243,6 +3243,15 @@ public static class RoleGuideButtonPatch
 
         descBody.color = ink;
 
+        // 役職/属性の説明文が長い場合、固定の枠(descriptionHeight)からはみ出して
+        // 下の「設定」欄などと重なって見えることがあったため、文章が長い時は
+        // 自動で文字サイズを縮小して枠内に収まるようにする。
+        descBody.enableAutoSizing = true;
+
+        descBody.fontSizeMin = 0.75f;
+
+        descBody.fontSizeMax = 1.22f;
+
         descBody.fontStyle = FontStyles.Normal;
 
         descBody.overflowMode = TextOverflowModes.Ellipsis;

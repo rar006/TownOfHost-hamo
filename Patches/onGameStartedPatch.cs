@@ -49,7 +49,7 @@ namespace TownOfHost
             GameStates.Intro = true;
 
             Main.NormalOptions.roleOptions.SetRoleRate(RoleTypes.GuardianAngel, 0, 0);
-
+            TownOfHost.Roles.Vanilla.Influencer.ApplyOptions();
 
 
             Modules.DiscordRichPresenceService.UpdatePresence("ゲーム中", $"{Options.CurrentGameMode}");

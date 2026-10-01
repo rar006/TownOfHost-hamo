@@ -265,7 +265,10 @@ namespace TownOfHost
 
             if (!PlayerControl.LocalPlayer.IsAlive())
             {
-                role = role.IsCrewmate() ? RoleTypes.CrewmateGhost : RoleTypes.ImpostorGhost;
+                role = AntiBlackout.WasSpiritGuide(PlayerControl.LocalPlayer.PlayerId) ||
+                    PlayerControl.LocalPlayer.Data?.Role?.Role == RoleTypes.SpiritGuide
+                    ? RoleTypes.SpiritGuide
+                    : role.IsCrewmate() ? RoleTypes.CrewmateGhost : RoleTypes.ImpostorGhost;
             }
             RoleManager.Instance.SetRole(PlayerControl.LocalPlayer, role);
             //ここで処刑処理を入れると暗転が起こる?

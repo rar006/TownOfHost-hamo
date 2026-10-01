@@ -215,7 +215,18 @@ namespace TownOfHost
         public static Dictionary<byte, string> LastLogSubRole = new();
 
         public static Dictionary<byte, string> LastLogLoveRole = new();
+        private static string GetResultRoleName(byte playerId)
+        {
+            var player = GetPlayerById(playerId);
+            var state = PlayerState.GetByPlayerId(playerId);
+            if (state?.GhostRole == CustomRoles.NotAssigned &&
+                (TownOfHost.Roles.Vanilla.Influencer.IsDisplayedAsInfluencer(player) ||
+                 (state.WasInfluencer && (state.IsDead || player?.Data?.IsDead == true))))
+                return GetRoleNameData(state.MainRole, null, CustomRoles.Influencer, false).text;
 
+            return LastLogRole.TryGetValue(playerId, out var roleLog)
+                ? roleLog : GetTrueRoleName(playerId);
+        }
         public static string GetLogtext(byte pc)
 
         {
@@ -282,11 +293,7 @@ namespace TownOfHost
 
                 builder.AppendFormat("<pos={0}em>", pos);
 
-                var role = GetTrueRoleName(id);
-
-                if (LastLogRole.ContainsKey(id))
-
-                    role = LastLogRole[id];
+                var role = GetResultRoleName(id);
 
                 role = Regex.Replace(role, "<b>", "");
 

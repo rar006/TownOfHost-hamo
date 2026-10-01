@@ -260,7 +260,7 @@ namespace TownOfHost.Roles.Ghost
 
             var candidates = new List<PlayerControl>();
 
-            var AP = new List<PlayerControl>(PlayerCatch.AllPlayerControls.Where(x => !x.IsGhostRole() && !x.IsAlive() && (x.Is(data.RoleType) || x.Is(data.SubRoleType)) && !x.CanUseSabotageButton()));
+            var AP = new List<PlayerControl>(PlayerCatch.AllPlayerControls.Where(x => !x.IsGhostRole() && !x.IsAlive() && x.Data?.Role?.Role != RoleTypes.SpiritGuide && (x.Is(data.RoleType) || x.Is(data.SubRoleType)) && !x.CanUseSabotageButton()));
 
             var APcount = AP.Count;
 

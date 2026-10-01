@@ -8,6 +8,7 @@ namespace TownOfHost
     public class OptionBackupData
     {
         public List<OptionBackupValue> AllValues;
+        private readonly float? spiritGuideCooldown;
         public OptionBackupData(IGameOptions option)
         {
             AllValues = new(32);
