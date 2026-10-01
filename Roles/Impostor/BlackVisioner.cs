@@ -202,7 +202,7 @@ public sealed class BlackVisioner : RoleBase, IImpostor, IUsePhantomButton
             if (pc == null || pc == Player) continue;
             if (PartnerId != byte.MaxValue && !PartnerDead && pc.PlayerId == PartnerId) continue;
 
-            pc.RpcChColor(Player, 15, true); // 15 = 黒
+            pc.RpcChColor(Player, 15, true); 
             pc.RpcHideSkinAndPet(Player);
         }
     }

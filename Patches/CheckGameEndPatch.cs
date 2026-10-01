@@ -255,7 +255,7 @@ namespace TownOfHost
 
                                 .Do(pc => CustomWinnerHolder.WinnerIds.Add(pc.PlayerId));
 
-                            //if (Monochromer.CheckWin(reason)) break;
+                            if (Monochromer.CheckWin(reason)) break;
 
                             foreach (var pc in PlayerCatch.AllPlayerControls)
 

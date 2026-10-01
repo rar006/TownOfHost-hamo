@@ -40,7 +40,7 @@ public sealed class Magician : RoleBase, IImpostor, IUsePhantomButton
 
             SetupOptionItem,
 
-            "mc",
+            "mgc",
 
             OptionSort: (3, 2),
 
