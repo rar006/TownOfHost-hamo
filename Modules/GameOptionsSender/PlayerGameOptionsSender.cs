@@ -66,7 +66,7 @@ namespace TownOfHost.Modules
 
         public override IGameOptions BasedGameOptions =>
 
-            Main.RealOptionsData.Restore(cachedGameOptions ?? (cachedGameOptions = new NormalGameOptionsV11(new UnityLogger().Cast<ILogger>()).Cast<IGameOptions>()));
+            Main.RealOptionsData.Restore(cachedGameOptions ?? (cachedGameOptions = new NormalGameOptionsV12(new UnityLogger().Cast<ILogger>()).Cast<IGameOptions>()));
 
         public override bool IsDirty { get; protected set; }
 

@@ -23,7 +23,6 @@ public sealed class Viper : RoleBase, IImpostor
         player
     )
     {
-                // オプション登録前に役職インスタンスが生成される環境でも起動を止めない。
         ViperDissolveTime = OptViperDissolveTime?.GetFloat() ?? 15f;
         killcool = OptKillcool?.GetFloat() ?? 30f;
 
@@ -33,10 +32,8 @@ public sealed class Viper : RoleBase, IImpostor
     }
     static OptionItem OptKillcool; static float killcool;
     public static OptionItem OptViperDissolveTime; public static float ViperDissolveTime;
-    // 溶解タイマー進行中の死体(PlayerId -> 残り時間)
     readonly Dictionary<byte, float> dissolvingPlayers = new();
-    // 溶け終わった死体の一覧(ヴァルチャーのstaticEatedPlayersと同じ考え方で、
-    // 会議中に全員から×マークが見えるようにするためのリスト)
+
     static readonly HashSet<byte> staticDissolvedPlayers = new();
     public static void SetUpCustomOption()
     {
@@ -49,7 +46,7 @@ public sealed class Viper : RoleBase, IImpostor
     {
         AURoleOptions.ViperDissolveTime = ViperDissolveTime;
     }
-        // Viperは標準インポスターと同じく通常キルを行えることを明示する。
+        
     bool IKiller.CanUseKillButton() => Player.IsAlive();
     float IKiller.CalculateKillCooldown() => killcool;
 
@@ -59,11 +56,7 @@ public sealed class Viper : RoleBase, IImpostor
         return true;
     }
 
-    /// <summary>
-    /// キルした瞬間、死体が溶けるまでのタイマーを開始する。
-    /// (ヴァルチャーがViperの死体消滅を検知していたのと同じ仕組みを、
-    ///  Viper自身の役職側に持たせている)
-    /// </summary>
+
     public void OnMurderPlayerAsKiller(MurderInfo info)
     {
         var target = info.AttemptTarget;
@@ -91,9 +84,6 @@ public sealed class Viper : RoleBase, IImpostor
         }
     }
 
-    /// <summary>
-    /// 溶けた死体に、会議中ヴァルチャーと同じ×マークを付ける。
-    /// </summary>
     public static string GetMarkOthers(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)
     {
         seen ??= seer;

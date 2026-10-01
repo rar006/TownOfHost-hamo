@@ -186,7 +186,7 @@ namespace TownOfHost
 
 
 
-                NormalGameOptionsV11 gameOptions = Main.NormalOptions.TryCast<NormalGameOptionsV11>();
+                NormalGameOptionsV12 gameOptions = Main.NormalOptions.TryCast<NormalGameOptionsV12>();
 
                 if (Main.NormalOptions.NumImpostors == 0 && GameStates.IsOnlineGame)
 

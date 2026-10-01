@@ -180,9 +180,9 @@ namespace TownOfHost
 
         public static string credentialsText;
 
-        public static NormalGameOptionsV11 NormalOptions => GameOptionsManager.Instance.currentNormalGameOptions;
+        public static NormalGameOptionsV12 NormalOptions => GameOptionsManager.Instance.currentNormalGameOptions;
 
-        public static HideNSeekGameOptionsV11 HideNSeekSOptions => GameOptionsManager.Instance.currentHideNSeekGameOptions;
+        public static HideNSeekGameOptionsV12 HideNSeekSOptions => GameOptionsManager.Instance.currentHideNSeekGameOptions;
 
         //Client Options
 

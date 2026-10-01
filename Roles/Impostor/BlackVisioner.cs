@@ -7,19 +7,6 @@ using TownOfHost.Roles.Core.Interfaces;
 
 namespace TownOfHost.Roles.Impostor;
 
-// ===== ブラックビジョナー (BlackVisioner) =====
-// From: TownOfHost_hamo
-// イントロ：色はすべて同じだけど
-// 陣営：インポスター / 置き換え：インポスター / カウント：インポスター
-//
-// すべてのクルーが黒色に見えるインポスター。マッドメイト(ブラックマッドメイト)を作成できる。
-// ブラックマッドメイトとは互いの真の色を視認できる。ブラックビジョナーが死亡するとブラックマッドメイトも道連れで死亡する。
-// 実際の(通常の)インポスター仲間は黒く塗りつぶされて見分けがつかなくなるため、誤ってキルしてしまう可能性がある演出上のリスクがある。
-//
-// 【実装メモ】サイドキック生成は当初 Shapeshifter+ISidekickable 方式(Egoist方式)で組んだが、
-// このコードベースでインポスター陣営がマッドメイトを作る役職(Jackal, EvilMaker)は実際には
-// RoleTypes.Phantom + IUsePhantomButton 方式(いわゆる「専用ボタン」)を使っており、
-// Shapeshifter方式はインポスター陣営には正しく機能しない。EvilMakerを参考に書き直した。
 public sealed class BlackVisioner : RoleBase, IImpostor, IUsePhantomButton
 {
     public static readonly SimpleRoleInfo RoleInfo =
