@@ -9,6 +9,16 @@ namespace TownOfHost.Modules.ClientOptions;
 public static class SoundSettingsScreen
 {
     public static SpriteRenderer Popup { get; private set; }
+        /// <summary>旧メニューの残骸を指している場合に、ポップアップ参照を破棄して作り直せる状態に戻す</summary>
+        public static void ForgetPopup()
+        {
+            try
+            {
+                if (Popup != null && Popup.gameObject != null) UnityEngine.Object.Destroy(Popup.gameObject);
+            }
+            catch { }
+            Popup = null;
+        }
     public static TextMeshPro Text { get; private set; }
     public static SlideBar Music { get; private set; }
     public static SlideBar Sound { get; private set; }

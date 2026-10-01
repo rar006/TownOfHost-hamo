@@ -8217,6 +8217,10 @@
 "Judge","Judge","ジャッジ"
 "JudgeInfo","Control the meeting.","会議を支配しよう"
 "JudgeInfoLong","Control the vote.","投票を支配しよう"
+"Influencer","Influencer","インフルエンサー"
+"InfluencerInfo","Keep influencing the living after death.","死んでもメッセージを送り続けよう"
+"InfluencerInfoLong","Even after death, you can send messages to the living players.","死亡後も生存者にメッセージを送ることができる。"
+"InfluencerMessageCooldown","Message Cooldown","メッセージのクールダウン"
 
 "Madpsycho","Mad Psycho","マッドサイコ"
 "MadpsychoInfo","*","僕にかかわった人はみんな死んでいくんだ。"

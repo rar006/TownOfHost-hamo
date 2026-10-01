@@ -11,6 +11,16 @@ namespace TownOfHost.Modules.ClientOptions;
 public static class ModUnloaderScreen
 {
     public static SpriteRenderer Popup { get; private set; }
+        /// <summary>旧メニューの残骸を指している場合に、ポップアップ参照を破棄して作り直せる状態に戻す</summary>
+        public static void ForgetPopup()
+        {
+            try
+            {
+                if (Popup != null && Popup.gameObject != null) UnityEngine.Object.Destroy(Popup.gameObject);
+            }
+            catch { }
+            Popup = null;
+        }
     public static TextMeshPro WarnText { get; private set; }
     public static ToggleButtonBehaviour CancelButton { get; private set; }
     public static ToggleButtonBehaviour UnloadButton { get; private set; }

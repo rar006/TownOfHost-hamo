@@ -118,6 +118,9 @@ namespace TownOfHost
         {
 
             AutoRehost.NotifyExitGameCalled(reason);
+            // 自動立て直し中(=意図して部屋を作り直す時)以外の退出は、メインメニューへ戻る際に
+            // ゲーム作成画面へ強制遷移させないよう記録しておく。
+            if (!AutoRehost.IsPending) MainMenuManagerPatch.NotifyLeftGame();
 
         }
 

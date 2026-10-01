@@ -620,12 +620,12 @@ namespace TownOfHost
 
 
 
-            // フリープレイの無効化
-
+            // フリープレイ → 「カスタムスポーンを設定」ボタン化
+            // 【修正】以前は OnClick = new() でバニラのクリック処理(フリープレイ起動)ごと
+            // 消してしまっており、フラグを立てるだけで何も起きなかった。
+            // TownOfHost-K と同じく、バニラの処理は残したままリスナーを「追加」する。
             var howToPlayButton = __instance.howToPlayButton;
-
-            var freeplayButton = howToPlayButton.transform.parent.Find("FreePlayButton");
-
+            var freeplayButton = howToPlayButton?.transform?.parent?.Find("FreePlayButton");
             if (freeplayButton != null)
             {
                 var textm = freeplayButton.transform.FindChild("Text_TMP")?.GetComponent<TextMeshPro>();
@@ -634,45 +634,13 @@ namespace TownOfHost
                     textm.DestroyTranslator();
                     textm.text = GetMenuText("EditCSp", "カスタムスポーンを設定");
                 }
-
                 var freeplayPassiveButton = freeplayButton.GetComponent<PassiveButton>();
                 if (freeplayPassiveButton != null)
                 {
-                    freeplayPassiveButton.OnClick = new();
+                    // OnClick = new() はしない(バニラのフリープレイ開始処理を残す)
                     freeplayPassiveButton.OnClick.AddListener((Action)(() => CustomSpawnEditor.ActiveEditMode = true));
                 }
             }
-
-            // フリープレイが消えるのでHowToPlayをセンタリング | 消えないのでしません☆
-            //howToPlayButton.transform.SetLocalX(0);
-
-#if DEBUG
-
-            var csbutton = GameObject.Instantiate(freeplayButton, freeplayButton.parent);
-
-            var debugCsButtonText = csbutton.transform.FindChild("Text_TMP").GetComponent<TextMeshPro>();
-
-            debugCsButtonText.DestroyTranslator();
-
-            debugCsButtonText.text = Translator.GetString("EditCSp");
-
-
-
-            csbutton.transform.localPosition = new Vector3(2.8704f, -1.9916f);
-
-            csbutton.transform.localScale = new Vector3(0.6f, 0.6f);
-
-            var pb = csbutton.GetComponent<PassiveButton>();
-
-            pb.inactiveSprites.GetComponent<SpriteRenderer>().color = new(88, 101, 242, byte.MaxValue);
-
-            pb.activeSprites.GetComponent<SpriteRenderer>().color = new(148, 161, byte.MaxValue, byte.MaxValue);
-
-            pb.OnClick.AddListener((Action)(() => CustomSpawnEditor.ActiveEditMode = true));
-
-            freeplayButton.GetComponent<PassiveButton>().OnClick.AddListener((Action)(() => CustomSpawnEditor.ActiveEditMode = false));//ボタンを生成
-
-#endif
 
         }
 
@@ -834,10 +802,39 @@ namespace TownOfHost
             SetInitialMenuUiVisible(false);
         }
 
+        // 「ゲームをやめる」等で試合/ロビーから抜けた直後かどうか。
+        // 退出後にバニラが呼ぶ OpenOnlineMenu を、ゲーム作成画面へ置き換えてしまうと
+        // 「ゲームをやめる→ゲーム作成画面に飛ばされる」不具合になるため、
+        // 退出直後の1回だけはバニラ(TownOfHost-Kと同じ)の遷移に任せる。
+        private static bool leftGameRecently;
+        private static float mainMenuEnteredAt = -100f;
+        private const float LeftGameOnlineMenuWindow = 5f;
+        /// <summary>ゲームから退出した(=メインメニューへ戻る)ことを記録する</summary>
+        public static void NotifyLeftGame()
+        {
+            leftGameRecently = true;
+        }
+        [HarmonyPatch(nameof(MainMenuManager.Start))]
+        [HarmonyPrefix]
+        private static void MainMenuStartRecordPrefix()
+        {
+            mainMenuEnteredAt = UnityEngine.Time.realtimeSinceStartup;
+        }
         [HarmonyPatch(nameof(MainMenuManager.OpenOnlineMenu))]
         [HarmonyPrefix]
         private static bool OpenOnlineMenuDirectModePrefix(MainMenuManager __instance)
         {
+            // 退出直後(メインメニュー読み込みから一定時間内)のOpenOnlineMenuは
+            // バニラの遷移に任せ、ゲーム作成画面へは飛ばさない。
+            if (leftGameRecently)
+            {
+                leftGameRecently = false;
+                if (UnityEngine.Time.realtimeSinceStartup - mainMenuEnteredAt <= LeftGameOnlineMenuWindow)
+                {
+                    SetInitialMenuUiVisible(false);
+                    return true;
+                }
+            }
             // バニラのオンライン中間画面（ゲーム作成／コード入力カード）は使用しない。
             // どのボタン経路でも、起動モードに必要な最終画面へ直接遷移する。
             if (Main.IsNonHostClient)

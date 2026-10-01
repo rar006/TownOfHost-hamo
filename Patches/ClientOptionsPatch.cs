@@ -86,6 +86,14 @@ namespace TownOfHost
 
             Instance = __instance;
 
+            // 旧メニューの残骸を参照している場合は、UI参照を全て破棄して作り直す
+            // (設定を閉じて開き直すと2回目以降ボタンが反応しない不具合の対策)
+            if (ClientActionItem.IsStale(__instance))
+            {
+                ResetItemReferences();
+                ClientActionItem.ResetAll();
+            }
+
 
 
             if (__instance.DisableMouseMovement == null)
@@ -448,6 +456,34 @@ namespace TownOfHost
 
         }
 
+        /// <summary>保持している各アイテム/ポップアップ/ボタンの参照を全て破棄する</summary>
+        private static void ResetItemReferences()
+        {
+            ForceJapanese = JapaneseRoleName = UnloadMod = DumpLog = OpenLogFolder = ForceEnd = null;
+            UseWebHook = Yomiage = CustomName = CustomSprite = HideSomeFriendCodes = null;
+            ViewPingDetails = DebugChatopen = DebugSendAmout = DebugTours = ShowDistance = null;
+            FpsLimitRemoval = AutoSaveScreenShot = PreloadMapAssets = ShowPresetInWebhook = null;
+            AutoRehost = EnableDiscordRichPresence = ShowRoomTimer = ShowPlayerCount = ShowRoomCode = null;
+            ModUnloaderScreen.ForgetPopup();
+            SoundSettingsScreen.ForgetPopup();
+            StreamerHopeMenu.ForgetPopup();
+            if (soundSettingsButton != null && soundSettingsButton.gameObject != null)
+                Object.Destroy(soundSettingsButton.gameObject);
+            soundSettingsButton = null;
+            if (StreamHopeButton != null && StreamHopeButton.gameObject != null)
+                Object.Destroy(StreamHopeButton.gameObject);
+            StreamHopeButton = null;
+        }
+
+        /// <summary>Modオプション用UIを全て作り直す(旧メニューの残骸を参照していた場合の復旧用)</summary>
+        public static void RebuildClientOptions(OptionsMenuBehaviour menu)
+        {
+            if (menu == null) return;
+            ResetItemReferences();
+            ClientActionItem.ResetAll();
+            Postfix(menu);
+        }
+
         private static void ForceEndProcess()
 
         {
@@ -523,6 +559,14 @@ namespace TownOfHost
     public static class OptionsMenuBehaviourOpenPatch
 
     {
+        public static void Postfix(OptionsMenuBehaviour __instance)
+        {
+            // 開いた時点で旧メニューの残骸を指していたら作り直す
+            if (__instance != null && ClientActionItem.IsStale(__instance))
+            {
+                OptionsMenuBehaviourStartPatch.RebuildClientOptions(__instance);
+            }
+        }
 
         public static void Prefix()
 
