@@ -376,7 +376,7 @@ namespace TownOfHost.Patches
             }
         }
 
-        private static IEnumerator CoAnimateBubbles(List<Transform> bubbles, float baseY)
+        internal static IEnumerator CoAnimateBubbles(List<Transform> bubbles, float baseY)
         {
             var phase = new float[bubbles.Count];
             for (int i = 0; i < phase.Length; i++) phase[i] = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
@@ -398,7 +398,7 @@ namespace TownOfHost.Patches
             }
         }
 
-        private static GameObject CreateBar(Vector3 leftEdgePosition, float width, float height, Color color, int sortingOrder)
+        internal static GameObject CreateBar(Vector3 leftEdgePosition, float width, float height, Color color, int sortingOrder)
         {
             var obj = new GameObject("TOHhamoLoadingBar");
             var sr = obj.AddComponent<SpriteRenderer>();
@@ -410,7 +410,7 @@ namespace TownOfHost.Patches
             return obj;
         }
 
-        private static void SetBarFill(GameObject barFill, float fullWidth, float percent)
+        internal static void SetBarFill(GameObject barFill, float fullWidth, float percent)
         {
             var scale = barFill.transform.localScale;
             scale.x = fullWidth * Mathf.Clamp01(percent);
@@ -430,7 +430,7 @@ namespace TownOfHost.Patches
         }
 
         private static readonly Dictionary<Color, Sprite> _circleSpriteCache = new();
-        private static Sprite CreateCircleSprite(Color color)
+        internal static Sprite CreateCircleSprite(Color color)
         {
             if (_circleSpriteCache.TryGetValue(color, out var cached) && cached != null) return cached;
 
@@ -458,7 +458,7 @@ namespace TownOfHost.Patches
             return sprite;
         }
 
-        private static Color SetAlpha(Color c, float a)
+        internal static Color SetAlpha(Color c, float a)
         {
             c.a = a;
             return c;

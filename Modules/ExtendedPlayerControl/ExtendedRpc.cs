@@ -942,7 +942,7 @@ namespace TownOfHost
 
             }
 
-            if (player.IsAlive() || !(player.Data.Role.Role is RoleTypes.CrewmateGhost or RoleTypes.ImpostorGhost or RoleTypes.GuardianAngel))
+           var currentRole = player.Data.Role.Role;
 
             {//道連れ、マジシャン等で死んでいないのにIsDeadを変更する場合はモーションを入れる。
 
@@ -984,9 +984,9 @@ namespace TownOfHost
 
             RPC.RpcSyncAllNetworkedPlayer();
 
-            player.RpcSetRole(player.IsGhostRole() ? RoleTypes.GuardianAngel :
-
-            (player.CanUseSabotageButton() ? RoleTypes.ImpostorGhost : RoleTypes.CrewmateGhost));
+            player.RpcSetRole(currentRole is RoleTypes.SpiritGuide ? RoleTypes.SpiritGuide :
+                player.IsGhostRole() ? RoleTypes.GuardianAngel :
+                (player.CanUseSabotageButton() ? RoleTypes.ImpostorGhost : RoleTypes.CrewmateGhost));
 
             Patches.GameDataSerializePatch.SerializeMessageCount--;
 

@@ -27,6 +27,7 @@ namespace TownOfHost
         byte PlayerId;
 
         public CustomRoles MainRole;
+        public bool WasInfluencer {get; set;}
 
         public List<CustomRoles> SubRoles;
 

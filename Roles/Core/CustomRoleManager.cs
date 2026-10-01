@@ -1976,6 +1976,7 @@ public enum CustomRoles
     Ruler,
     Abuser,
     Victim,
+    Influencer = 286,
     // Sub-roll after 500
     NotAssigned = 500,
     LastImpostor,
@@ -2041,7 +2042,7 @@ public enum CustomRoles
     GhostNoiseSender,
     GhostReseter,
     GuardianAngel,
-    GhostRumour,
+    GhostRumour = 565,
     //Pko
     GhostFloodlight,
     GhostSaboteur,

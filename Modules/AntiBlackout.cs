@@ -23,6 +23,8 @@ namespace TownOfHost
         public static bool Iswaitsend { get; private set; } = false;
         public static byte dummyImpostorPlayer { get; private set; }
         public static Dictionary<byte, (bool isDead, bool Disconnected)> isDeadCache = new();
+        private static readonly HashSet<byte> spiritGuideCache = new();
+        public static bool WasSpiritGuide(byte playerId) => spiritGuideCache.Contains(playerId);
         public static List<byte> isRoleCache = new();
         public static VoteResult? voteresult;
         //private static Dictionary<(byte, byte), RoleTypes> RoleTypeCache = new();
@@ -61,10 +63,14 @@ namespace TownOfHost
                 return;
             }
             isDeadCache.Clear();
+           spiritGuideCache.Clear();
             var nowcount = PlayerCatch.AllPlayerControls.Count();
             foreach (var info in GameData.Instance.AllPlayers)
             {
+                if (info == null) continue;
                 isDeadCache[info.PlayerId] = (info.IsDead, info.Disconnected);
+                if (info.Role?.Role == RoleTypes.SpiritGuide)
+                    spiritGuideCache.Add(info.PlayerId);
                 //情報が無い　　　   4人以上正常者がいる場合は役職変えるので回線切断者を生存擬装する必要が多分ない。
                 if (info == null || ((info?.Disconnected == true) && MustPlayerCount <= nowcount)) continue;
                 info.IsDead = false;
@@ -279,7 +285,8 @@ namespace TownOfHost
                     }
                     if (!isalive)
                     {
-                        role = pc.CanUseSabotageButton() ?
+                        role = (WasSpiritGuide(pc.PlayerId) || pc.Data?.Role?.Role == RoleTypes.SpiritGuide)
+                            ? RoleTypes.SpiritGuide : pc.CanUseSabotageButton() ?
                                 RoleTypes.ImpostorGhost : RoleTypes.CrewmateGhost;
                     }
 
@@ -317,6 +324,10 @@ namespace TownOfHost
                     {
                         setrole = RoleTypes.GuardianAngel;
                     }
+
+                    if (!isalive && pc.PlayerId == Player.PlayerId &&
+                        (WasSpiritGuide(pc.PlayerId) || pc.Data?.Role?.Role == RoleTypes.SpiritGuide))
+                        setrole = RoleTypes.SpiritGuide;
 
                     sender.StartRpc(pc.NetId, RpcCalls.SetRole)
                     .Write((ushort)setrole)
@@ -404,6 +415,7 @@ namespace TownOfHost
             if (isRoleCache == null) isRoleCache = new();
             isRoleCache.Clear();
             isDeadCache.Clear();
+            spiritGuideCache.Clear();
             //RoleTypeCache.Clear();
             voteresult = null;
             IsCached = false;

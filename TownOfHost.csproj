@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+	<!-- 任意: 同じフォルダに AmongUsPath.props を置くと、そこで指定した <AmongUs> が使われる(AmongUsPath.props.example 参照) -->
+	<Import Project="AmongUsPath.props" Condition="Exists('AmongUsPath.props')" />
+
 	<PropertyGroup>
 
 		<TargetFramework>net6.0</TargetFramework>
@@ -30,7 +33,17 @@
 
 		<NoWarn>MSB3246;CS0162;CS0169;CS0184;CS0649;CS0414;GI001,IDE0017,IDE0090</NoWarn>
 
-		<AmongUs>C:\Program Files (x86)\Steam\steamapps\common\Among Us</AmongUs>
+		<!-- Among Usのフォルダ。優先順位: ①ビルド時の -p:AmongUs="..." ②環境変数 AMONGUS_PATH ③AmongUsPath.props ④下の自動検出 -->
+		<AmongUs Condition="'$(AmongUs)' == '' And '$(AMONGUS_PATH)' != ''">$(AMONGUS_PATH)</AmongUs>
+		<AmongUs Condition="'$(AmongUs)' == '' And Exists('C:\Program Files (x86)\Steam\steamapps\common\Among Us\BepInEx\interop')">C:\Program Files (x86)\Steam\steamapps\common\Among Us</AmongUs>
+		<AmongUs Condition="'$(AmongUs)' == '' And Exists('C:\Program Files\Steam\steamapps\common\Among Us\BepInEx\interop')">C:\Program Files\Steam\steamapps\common\Among Us</AmongUs>
+		<AmongUs Condition="'$(AmongUs)' == '' And Exists('D:\SteamLibrary\steamapps\common\Among Us\BepInEx\interop')">D:\SteamLibrary\steamapps\common\Among Us</AmongUs>
+		<AmongUs Condition="'$(AmongUs)' == '' And Exists('D:\Steam\steamapps\common\Among Us\BepInEx\interop')">D:\Steam\steamapps\common\Among Us</AmongUs>
+		<AmongUs Condition="'$(AmongUs)' == '' And Exists('E:\SteamLibrary\steamapps\common\Among Us\BepInEx\interop')">E:\SteamLibrary\steamapps\common\Among Us</AmongUs>
+		<AmongUs Condition="'$(AmongUs)' == '' And Exists('C:\Program Files\Epic Games\AmongUs\BepInEx\interop')">C:\Program Files\Epic Games\AmongUs</AmongUs>
+		<AmongUs Condition="'$(AmongUs)' == '' And Exists('C:\Program Files (x86)\Epic Games\AmongUs\BepInEx\interop')">C:\Program Files (x86)\Epic Games\AmongUs</AmongUs>
+		<!-- 見つからなかった場合は、下のCheckAmongUsPathが分かりやすいエラーを出す -->
+		<AmongUs Condition="'$(AmongUs)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Among Us</AmongUs>
 
 		<CopyToAmongUs Condition="'$(CopyToAmongUs)' == ''">true</CopyToAmongUs>
 
@@ -136,5 +149,10 @@
 
 	</Target>
 
-</Project>
+	<!-- Among UsのBepInEx interopが見つからないとき、数千件の型エラーではなく原因を1件だけ表示して止める -->
+	<Target Name="CheckAmongUsPath" BeforeTargets="ResolveAssemblyReferences;CoreCompile">
+		<Error Condition="!Exists('$(AmongUs)\BepInEx\interop\Assembly-CSharp.dll')"
+		       Text="Among Usの場所が正しくありません: '$(AmongUs)'。BepInEx\interop\Assembly-CSharp.dll が見つかりません。 対処: (1) AmongUsPath.props.example を AmongUsPath.props にコピーして自分のAmong Usフォルダに書き換える / または dotnet build -p:AmongUs=&quot;自分のパス&quot; を使う。 (2) そのフォルダにBepInEx(IL2CPP版)を入れて、Among Usを一度起動し BepInEx\interop を生成する。" />
+	</Target>
 
+</Project>

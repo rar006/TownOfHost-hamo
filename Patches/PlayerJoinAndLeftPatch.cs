@@ -212,7 +212,8 @@ namespace TownOfHost
 
                 gameOptions.RoleOptions.SetRoleRate(RoleTypes.Judge, 0, 0);
 
-                Main.NormalOptions.roleOptions.TryGetRoleOptions(RoleTypes.GuardianAngel, out GuardianAngelRoleOptionsV10 roleData);
+                if (Main.NormalOptions.roleOptions.TryGetRoleOptions(RoleTypes.GuardianAngel, out GuardianAngelRoleOptionsV12 roleData))
+                    roleData.ProtectionDurationSeconds = 9999999999;
 
                 gameOptions.SetBool(BoolOptionNames.ConfirmImpostor, false);
 
@@ -226,7 +227,6 @@ namespace TownOfHost
 
                 }
 
-                roleData.ProtectionDurationSeconds = 9999999999;
 
                 foreach (var option in OptionItem.AllOptions)
 
@@ -239,7 +239,7 @@ namespace TownOfHost
                 }
 
                 VanillaOptionHolder.SetVanillaValue();
-
+                TownOfHost.Roles.Vanilla.Influencer.ApplyOptions();
 
 
                 if (TaskBattle.IsAllMapMode)
