@@ -453,7 +453,8 @@ public static class RoleGuideButtonPatch
 
     private static bool ShouldShowTopRightChatButton()
 
-        => GameStates.IsLobby || GameStates.IsMeeting;
+        // フリープレイ(カスタムスポーン編集)ではチャットを出さない
+        => (GameStates.IsLobby && !GameStates.IsFreePlay) || GameStates.IsMeeting;
 
 
 
@@ -509,94 +510,92 @@ public static class RoleGuideButtonPatch
 
 
 
-    internal static void CreateVanillaButtonFrame(HudManager hud, Transform parent)
+    // フリープレイ等ではメインメニューの「Friends List Button」やチャットUIの背景が存在せず、
+    // BUG/HELPの枠が作れずに消えてしまっていた。見つかった時のテンプレート情報を保存しておき、
+    // 見つからないシーンではそれと、HUD内のボタン背景で代用する。
+    private static Sprite cachedFrameSprite;
+    private static Vector3 cachedFrameLossyScale = Vector3.one;
+    private static Vector2 cachedFrameSize;
+    private static SpriteDrawMode cachedFrameDrawMode;
+    private static bool cachedFrameFlipX, cachedFrameFlipY;
 
+    private static SpriteRenderer FindFrameTemplate(HudManager hud)
     {
-
         var renderers = hud.transform.root.GetComponentsInChildren<SpriteRenderer>(true);
-
-        var templateRenderer = renderers.FirstOrDefault(renderer =>
-
-                renderer.gameObject.name == "background"
-
-                && renderer.transform.parent != null
-
-                && renderer.transform.parent.name == "Friends List Button")
-
-            ?? renderers.FirstOrDefault(renderer =>
-
-                renderer.gameObject.name == "background"
-
-                && renderer.transform.parent != null
-
-                && renderer.transform.parent.name == "ChatUi");
-
-        if (templateRenderer == null || templateRenderer.sprite == null)
-
-        {
-
-            Logger.Error("バニラのボタン背景スプライトが見つかりませんでした", "RoleGuideButton");
-
-            return;
-
-        }
-
-
-
-        var frameObj = new GameObject("VanillaBackground");
-
-        frameObj.transform.SetParent(parent);
-
-        frameObj.name = "VanillaBackground";
-
-        frameObj.layer = 5;
-
-        frameObj.transform.localPosition = new Vector3(0f, 0f, 0.05f);
-
-        frameObj.transform.localRotation = Quaternion.identity;
-
-
-
-        var templateScale = templateRenderer.transform.lossyScale;
-
-        var parentScale = parent.lossyScale;
-
-        frameObj.transform.localScale = new Vector3(
-
-            parentScale.x == 0f ? 1f : templateScale.x / parentScale.x,
-
-            parentScale.y == 0f ? 1f : templateScale.y / parentScale.y,
-
-            1f);
-
-
-
-        var frameRenderer = frameObj.AddComponent<SpriteRenderer>();
-
-        frameRenderer.sprite = templateRenderer.sprite;
-
-        frameRenderer.color = Color.white;
-
-        frameRenderer.drawMode = templateRenderer.drawMode;
-
-        frameRenderer.size = templateRenderer.size;
-
-        frameRenderer.flipX = templateRenderer.flipX;
-
-        frameRenderer.flipY = templateRenderer.flipY;
-
-        frameRenderer.maskInteraction = SpriteMaskInteraction.None;
-
-        frameRenderer.sortingLayerID = 0;
-
-        frameRenderer.sortingOrder = 9;
-
-        frameRenderer.enabled = true;
-
+        bool IsBg(SpriteRenderer r) => r != null && r.sprite != null && r.gameObject.name.ToLowerInvariant() == "background" && r.transform.parent != null;
+        return renderers.FirstOrDefault(r => IsBg(r) && r.transform.parent.name == "Friends List Button")
+            ?? renderers.FirstOrDefault(r => IsBg(r) && r.transform.parent.name == "ChatUi")
+            // HUD内の右上ボタン(チャット/設定/マップ)の背景
+            ?? renderers.FirstOrDefault(r => IsBg(r) && r.transform.IsChildOf(hud.transform)
+                && !r.transform.IsChildOf(guidePanel != null ? guidePanel.transform : hud.transform.parent ?? hud.transform)
+                && (r.transform.parent.name.Contains("Chat") || r.transform.parent.name.Contains("Settings") || r.transform.parent.name.Contains("Map")));
     }
 
+    /// <summary>メインメニュー等でバニラのボタン枠を見つけたら、後のシーン用に控えておく。</summary>
+    public static void CacheFrameTemplate()
+    {
+        try
+        {
+            if (!DestroyableSingleton<HudManager>.InstanceExists)
+            {
+                var all = UnityEngine.Object.FindObjectsOfType<SpriteRenderer>();
+                var r = all.FirstOrDefault(x => x != null && x.sprite != null && x.gameObject.name == "background"
+                    && x.transform.parent != null && x.transform.parent.name == "Friends List Button");
+                if (r != null) StoreFrameTemplate(r);
+                return;
+            }
+            var template = FindFrameTemplate(DestroyableSingleton<HudManager>.Instance);
+            if (template != null) StoreFrameTemplate(template);
+        }
+        catch (Exception e) { Logger.Warn($"CacheFrameTemplate: {e.Message}", "RoleGuideButton"); }
+    }
 
+    private static void StoreFrameTemplate(SpriteRenderer template)
+    {
+        cachedFrameSprite = template.sprite;
+        cachedFrameLossyScale = template.transform.lossyScale;
+        cachedFrameSize = template.size;
+        cachedFrameDrawMode = template.drawMode;
+        cachedFrameFlipX = template.flipX;
+        cachedFrameFlipY = template.flipY;
+    }
 
+    internal static void CreateVanillaButtonFrame(HudManager hud, Transform parent)
+    {
+        var templateRenderer = FindFrameTemplate(hud);
+        if (templateRenderer != null && templateRenderer.sprite != null)
+        {
+            StoreFrameTemplate(templateRenderer);
+        }
+        else if (cachedFrameSprite == null)
+        {
+            Logger.Error("バニラのボタン背景スプライトが見つかりませんでした", "RoleGuideButton");
+            return;
+        }
+        var frameObj = new GameObject("VanillaBackground");
+        frameObj.transform.SetParent(parent);
+        frameObj.name = "VanillaBackground";
+        frameObj.layer = 5;
+        frameObj.transform.localPosition = new Vector3(0f, 0f, 0.05f);
+        frameObj.transform.localRotation = Quaternion.identity;
+        var templateScale = cachedFrameLossyScale;
+        var parentScale = parent.lossyScale;
+        frameObj.transform.localScale = new Vector3(
+            parentScale.x == 0f ? 1f : templateScale.x / parentScale.x,
+            parentScale.y == 0f ? 1f : templateScale.y / parentScale.y,
+            1f);
+        var frameRenderer = frameObj.AddComponent<SpriteRenderer>();
+        frameRenderer.sprite = cachedFrameSprite;
+        frameRenderer.color = Color.white;
+        frameRenderer.drawMode = cachedFrameDrawMode;
+        frameRenderer.size = cachedFrameSize;
+        frameRenderer.flipX = cachedFrameFlipX;
+        frameRenderer.flipY = cachedFrameFlipY;
+        frameRenderer.maskInteraction = SpriteMaskInteraction.None;
+        frameRenderer.sortingLayerID = 0;
+        frameRenderer.sortingOrder = 9;
+        frameRenderer.enabled = true;
+    }
     private static void TogglePanel()
 
     {

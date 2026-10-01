@@ -29,6 +29,8 @@ public static class ModUnloadLoadingScreen
     private const int OrderLogo = 30004;
     private const int OrderText = 30010;
 
+    // ロード画面全体の縮小率(1.0で従来サイズ)
+    private const float LoadingScreenScale = 0.7f;
     private const float MinStepSeconds = 0.45f;
     private const float MaxGcWaitSeconds = 5f;
 
@@ -134,7 +136,8 @@ public static class ModUnloadLoadingScreen
         if (cam != null)
         {
             root.transform.SetPositionAndRotation(cam.transform.position + cam.transform.forward * 5f, cam.transform.rotation);
-            if (cam.orthographic) root.transform.localScale = Vector3.one * (cam.orthographicSize / 3f);
+            // ロゴ・文字・バーが大きすぎたため、全体を一定割合で縮小する(背景は下で拡大して画面全体を覆う)
+            if (cam.orthographic) root.transform.localScale = Vector3.one * (cam.orthographicSize / 3f) * LoadingScreenScale;
         }
 
         GameObject Attach(GameObject obj, Vector3 localPos)
@@ -154,8 +157,9 @@ public static class ModUnloadLoadingScreen
         var barFillColor = new Color(1f, 0.52f, 0.85f, 0.95f);
 
         // 背景(画面全体を覆う)
-        const float overlayWidth = 60f;
-        const float overlayHeight = 40f;
+        // 全体を縮小しても画面全体を覆えるよう、縮小率の逆数ぶん広げる
+        const float overlayWidth = 60f / LoadingScreenScale;
+        const float overlayHeight = 40f / LoadingScreenScale;
         var overlayPos = new Vector3(-overlayWidth / 2f, 0f, 0f);
         var overlay = Attach(HamoLoadingScreenPatch.CreateBar(overlayPos, overlayWidth, overlayHeight, HamoLoadingScreenPatch.SetAlpha(overlayColor, 0f), OrderOverlay), overlayPos);
         overlay.name = "TOHhamoUnloadOverlay";

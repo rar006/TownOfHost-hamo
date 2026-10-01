@@ -206,7 +206,8 @@ public class SimpleRoleInfo
         bool canMakeMadmate = false,
         RoleAssignInfo assignInfo = null,
         CombinationRoles combination = CombinationRoles.None,
-        From from = From.None
+        From from = From.None,
+        TabGroup tab = TabGroup.MainSettings
     )
     {
         CustomRoles roleName;
@@ -311,7 +312,7 @@ public class SimpleRoleInfo
             colorCode,
             OptionSort,
             false,
-            TabGroup.MainSettings,
+            tab,
             null,
             () => canMakeMadmate,
             assignInfo ?? new(roleName, customRoleType),

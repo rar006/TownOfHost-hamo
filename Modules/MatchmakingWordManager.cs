@@ -115,9 +115,12 @@ public static class MatchmakingWordManager
 
     public static void HideEditor()
     {
+        // 編集ポップアップが実際に開いていた時だけチャットUIを復元する。
+        // (設定を閉じるたびに無条件で復元すると、フリープレイ/試合中でもチャットが出てしまう)
+        var wasOpen = popup != null && popup.gameObject.activeInHierarchy;
         if (popup != null)
             popup.gameObject.SetActive(false);
-
+        if (!wasOpen) return;
         TryRestoreChatUiNow();
         ScheduleChatUiRefresh(8f, 0f);
     }
@@ -562,6 +565,10 @@ public static class MatchmakingWordManager
 
     private static void TryRestoreChatUiNow()
     {
+        // メインメニュー等、HudManagerが存在しない場面でInstanceを参照すると
+        // HudManagerが新規生成されてしまい、設定メニューの2回目以降が開けなくなる原因になるため、
+        // 存在する時だけ処理する。
+        if (!DestroyableSingleton<HudManager>.InstanceExists) return;
         var hud = DestroyableSingleton<HudManager>.Instance;
         var chat = hud?.Chat;
         if (chat == null) return;

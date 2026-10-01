@@ -132,6 +132,11 @@ namespace TownOfHost
             }
             MenuButtonParent = MenuButtonAnchor.transform;
             SetInitialMenuUiVisible(true);
+            // 右下に出る赤い✘ボタン(要望により小さくする)。生成タイミングが遅いため少し待ってから縮小する。
+            _ = new LateTask(() => ShrinkBottomRightRedButton(), 1.0f, "ShrinkBottomRightRedButton", true);
+            // BUG/HELPボタンの枠用に、バニラのボタン枠スプライトを控えておく(フリープレイ等で枠が消えるのを防ぐ)
+            _ = new LateTask(() => RoleGuideButtonPatch.CacheFrameTemplate(), 0.8f, "CacheFrameTemplate", true);
+            _ = new LateTask(() => ShrinkBottomRightRedButton(), 3.0f, "ShrinkBottomRightRedButton2", true);
 
             // モード切替ボタンはゲームモード画面が実際に開かれた後に生成する。
             // Start時点ではgameModeButtonsが未生成のことがあるため、ここでは生成しない。
@@ -751,6 +756,39 @@ namespace TownOfHost
             text.fontSize = text.fontSizeMin = text.fontSizeMax = 1.55f;
         }
 
+        // 縮小済みオブジェクトの記録(同じオブジェクトを何度も縮めないため)
+        private static readonly System.Collections.Generic.HashSet<int> shrunkRedButtonIds = new();
+        private const float RedButtonShrinkScale = 0.55f;
+        /// <summary>
+        /// メインメニュー右下の赤い✘ボタンを小さくする。
+        /// 名前(exit/close/quit/cross)と、画面右下に位置することを条件に探す。
+        /// 見つけた候補はログにも出す(別のオブジェクトを縮めてしまった/見つからない場合の調査用)。
+        /// </summary>
+        private static void ShrinkBottomRightRedButton()
+        {
+            try
+            {
+                var cam = Camera.main;
+                if (cam == null) return;
+                foreach (var sr in Object.FindObjectsOfType<SpriteRenderer>())
+                {
+                    if (sr == null || sr.sprite == null || !sr.gameObject.activeInHierarchy) continue;
+                    var key = (sr.gameObject.name + " " + sr.sprite.name).ToLowerInvariant();
+                    if (!(key.Contains("exit") || key.Contains("close") || key.Contains("quit") || key.Contains("cross"))) continue;
+                    var vp = cam.WorldToViewportPoint(sr.transform.position);
+                    if (vp.x < 0.75f || vp.y > 0.35f) continue;
+                    var button = sr.GetComponentInParent<PassiveButton>();
+                    var target = button != null ? button.transform : sr.transform;
+                    Logger.Info($"RedButton候補: {target.name} / sprite={sr.sprite.name} / viewport=({vp.x:F2},{vp.y:F2})", "MainMenu");
+                    if (!shrunkRedButtonIds.Add(target.gameObject.GetInstanceID())) continue;
+                    target.localScale *= RedButtonShrinkScale;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Warn($"ShrinkBottomRightRedButton: {e.Message}", "MainMenu");
+            }
+        }
         public static void SetInitialMenuUiVisible(bool visible)
         {
             // 追加ボタン群とhamoロゴだけを切り替える。バニラのAMONG USロゴ・プレイ画面UIは触らない。
@@ -831,8 +869,11 @@ namespace TownOfHost
                 leftGameRecently = false;
                 if (UnityEngine.Time.realtimeSinceStartup - mainMenuEnteredAt <= LeftGameOnlineMenuWindow)
                 {
-                    SetInitialMenuUiVisible(false);
-                    return true;
+                    // 退出後は「オンライン」中間画面(ゲーム作成カード)ではなく、
+                    // 通常のメインメニュー(hamoロゴ画面)をそのまま表示する。
+                    SetInitialMenuUiVisible(true);
+                    try { __instance.ResetScreen(); } catch (Exception e) { Logger.Warn($"ResetScreen: {e.Message}", "MainMenuManagerPatch"); }
+                    return false;
                 }
             }
             // バニラのオンライン中間画面（ゲーム作成／コード入力カード）は使用しない。

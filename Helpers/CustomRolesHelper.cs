@@ -108,7 +108,10 @@ namespace TownOfHost
 
         // 表示上も配役上も、クルー役職と属性を同じ分類規則で扱う。
 
-        public static bool IsCrewmateTabDisplay(this CustomRoles role) => role.IsCrewmate();
+        public static bool IsCrewmateTabDisplay(this CustomRoles role) => role.IsCrewmate() && role != CustomRoles.Influencer;
+
+        // ゴースト枠に表示する役職(インフルエンサーはバニラのSpiritGuideのためIsGhostRoleには含めず、表示だけゴースト枠に入れる)
+        public static bool IsGhostRoleTabDisplay(this CustomRoles role) => role.IsGhostRole() || role == CustomRoles.Influencer;
 
         public static bool IsAddOnTabDisplay(this CustomRoles role) => role.IsAddOn();
 
