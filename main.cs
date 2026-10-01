@@ -896,7 +896,7 @@ namespace TownOfHost
         Retaliation,
 
         RuleViolation,
-
+        MagicC,
         etc = -1
 
     }
