@@ -140,14 +140,14 @@ namespace TownOfHost
 
         public const string PluginVersion = "4.00.32.00";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
 
-        public const string PluginShowVersion = "4.32.00β";
+        public const string PluginShowVersion = "4.32.00α";
 
         public const string ModVersion = ".32.00";//リリースver用バージョン変更dc9b79
 
 
 
         /// 配布するデバッグ版なのであればtrue。リリース時にはfalseにすること。
-        public static bool DebugVersion = true;
+        public static bool DebugVersion = false;
         public static bool WarnDuplicatetranslate = false;
 
 
