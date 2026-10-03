@@ -61,11 +61,11 @@ namespace TownOfHost
 
                     // 「有効なMAP設定」ボタンが意図せず大きく・ズレた位置に表示される原因になっていた。
 
-                    search.transform.localScale = priset.transform.localScale = new Vector3(0.4f, 0.4f, 0f);
+                    search.transform.localScale = priset.transform.localScale = new Vector3(0.46f, 0.46f, 0f);
 
                     activeonly.transform.localPosition = new Vector3(-2.0f, 3.25f, -400f);
 
-                    activeonly.transform.localScale = new Vector3(0.4f, 0.4f, 0f);
+                    activeonly.transform.localScale = new Vector3(0.6f, 0.46f, 0f); // 横にしっかり・縦は少しだけ拡大(MenuPatch.csと同じ値)
 
 
 
@@ -117,11 +117,11 @@ namespace TownOfHost
 
                     searchtext.gameObject.SetActive(active);
 
-                    prisettext.gameObject.SetActive(active);
+                    prisettext.gameObject.SetActive(active && GameSettingMenuStartPatch.PresetNameEditorOpen);
 
                     search.gameObject.SetActive(active);
 
-                    priset.gameObject.SetActive(active);
+                    priset.gameObject.SetActive(active && GameSettingMenuStartPatch.PresetNameEditorOpen); // 「名前」ボタンを押した時だけ表示
 
 
 

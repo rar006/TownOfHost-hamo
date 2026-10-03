@@ -134,6 +134,7 @@ namespace TownOfHost
             SetInitialMenuUiVisible(true);
             // 右下に出る赤い✘ボタン(要望により小さくする)。生成タイミングが遅いため少し待ってから縮小する。
             _ = new LateTask(() => ShrinkBottomRightRedButton(), 1.0f, "ShrinkBottomRightRedButton", true);
+            KeepRedButtonVisible();
             // BUG/HELPボタンの枠用に、バニラのボタン枠スプライトを控えておく(フリープレイ等で枠が消えるのを防ぐ)
             _ = new LateTask(() => RoleGuideButtonPatch.CacheFrameTemplate(), 0.8f, "CacheFrameTemplate", true);
             _ = new LateTask(() => ShrinkBottomRightRedButton(), 3.0f, "ShrinkBottomRightRedButton2", true);
@@ -349,7 +350,7 @@ namespace TownOfHost
 
                     {
 
-                        CredentialsPatch.TOHhmLogo?.gameObject?.SetActive(false);
+                        EnterSubMenu(__instance);
 
                         __instance.screenTint.enabled = true;
 
@@ -535,7 +536,7 @@ namespace TownOfHost
 
                     {
 
-                        CredentialsPatch.TOHhmLogo?.gameObject?.SetActive(false);
+                        EnterSubMenu(__instance);
 
                         __instance.screenTint.enabled = true;
 
@@ -756,43 +757,188 @@ namespace TownOfHost
             text.fontSize = text.fontSizeMin = text.fontSizeMax = 1.55f;
         }
 
-        // 縮小済みオブジェクトの記録(同じオブジェクトを何度も縮めないため)
-        private static readonly System.Collections.Generic.HashSet<int> shrunkRedButtonIds = new();
-        private const float RedButtonShrinkScale = 0.55f;
+        // 右下の赤い✘ボタンの正体は EjectMainMenu.ejectButton(ホーム画面の「追い出す」ボタン)。
+        // 元のスケールを記録し、「元のスケール x 係数」を毎回設定する(何度呼んでも小さくなり続けない)。
+        private static readonly System.Collections.Generic.Dictionary<int, Vector3> redButtonOriginalScales = new();
+        private const float RedButtonShrinkScale = 0.45f;
+        private static readonly System.Collections.Generic.Dictionary<int, Vector3> redButtonOriginalPositions = new();
+        // 赤い✘ボタンを右・下へずらす量(x:右へ / y:下へはマイナス)。足りなければここを調整。
+        private static readonly Vector3 RedButtonOffset = new(0.9f, -0.75f, 0f); // 右へ0.9 / 下へ0.75
+        private static MainMenuManager mainMenuInstance;
+        private static void KeepRedButtonVisible() { } // 毎フレーム処理(ApplyRedButtonLayout)に置き換えたため何もしない
+        private static void ShrinkBottomRightRedButton() => ApplyRedButtonLayout();
         /// <summary>
-        /// メインメニュー右下の赤い✘ボタンを小さくする。
-        /// 名前(exit/close/quit/cross)と、画面右下に位置することを条件に探す。
-        /// 見つけた候補はログにも出す(別のオブジェクトを縮めてしまった/見つからない場合の調査用)。
+        /// 赤い✘ボタンのサイズ・位置・表示を毎フレーム固定する(ModManager.LateUpdateから呼ぶ)。
+        /// 以前は1秒ごとに設定していたため、バニラ側(AspectPosition等)が元の位置へ戻す→こちらが移動する、を
+        /// 繰り返して「2か所に出てチカチカする」状態になっていた。
+        /// 毎フレーム「元の値 + オフセット」を設定し、位置を勝手に戻すAspectPositionは無効化する。
         /// </summary>
-        private static void ShrinkBottomRightRedButton()
+        internal static void ApplyRedButtonLayout()
         {
             try
             {
-                var cam = Camera.main;
-                if (cam == null) return;
-                foreach (var sr in Object.FindObjectsOfType<SpriteRenderer>())
+                var menu = mainMenuInstance;
+                if (menu == null) return;
+                var button = menu.ejectMenu?.ejectButton;
+                if (button == null) return;
+                var tf = button.transform;
+                var id = button.GetInstanceID();
+                if (!redButtonOriginalScales.TryGetValue(id, out var original))
                 {
-                    if (sr == null || sr.sprite == null || !sr.gameObject.activeInHierarchy) continue;
-                    var key = (sr.gameObject.name + " " + sr.sprite.name).ToLowerInvariant();
-                    if (!(key.Contains("exit") || key.Contains("close") || key.Contains("quit") || key.Contains("cross"))) continue;
-                    var vp = cam.WorldToViewportPoint(sr.transform.position);
-                    if (vp.x < 0.75f || vp.y > 0.35f) continue;
-                    var button = sr.GetComponentInParent<PassiveButton>();
-                    var target = button != null ? button.transform : sr.transform;
-                    Logger.Info($"RedButton候補: {target.name} / sprite={sr.sprite.name} / viewport=({vp.x:F2},{vp.y:F2})", "MainMenu");
-                    if (!shrunkRedButtonIds.Add(target.gameObject.GetInstanceID())) continue;
-                    target.localScale *= RedButtonShrinkScale;
+                    // 位置を勝手に動かす部品(画面端への自動配置)を止める
+                    foreach (var aspect in button.GetComponentsInChildren<AspectPosition>(true))
+                        if (aspect != null) aspect.enabled = false;
+                    foreach (var aspect in button.GetComponentsInParent<AspectPosition>(true))
+                        if (aspect != null) aspect.enabled = false;
+                    original = tf.localScale;
+                    redButtonOriginalScales[id] = original;
+                    redButtonOriginalPositions[id] = tf.localPosition;
+                    Logger.Info($"赤い✘ボタンを固定: scale {original}, pos {tf.localPosition}", "MainMenu");
                 }
+                var targetScale = original * RedButtonShrinkScale;
+                var targetPos = redButtonOriginalPositions[id] + RedButtonOffset;
+                if (tf.localScale != targetScale) tf.localScale = targetScale;
+                if (tf.localPosition != targetPos) tf.localPosition = targetPos;
+                if (!button.activeSelf) button.SetActive(true);
             }
             catch (Exception e)
             {
-                Logger.Warn($"ShrinkBottomRightRedButton: {e.Message}", "MainMenu");
+                Logger.Warn($"ApplyRedButtonLayout: {e.Message}", "MainMenu");
             }
+        }
+        // ===== ホーム画面UIの出し入れ(マイアカウント/クレジット/バージョン切り替え/統計) =====
+        private static SimpleButton closeSubMenuButton;
+        private static GameObject playBackButtonObject;
+        /// <summary>
+        /// プレイ画面(ローカル/オンライン選択)に「戻る」を表示し、押すとhamoのホーム画面へ戻る。
+        /// 「プレイ方法」ボタン(バニラ)を複製して、同じ入れ物の中の左上に置く。
+        /// (入れ物の中に置くので、プレイ画面を閉じれば一緒に消える)
+        /// </summary>
+        private static void ShowPlayBackButton(MainMenuManager mainMenu)
+        {
+            try
+            {
+                var source = mainMenu.howToPlayButton != null ? mainMenu.howToPlayButton.transform : null;
+                if (source == null || source.parent == null) return;
+                if (playBackButtonObject == null)
+                {
+                    var clone = Object.Instantiate(source.gameObject, source.parent);
+                    clone.name = "TOHPlayBackButton";
+                    var passive = clone.GetComponent<PassiveButton>();
+                    if (passive == null) { Object.Destroy(clone); return; }
+                    passive.OnClick = new();
+                    passive.OnClick.AddListener((Action)(() =>
+                    {
+                        try { mainMenu.ResetScreen(); } catch (Exception e) { Logger.Warn($"PlayBack ResetScreen: {e.Message}", "MainMenuManagerPatch"); }
+                        SetInitialMenuUiVisible(true);
+                    }));
+                    var text = clone.transform.FindChild("Text_TMP")?.GetComponent<TextMeshPro>() ?? clone.GetComponentInChildren<TextMeshPro>(true);
+                    if (text != null)
+                    {
+                        text.DestroyTranslator();
+                        text.text = "戻る";
+                    }
+                    // 「プレイ方法」ボタンの1ボタン分左・約2ボタン分上(=パネル左上)へ。ワールド座標で相対配置して縮尺差を吸収する。
+                    var renderer = source.GetComponentInChildren<SpriteRenderer>();
+                    var width = renderer != null ? renderer.bounds.size.x : 1.2f;
+                    clone.transform.localScale = clone.transform.localScale * 0.9f; // 少し小さく
+                    // 左がパネルからはみ出していたため、以前より右(0.33ボタン分)へ寄せる
+                    clone.transform.position = source.position + new Vector3(-0.72f * width, 2.0f * width, 0f);
+                    playBackButtonObject = clone;
+                    Logger.Info($"プレイ画面の戻るボタンを生成: pos={clone.transform.position}, width={width:F2}", "MainMenuManagerPatch");
+                }
+                playBackButtonObject.SetActive(true);
+            }
+            catch (Exception e)
+            {
+                Logger.Warn($"ShowPlayBackButton: {e.Message}", "MainMenuManagerPatch");
+            }
+        }
+        // 戻るボタンはプレイ画面の入れ物の中にあるため、画面を閉じれば一緒に消える。
+        private static void HidePlayBackButton() { }
+        // バージョン切り替え/統計の「閉じる✘」ボタン位置(右パネルの右上。ずれる場合はここを調整)
+        private static readonly Vector3 CloseSubMenuButtonPosition = new(2.9f, 1.25f, -6f);
+        private static bool suppressOpenMenuPostfixOnce;
+        /// <summary>ホームのUI(hamoロゴ・追加ボタン群)を隠して、サブ画面(統計/バージョン切り替え)用の✘ボタンを表示する。</summary>
+        internal static void EnterSubMenu(MainMenuManager mainMenu)
+        {
+            SetInitialMenuUiVisible(false);
+            try
+            {
+                var parent = MenuButtonAnchor != null ? MenuButtonAnchor.transform.parent : null;
+                if (parent == null) return;
+                if (SimpleButton.IsNullOrDestroyed(closeSubMenuButton))
+                {
+                    closeSubMenuButton = CreateButton(
+                        "CloseSubMenuButton",
+                        CloseSubMenuButtonPosition,
+                        new(200, 40, 40, byte.MaxValue),
+                        new(255, 90, 90, byte.MaxValue),
+                        () => CloseSubMenu(mainMenu),
+                        "X",
+                        new(0.6f, 0.6f),
+                        isActive: false,
+                        transform: parent);
+                    if (closeSubMenuButton != null) closeSubMenuButton.FontSize = 3f;
+                }
+                if (!SimpleButton.IsNullOrDestroyed(closeSubMenuButton))
+                    closeSubMenuButton.Button.gameObject.SetActive(true);
+            }
+            catch (Exception e)
+            {
+                Logger.Warn($"EnterSubMenu: {e.Message}", "MainMenuManagerPatch");
+            }
+        }
+        /// <summary>✘ボタン: サブ画面を閉じて最初のhamo画面に戻る</summary>
+        private static void CloseSubMenu(MainMenuManager mainMenu)
+        {
+            try
+            {
+                CreateStreameMenu.CloseMenu(); // STREAMメニュー(入力欄など)も閉じる
+                if (Statistics_TMP?.gameObject != null) Statistics_TMP.gameObject.SetActive(false);
+                if (Statistics_ScrollStuff != null) Statistics_ScrollStuff.SetActive(false);
+                if (VersionMenu != null) VersionMenu.SetActive(false);
+                if (betaVersionMenu != null) betaVersionMenu.SetActive(false);
+                if (mainMenu != null && mainMenu.screenTint != null) mainMenu.screenTint.enabled = false;
+                if (mainMenu != null) mainMenu.ResetScreen();
+            }
+            catch (Exception e)
+            {
+                Logger.Warn($"CloseSubMenu: {e.Message}", "MainMenuManagerPatch");
+            }
+            SetInitialMenuUiVisible(true);
+        }
+        /// <summary>クレジット画面が閉じられたらホームUIを戻す(クレジットはResetScreenを経由しないため監視する)</summary>
+        private static void WatchCreditsClosed(int remainingChecks = 400)
+        {
+            _ = new LateTask(() =>
+            {
+                try
+                {
+                    var open = false;
+                    foreach (var c in Object.FindObjectsOfType<CreditsScreenPopUp>())
+                        if (c != null && c.gameObject.activeInHierarchy) { open = true; break; }
+                    if (open)
+                    {
+                        if (remainingChecks > 0) WatchCreditsClosed(remainingChecks - 1);
+                        return;
+                    }
+                    var subMenuOpen = (VersionMenu != null && VersionMenu.activeSelf)
+                        || (betaVersionMenu != null && betaVersionMenu.activeSelf)
+                        || (Statistics_ScrollStuff != null && Statistics_ScrollStuff.activeSelf);
+                    if (!subMenuOpen) SetInitialMenuUiVisible(true);
+                }
+                catch (Exception e) { Logger.Warn($"WatchCreditsClosed: {e.Message}", "MainMenuManagerPatch"); }
+            }, 0.3f, "WatchCreditsClosed", true);
         }
         public static void SetInitialMenuUiVisible(bool visible)
         {
             // 追加ボタン群とhamoロゴだけを切り替える。バニラのAMONG USロゴ・プレイ画面UIは触らない。
             if (MenuButtonAnchor != null) MenuButtonAnchor.SetActive(visible);
+            // ホームUIを表示する時は、サブ画面用の✘ボタンは隠す
+            if (visible && !SimpleButton.IsNullOrDestroyed(closeSubMenuButton))
+                closeSubMenuButton.Button.gameObject.SetActive(false);
+            if (visible) HidePlayBackButton();
             if (CredentialsPatch.TOHhmLogo != null) CredentialsPatch.TOHhmLogo.gameObject.SetActive(visible);
         }
 
@@ -822,6 +968,7 @@ namespace TownOfHost
         {
             // ホストのゲーム作成へ進む時も、初期メニュー用UIを直ちに隠す。
             SetInitialMenuUiVisible(false);
+            HidePlayBackButton();
         }
 
         [HarmonyPatch(nameof(MainMenuManager.OpenCreateGame))]
@@ -854,14 +1001,17 @@ namespace TownOfHost
         }
         [HarmonyPatch(nameof(MainMenuManager.Start))]
         [HarmonyPrefix]
-        private static void MainMenuStartRecordPrefix()
+        private static void MainMenuStartRecordPrefix(MainMenuManager __instance)
         {
+            DeferredPatcher.BeginBackgroundApply(); // 保留していた試合専用パッチを、メニュー表示後に少しずつ登録
+            mainMenuInstance = __instance;
             mainMenuEnteredAt = UnityEngine.Time.realtimeSinceStartup;
         }
         [HarmonyPatch(nameof(MainMenuManager.OpenOnlineMenu))]
         [HarmonyPrefix]
         private static bool OpenOnlineMenuDirectModePrefix(MainMenuManager __instance)
         {
+            HidePlayBackButton();
             // 退出直後(メインメニュー読み込みから一定時間内)のOpenOnlineMenuは
             // バニラの遷移に任せ、ゲーム作成画面へは飛ばさない。
             if (leftGameRecently)
@@ -871,8 +1021,14 @@ namespace TownOfHost
                 {
                     // 退出後は「オンライン」中間画面(ゲーム作成カード)ではなく、
                     // 通常のメインメニュー(hamoロゴ画面)をそのまま表示する。
+                    // Harmonyではprefixがfalseを返してもpostfix(OpenMenuPostfix)は実行され、
+                    // そこでhamoロゴを隠してしまうため、今回だけ隠さないよう印を付ける。
+                    suppressOpenMenuPostfixOnce = true;
                     SetInitialMenuUiVisible(true);
                     try { __instance.ResetScreen(); } catch (Exception e) { Logger.Warn($"ResetScreen: {e.Message}", "MainMenuManagerPatch"); }
+                    // 念のため、後続処理で隠された場合に備えて少し後にも再表示する。
+                    _ = new LateTask(() => SetInitialMenuUiVisible(true), 0.3f, "RestoreHomeUi1", true);
+                    _ = new LateTask(() => SetInitialMenuUiVisible(true), 1.0f, "RestoreHomeUi2", true);
                     return false;
                 }
             }
@@ -899,6 +1055,8 @@ namespace TownOfHost
         {
             // OpenGameModeMenu内部のResetScreen等で再表示されても、遷移後は必ず隠す。
             SetInitialMenuUiVisible(false);
+            // プレイ画面に「戻る」を表示(ホーム画面へ戻れるように)
+            ShowPlayBackButton(__instance);
 
             // バニラの補助ボタンが生成された後に、その実オブジェクトを複製する。
             // 要望によりモード切替ボタン(ホスト専用MOD/参加者専用MODバッジ)の表示を停止した。
@@ -1184,10 +1342,17 @@ namespace TownOfHost
         [HarmonyPostfix]
 
         public static void OpenMenuPostfix(MainMenuManager __instance)
-
         {
-
             CreateStreameMenu.CloseMenu();
+            // 「ゲームをやめる」後にホームへ戻した時は、ロゴ等を隠さない
+            if (suppressOpenMenuPostfixOnce)
+            {
+                suppressOpenMenuPostfixOnce = false;
+                SetInitialMenuUiVisible(true);
+                return;
+            }
+            // マイアカウント/クレジット/オンライン等を開いたら、ホーム画面のUI(ロゴ+追加ボタン群)をまとめて隠す
+            SetInitialMenuUiVisible(false);
 
             var onlineButtonScaler = __instance.transform.Find(OnlineButtonScalerPath);
 
@@ -1244,9 +1409,35 @@ namespace TownOfHost
             }
 
             OptionsMenuBehaviourStartPatch.Instance = null;
-
         }
-
+        // 「報酬を取得する」(コード入力)画面でも、裏にホーム画面(hamoロゴ・ボタン群)が残らないようにする
+        [HarmonyPatch(nameof(MainMenuManager.OpenRedeemCodeMenu))]
+        [HarmonyPostfix]
+        private static void OpenRedeemCodeMenuPostfix()
+        {
+            SetInitialMenuUiVisible(false);
+            // 画面表示の後続処理で再表示される場合に備えて、少し後にも隠す
+            _ = new LateTask(() => SetInitialMenuUiVisible(false), 0.2f, "HideHomeUiRedeem1", true);
+            _ = new LateTask(() => SetInitialMenuUiVisible(false), 0.6f, "HideHomeUiRedeem2", true);
+        }
+        // ロビー/試合/フリープレイへ進む前に、保留中のパッチを全て登録する(起動高速化の安全弁)
+        [HarmonyPatch(nameof(MainMenuManager.OpenGameModeMenu))]
+        [HarmonyPatch(nameof(MainMenuManager.OpenOnlineMenu))]
+        [HarmonyPatch(nameof(MainMenuManager.OpenCreateGame))]
+        [HarmonyPatch(nameof(MainMenuManager.OpenEnterCodeMenu))]
+        [HarmonyPrefix]
+        [HarmonyPriority(Priority.First)]
+        private static void FinishDeferredPatchesPrefix()
+        {
+            DeferredPatcher.FinishNow();
+        }
+        // クレジットを開いた時だけ、閉じられたことを監視してホームUIを戻す
+        [HarmonyPatch(nameof(MainMenuManager.OpenCredits))]
+        [HarmonyPostfix]
+        private static void OpenCreditsWatchPostfix()
+        {
+            WatchCreditsClosed();
+        }
         [HarmonyPatch(nameof(MainMenuManager.ResetScreen)), HarmonyPostfix]
 
         public static void ResetScreenPostfix(MainMenuManager __instance)
@@ -1292,7 +1483,7 @@ namespace TownOfHost
                 if (ejectButton != null && ejectButton.gameObject != null)
 
                     ejectButton.gameObject.SetActive(true);
-
+                ShrinkBottomRightRedButton();
             }, 0.5f, "ShowButton", true);
 
         }

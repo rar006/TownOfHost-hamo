@@ -190,8 +190,8 @@ public class ModNewsHistory
             for (var news = json["News"].First; news != null; news = news.Next)
             {
                 JsonModNews n = new(
-                    int.Parse(news["Number"].ToString()), news["Title"]?.ToString(), news["Subtitle"]?.ToString(), news["Short"]?.ToString(),
-                    news["Body"]?.ToString(), news["Date"]?.ToString());
+                    int.Parse(news.GetJ("Number").ToString()), news.GetJ("Title")?.ToString(), news.GetJ("Subtitle")?.ToString(), news.GetJ("Short")?.ToString(),
+                    news.GetJ("Body")?.ToString(), news.GetJ("Date")?.ToString());
             }
         }
         __instance.StartCoroutine(FetchModNews().WrapToIl2Cpp());

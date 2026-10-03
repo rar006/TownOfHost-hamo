@@ -333,8 +333,9 @@ namespace TownOfHost
         {
 
             checkjoin(client);
-
             RPC.RpcVersionCheck();
+            // 人数別アサイン設定の自動反映(人数が変わったため)
+            TownOfHost.Roles.RoleAssignManager.OnLobbyPlayerCountChanged();
 
         }
 
@@ -511,8 +512,9 @@ namespace TownOfHost
         {
 
             var isFailure = false;
-
             if (GameStates.IsLobby) SuddenDeathMode.TeamReset();
+            // 人数別アサイン設定の自動反映(人数が変わったため)
+            TownOfHost.Roles.RoleAssignManager.OnLobbyPlayerCountChanged();
 
 
 

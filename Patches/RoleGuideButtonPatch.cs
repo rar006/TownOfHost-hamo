@@ -560,7 +560,28 @@ public static class RoleGuideButtonPatch
         cachedFrameFlipY = template.flipY;
     }
 
+    /// <summary>バニラの1ボタン分の枠(スプライト・ワールド上の大きさ等)を返す。見つからなければfalse。</summary>
+    internal static bool TryGetFrameTemplate(HudManager hud, out Sprite sprite, out Vector2 spriteSize, out Vector3 lossyScale, out SpriteDrawMode drawMode)
+    {
+        var template = FindFrameTemplate(hud);
+        if (template != null && template.sprite != null) StoreFrameTemplate(template);
+        sprite = cachedFrameSprite;
+        spriteSize = cachedFrameSize;
+        lossyScale = cachedFrameLossyScale;
+        drawMode = cachedFrameDrawMode;
+        return cachedFrameSprite != null;
+    }
+
     internal static void CreateVanillaButtonFrame(HudManager hud, Transform parent)
+    {
+        CreateWideVanillaFrame(hud, parent, 1, 0f);
+    }
+
+    /// <summary>
+    /// 1スロット分のバニラ枠を、左へ (slots-1) スロット分だけ広げて作る。HELPとBUGを1つの枠にまとめる用。
+    /// slotWorldSpacing: 1スロットあたりのワールド座標上の間隔。
+    /// </summary>
+    internal static void CreateWideVanillaFrame(HudManager hud, Transform parent, int slots, float slotWorldSpacing)
     {
         var templateRenderer = FindFrameTemplate(hud);
         if (templateRenderer != null && templateRenderer.sprite != null)
@@ -572,6 +593,8 @@ public static class RoleGuideButtonPatch
             Logger.Error("バニラのボタン背景スプライトが見つかりませんでした", "RoleGuideButton");
             return;
         }
+        var oldFrame = parent.Find("VanillaBackground");
+        if (oldFrame != null) UnityEngine.Object.Destroy(oldFrame.gameObject);
         var frameObj = new GameObject("VanillaBackground");
         frameObj.transform.SetParent(parent);
         frameObj.name = "VanillaBackground";
@@ -588,7 +611,17 @@ public static class RoleGuideButtonPatch
         frameRenderer.sprite = cachedFrameSprite;
         frameRenderer.color = Color.white;
         frameRenderer.drawMode = cachedFrameDrawMode;
-        frameRenderer.size = cachedFrameSize;
+        var widthFactor = 1f;
+        var templateWorldWidth = cachedFrameSize.x * Mathf.Abs(cachedFrameLossyScale.x);
+        if (slots > 1 && templateWorldWidth > 0.01f && slotWorldSpacing > 0f)
+        {
+            widthFactor = (templateWorldWidth + (slots - 1) * slotWorldSpacing) / templateWorldWidth;
+            // 枠の中心を、左へ広げた分の半分だけ左へずらす(右端=チャット側は動かさない)
+            var shiftWorld = (slots - 1) * slotWorldSpacing * 0.5f;
+            var parentScaleX = Mathf.Abs(parent.lossyScale.x) < 0.0001f ? 1f : Mathf.Abs(parent.lossyScale.x);
+            frameObj.transform.localPosition = new Vector3(-shiftWorld / parentScaleX, 0f, 0.05f);
+        }
+        frameRenderer.size = new Vector2(cachedFrameSize.x * widthFactor, cachedFrameSize.y);
         frameRenderer.flipX = cachedFrameFlipX;
         frameRenderer.flipY = cachedFrameFlipY;
         frameRenderer.maskInteraction = SpriteMaskInteraction.None;
@@ -700,7 +733,7 @@ public static class RoleGuideButtonPatch
 
 
 
-        bool shouldShow = !GameSettingMenu.Instance;
+        bool shouldShow = !GameSettingMenu.Instance && !(AmongUsClient.Instance != null && AmongUsClient.Instance.NetworkMode == NetworkModes.FreePlay); // フリープレイ(カスタムスポーン設定)ではHELPを表示しない
 
         var buttonObject = _btnRenderer.gameObject;
 

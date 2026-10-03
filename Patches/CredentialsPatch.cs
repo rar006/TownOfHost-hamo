@@ -645,6 +645,8 @@ namespace TownOfHost
             public static void Postfix(ModManager __instance)
 
             {
+                // 赤い✘ボタンのサイズ・位置を毎フレーム固定(チカチカ防止)
+                MainMenuManagerPatch.ApplyRedButtonLayout();
 
                 // 参加者専用版は会議HUD上部の他テキストと重ならないよう、
                 // MODスタンプを小さくして右上から少し下へ配置する。

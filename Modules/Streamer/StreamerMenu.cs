@@ -26,7 +26,8 @@ namespace TownOfHost
                     () =>
                     {
                         SetOpenMenu();
-                        CredentialsPatch.TOHhmLogo.gameObject.SetActive(false);
+                        // ホームのUI(ロゴ・DISCORD等のボタン群)をまとめて隠し、✘ボタンで戻れるようにする
+                        MainMenuManagerPatch.EnterSubMenu(mainmenumanager);
                     },
                     "Stream"
                     );

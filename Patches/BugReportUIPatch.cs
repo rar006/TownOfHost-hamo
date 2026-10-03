@@ -582,13 +582,25 @@ namespace TownOfHost.Patches
         /// </summary>
         private static int FindHighestPrioritySortingLayerID()
         {
+            // 【クラッシュ対策】SortingLayer.layers はIL2CPP環境でアクセス違反(AccessViolationException)を
+            // 起こすことがあり、try/catchでも捕捉できずゲームごと落ちていた。
+            // HELPパネルと同じく、画面内のRendererから SortingLayer.GetLayerValueFromID で最前面のレイヤーを探す。
             try
             {
-                var layers = SortingLayer.layers;
-                if (layers == null || layers.Length == 0) return 0;
-                // SortingLayer.layersは既に優先度(描画順)の低い方から並んでいるため、
-                // 最後の要素が最も手前に描画されるレイヤーになる。
-                return layers[layers.Length - 1].id;
+                if (_panelRoot == null) return 0;
+                var targetLayerId = 0;
+                var highestLayerValue = int.MinValue;
+                foreach (var renderer in _panelRoot.transform.root.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (renderer == null || renderer.transform.IsChildOf(_panelRoot.transform)) continue;
+                    var layerValue = SortingLayer.GetLayerValueFromID(renderer.sortingLayerID);
+                    if (layerValue > highestLayerValue)
+                    {
+                        highestLayerValue = layerValue;
+                        targetLayerId = renderer.sortingLayerID;
+                    }
+                }
+                return targetLayerId;
             }
             catch
             {

@@ -699,7 +699,7 @@ namespace TownOfHost
 
 
 
-            Harmony.PatchAll(Assembly.GetExecutingAssembly());
+            DeferredPatcher.PatchAllDeferred(Harmony, Assembly.GetExecutingAssembly()); // 起動高速化: 試合専用パッチはメインメニュー表示後に登録
 
             Application.quitting += new Action(UtilsOutputLog.SaveNowLog);
 
