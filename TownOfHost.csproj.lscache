@@ -158,6 +158,7 @@ Modules/
  CustomWinnerHolder.cs
  Debugger.cs
  DebugModeManager.cs
+ DeferredPatcher.cs
  DisableDevice.cs
  DiscordRichPresenceService.cs
  DoorsReset.cs
