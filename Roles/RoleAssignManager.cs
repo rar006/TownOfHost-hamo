@@ -138,6 +138,8 @@ namespace TownOfHost.Roles
         public static OptionItem OptionAssignMadmateFromCrewmateSlot;
         public static OptionItem OptionAssignMadmateFromCrewmateSlotMax;
         public static OptionItem OptionAssignPerPlayerCount;
+        // 参加/退出のたびに人数別設定を自動で反映するか(OFF=試合開始前にだけ反映して負荷を抑える)
+        public static OptionItem OptionAssignPerPlayerCountAuto;
         private static Dictionary<CustomRoleTypes, RandomAssignOptions> RandomAssignOptionsCollection = new(CustomRolesHelper.AllRoleTypes.Length);
         // 要望により追加: 3人〜15人それぞれに個別の配役数設定を持たせるための辞書。
         private const int MinSupportedPlayerCount = 3;
@@ -275,6 +277,9 @@ namespace TownOfHost.Roles
                 .SetParent(OptionAssignMode)
                 .SetEnabled(() => OptionAssignMode.GetBool());
 
+            OptionAssignPerPlayerCountAuto = BooleanOptionItem.Create(idStart + 61, "AssignPerPlayerCountAuto", true, TabGroup.MainSettings, false)
+                .SetParent(OptionAssignPerPlayerCount)
+                .SetEnabled(() => OptionAssignMode.GetBool() && OptionAssignPerPlayerCount.GetBool());
             PerCountOptionsCollection.Clear();
             const int perCountIdBase = 590000;
             const int perCountIdStep = 20; // 1人分につきヘッダー+9項目=10使用。将来の項目追加に備え余裕を持たせる。
@@ -296,6 +301,7 @@ namespace TownOfHost.Roles
         public static bool CheckRoleCount()
         {
             if (AssignMode == AssignAlgorithm.Fixed) return true;
+            ApplyPerCountSettings("開始チェック");
             var result = true;
             var opt = Main.NormalOptions.Cast<IGameOptions>();
 
@@ -326,8 +332,62 @@ namespace TownOfHost.Roles
 
             return result;
         }
+        /// <summary>
+        /// 現在の人数(GMがONの場合はGMを人数に含めない)に対応する「人数ごとの設定」を、
+        /// 通常の最少/最大人数の設定へ反映する。値が変わらない項目は触らない(負荷軽減)。
+        /// </summary>
+        public static void ApplyPerCountSettings(string reason)
+        {
+            try
+            {
+                if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
+                if (AssignMode != AssignAlgorithm.Random) return;
+                if (!TryGetPerCountOverride(out var pc)) return;
+                var changed = false;
+                foreach (var kv in RandomAssignOptionsCollection)
+                {
+                    var type = kv.Key;
+                    var option = kv.Value;
+                    var newMax = pc.Max(type);
+                    var newMin = pc.Min(type);
+                    if (option.Max != newMax && option.SetMaxValue(newMax)) changed = true;
+                    if (option.Min != newMin && option.SetMinValue(newMin)) changed = true;
+                }
+                if (OptionAssignMadmateFromCrewmateSlot?.GetBool() == true && OptionAssignMadmateFromCrewmateSlotMax != null)
+                {
+                    var madMax = Math.Clamp(pc.MadFromCrewMax, 0, 15);
+                    if (OptionAssignMadmateFromCrewmateSlotMax.GetInt() != madMax)
+                    {
+                        OptionAssignMadmateFromCrewmateSlotMax.SetValue(madMax);
+                        changed = true;
+                    }
+                }
+                if (changed) Logger.Info($"人数別アサイン設定を反映({reason}): {GetAssignTargetPlayerCount()}人", "RoleAssignManager");
+            }
+            catch (Exception e)
+            {
+                Logger.Warn($"ApplyPerCountSettings: {e.Message}", "RoleAssignManager");
+            }
+        }
+        private static bool perCountApplyScheduled;
+        /// <summary>ロビーで人が増減した時に呼ぶ。「自動で変更」がONの時だけ、少し待ってから(連続参加をまとめて)反映する。</summary>
+        public static void OnLobbyPlayerCountChanged()
+        {
+            if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
+            if (!GameStates.IsLobby) return;
+            if (OptionAssignPerPlayerCount?.GetBool() != true || OptionAssignPerPlayerCountAuto?.GetBool() != true) return;
+            if (perCountApplyScheduled) return;
+            perCountApplyScheduled = true;
+            _ = new LateTask(() =>
+            {
+                perCountApplyScheduled = false;
+                if (GameStates.IsLobby) ApplyPerCountSettings("参加/退出");
+            }, 0.5f, "ApplyPerCountSettings", true);
+        }
         public static void SelectAssignRoles()
         {
+            // 「自動で変更」がOFFでも、試合開始前には必ず人数別設定を反映する
+            ApplyPerCountSettings("試合開始前");
             AssignCount.Clear();
             AssignRoleList.Clear();
 

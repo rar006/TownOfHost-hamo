@@ -507,6 +507,7 @@ namespace TownOfHost
                             }
 
                             GameSettingMenuStartPatch.priset.textArea.Clear();
+                    GameSettingMenuStartPatch.ClosePresetNameEditor();
 
                         }
 

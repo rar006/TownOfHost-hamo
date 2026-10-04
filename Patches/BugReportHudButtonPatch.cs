@@ -150,7 +150,7 @@ namespace TownOfHost.Patches
                 UpdateBugButtonLayout();
                 // 試合中・ロビー外に加えて、設定画面(GameSettingMenu)が開いている間も
                 // 要望により非表示にする(HELPボタンと同じ判定方法)。
-                var shouldShow = GameStates.IsLobby && !GameStates.IsInGame && GameSettingMenu.Instance == null;
+                var shouldShow = GameStates.IsLobby && !GameStates.IsInGame && GameSettingMenu.Instance == null && !(AmongUsClient.Instance != null && AmongUsClient.Instance.NetworkMode == NetworkModes.FreePlay); // フリープレイではBUGを表示しない
                 if (_buttonObj.activeSelf != shouldShow)
                     _buttonObj.SetActive(shouldShow);
 

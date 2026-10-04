@@ -124,6 +124,33 @@ namespace TownOfHost
                     // 要望により、HELPの真横に並んだBUGボタンの分もさらに詰めて、上部表示と重ならないようにする。
                     if (TownOfHost.Patches.BugReportHudButtonPatch.HasBugButton) rightOffset += 0.72f;
 
+                    // HELP/BUGボタンの実際の位置を見て、上部表示(バージョン・カスタムスポーンエディタ等)が
+                    // それらと重ならないよう右端からの距離を広げる(フリープレイ等で文字が被る不具合の対策)。
+                    try
+                    {
+                        if (DestroyableSingleton<HudManager>.InstanceExists)
+                        {
+                            var hudForOffset = DestroyableSingleton<HudManager>.Instance;
+                            var uiCam = hudForOffset.UICamera != null ? hudForOffset.UICamera : Camera.main;
+                            if (uiCam != null)
+                            {
+                                float edgeX = uiCam.ViewportToWorldPoint(new Vector3(1f, 0.5f, 0f)).x;
+                                float leftmost = float.MaxValue;
+                                var helpTf = hudForOffset.transform.Find("RoleGuideButton");
+                                if (helpTf != null && helpTf.gameObject.activeInHierarchy)
+                                    leftmost = Mathf.Min(leftmost, helpTf.position.x);
+                                var bugTf = hudForOffset.transform.Find("BugReportHudButton");
+                                if (bugTf != null && bugTf.gameObject.activeInHierarchy)
+                                    leftmost = Mathf.Min(leftmost, bugTf.position.x);
+                                if (leftmost < float.MaxValue)
+                                {
+                                    // ボタン半幅(約0.32)+余白
+                                    rightOffset = Mathf.Max(rightOffset, edgeX - leftmost + 0.45f);
+                                }
+                            }
+                        }
+                    }
+                    catch (System.Exception) { }
                     pingTrackerCredentialAspectPos.DistanceFromEdge = new(rightOffset, 0, 0);
 
                 }
@@ -618,12 +645,14 @@ namespace TownOfHost
             public static void Postfix(ModManager __instance)
 
             {
+                // 赤い✘ボタンのサイズ・位置を毎フレーム固定(チカチカ防止)
+                MainMenuManagerPatch.ApplyRedButtonLayout();
 
                 // 参加者専用版は会議HUD上部の他テキストと重ならないよう、
                 // MODスタンプを小さくして右上から少し下へ配置する。
                 var offset_y = HudManager.InstanceExists ? (Main.IsNonHostClient ? 2.15f : 1.6f) : 0.9f;
                 // MODスタンプが目立ちすぎて邪魔なため、全体的に縮小する。
-                __instance.ModStamp.transform.localScale = Main.IsNonHostClient ? Vector3.one * 0.5f : Vector3.one * 0.65f;
+                __instance.ModStamp.transform.localScale = Main.IsNonHostClient ? Vector3.one * 0.42f : Vector3.one * 0.52f;
 
                 __instance.ModStamp.transform.position = AspectPosition.ComputeWorldPosition(
 

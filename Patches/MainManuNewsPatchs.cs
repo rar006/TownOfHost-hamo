@@ -135,9 +135,22 @@ public class ModNewsHistory
                     Title = "久しぶりのリリースだね..汗",
                     SubTitle = "<color=#fb85ff>Town Of Host-hamo v4.00.31α</color>",
                     ShortTitle = "<color=#fb85ff>●TOH-hamo v4.00.31α</color>",
-                    Text = "・リザルター追加\r\n・トゥモロー追加\r\n・リピーター追加\r\n・コレクシス追加\r\n・マエストロ追加\r\n・その他諸々..NEWついているからここでは省略するね★"
+                    Text = "・リザルター追加\r\n・トゥモロー追加\r\n・リピーター追加\r\n・コレクシス追加\r\n・マッドパラサイト追加\r\n・インフェクト\r\n・リザルター\r\n・マッドスクリーム\r\n・ミューター\r\n・ハトホルとセメクト\r\n・マエストロ"
                     ,
                     Date = "2026-9-26"
+                };
+                AllModNews.Add(news);
+            }
+            {
+                var news = new ModNews
+                {
+                    Number = 100009,
+                    Title = "amongusのv19対応、バグ修正",
+                    SubTitle = "<color=#fb85ff>Town Of Host-hamo v4.32.00α</color>",
+                    ShortTitle = "<color=#fb85ff>●TOH-hamo v4.32.00α</color>",
+                    Text = "起動が早くなったよ！ロード長くなったけどね...汗"
+                    ,
+                    Date = "2026-10-4"
                 };
                 AllModNews.Add(news);
             }
@@ -190,8 +203,8 @@ public class ModNewsHistory
             for (var news = json["News"].First; news != null; news = news.Next)
             {
                 JsonModNews n = new(
-                    int.Parse(news["Number"].ToString()), news["Title"]?.ToString(), news["Subtitle"]?.ToString(), news["Short"]?.ToString(),
-                    news["Body"]?.ToString(), news["Date"]?.ToString());
+                    int.Parse(news.GetJ("Number").ToString()), news.GetJ("Title")?.ToString(), news.GetJ("Subtitle")?.ToString(), news.GetJ("Short")?.ToString(),
+                    news.GetJ("Body")?.ToString(), news.GetJ("Date")?.ToString());
             }
         }
         __instance.StartCoroutine(FetchModNews().WrapToIl2Cpp());

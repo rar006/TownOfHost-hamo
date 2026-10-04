@@ -402,6 +402,13 @@ namespace TownOfHost
         public static PassiveButton GamePresetButton;
 
         public static FreeChatInputField priset;
+        /// <summary>「名前」ボタンでプリセット名の入力欄を開いている間だけtrue</summary>
+        public static bool PresetNameEditorOpen;
+        public static void ClosePresetNameEditor()
+        {
+            PresetNameEditorOpen = false;
+            try { if (priset != null) priset.gameObject.SetActive(false); } catch { }
+        }
 
         public static TMPro.TextMeshPro prisettext;
 
@@ -736,7 +743,9 @@ namespace TownOfHost
 
                     activeonly.transform.localPosition = new Vector3(-2.0f, 3.25f, -400f);
 
-                    activeonly.transform.localScale = new Vector3(0.4f, 0.4f, 0f);
+                    activeonly.transform.localScale = new Vector3(0.6f, 0.46f, 0f); // 横にしっかり・縦は少しだけ拡大
+                    // 横に伸びた分、文字が横長にならないよう打ち消す
+                    if (activeonly.buttonText != null) activeonly.buttonText.transform.localScale = new Vector3(0.767f, 1f, 1f);
 
                 }
 
@@ -756,7 +765,8 @@ namespace TownOfHost
 
                 GamePresetButton.transform.SetParent(__instance.RoleSettingsTab.transform.parent, false);
 
-                GamePresetButton.transform.localScale = new(0.3f, 0.3f);
+                GamePresetButton.transform.localScale = new(0.45f, 0.345f); // 横にしっかり・縦は少しだけ拡大
+                if (GamePresetButton.buttonText != null) GamePresetButton.buttonText.transform.localScale = new Vector3(0.767f, 1f, 1f);
 
                 GamePresetButton.transform.localPosition = new Vector3(-1.9f, 3.6f, -400f);
 
@@ -981,14 +991,12 @@ namespace TownOfHost
 
                 {
 
-                    priset.transform.localPosition = new Vector3(0.3f, 3.2f);
+                    priset.transform.localPosition = new Vector3(0.1f, 3.45f); // 開いた時だけ表示される入力欄(検索欄の上)
 
-                    priset.transform.localScale = new Vector3(0.4f, 0.4f, 0f);
+                    priset.transform.localScale = new Vector3(0.46f, 0.46f, 0f);
 
-                    priset?.gameObject?.SetActive(true);
-
+                    priset?.gameObject?.SetActive(PresetNameEditorOpen);
                     ForceRenderInFront(priset);
-
                     priset.submitButton.OnPressed = (Action)(() =>
 
                     {
@@ -1040,6 +1048,7 @@ namespace TownOfHost
                             }
 
                             priset.textArea.Clear();
+                        ClosePresetNameEditor();
 
                         }
 
@@ -1444,7 +1453,7 @@ namespace TownOfHost
 
                         search?.transform?.SetAsFirstSibling();
 
-                        priset?.gameObject?.SetActive(true);
+                        priset?.gameObject?.SetActive(PresetNameEditorOpen);
 
                         priset?.transform?.SetAsFirstSibling();
 
@@ -1476,7 +1485,7 @@ namespace TownOfHost
 
                             search?.gameObject?.SetActive(true);
 
-                            priset?.gameObject?.SetActive(true);
+                            priset?.gameObject?.SetActive(PresetNameEditorOpen);
 
                             activeonly?.gameObject?.SetActive(true);
 
@@ -1828,7 +1837,7 @@ namespace TownOfHost
 
                         search?.gameObject?.SetActive(true);
 
-                        priset?.gameObject?.SetActive(true);
+                        priset?.gameObject?.SetActive(PresetNameEditorOpen);
 
                         activeonly?.gameObject?.SetActive(true);
 
@@ -1864,7 +1873,7 @@ namespace TownOfHost
 
                             search?.gameObject?.SetActive(true);
 
-                            priset?.gameObject?.SetActive(true);
+                            priset?.gameObject?.SetActive(PresetNameEditorOpen);
 
                             activeonly?.gameObject?.SetActive(true);
 
@@ -1916,9 +1925,9 @@ namespace TownOfHost
 
                 {
 
-                    search.transform.localPosition = new Vector3(0.3f, 3.5f);
+                    search.transform.localPosition = new Vector3(0.1f, 3.15f); // もっと下へ(旧プリセット名編集の位置)
 
-                    search.transform.localScale = new Vector3(0.4f, 0.4f, 0f);
+                    search.transform.localScale = new Vector3(0.46f, 0.46f, 0f); // 拡大
 
                     search?.gameObject?.SetActive(true);
 
@@ -3166,6 +3175,33 @@ namespace TownOfHost
 
                         }
 
+                        if (option is PresetOptionItem)
+                                                {
+                                                    // プリセット行にも「名前」ボタンを追加(役職行のH/?ボタンと同じ位置)。
+                                                    // 押すと上部の「プリセット名編集」入力欄にフォーカスを当てる。
+                                                    try
+                                                    {
+                                                        var presetNameButton = Object.Instantiate(stringOption.MinusBtn, stringOption.transform);
+                                                        presetNameButton.gameObject.name = "PresetName-EditButton";
+                                var nameText = presetNameButton.transform.FindChild("Text_TMP").GetComponent<TMPro.TextMeshPro>();
+                                nameText.text = "名前";
+                                nameText.enableAutoSizing = true;
+                                nameText.fontSizeMin = 1f;
+                                nameText.fontSizeMax = 3f;
+                                // 正方形のボタンを横長の長方形にする(文字は横に潰れないよう打ち消す)
+                                const float nameButtonWidthScale = 2.3f;
+                                presetNameButton.transform.localScale = new Vector3(nameButtonWidthScale, 1f, 1f);
+                                nameText.transform.localScale = new Vector3(1f / nameButtonWidthScale, 1f, 1f);
+                                presetNameButton.OnClick = new();
+                                presetNameButton.OnClick.AddListener((System.Action)(() => PresetNameDialog.Open())); // 画面中央の入力フォームを開く
+                                presetNameButton.gameObject.transform.SetLocalX(-0.42f);
+                                presetNameButton.gameObject.transform.SetLocalZ(-50);
+                            }
+                            catch (Exception e)
+                                                    {
+                                                        Logger.Warn($"プリセット名ボタンの生成に失敗: {e.Message}", "OptionsManager");
+                                                    }
+                                                }
                         if ((option as ObjectOptionitem)?.ClickActionkey is not null)
 
                         {

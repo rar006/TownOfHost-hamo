@@ -200,13 +200,13 @@ public static class Blacklist
 
         {
 
-            string endbantime = user["EndBanTime"]?.ToString();
+            string endbantime = user.GetJ("EndBanTime")?.ToString();
 
             BlackPlayer player = new(
 
-                user["FriendCode"]?.ToString(), user["AddedMod"]?.ToString(), user["Reason"]?["Code"]?.ToString(),
+                user.GetJ("FriendCode")?.ToString(), user.GetJ("AddedMod")?.ToString(), user.GetJ("Reason")?.GetJ("Code")?.ToString(),
 
-                user["Reason"]?["Title"]?.ToString(), user["Reason"]?["Description"]?.ToString(), false, endbantime == "never" ? null : (DateTime.TryParse(endbantime, out DateTime resulttime) ? (resulttime - new TimeSpan(9, 0, 0)) : null));
+                user.GetJ("Reason")?.GetJ("Title")?.ToString(), user.GetJ("Reason")?.GetJ("Description")?.ToString(), false, endbantime == "never" ? null : (DateTime.TryParse(endbantime, out DateTime resulttime) ? (resulttime - new TimeSpan(9, 0, 0)) : null));
 
         }
 
@@ -214,13 +214,13 @@ public static class Blacklist
 
         {
 
-            string endbantime = user["EndBanTime"]?.ToString();
+            string endbantime = user.GetJ("EndBanTime")?.ToString();
 
             BlackPlayer player = new(
 
-                user["PUID"]?.ToString(), user["AddedMod"]?.ToString(), user["Reason"]?["Code"]?.ToString(),
+                user.GetJ("PUID")?.ToString(), user.GetJ("AddedMod")?.ToString(), user.GetJ("Reason")?.GetJ("Code")?.ToString(),
 
-                user["Reason"]?["Title"]?.ToString(), user["Reason"]?["Description"]?.ToString(), true, endbantime == "never" ? null : (DateTime.TryParse(endbantime, out DateTime resulttime) ? (resulttime - new TimeSpan(9, 0, 0)) : null));
+                user.GetJ("Reason")?.GetJ("Title")?.ToString(), user.GetJ("Reason")?.GetJ("Description")?.ToString(), true, endbantime == "never" ? null : (DateTime.TryParse(endbantime, out DateTime resulttime) ? (resulttime - new TimeSpan(9, 0, 0)) : null));
 
         }
 

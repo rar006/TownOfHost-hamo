@@ -236,6 +236,7 @@ namespace TownOfHost.Patches
 
             try
             {
+                Logger.Info("BugReport: パネル生成開始", "BugReportUIPatch");
                 _panelRoot = new GameObject("BugReportPanel");
                 _panelRoot.transform.SetParent(parent, false);
                 _panelRoot.transform.localPosition = localPosition;
@@ -254,8 +255,10 @@ namespace TownOfHost.Patches
                 bgRenderer.sortingOrder = 950; // 要望により最前面に来るよう大きめの値にしている
 
                 // 要望により、パネル全体にピンクの縁を付ける。
+                Logger.Info("BugReport: 背景生成完了 / 枠生成開始", "BugReportUIPatch");
                 CreatePinkBorder(_panelRoot.transform, PanelSize, 949);
 
+                Logger.Info("BugReport: タイトル/本文テキスト生成開始", "BugReportUIPatch");
                 _titleText = TMPTemplate.Create(
                     name: "BugReportTitle",
                     text: "バグ報告", // 絵文字はこのフォントで表示できず「□」になるため使わない
@@ -281,6 +284,7 @@ namespace TownOfHost.Patches
                 _bodyText.enableWordWrapping = true;
                 SetSortingOrder(_bodyText, 961);
 
+                Logger.Info("BugReport: ボタン生成開始", "BugReportUIPatch");
                 // ===== Step: これまでのバグ報告一覧(最大4件) + 新規報告ボタン =====
                 for (var i = 0; i < MaxTicketListButtons; i++)
                 {
@@ -337,6 +341,7 @@ namespace TownOfHost.Patches
                 var discordIdBoxWidth = 3.0f;
                 var discordIdBoxX = 0.3f;
                 var discordIdBoxY = 1.0f;
+                Logger.Info("BugReport: 入力欄(Discord ID)生成開始", "BugReportUIPatch");
                 _discordIdBox = new SimpleTextBox(
                     parent: _panelRoot.transform,
                     name: "BugReportDiscordIdBox",
@@ -400,6 +405,7 @@ namespace TownOfHost.Patches
                 var descriptionBoxX = 0f;
                 // 要望により、枠(見た目)ごと全体を上に上げる。
                 var descriptionBoxY = 0.05f;
+                Logger.Info("BugReport: 入力欄(内容)生成開始", "BugReportUIPatch");
                 _descriptionBox = new SimpleTextBox(
                     parent: _panelRoot.transform,
                     name: "BugReportDescriptionBox",
@@ -576,13 +582,25 @@ namespace TownOfHost.Patches
         /// </summary>
         private static int FindHighestPrioritySortingLayerID()
         {
+            // 【クラッシュ対策】SortingLayer.layers はIL2CPP環境でアクセス違反(AccessViolationException)を
+            // 起こすことがあり、try/catchでも捕捉できずゲームごと落ちていた。
+            // HELPパネルと同じく、画面内のRendererから SortingLayer.GetLayerValueFromID で最前面のレイヤーを探す。
             try
             {
-                var layers = SortingLayer.layers;
-                if (layers == null || layers.Length == 0) return 0;
-                // SortingLayer.layersは既に優先度(描画順)の低い方から並んでいるため、
-                // 最後の要素が最も手前に描画されるレイヤーになる。
-                return layers[layers.Length - 1].id;
+                if (_panelRoot == null) return 0;
+                var targetLayerId = 0;
+                var highestLayerValue = int.MinValue;
+                foreach (var renderer in _panelRoot.transform.root.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (renderer == null || renderer.transform.IsChildOf(_panelRoot.transform)) continue;
+                    var layerValue = SortingLayer.GetLayerValueFromID(renderer.sortingLayerID);
+                    if (layerValue > highestLayerValue)
+                    {
+                        highestLayerValue = layerValue;
+                        targetLayerId = renderer.sortingLayerID;
+                    }
+                }
+                return targetLayerId;
             }
             catch
             {
@@ -706,11 +724,15 @@ namespace TownOfHost.Patches
                 centerLocalPosition.z = -20f;
             }
 
+            Logger.Info("BugReport: ShowPanel 開始", "BugReportUIPatch");
             if (!EnsurePanel(_currentParent, centerLocalPosition)) return;
 
             _panelRoot.SetActive(true);
+            Logger.Info("BugReport: パネル表示 / 前面化開始", "BugReportUIPatch");
             BringPanelToFront();
+            Logger.Info("BugReport: 前面化完了 / テキスト更新開始", "BugReportUIPatch");
             RefreshPanelText();
+            Logger.Info("BugReport: ShowPanel 完了", "BugReportUIPatch");
         }
 
         public static void HidePanel()

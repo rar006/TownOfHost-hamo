@@ -1203,7 +1203,7 @@ class MainMenuManagerUpdatePatch
 
                 TabGroup.CrewmateRoles => buttongameobjectdata.Key.IsCrewmateTabDisplay(),
 
-                TabGroup.GhostRoles => buttongameobjectdata.Key.IsGhostRole(),
+                TabGroup.GhostRoles => buttongameobjectdata.Key.IsGhostRoleTabDisplay(),
 
                 TabGroup.Addons => buttongameobjectdata.Key.IsAddOnTabDisplay(),
 

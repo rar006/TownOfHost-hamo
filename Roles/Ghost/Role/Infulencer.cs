@@ -16,7 +16,8 @@ public sealed class Influencer : RoleBase
             {
                 IsInitiallyAssignableCallBack = () => false
             },
-            from: From.AmongUs
+            from: From.AmongUs,
+            tab: TabGroup.GhostRoles
         );
 
     private static OptionItem messageCooldown;

@@ -3,10 +3,6 @@ using TownOfHost.Roles.Core;
 
 namespace TownOfHost.Roles.Vanilla;
 
-/// <summary>
-/// Among Us V11公式クルー役職「ジャッジ」。
-/// Overruleのボタン・RPC・使用回数はゲーム本体のJudgeOverruleVoteに委ねる。
-/// </summary>
 public sealed class Judge : RoleBase
 {
     public static readonly SimpleRoleInfo RoleInfo =

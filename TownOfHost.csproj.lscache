@@ -24,8 +24,8 @@ RootNamespace=TownOfHost
 TargetFramework=net6.0
 TargetFrameworkIdentifier=.NETCoreApp
 TargetFrameworkVersion=v6.0
-TargetPath=<PATH>bin/Release/net6.0/TownOfHost-hamo.dll
-TargetRefPath=<PATH>obj/Release/net6.0/ref/TownOfHost-hamo.dll
+TargetPath=<PATH>bin/Debug/net6.0/TownOfHost-hamo.dll
+TargetRefPath=<PATH>obj/Debug/net6.0/ref/TownOfHost-hamo.dll
 TemporaryDependencyNodeTargetIdentifier=net6.0
 
 [commandLineArguments]
@@ -37,14 +37,14 @@ TemporaryDependencyNodeTargetIdentifier=net6.0
 /nostdlib+
 /errorreport:prompt
 /warn:6
-/define:TRACE;RELEASE;NET;NET6_0;NETCOREAPP;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NETCOREAPP1_0_OR_GREATER;NETCOREAPP1_1_OR_GREATER;NETCOREAPP2_0_OR_GREATER;NETCOREAPP2_1_OR_GREATER;NETCOREAPP2_2_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER
+/define:TRACE;DEBUG;NET;NET6_0;NETCOREAPP;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NETCOREAPP1_0_OR_GREATER;NETCOREAPP1_1_OR_GREATER;NETCOREAPP2_0_OR_GREATER;NETCOREAPP2_1_OR_GREATER;NETCOREAPP2_2_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER
 /highentropyva+
-/debug-
+/debug+
 /debug:portable
 /filealign:512
-/optimize+
-/out:obj/Release/net6.0/TownOfHost-hamo.dll
-/refout:obj/Release/net6.0/refint/TownOfHost-hamo.dll
+/optimize-
+/out:obj/Debug/net6.0/TownOfHost-hamo.dll
+/refout:obj/Debug/net6.0/refint/TownOfHost-hamo.dll
 /target:library
 /warnaserror-
 /utf8output
@@ -63,6 +63,7 @@ Helpers/
  EnumHelper.cs
  IEnumeratorHelper.cs
  JsonHelper.cs
+ JTokenExtensions.cs
  ObjectHelper.cs
  StringHelper.cs
 Modules/
@@ -75,6 +76,7 @@ Modules/
   ClientActionItem.cs
   ClientOptionItem.cs
   ModUnloaderScreen.cs
+  ModUnloadLoadingScreen.cs
   SoundSettingsScreen.cs
  CustomSpawn/
   CustomSpawnDeserializer.cs
@@ -156,6 +158,7 @@ Modules/
  CustomWinnerHolder.cs
  Debugger.cs
  DebugModeManager.cs
+ DeferredPatcher.cs
  DisableDevice.cs
  DiscordRichPresenceService.cs
  DoorsReset.cs
@@ -220,7 +223,7 @@ Modules/
  Win32FileDialog.cs
  Yomiage.cs
  Zoom.cs
-obj/Release/net6.0/
+obj/Debug/net6.0/
  .NETCoreApp,Version=v6.0.AssemblyAttributes.cs
  TownOfHost.AssemblyInfo.cs
 Patches/
@@ -233,6 +236,7 @@ Patches/
   ChangeValue.cs
   MenuPatch.cs
   NumericOptionInput.cs
+  PresetNameDialog.cs
   PresetPatch.cs
   ShowFilter.cs
   ShowRandomSpawnMenu.cs
@@ -309,6 +313,7 @@ Patches/
  ModStampPatch.cs
  MovingPlatformBehaviourPatch.cs
  NetworkedPlayrInfoPatch.cs
+ NewsTabPatch.cs
  NoBlackoutPatch.cs
  OneWayShadowsPatch.cs
  onGameStartedPatch.cs
@@ -331,6 +336,7 @@ Patches/
  TestPatch LobbyWallWalkDebug.cs
  TestPatch PetShapeshiftAssignPatch.cs
  TestPatch RandomSukinOnDeathPatch.cs
+ TopRightButtonFramePatch.cs
  UsablesPatch.cs
 Properties/Resources.Designer.cs
 Roles/
@@ -509,7 +515,6 @@ Roles/
   SuspiciousTeller.cs
   SwitchSheriff.cs
   Taskstar.cs
-  Test StepDancer.cs
   TimeManager.cs
   ToiletFan.cs
   Tomorrow.cs
@@ -539,10 +544,12 @@ Roles/
    GhostRumour.cs
    GhostSaboteur.cs
    GuardianAngel.cs
+   Infulencer.cs
   GhostRoleAssign.cs
   GhostRoleCore.cs
  Impostor/
   Abuser.cs
+  Administer.cs
   Alien.cs
   AlienHijack.cs
   Amnesiac.cs
@@ -584,6 +591,7 @@ Roles/
   EvilTrapper.cs
   Evolver.cs
   FireWorks.cs
+  Greedier.cs
   HadouHo.cs
   HateKiller.cs
   Infect.cs
@@ -620,9 +628,11 @@ Roles/
   Surrogate.cs
   Survivor.cs
   Swooper.cs
-  Tairou.css
+  Tairou.cs
   Teleporter.cs
   TeleportKiller.cs
+  Test DummySpawner.cs
+  Test Reverser.cs
   TimeSleeper.cs
   TimeThief.cs
   UnFortuner.cs
@@ -677,6 +687,7 @@ Roles/
   Cupid.cs
   CurseMaker.cs
   Dancer.cs
+  DarkHide.cs
   DarkSheriff.cs
   DoppelGanger.cs
   Dracula.cs
@@ -838,6 +849,7 @@ Microsoft.NETCore.App.Ref
   Sentry.System.Text.Json.dll
   Sentry.System.Threading.Tasks.Extensions.dll
   Sentry.Unity.dll
+  Sentry.Unity.Native.dll
   Unity.Addressables.dll
   Unity.LevelPlay.dll
   Unity.ProBuilder.dll
@@ -937,7 +949,7 @@ Microsoft.NETCore.App.Ref
 Microsoft.NET.Sdk/analyzers
 
 [analyzerConfigFiles]
-obj/Release/net6.0/TownOfHost.GeneratedMSBuildEditorConfig.editorconfig
+obj/Debug/net6.0/TownOfHost.GeneratedMSBuildEditorConfig.editorconfig
 .editorconfig
 
 [additionalFiles]

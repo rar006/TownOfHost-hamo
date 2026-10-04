@@ -324,29 +324,29 @@ namespace TownOfHost
 
                     {
 
-                        if (assets[i]["name"].ToString() == "TownOfHost-hamo_Steam.dll" && Constants.GetPlatformType() == Platforms.StandaloneSteamPC)
+                        if (assets[i].GetJ("name").ToString() == "TownOfHost-hamo_Steam.dll" && Constants.GetPlatformType() == Platforms.StandaloneSteamPC)
 
                         {
 
-                            downloadUrl = assets[i]["browser_download_url"].ToString();
+                            downloadUrl = assets[i].GetJ("browser_download_url").ToString();
 
                             break;
 
                         }
 
-                        if (assets[i]["name"].ToString() == "TownOfHost-hamo_Epic.dll" && Constants.GetPlatformType() == Platforms.StandaloneEpicPC)
+                        if (assets[i].GetJ("name").ToString() == "TownOfHost-hamo_Epic.dll" && Constants.GetPlatformType() == Platforms.StandaloneEpicPC)
 
                         {
 
-                            downloadUrl = assets[i]["browser_download_url"].ToString();
+                            downloadUrl = assets[i].GetJ("browser_download_url").ToString();
 
                             break;
 
                         }
 
-                        if (assets[i]["name"].ToString() == "TownOfHost-hamo.dll")
+                        if (assets[i].GetJ("name").ToString() == "TownOfHost-hamo.dll")
 
-                            downloadUrl = assets[i]["browser_download_url"].ToString();
+                            downloadUrl = assets[i].GetJ("browser_download_url").ToString();
 
                     }
 

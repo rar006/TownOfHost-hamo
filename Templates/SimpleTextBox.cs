@@ -41,6 +41,8 @@ public class SimpleTextBox
     // 末尾への追記・削除しか行えないため、真実の情報源はこちら側で完全に管理する。
     private string _fullText = "";
     public string Text => _fullText;
+    /// <summary>入力内容を表示しているTMP(フォント・色・描画順を外から調整する用)</summary>
+    public TMPro.TextMeshPro DisplayText => _displayText;
 
     // カーソル位置(_fullText中の文字インデックス、0 = 先頭)。
     // 矢印キーでの移動や、文中への挿入/削除に使う「途中編集」の要。

@@ -73,43 +73,17 @@ public static class WatchdogLauncher
     /// </summary>
     public static void ReconcileWithOption()
     {
-        if (!IsSupported || !MainMenuReached || scriptResourceUnavailable || watchdogLaunchUnavailable) return;
-
-        const bool wanted = true;
-
-        if (!reconciled)
-        {
-            reconciled = true;
-            lastWanted = wanted;
-            if (wanted && !IsRunning) Start();
-            return;
-        }
-
-        if (wanted == lastWanted)
-        {
-            if (wanted && !IsRunning) Start();
-            return;
-        }
-
-        lastWanted = wanted;
-        if (wanted) Start();
-        else Stop();
+        // クラッシュ時の自動再起動は廃止した。
+        // 以前のバージョンで起動済みのWatchdogが残っていれば、起動後に一度だけ停止を要求して終了させる。
+        if (!MainMenuReached || reconciled) return;
+        reconciled = true;
+        if (IsRunning) Stop();
     }
 
     /// <summary>Watchdogをゲームプロセスから切り離して起動する。</summary>
     public static void Start()
     {
-        if (!IsSupported || scriptResourceUnavailable || watchdogLaunchUnavailable || startInFlight || IsRunning) return;
-        if ((DateTime.UtcNow - lastStartAttemptUtc).TotalSeconds < StartRetrySeconds) return;
-
-        lastStartAttemptUtc = DateTime.UtcNow;
-        startInFlight = true;
-        var thread = new Thread(StartWorker)
-        {
-            IsBackground = true,
-            Name = "TOHhamoWatchdogStart"
-        };
-        thread.Start();
+        // クラッシュ時の自動再起動は廃止したため、Watchdogは起動しない。
     }
 
     private static void StartWorker()

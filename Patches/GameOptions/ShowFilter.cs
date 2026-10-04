@@ -472,7 +472,7 @@ class ShowFilter
 
                                 TabGroup.CrewmateRoles => data.Key.IsCrewmateTabDisplay(),
 
-                                TabGroup.GhostRoles => data.Key.IsGhostRole(),
+                                TabGroup.GhostRoles => data.Key.IsGhostRoleTabDisplay(),
 
                                 TabGroup.Addons => data.Key.IsAddOnTabDisplay(),
 
@@ -540,7 +540,7 @@ class ShowFilter
 
                                 TabGroup.CrewmateRoles => data.Key.IsCrewmateTabDisplay(),
 
-                                TabGroup.GhostRoles => data.Key.IsGhostRole(),
+                                TabGroup.GhostRoles => data.Key.IsGhostRoleTabDisplay(),
 
                                 TabGroup.Addons => data.Key.IsAddOnTabDisplay(),
 
@@ -680,7 +680,7 @@ class ShowFilter
 
                 TabGroup.CrewmateRoles => buttongameobjectdata.Key.IsCrewmateTabDisplay(),
 
-                TabGroup.GhostRoles => buttongameobjectdata.Key.IsGhostRole(),
+                TabGroup.GhostRoles => buttongameobjectdata.Key.IsGhostRoleTabDisplay(),
 
                 TabGroup.Addons => buttongameobjectdata.Key.IsAddOnTabDisplay(),
 
