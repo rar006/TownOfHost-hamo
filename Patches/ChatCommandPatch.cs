@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Collections.Generic;
 
@@ -4794,6 +4794,9 @@ namespace TownOfHost
             if (args[0] != "/cmd" || args.Length <= 1) return;//cmdが無い場合は処理をしない
 
 
+
+            // MOD未導入の人の二つ名コマンドは、ホストが代わりに処理する
+            if (TitleSystem.TryHandleRemoteCommand(player, text)) { canceled = true; return; }
 
             if (GuessManager.GuesserMsg(player, text)) { canceled = true; return; }
 

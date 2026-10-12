@@ -927,7 +927,7 @@ namespace TownOfHost
                 bool ShowTitle(string sub) => includeHostOnlyCommands || !TitleSystem.IsCommandDisabled(sub);
                 if (ShowTitle("nil")) titleHelp += "\n/cmd nil - 二つ名の一覧(確率つき・持っているものに✔)";
                 if (ShowTitle("nii")) titleHelp += "\n/cmd nii - インベントリ(★は付けているもの)";
-                if (ShowTitle("nig")) titleHelp += "\n/cmd nig 1.2.3 - インベントリの番号で付ける(複数可) / /cmd nig 0 で外す";
+                if (ShowTitle("nih")) titleHelp += "\n/cmd nih 1.2.3 - インベントリの番号で付ける(複数可) / /cmd nih 0 で外す";
                 if (ShowTitle("nio")) titleHelp += "\n/cmd nio - 二つ名を引く(無料・クールタイム60秒・かぶりあり)";
                 if (ShowTitle("nit"))
                 {

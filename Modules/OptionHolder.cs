@@ -3127,7 +3127,7 @@ namespace TownOfHost
             OptionCommandTitleEquip = BooleanOptionItem.Create(1_601_340, "DisableCommandTitleEquip", false, TabGroup.Other2, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#ffd36e")
-                .SetOptionName(() => "/cmd nig - 二つ名を付ける・外す");
+                .SetOptionName(() => "/cmd nih - 二つ名を付ける・外す");
             OptionCommandTitleDraw = BooleanOptionItem.Create(1_601_350, "DisableCommandTitleDraw", false, TabGroup.Other2, true)
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#ffd36e")

@@ -24,7 +24,7 @@ namespace TownOfHost;
 /// チャットコマンド:
 ///   /cmd nil            二つ名の一覧(確率つき・持っているものに✔)
 ///   /cmd nii            持っている二つ名(インベントリ・★=付けている)
-///   /cmd nig 1.2.3      インベントリの番号で付ける(複数可・最大数はサーバー設定) / /cmd nig 0 で外す
+///   /cmd nih 1.2.3      インベントリの番号で付ける(複数可・最大数はサーバー設定) / /cmd nih 0 で外す
 ///   /cmd nio            二つ名を引く(無料・クールタイム60秒・かぶりあり)
 ///   /cmd nit 名前        相手のインベントリを見る
 ///   /cmd nit 名前 a b    自分の a 番と相手の b 番の交換を申し込む
@@ -272,6 +272,7 @@ public static class TitleSystem
         {
             notifyAt = -1f;
             SendNotify();
+            RefreshVanillaPlayers();
         }
     }
 
@@ -291,7 +292,7 @@ public static class TitleSystem
                 foreach (var e in g.EnumerateArray())
                     names.Add($"<color={GetString(e, "color", "#ffffff")}>{GetString(e, "name")}</color>");
                 await FetchUserAsync(fc, true).ConfigureAwait(false);
-                Reply($"限定配布の二つ名を受け取りました!  {string.Join(" ", names)}\n/cmd nii で確認・/cmd nig で付けられます。");
+                Reply($"限定配布の二つ名を受け取りました!  {string.Join(" ", names)}\n/cmd nii で確認・/cmd nih で付けられます。");
             }
         }
         catch (Exception e) { Logger.Exception(e, Tag); }
@@ -339,8 +340,49 @@ public static class TitleSystem
         catch (Exception e) { Logger.Exception(e, Tag); }
     }
 
-    // RPCの種類(1バイト目)。1 = 二つ名を変えた / 2〜5 = 交換
-    private const byte RpcNotify = 1, RpcTradePropose = 2, RpcTradeAccept = 3, RpcTradeCancel = 4, RpcTradeDone = 5;
+    // RPCの種類(1バイト目)。1 = 二つ名を変えた / 2〜5 = 交換 / 6 = ホストが「この人(MOD未導入)の二つ名が変わった」と知らせる
+    private const byte RpcNotify = 1, RpcTradePropose = 2, RpcTradeAccept = 3, RpcTradeCancel = 4, RpcTradeDone = 5, RpcNotifyFor = 6;
+
+    /// <summary>ホスト用: MOD未導入の人の二つ名が変わったことを、MOD導入者に知らせる</summary>
+    private static void SendNotifyFor(byte playerId)
+    {
+        try
+        {
+            if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost || PlayerControl.LocalPlayer == null) return;
+            var writer = AmongUsClient.Instance.StartRpcImmediately(
+                PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.SyncTitle, SendOption.Reliable, -1);
+            writer.Write(RpcNotifyFor);
+            writer.Write(playerId);
+            AmongUsClient.Instance.FinishRpcImmediately(writer);
+        }
+        catch (Exception e) { Logger.Exception(e, Tag); }
+    }
+
+    /// <summary>ホスト用: ロビーにいるMOD未導入の人の二つ名を読み込んで、表示とみんなへの通知をする</summary>
+    private static void RefreshVanillaPlayers()
+    {
+        if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
+        foreach (var pc in PlayerControl.AllPlayerControls.ToArray())
+        {
+            if (pc == null || pc.AmOwner || pc.IsModClient()) continue;
+            var id = pc.PlayerId;
+            var fc = FriendCodeOf(pc);
+            if (fc.Length == 0) continue;
+            RefreshForHostAsync(id, fc);
+        }
+    }
+
+    private static async void RefreshForHostAsync(byte id, string fc)
+    {
+        try
+        {
+            await EnsureCatalogAsync().ConfigureAwait(false);
+            var rec = await FetchUserAsync(fc, true).ConfigureAwait(false);
+            SetShown(id, fc, rec.Equipped);
+            if (rec.Equipped.Count > 0) RunOnMain(() => SendNotifyFor(id));
+        }
+        catch (Exception e) { Logger.Exception(e, Tag); }
+    }
 
     public static void ReceiveRpc(PlayerControl sender, MessageReader reader)
     {
@@ -348,6 +390,16 @@ public static class TitleSystem
         try { kind = reader.ReadByte(); } catch { }
         if (!Enabled) return;
         if (sender == null || sender.AmOwner) return;
+        if (kind == RpcNotifyFor)
+        {
+            // ホストからの「この人の二つ名が変わった」(ホストからのものだけ信じる。中身はサーバーから読み直す)
+            if (!GameStates.IsLobby || AmongUsClient.Instance == null || sender.OwnerId != AmongUsClient.Instance.HostId) return;
+            byte target;
+            try { target = reader.ReadByte(); } catch { return; }
+            var pc = PlayerControl.AllPlayerControls.ToArray().FirstOrDefault(p => p != null && p.PlayerId == target);
+            if (pc != null) RefreshPlayerAsync(target, FriendCodeOf(pc));
+            return;
+        }
         if (kind == RpcNotify || kind > RpcTradeDone)
         {
             if (!GameStates.IsLobby) return;
@@ -432,7 +484,7 @@ public static class TitleSystem
     }
 
     // =====================================================================
-    //  チャットコマンド  /cmd nil | nii | nig | nio | nit   (ロビーのみ)
+    //  チャットコマンド  /cmd nil | nii | nih | nio | nit   (ロビーのみ)
     // =====================================================================
     /// <summary>二つ名のコマンドなら処理して true。ロビー以外や別のコマンドなら false(元の処理に渡す)。</summary>
     internal static bool TryHandleCommand(string raw)
@@ -441,7 +493,7 @@ public static class TitleSystem
         var tokens = raw.Trim().Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
         if (tokens.Length < 2 || !tokens[0].Equals(CmdPrefix, StringComparison.OrdinalIgnoreCase)) return false;
         var sub = tokens[1].ToLowerInvariant();
-        if (sub is not ("nil" or "nii" or "nig" or "nio" or "nit")) return false;
+        if (sub is not ("nil" or "nii" or "nih" or "nio" or "nit")) return false;
         // ゲーム中は別のコマンドかもしれないので、二つ名では横取りしない
         if (!GameStates.IsLobby) return false;
 
@@ -461,7 +513,7 @@ public static class TitleSystem
         {
             "nil" => Options.OptionCommandTitleList,
             "nii" => Options.OptionCommandTitleInventory,
-            "nig" => Options.OptionCommandTitleEquip,
+            "nih" => Options.OptionCommandTitleEquip,
             "nio" => Options.OptionCommandTitleDraw,
             "nit" => Options.OptionCommandTitleTrade,
             _ => null,
@@ -471,19 +523,49 @@ public static class TitleSystem
 
     /// <summary>自分だけに見えるメッセージ(必ずメインスレッドで送る)</summary>
     private static void Reply(string msg)
-        => RunOnMain(() => Utils.SendMessage(msg, PlayerControl.LocalPlayer.PlayerId));
+    {
+        // ホストが他のプレイヤー(MOD未導入)のコマンドを代わりに処理している時は、その人に返す
+        var to = ReplyTo.Value;
+        RunOnMain(() => Utils.SendMessage(msg, to != byte.MaxValue ? to : PlayerControl.LocalPlayer.PlayerId));
+    }
+
+    /// <summary>返信先(byte.MaxValue = 自分)。await をまたいでも引き継がれる</summary>
+    private static readonly System.Threading.AsyncLocal<byte> ReplyTo = new();
+
+    /// <summary>
+    /// ホスト用: MODを入れていないプレイヤーが打った二つ名コマンドを、ホストが代わりに処理する。
+    /// (MOD導入者は自分の端末で処理してチャットを送らないので、ここに来るのは未導入者だけ)
+    /// </summary>
+    internal static bool TryHandleRemoteCommand(PlayerControl player, string raw)
+    {
+        if (!Enabled || player == null || player.AmOwner || string.IsNullOrWhiteSpace(raw)) return false;
+        if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return false;
+        var tokens = raw.Trim().Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length < 2 || !tokens[0].Equals(CmdPrefix, StringComparison.OrdinalIgnoreCase)) return false;
+        var sub = tokens[1].ToLowerInvariant();
+        if (sub is not ("nil" or "nii" or "nih" or "nio" or "nit")) return false;
+        if (!GameStates.IsLobby) return false;
+        var id = player.PlayerId;
+        if (IsCommandDisabled(sub)) { Utils.SendMessage("このコマンドは部屋の設定で無効化されています。", id); return true; }
+        if (sub == "nit") { Utils.SendMessage("二つ名の交換は、MODを入れているプレイヤー同士でのみ使えます。", id); return true; }
+        RunCommandAsync(sub, tokens.Skip(2).ToArray(), player);
+        return true;
+    }
 
     private static string Pct(double p) => (p * 100).ToString(p >= 0.1 ? "0.#" : "0.##", CultureInfo.InvariantCulture) + "%";
     private static string Colored(TitleDef d) => $"<color={d.Color}>{d.Name}</color>";
 
-    private static async void RunCommandAsync(string sub, string[] args)
+    private static async void RunCommandAsync(string sub, string[] args, PlayerControl target = null)
     {
+        var remote = target != null && !target.AmOwner;
+        ReplyTo.Value = remote ? target.PlayerId : byte.MaxValue;
         try
         {
             if (!IsConfigured) { Reply("二つ名サーバー(Bot)のURLが設定されていません。"); return; }
             // ゲームのオブジェクトに触る値は、await の前(メインスレッド)で取っておく
-            var fc = FriendCodeOf(PlayerControl.LocalPlayer);
-            var localId = PlayerControl.LocalPlayer.PlayerId;
+            var who = target ?? PlayerControl.LocalPlayer;
+            var fc = FriendCodeOf(who);
+            var localId = who.PlayerId;
             if (fc.Length == 0) { Reply("フレンドコードを取得できませんでした。"); return; }
 
             await EnsureCatalogAsync(true).ConfigureAwait(false);
@@ -491,7 +573,7 @@ public static class TitleSystem
 
             if (sub == "nil") { await ListAllAsync(fc).ConfigureAwait(false); return; }
             if (sub == "nii") { await ShowInventoryAsync(fc).ConfigureAwait(false); return; }
-            if (sub == "nig") { await EquipAsync(fc, localId, args).ConfigureAwait(false); return; }
+            if (sub == "nih") { await EquipAsync(fc, localId, args).ConfigureAwait(false); return; }
             if (sub == "nio") { await DrawAsync(fc, localId).ConfigureAwait(false); return; }
         }
         catch (Exception e) { Logger.Exception(e, Tag); Reply("二つ名の処理でエラーが起きました。"); }
@@ -525,11 +607,11 @@ public static class TitleSystem
         var sb = new StringBuilder($"<b>インベントリ</b>({inv.Count}個 / ★=付けている)\n");
         for (int i = 0; i < inv.Count; i++)
             sb.Append(rec.Equipped.Contains(inv[i]) ? "★" : "　").Append(i + 1).Append(". ").Append(Colored(Catalog[inv[i]])).Append('\n');
-        sb.Append($"\n/cmd nig 1.2.3 のように番号で付けます(最大{maxEquipped}個) / /cmd nig 0 で外す");
+        sb.Append($"\n/cmd nih 1.2.3 のように番号で付けます(最大{maxEquipped}個) / /cmd nih 0 で外す");
         Reply(sb.ToString());
     }
 
-    /// <summary>/cmd nig 1.2.3  インベントリの番号で付ける。0 で外す。</summary>
+    /// <summary>/cmd nih 1.2.3  インベントリの番号で付ける。0 で外す。</summary>
     private static async Task EquipAsync(string fc, byte localId, string[] args)
     {
         var rec = await FetchUserAsync(fc, true).ConfigureAwait(false);
@@ -537,7 +619,7 @@ public static class TitleSystem
         var text = string.Join(" ", args).Trim();
         if (text.Length == 0)
         {
-            Reply($"使い方: /cmd nig 1.2.3  (インベントリの番号。最大{maxEquipped}個まで) / /cmd nig 0 で外す\n番号は /cmd nii で確認できます。");
+            Reply($"使い方: /cmd nih 1.2.3  (インベントリの番号。最大{maxEquipped}個まで) / /cmd nih 0 で外す\n番号は /cmd nii で確認できます。");
             return;
         }
         List<string> chosen;
@@ -570,7 +652,8 @@ public static class TitleSystem
         }
         var after = await FetchUserAsync(fc, true).ConfigureAwait(false);
         SetShown(localId, fc, after.Equipped);
-        RunOnMain(SendNotify);
+        if (ReplyTo.Value != byte.MaxValue) RunOnMain(() => SendNotifyFor(localId));
+        else RunOnMain(SendNotify);
         Reply(chosen.Count == 0
             ? "二つ名を外しました。"
             : "二つ名を付けました: " + string.Join(" ", chosen.Select(id => Colored(Catalog[id]))));
@@ -592,7 +675,7 @@ public static class TitleSystem
                 var p = GetDouble(root, "probability");
                 await FetchUserAsync(fc, true).ConfigureAwait(false);
                 Reply($"二つ名を引きました!  <color={color}>{name}</color>  (確率 {Pct(p)})\n"
-                    + (dup ? "すでに持っているのでかぶりです。" : "インベントリに追加されました。/cmd nii で確認・/cmd nig で付けられます。"));
+                    + (dup ? "すでに持っているのでかぶりです。" : "インベントリに追加されました。/cmd nii で確認・/cmd nih で付けられます。"));
                 return;
             }
             var err = GetString(root, "error");
