@@ -285,6 +285,69 @@ public static class TitleSystem
     //  ホスト側の本当の名前は変えない(未導入の人それぞれにだけ見える名前を送る)。
     // =====================================================================
     private static float nextVanillaNameAt;
+    private static float nextVanillaForceAt;
+
+    /// <summary>
+    /// システムメッセージ等で名前が一時的に書き換えられて戻された時に呼ぶ。
+    /// 二つ名付きの名前を送っていた分だけ「前回送った名前」の記録を消し、次のチェック(すぐ)で送り直させる。
+    /// </summary>
+    public static void InvalidateVanillaNames()
+    {
+        try
+        {
+            if (!Enabled || !GameStates.IsLobby || Main.LastNotifyNames == null) return;
+            if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
+            var removed = false;
+            foreach (var key in Main.LastNotifyNames.Keys.ToList())
+            {
+                var v = Main.LastNotifyNames[key];
+                if (v != null && v.StartsWith(VanillaNameHead)) { Main.LastNotifyNames.Remove(key); removed = true; }
+            }
+            // 吹き出しの表示より後に送り直したいので、少しだけ待つ
+            if (removed) nextVanillaNameAt = Time.time + 0.3f;
+        }
+        catch { }
+    }
+    private static float nextHostRefreshAt;
+
+    /// <summary>
+    /// 全員向けに名前が変わった(RpcSetName)ときは、未導入の人それぞれに送った「二つ名付きの名前」も上書きされている。
+    /// 前回送った名前の記録を消して、次のチェックで送り直されるようにする。
+    /// </summary>
+    /// <summary>ホストに届いた SetName(他の人が自分の名前を変えた等)でも、送った名前は上書きされているので送り直す</summary>
+    [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.HandleRpc))]
+    private static class IncomingSetNameInvalidatePatch
+    {
+        public static void Postfix(PlayerControl __instance, [HarmonyArgument(0)] byte callId)
+        {
+            try
+            {
+                if (callId != (byte)RpcCalls.SetName && callId != (byte)RpcCalls.CheckName) return;
+                if (__instance == null || Main.LastNotifyNames == null || !GameStates.IsLobby) return;
+                if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
+                foreach (var key in Main.LastNotifyNames.Keys.Where(k => k.Item1 == __instance.PlayerId).ToList())
+                    Main.LastNotifyNames.Remove(key);
+                nextVanillaNameAt = Time.time + 0.3f;
+            }
+            catch { }
+        }
+    }
+
+    [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.RpcSetName))]
+    private static class RpcSetNameInvalidatePatch
+    {
+        public static void Postfix(PlayerControl __instance)
+        {
+            try
+            {
+                if (__instance == null || Main.LastNotifyNames == null || !GameStates.IsLobby) return;
+                foreach (var key in Main.LastNotifyNames.Keys.Where(k => k.Item1 == __instance.PlayerId).ToList())
+                    Main.LastNotifyNames.Remove(key);
+                nextVanillaNameAt = 0f; // 次のフレームですぐ送り直す
+            }
+            catch { }
+        }
+    }
 
     private static string TitlePrefixOf(PlayerControl pc)
     {
@@ -297,8 +360,15 @@ public static class TitleSystem
             if (!color.StartsWith("#")) color = "#" + color;
             parts.Add($"<color={color}>{def.Name}</color>");
         }
-        // 改行すると、チャットの吹き出しで名前が2行になって本文と重なるので、名前と同じ行の前に小さく付ける
-        return parts.Count == 0 ? "" : $"<size=60%>{string.Join(" ", parts)}</size> ";
+        return parts.Count == 0 ? "" : string.Join(" ", parts);
+    }
+
+    private const string VanillaNameHead = "<line-height=-72%>"; // -100%だと二つ名が上に行きすぎてチャット欄からはみ出るので少し下げる
+    private static string VanillaNameOf(PlayerControl target, string baseName)
+    {
+        var titles = TitlePrefixOf(target);
+        if (titles.Length == 0) return baseName;
+        return $"{VanillaNameHead}{baseName}\r\n<size=60%>{titles}</size></line-height>";
     }
 
     private static void VanillaNameTick()
@@ -306,6 +376,11 @@ public static class TitleSystem
         if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
         if (Time.time < nextVanillaNameAt) return;
         nextVanillaNameAt = Time.time + 1f;
+        // 他の処理(チャット送信時の一時的な名前変更など)で名前が上書きされても、5秒ごとに送り直して直す
+        var forceResend = Time.time >= nextVanillaForceAt;
+        if (forceResend) nextVanillaForceAt = Time.time + 5f;
+        // 30秒ごとに全員の二つ名をサーバーから読み直す(通知の取りこぼし対策)
+        if (Time.time >= nextHostRefreshAt) { nextHostRefreshAt = Time.time + 30f; RefreshVanillaPlayers(); }
         try
         {
             var all = PlayerControl.AllPlayerControls.ToArray().Where(p => p != null && p.Data != null).ToArray();
@@ -317,8 +392,9 @@ public static class TitleSystem
                     var baseName = target.Data.PlayerName ?? target.name;
                     // 同じ名前なら送らない(RpcSetNamePrivate 側で前回と同じかを確認している)
                     // ホストの名前は「ホスト：」の欄にも出るので、二つ名は付けない
-                    var prefix = target.OwnerId == AmongUsClient.Instance.HostId ? "" : TitlePrefixOf(target);
-                    target.RpcSetNamePrivate(prefix + baseName, false, seer);
+                    var name = VanillaNameOf(target, baseName); // ホスト本人にも付ける
+                    // 二つ名がある人の分は、ときどき強制で送り直す(上書きされて消えたままになるのを防ぐ)
+                    target.RpcSetNamePrivate(name, false, seer, forceResend && !ReferenceEquals(name, baseName));
                 }
             }
         }
@@ -384,6 +460,8 @@ public static class TitleSystem
     private static void SetShown(byte playerId, string fc, IEnumerable<string> ids)
     {
         var valid = ValidIds(ids);
+        if (AmongUsClient.Instance != null && AmongUsClient.Instance.AmHost)
+            Logger.Info($"表示する二つ名: player={playerId} fc={fc} ids=[{string.Join(",", valid)}]", Tag);
         if (valid.Length == 0) Shown.TryRemove(playerId, out _);
         else Shown[playerId] = (fc, valid);
     }
@@ -428,22 +506,23 @@ public static class TitleSystem
         if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
         foreach (var pc in PlayerControl.AllPlayerControls.ToArray())
         {
-            if (pc == null || pc.AmOwner || pc.IsModClient()) continue;
+            if (pc == null || pc.AmOwner) continue;
             var id = pc.PlayerId;
             var fc = FriendCodeOf(pc);
             if (fc.Length == 0) continue;
-            RefreshForHostAsync(id, fc);
+            // MOD導入者の分もホストが自分で読む(相手からの通知が届かなかった時でも、未導入の人に見せられるように)
+            RefreshForHostAsync(id, fc, notify: !pc.IsModClient());
         }
     }
 
-    private static async void RefreshForHostAsync(byte id, string fc)
+    private static async void RefreshForHostAsync(byte id, string fc, bool notify = true)
     {
         try
         {
             await EnsureCatalogAsync().ConfigureAwait(false);
             var rec = await FetchUserAsync(fc, true).ConfigureAwait(false);
             SetShown(id, fc, rec.Equipped);
-            if (rec.Equipped.Count > 0) RunOnMain(() => SendNotifyFor(id));
+            if (notify && rec.Equipped.Count > 0) RunOnMain(() => SendNotifyFor(id));
         }
         catch (Exception e) { Logger.Exception(e, Tag); }
     }

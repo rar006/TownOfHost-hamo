@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using AmongUs.GameOptions;
 using Hazel;
 using InnerNet;
@@ -207,6 +207,8 @@ namespace TownOfHost
         }
         public void SendMessage()
         {
+            // チャット送信(名前を一時的に変えて戻す)で、未導入の人に見せていた二つ名付きの名前が消えるので、送り直してもらう
+            if (name == "MessagesToSend") TitleSystem.InvalidateVanillaNames();
             if (currentState == State.InRootMessage) this.EndMessage();
             if (currentState != State.Ready)
             {
