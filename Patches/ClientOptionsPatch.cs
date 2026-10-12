@@ -246,7 +246,8 @@ namespace TownOfHost
 
             }
 
-            if ((AutoRehost == null || AutoRehost.ToggleButton == null) && !Main.IsAndroid())
+            // 部屋の自動立て直しは Windows 専用の処理を使っていないので Android でも使える
+            if (AutoRehost == null || AutoRehost.ToggleButton == null)
 
             {
 

@@ -20,6 +20,10 @@ namespace TownOfHost
         {
             // 定数設定による公開ルームブロック
             if (!AmongUsClient.Instance.AmHost) return false;
+            // Discord募集の中継が設定されている時は、公開ボタンはDiscord募集の切り替えだけに使う
+            // (MakePublicDiscordBotPatch が処理する)。公式サーバーの公開はしないので、ここでは何も言わずに止める。
+            if (!string.IsNullOrWhiteSpace(Main.MatchmakingRelayUrl) && !Main.MatchmakingRelayUrl.Equals("none", System.StringComparison.OrdinalIgnoreCase))
+                return false;
             if (!Main.AllowPublicRoom)
             {
                 var message = GetString("DisabledByProgram");
@@ -95,7 +99,9 @@ namespace TownOfHost
             if (ServerManager.Instance?.CurrentRegion?.Name == null) return;
 
             var nowserver = ServerManager.Instance.CurrentRegion.Name;
-            if ((Main.IsAndroid() && !Main.IsCs()) || nowserver is "ExROfficialTokyo" || nowserver.Contains("Nebula on the Ship JP") || nowserver.Contains("<color=#ffa500>Super</color>")
+            // 以前は Android だと公式サーバーで「作成」ボタンを画面外へ移していた(Androidでホストできなかった頃の名残)。
+            // 今はランチャー経由で itch.io ログインでき、Androidでもホストできるので、その条件は外した。
+            if (nowserver is "ExROfficialTokyo" || nowserver.Contains("Nebula on the Ship JP") || nowserver.Contains("<color=#ffa500>Super</color>")
             || (VersionInfoManager.BlockVanillaSaver && !Main.IsCs()))
             {
                 obj.transform.localPosition = new Vector3(100f, 100f, 100f);
@@ -119,6 +125,7 @@ namespace TownOfHost
             }
         }
     }
+#if !HAMO_ANDROID
     [HarmonyPatch(typeof(EOSManager), nameof(EOSManager.IsAllowedOnline))]
     class RunLoginPatch
     {
@@ -129,6 +136,7 @@ namespace TownOfHost
 #endif
         }
     }
+#endif
     [HarmonyPatch(typeof(BanMenu), nameof(BanMenu.SetVisible))]
     class BanMenuSetVisiblePatch
     {

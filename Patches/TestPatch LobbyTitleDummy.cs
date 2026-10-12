@@ -44,7 +44,7 @@ public sealed class テスト用PatchLobbyTitleDummy : CustomNetObject
             float t = (float)i / (nameText.Length - 1) * (stops.Length - 1);
             int idx = Mathf.Clamp(Mathf.FloorToInt(t), 0, stops.Length - 2);
             Color c = Color.Lerp(stops[idx], stops[idx + 1], t - idx);
-            string hex = ColorUtility.ToHtmlStringRGB(c);
+            string hex = ColorCompat.ToHtmlStringRGB(c);
             sb.Append($"<color=#{hex}>{nameText[i]}</color>");
         }
         sb.Append($"</i></b></size>");

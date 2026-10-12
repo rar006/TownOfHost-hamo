@@ -124,7 +124,7 @@ class VersionInfoManager
                 if (release != null)
                 {
                     ModUpdater.downloadUrl = release.DownloadUrl;
-                    ModUpdater.latestVersion = new(release.TagName.TrimStart('v')?.Trim('S')?.Trim('s'));
+                    ModUpdater.latestVersion = ModUpdater.ParseTagVersion(release.TagName);
                     ModUpdater.latestTitle = $"Ver. {ModUpdater.latestVersion}";
                 }
             }
@@ -277,19 +277,15 @@ class VersionInfoManager
         if (Versions != null && !force) return true;
         try
         {
-            UnityWebRequest request = UnityWebRequest.Get(URL);
-            request.SetRequestHeader("User-Agent", "TownOfHost-hamo VersionChecker");
-
-            var co = request.SendWebRequest();
-            while (!co.isDone) { System.Threading.Thread.Sleep(10); }
-
-            if (request.isNetworkError || request.isHttpError)
+            // 起動を早くするため、MOD読み込み直後からバックグラウンドで取得している結果を使う
+            // (メニュー表示時に終わっていなければ、残りの時間だけ待つ。最大8秒)
+            var result = StartupPrefetch.Get(URL);
+            if (result == null)
             {
-                Logger.Error($"ステータスコード: {request.responseCode.ToString()}", "CheckVersionJson");
+                Logger.Error("versions.json を取得できませんでした", "CheckVersionJson");
                 return false;
             }
 
-            var result = request.downloadHandler.text;
             var versions = JsonSerializer.Deserialize<Dictionary<string, VersionInfo>>(result);
             if (versions == null) return false;
             Versions = versions;

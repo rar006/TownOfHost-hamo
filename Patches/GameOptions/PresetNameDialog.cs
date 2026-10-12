@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using TMPro;
 using TownOfHost.Templates;
@@ -81,7 +81,11 @@ public static class PresetNameDialog
             ApplySorting(menu.transform);
             root.SetActive(true);
             nameBox.SetText(GetCurrentPresetName());
+#if HAMO_ANDROID
+            OpenKeyboard();
+#else
             nameBox.TextBox.GiveFocus();
+#endif
             Tick();
         }
         catch (Exception e)
@@ -106,6 +110,10 @@ public static class PresetNameDialog
                         ticking = false;
                         return;
                     }
+#if HAMO_ANDROID
+                    PollKeyboard();
+                    if (root == null || !root.activeSelf) { ticking = false; return; }
+#endif
                     var caret = nameBox.TextBox != null && nameBox.TextBox.hasFocus && (int)(Time.realtimeSinceStartup * 2f) % 2 == 0;
                     previewText.text = (nameBox.Text ?? "") + (caret ? "|" : "");
                     Loop();
@@ -116,8 +124,44 @@ public static class PresetNameDialog
         Loop();
     }
 
+#if HAMO_ANDROID
+    private static TouchScreenKeyboard keyboard;
+
+    /// <summary>Android: スマホ標準のキーボード(決定/戻る付き)を直接開く</summary>
+    public static void OpenKeyboard()
+    {
+        try
+        {
+            nameBox?.OpenAndroidKeyboard(); // 決定すると onEnter(=Apply) が呼ばれる
+            keyboard = null;
+        }
+        catch (Exception e)
+        {
+            keyboard = null;
+            Logger.Warn($"PresetNameDialog.OpenKeyboard: {e.Message}", "PresetNameDialog");
+        }
+    }
+
+    private static void PollKeyboard()
+    {
+        if (keyboard == null) return;
+        try
+        {
+            nameBox?.SyncFromKeyboard(keyboard.text);
+            var status = keyboard.status;
+            if (status == TouchScreenKeyboard.Status.Done) { keyboard = null; Apply(); }
+            else if (status == TouchScreenKeyboard.Status.Canceled || status == TouchScreenKeyboard.Status.LostFocus) keyboard = null;
+        }
+        catch { keyboard = null; }
+    }
+#endif
+
     public static void Close()
     {
+#if HAMO_ANDROID
+        try { if (keyboard != null) keyboard.active = false; } catch { }
+        keyboard = null;
+#endif
         if (root != null) root.SetActive(false);
     }
 
@@ -211,7 +255,7 @@ public static class PresetNameDialog
             normalColor: new Color32(120, 120, 120, 255),
             hoverColor: new Color32(160, 160, 160, 255),
             action: Close,
-            label: "キャンセル");
+            label: "戻る");
         cancel.Scale = new Vector2(1.7f, 0.5f);
         cancel.FontSize = 1.8f;
 
@@ -238,6 +282,18 @@ public static class PresetNameDialog
         previewText.rectTransform.localPosition = new Vector3(0f, 0.05f, -2f); // 中心は入力欄の中心(左揃えなので文字は左端から始まる)
         previewText.rectTransform.sizeDelta = new Vector2(3.9f, 0.45f);
         previewText.enableWordWrapping = false;
+#if HAMO_ANDROID
+        // 入力欄をタップしたらキーボードを開き直せるように、入力欄の上に透明なボタンを置く
+        var reopen = new SimpleButton(
+            parent: root.transform,
+            name: "PresetNameDialogKeyboard",
+            localPosition: new Vector3(0f, 0.05f, -3f),
+            normalColor: new Color32(0, 0, 0, 0),
+            hoverColor: new Color32(255, 255, 255, 30),
+            action: OpenKeyboard,
+            label: "");
+        reopen.Scale = new Vector2(4.2f, 0.5f);
+#endif
         ApplySorting(menuTransform);
         root.SetActive(false);
     }

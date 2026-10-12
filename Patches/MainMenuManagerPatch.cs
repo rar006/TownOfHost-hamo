@@ -1398,7 +1398,7 @@ namespace TownOfHost
 
                 cantJoin |= VersionInfoManager.allversion != null && VersionInfoManager.allversion.DisableRoomJoin == true;
 
-                var text = Main.IsAndroid() ? GetMenuText("CantAndroidCreateGame", "この環境では部屋を作成できません") : cantJoin ? GetMenuText("CantPublickAndJoin", "現在は部屋の作成・参加ができません") : "";
+                var text = cantJoin ? GetMenuText("CantPublickAndJoin", "現在は部屋の作成・参加ができません") : "";
 
                 TMP.SetText(text);
 

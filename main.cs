@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Collections.Generic;
 
@@ -50,7 +50,9 @@ namespace TownOfHost
 
     [BepInIncompatibility("jp.dreamingpig.amongus.nebula")]
 
-    [BepInProcess("Among Us.exe")]
+    #if !HAMO_ANDROID
+    [BepInProcess("Among Us.exe")] // Androidではプロセス名が異なるため、この制限を付けない
+#endif
 
     public class Main : BasePlugin
 
@@ -136,13 +138,13 @@ namespace TownOfHost
         public const string BepInExPluginName = "Town Of Host-hamo";
 #endif
 
-        public const string BepInExPluginVersion = "4.00.32.00";
+        public const string BepInExPluginVersion = "4.00.33.00";
 
-        public const string PluginVersion = "4.00.32.00";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
+        public const string PluginVersion = "4.00.33.00";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
 
-        public const string PluginShowVersion = "4.32.00α";
+        public const string PluginShowVersion = "4.33.00α";
 
-        public const string ModVersion = ".32.00";//リリースver用バージョン変更dc9b79
+        public const string ModVersion = ".33.00";//リリースver用バージョン変更dc9b79
 
 
 
@@ -162,7 +164,7 @@ namespace TownOfHost
 
 
 
-        public static readonly string MatchmakingRelayUrl = "https://rising-earn-excel-closed.trycloudflare.com/matchmaking";
+        public static readonly string MatchmakingRelayUrl = "https://ski-bidder-hook-falls.trycloudflare.com/matchmaking";
 
         public static readonly string MatchmakingRelaySecret = "z1xjsyqynboz";
 
@@ -295,6 +297,8 @@ namespace TownOfHost
         //Other Configs
 
         public static ConfigEntry<string> BetaBuildURL { get; private set; }
+        /// <summary>インクリメンタルGCを切る(部屋退出時などのクラッシュ対策・Windowsのみ)。Modules/IncrementalGcInvalidator.cs</summary>
+        public static ConfigEntry<bool> DisableIncrementalGc { get; private set; }
 
         public static ConfigEntry<float> LastKillCooldown { get; private set; }
 
@@ -423,8 +427,18 @@ namespace TownOfHost
         {
 
             GameCount = 0;
-
             Instance = this;
+#if HAMO_ANDROID
+            // Androidでは作業ディレクトリがゲームのフォルダとは限らないため、BepInExの親フォルダに揃える
+            // (設定・ログ・テンプレートなどを "./xxx" で読み書きする処理が正しい場所を指すようにする)
+            try
+            {
+                var androidRoot = System.IO.Directory.GetParent(BepInEx.Paths.BepInExRootPath)?.FullName;
+                if (!string.IsNullOrEmpty(androidRoot) && System.IO.Directory.Exists(androidRoot))
+                    System.IO.Directory.SetCurrentDirectory(androidRoot);
+            }
+            catch (System.Exception e) { UnityEngine.Debug.LogWarning("Android cwd: " + e.Message); }
+#endif
 
 
 
@@ -600,6 +614,20 @@ namespace TownOfHost
 
             BetaBuildURL = Config.Bind("Other", "BetaBuildURL", "");
 
+            DisableIncrementalGc = Config.Bind("Client Options", "DisableIncrementalGc", true,
+                "インクリメンタルGCを切って、部屋から退出するときなどのクラッシュ(0xC0000005)を防ぐ(Windowsのみ)");
+#if !HAMO_ANDROID
+            TownOfHost.Modules.IncrementalGcInvalidator.ApplyIfConfigured();
+#endif
+
+            // 起動を早くする: メインメニューで使う通信(バージョン情報・リリース情報)を、ゲームの読み込みと並行して先に始めておく
+            try
+            {
+                TownOfHost.Modules.StartupPrefetch.Start(VersionInfoManager.URL);
+                ModUpdater.StartPrefetch();
+            }
+            catch (System.Exception e) { UnityEngine.Debug.LogWarning("StartupPrefetch: " + e.Message); }
+
             MessageWait = Config.Bind("Other", "MessageWait", 1f);
 
             LastKillCooldown = Config.Bind("Other", "LastKillCooldown", (float)30);
@@ -647,8 +675,14 @@ namespace TownOfHost
 
 
                 foreach (var roleClassType in roleClassArray)
-
-                    roleClassType.GetField("RoleInfo")?.GetValue(type);
+                {
+                    // 1つの役職の初期化に失敗しても、残りの役職が読み込まれなくならないようにする(Androidで一部役職が消える対策)
+                    try { roleClassType.GetField("RoleInfo")?.GetValue(type); }
+                    catch (System.Exception ex) when (ex is not System.ArgumentException && ex.InnerException is not System.ArgumentException)
+                    {
+                        TownOfHost.Logger.Error($"役職の読み込みに失敗: {roleClassType.Name} {ex.InnerException ?? ex}", "LoadDictionary");
+                    }
+                }
 
             }
 
@@ -761,7 +795,11 @@ namespace TownOfHost
 
         }
 
-        public static bool IsAndroid()//蜿り・・縲ヾNR
+        #if HAMO_ANDROID
+        // Android用ビルド(TownOfHost-hamo_Android.dll)は常にAndroid
+        public static bool IsAndroid() => true;
+#else
+public static bool IsAndroid()//蜿り・・縲ヾNR
 
         {
 
@@ -788,6 +826,7 @@ namespace TownOfHost
             }
 
         }
+#endif
 
         public static bool IsPublicRoomAllowed(bool AllowCS = true)
 

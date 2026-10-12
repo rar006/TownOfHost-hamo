@@ -15,7 +15,7 @@ public static class StringHelper
     public static string Mark(this string self, Color color, bool bright = true)
     {
         var markingColor = color.ToMarkingColor(bright);
-        var markingColorCode = ColorUtility.ToHtmlStringRGBA(markingColor);
+        var markingColorCode = ColorCompat.ToHtmlStringRGBA(markingColor);
         return $"<mark=#{markingColorCode}>{self}</mark>";
     }
     /// <summary>
@@ -25,7 +25,7 @@ public static class StringHelper
     /// <returns></returns>
     public static string ColorCode(this Color32 color)
     {
-        return "#" + ColorUtility.ToHtmlStringRGBA(color);
+        return "#" + ColorCompat.ToHtmlStringRGBA(color);
     }
     /// <summary>
     /// カラーコードからカラーに変換します
@@ -36,7 +36,7 @@ public static class StringHelper
     {
         if (!color.StartsWith("#")) color = $"#{color}";
 
-        if (ColorUtility.TryParseHtmlString(color, out Color c))
+        if (ColorCompat.TryParseHtmlString(color, out Color c))
             return c;
 
         Logger.Info($"{color}をcolorに変換できませんでした。", "StringHelper");

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
@@ -478,6 +478,7 @@ namespace TownOfHost.Patches
                 _closeButton.Scale = new Vector2(0.4f, 0.4f);
                 _closeButton.FontSize = 3f;
 
+                BugUiTheme.Apply(_panelRoot, PanelSize, _titleText);
                 _panelRoot.SetActive(false);
                 return true;
             }
@@ -753,6 +754,7 @@ namespace TownOfHost.Patches
         {
             // GetOpenFileNameWはダイアログを閉じるまで戻らないブロッキング呼び出しのため、
             // 呼んでいる間はゲーム全体が一時停止して見える(ダイアログ自体は正常に操作できる)。
+            if (Main.IsAndroid()) return; // Win32のファイル選択はAndroidでは使えない
             var path = Win32FileDialog.ShowOpenImageOrVideoDialog();
             if (string.IsNullOrEmpty(path)) return;
 
@@ -853,7 +855,7 @@ namespace TownOfHost.Patches
                     _descriptionBoxFrame?.SetActive(true);
                     SetActiveSafe(_submitButton, true);
                     SetActiveSafe(_descriptionBackButton, true);
-                    SetActiveSafe(_attachButton, true);
+                    SetActiveSafe(_attachButton, !Main.IsAndroid()); // Androidではファイル選択が使えないので出さない
                     UpdateAttachButtonLabel();
                     // 説明欄を表示した直後に確実に入力フォーカスを与える。
                     _ = new LateTask(() => _descriptionBox?.TextBox?.GiveFocus(), 0.05f, "BugReportDescription.Focus", true);

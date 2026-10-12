@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -108,6 +108,9 @@ public static class Moderator
             case "/mn":
                 HandleSetMinAssignCount(player, args);
                 break;
+            case "/bug":
+                HandleBugReport(player, args);
+                break;
         }
 
         return true;
@@ -142,7 +145,36 @@ public static class Moderator
     }
 
     private static bool IsManagedCommand(string command)
-        => command is "/kick" or "/ban" or "/say" or "/fe" or "/forceend" or "/sw" or "/start" or "/kf" or "/mf" or "/ms" or "/cs" or "/fm" or "/ma" or "/mn";
+        => command is "/kick" or "/ban" or "/say" or "/fe" or "/forceend" or "/sw" or "/start" or "/kf" or "/mf" or "/ms" or "/cs" or "/fm" or "/ma" or "/mn" or "/bug";
+
+    /// <summary>/cmd bug 内容 : モデレーターのみ。ホストの端末から、モデレーターと部屋主のフレンドコード付きでバグ報告を送る</summary>
+    private static void HandleBugReport(PlayerControl player, string[] args)
+    {
+        if (Options.OptionCommandBugReport?.GetBool() == true)
+        {
+            SendMessage("このコマンドは部屋の設定で無効化されています。", player.PlayerId);
+            return;
+        }
+        if (!IsModerator(player))
+        {
+            SendMessage("/cmd bug はモデレーターのみ使用できます。", player.PlayerId);
+            return;
+        }
+        var description = string.Join(" ", args.Skip(1)).Trim();
+        if (description.Length == 0)
+        {
+            SendMessage("使い方: /cmd bug バグの内容", player.PlayerId);
+            return;
+        }
+        var modFc = player.GetClient()?.FriendCode ?? "";
+        var modName = RemoveModeratorPrefix(player.Data?.PlayerName ?? player.name).RemoveHtmlTags().Trim();
+        var playerId = player.PlayerId;
+        _ = System.Threading.Tasks.Task.Run(async () =>
+        {
+            var (ok, message, _) = await BugReportSystem.SubmitAsync("", description, $"{modName}(モデレーター)", modFc).ConfigureAwait(false);
+            MainThreadDispatcher.Enqueue(() => SendMessage(ok ? "バグ報告をホスト経由で送信しました。ご協力ありがとうございます！" : $"バグ報告の送信に失敗しました: {message}", playerId));
+        });
+    }
 
     private static bool CanUseModeratorCommand(PlayerControl player)
         => IsHostPlayer(player) || IsModerator(player);

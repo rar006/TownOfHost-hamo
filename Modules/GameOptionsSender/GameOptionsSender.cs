@@ -60,9 +60,15 @@ namespace TownOfHost.Modules
             writer.EndMessage();
 
             // 配列化&送信
+#if HAMO_ANDROID
+            // Android では Il2CppStructArray を Il2CppSystem.Array へ Cast するとネイティブクラッシュする
+            // (ホストでロビーに入った直後に落ちていた原因)。Hazel の ToByteArray(ヘッダー無し)で同じ内容を取り出す。
+            var byteArray = writer.ToByteArray(false);
+#else
             var byteArray = new Il2CppStructArray<byte>(writer.Length - 1);
             // MessageWriter.ToByteArray
             Buffer.BlockCopy(writer.Buffer.Cast<Array>(), 1, byteArray.Cast<Array>(), 0, writer.Length - 1);
+#endif
 
             SendOptionsArray(byteArray);
             writer.Recycle();

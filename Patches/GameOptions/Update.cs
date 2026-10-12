@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 
 using HarmonyLib;
 
@@ -63,7 +63,7 @@ namespace TownOfHost
 
                     search.transform.localScale = priset.transform.localScale = new Vector3(0.46f, 0.46f, 0f);
 
-                    activeonly.transform.localPosition = new Vector3(-2.0f, 3.25f, -400f);
+                    activeonly.transform.localPosition = new Vector3(-0.08f, 3.6f, -400f); // 「ゲーム・プリセット」の右隣(MenuPatch.csと同じ値)
 
                     activeonly.transform.localScale = new Vector3(0.6f, 0.46f, 0f); // 横にしっかり・縦は少しだけ拡大(MenuPatch.csと同じ値)
 
@@ -111,7 +111,9 @@ namespace TownOfHost
 
                         && OptionsMenuBehaviourStartPatch.Instance.gameObject.activeInHierarchy;
 
-                    var active = !pauseMenuOpen && ((ModSettingsButton?.selected ?? false) || (sideTabButtons?.Any(sb => sb != null && sb.selected) ?? false));
+                    // 地図(ランダムスポーン/牢屋)の画面を開いている間は出さない(出す→隠すを毎フレーム繰り返してチカチカしていた)
+                    var mapMenuOpen = ShowRandomSpawnOption.CustomBackground != null && ShowRandomSpawnOption.CustomBackground.gameObject.activeInHierarchy;
+                    var active = !pauseMenuOpen && !mapMenuOpen && ((ModSettingsButton?.selected ?? false) || (sideTabButtons?.Any(sb => sb != null && sb.selected) ?? false));
 
 
 
@@ -679,6 +681,8 @@ namespace TownOfHost
 
                             }
 
+                            // 「限定役職」の見出しは、期間内の役職が1つも無い時は隠す
+                            if (henabled && RoleGojuon.IsEmptyLimitedHeader(option.Id)) henabled = false;
                             option.OptionHedder.gameObject.SetActive(henabled);
 
                             if (henabled)
@@ -983,6 +987,8 @@ namespace TownOfHost
 
 
 
+                    // 五十音の見出し(あ行など)が閉じられていれば、その中の役職と設定は隠す
+                    if (enabled && RoleGojuon.IsInCollapsedRow(option)) enabled = false;
                     option.OptionBehaviour.gameObject.SetActive(enabled);
 
                     if (enabled)
@@ -1065,9 +1071,65 @@ namespace TownOfHost
 
     {
 
+        private static float _nextVanillaHideAt;
+        private static readonly System.Collections.Generic.HashSet<int> _modBehaviourIds = new();
+
+        /// <summary>
+        /// MOD設定タブ(RoleSettingsTabの複製)に、バニラの設定(キル可能距離など)が紛れて表示されることがある(Androidで確認)。
+        /// MODのオプション以外の設定行は隠す。
+        /// </summary>
+        private static void HideVanillaRowsInModTab()
+        {
+            var tab = GameSettingMenuStartPatch.ModSettingsTab;
+            if (tab == null || !tab.gameObject.activeInHierarchy) return;
+            if (Time.time < _nextVanillaHideAt) return;
+            _nextVanillaHideAt = Time.time + 0.5f;
+            _modBehaviourIds.Clear();
+            foreach (var o in OptionItem.AllOptions)
+                if (o?.OptionBehaviour != null) _modBehaviourIds.Add(o.OptionBehaviour.GetInstanceID());
+            foreach (var ob in tab.GetComponentsInChildren<OptionBehaviour>(true))
+            {
+                if (ob == null || ob is RoleOptionSetting) continue;
+                if (_modBehaviourIds.Contains(ob.GetInstanceID())) continue;
+                if (ob.gameObject.activeSelf) ob.gameObject.SetActive(false);
+            }
+        }
+
+        private static bool _overlaysHidden;
+        private static readonly System.Collections.Generic.List<GameObject> _hiddenOverlays = new();
+
+        /// <summary>
+        /// ランダムスポーン/牢屋の地図画面を開いている間は、検索欄・プリセット欄・左の役職タブのアイコンが
+        /// 地図の上に重なって見えるので隠す(閉じたら元に戻す)
+        /// </summary>
+        private static void HideOverlaysWhileMapMenu()
+        {
+            var bg = ShowRandomSpawnOption.CustomBackground;
+            var open = bg != null && bg.gameObject.activeInHierarchy;
+            if (open)
+            {
+                void Hide(GameObject go)
+                {
+                    if (go == null || !go.activeSelf) return;
+                    go.SetActive(false);
+                    _hiddenOverlays.Add(go);
+                }
+                foreach (var b in GameSettingMenuStartPatch.sideTabButtons) Hide(b?.gameObject);
+                _overlaysHidden = true;
+            }
+            else if (_overlaysHidden)
+            {
+                _overlaysHidden = false;
+                foreach (var go in _hiddenOverlays) if (go != null) go.SetActive(true);
+                _hiddenOverlays.Clear();
+            }
+        }
+
         public static void Postfix(GameSettingMenu __instance)
 
         {
+            try { HideVanillaRowsInModTab(); } catch { }
+            try { HideOverlaysWhileMapMenu(); } catch { }
 
             // バグ報告パネルを開いたまま設定画面が開かれた場合、要望により
             // 表示の競合を避けるためバグ報告パネル側を自動的に閉じる。

@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 using System.Linq;
 
@@ -308,6 +308,9 @@ namespace TownOfHost
                         SelfMark.Append(DummyHunter.GetScoreMark(seer.PlayerId));
 
                     }
+
+                    // ケイどろ: ベントの残り回数を名前の横に (3) のように出す(自分にだけ見える)
+                    if (Kedoro.IsActive) SelfMark.Append(Kedoro.GetVentMark(seer));
 
                     //Markとは違い、改行してから追記されます。
 

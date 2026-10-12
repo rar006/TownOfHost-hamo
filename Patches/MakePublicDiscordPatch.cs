@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.IO;
 
@@ -52,7 +52,9 @@ namespace TownOfHost
 
         [HarmonyPrefix]
 
-        [HarmonyPriority(Priority.Last)]
+        // 他の「公開」チェック(ClientPatch.MakePublicPatch)より先に動かして、Discord募集の切り替えを確実に行う。
+        // false を返すので、Among Us 本体の公開(公式サーバーのマッチメイキング)は行われない。
+        [HarmonyPriority(Priority.First)]
 
         public static bool Prefix(GameStartManager __instance)
 
@@ -173,6 +175,8 @@ namespace TownOfHost
 
 
         private const int UpdateIntervalMs = 6000;
+        private const long HeartbeatIntervalMs = 60000;
+        private static long _lastSentAtMs;
 
 
 
@@ -336,9 +340,11 @@ namespace TownOfHost
 
                 {
 
-                    if (string.Equals(snapshot, _lastSnapshot, StringComparison.Ordinal)) return;
+                    // 変化が無くても60秒ごとに送り直す(サーバー側は一定時間届かない募集を自動で消すため、生存確認を兼ねる)
+                    if (string.Equals(snapshot, _lastSnapshot, StringComparison.Ordinal) && nowMs - _lastSentAtMs < HeartbeatIntervalMs) return;
 
                     _lastSnapshot = snapshot;
+                    _lastSentAtMs = nowMs;
 
                 }
 
@@ -368,7 +374,6 @@ namespace TownOfHost
 
             {
 
-                if (Main.IsAndroid()) return;
 
 
 
@@ -450,7 +455,6 @@ namespace TownOfHost
 
             {
 
-                if (Main.IsAndroid()) return;
 
                 if (!File.Exists(PersistedStateFilePath)) return;
 
@@ -664,7 +668,8 @@ namespace TownOfHost
 
         {
 
-            if (Main.IsAndroid()) return false;
+            // Android でも募集を Discord に送る(通信は裏で行うだけなので問題ない)。
+            // ※ Among Us 本体の公開(公式マッチメイキング)は MakePublicDiscordBotPatch で常に止めている
 
             if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return false;
 

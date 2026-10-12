@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using TownOfHost.Roles.Core;
@@ -15,6 +15,13 @@ class ShowRandomSpawnOption
     public static Dictionary<OptionItem, GameObject> buttons = new();
 
     public static void CreateSpawanOptionMenu(Transform tabtransform, MapNames map)
+        => CreateSpawanOptionMenu(tabtransform, map, null, null);
+
+    /// <summary>
+    /// items/header を渡すと、ランダムスポーン以外の設定(ケイどろの牢屋など)を同じ地図画面で切り替えられる。
+    /// items: (切り替えるオプション, 地図上の位置に使うランダムスポーンのオプションID)
+    /// </summary>
+    public static void CreateSpawanOptionMenu(Transform tabtransform, MapNames map, List<(OptionItem opt, int posId)> items, OptionItem header)
     {
         if (CustomBackground is null)
         {
@@ -90,12 +97,21 @@ class ShowRandomSpawnOption
                     var pinsprite = UtilsSprite.LoadSprite("TownOfHost.Resources.TOHhm.pin.png");
                     var id = 103000 + ((int)map * 100);
                     List<(ToggleButtonBehaviour button, OptionItem opt)> buttons = new();
-                    var options = OptionItem.AllOptions.Where(option => option.Id < id + 100 && id < option.Id);
+                    var headerOpt = header ?? OptionItem.AllOptions.First(opt => opt.Id == id);
+                    var posIds = new Dictionary<OptionItem, int>();
+                    List<OptionItem> optionList;
+                    if (items != null)
+                    {
+                        optionList = items.Select(x => x.opt).ToList();
+                        foreach (var (o, pid) in items) posIds[o] = pid;
+                    }
+                    else optionList = OptionItem.AllOptions.Where(option => option.Id < id + 100 && id < option.Id).ToList();
+                    var options = optionList;
                     foreach (var option in options)
                     {
                         var button = Object.Instantiate(mouseMoveToggle, CustomBackground.transform);
                         button.GetComponent<BoxCollider2D>().size = new Vector2(0.2f, 0.5f);
-                        button.transform.localPosition = GetMapposition(option.Id);
+                        button.transform.localPosition = GetMapposition(posIds.TryGetValue(option, out var pid) ? pid : option.Id);
                         button.transform.SetLocalZ(-15);
                         button.name = option.Name;
                         button.Text.DestroyTranslator();
@@ -124,11 +140,11 @@ class ShowRandomSpawnOption
 
                             if (options.All(opt => opt.CurrentValue == 0))
                             {
-                                OptionItem.AllOptions.First(opt => opt.Id == id).SetValue(0);
+                                headerOpt.SetValue(0);
                             }
                             else
                             {
-                                OptionItem.AllOptions.First(opt => opt.Id == id).SetValue(1);
+                                headerOpt.SetValue(1);
                             }
                             ToolTip.Hide();
                             ToolTip.Show(passive, option.GetName() + (option.CurrentValue is 0 ? " (Off)" : " (ON)"), null, 0.1f);
@@ -154,7 +170,7 @@ class ShowRandomSpawnOption
                                 data.button.Background.color = data.opt.CurrentValue is 0 ? Palette.DisabledGrey : Palette.EnabledColor;
                             }
                         }
-                        OptionItem.AllOptions.First(opt => opt.Id == id).SetValue(1, false, false);
+                        headerOpt.SetValue(1, false, false);
                         OptionItem.SyncAllOptions();
                         Modules.OptionSaver.Save();
                     }));
@@ -177,7 +193,7 @@ class ShowRandomSpawnOption
                                 data.button.Background.color = data.opt.CurrentValue is 0 ? Palette.DisabledGrey : Palette.EnabledColor;
                             }
                         }
-                        OptionItem.AllOptions.First(opt => opt.Id == id).SetValue(0, false, false);
+                        headerOpt.SetValue(0, false, false);
                         OptionItem.SyncAllOptions();
                         Modules.OptionSaver.Save();
                     }));

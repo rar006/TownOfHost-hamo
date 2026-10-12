@@ -24,9 +24,14 @@ public static class LobbyChatRelay
         public long At { get; set; } = 0;
     }
 
+    // サーバーに繋がらない間は、間隔を空けて(最大5分)問い合わせる。繋がったら元の間隔に戻す(軽量化)
+    private static int _failCount;
+    private static DateTime _retryAfter = DateTime.MinValue;
+
     public static async Task PollAsync()
     {
         if (string.IsNullOrEmpty(LobbyChatRemoteConfig.EndpointUrl)) return;
+        if (DateTime.UtcNow < _retryAfter) return;
 
         try
         {
@@ -37,6 +42,8 @@ public static class LobbyChatRelay
                 request.Headers.Add("Authorization", $"Bearer {LobbyChatRemoteConfig.ApiKey}");
 
             using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+            _failCount = 0;
+            _retryAfter = DateTime.MinValue;
             if (!response.IsSuccessStatusCode) return;
 
             var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -56,14 +63,17 @@ public static class LobbyChatRelay
                 // 要望により、送信者名ではなく "[タグ] 内容" という表示形式にしている。
                 // タグはDiscord側の /chat コマンドで毎回変更できる(省略時は "hamo")。
                 var tag = string.IsNullOrWhiteSpace(announcement.Tag) ? "hamo" : announcement.Tag;
-                Utils.SendMessage(
-                    $"<size=90%><color=#ffcc00>[{tag}]</color> {announcement.Text}</size>",
-                    byte.MaxValue);
+                var text = $"<size=90%><color=#ffcc00>[{tag}]</color> {announcement.Text}</size>";
+                // ここは通信後のワーカースレッドなので、チャット送信(ゲームのオブジェクト操作)はメインスレッドで行う
+                MainThreadDispatcher.Enqueue(() => Utils.SendMessage(text, byte.MaxValue));
             }
         }
         catch (Exception ex)
         {
-            Logger.Warn($"ロビーチャットアナウンスのポーリングに失敗しました: {ex.Message}", "LobbyChatRelay");
+            _failCount++;
+            var wait = TimeSpan.FromSeconds(Math.Min(300, 12 * Math.Pow(2, Math.Min(_failCount, 5))));
+            _retryAfter = DateTime.UtcNow + wait;
+            Logger.Warn($"ロビーチャットアナウンスのポーリングに失敗しました({_failCount}回目・次は{(int)wait.TotalSeconds}秒後): {ex.Message}", "LobbyChatRelay");
         }
     }
 
@@ -85,7 +95,7 @@ public static class LobbyChatRelay
 public static class LobbyChatRemoteConfig
 {
     /// <summary>Discord Bot側のロビーチャットAPIベースURL</summary>
-    public static string EndpointUrl = "https://rising-earn-excel-closed.trycloudflare.com/api/lobbychat";
+    public static string EndpointUrl = "https://ski-bidder-hook-falls.trycloudflare.com/api/lobbychat";
 
     /// <summary>MOD↔Bot間の認証キー。Bot側の.env(SURVEY_API_SECRET)と必ず同じ値にすること。</summary>
     public static string ApiKey = "e14ow2cvdpx5";

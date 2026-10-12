@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Collections.Generic;
 
@@ -526,6 +526,17 @@ namespace TownOfHost
 
                 }
 
+                else if (Options.CurrentGameMode == CustomGameMode.Kedoro)
+                {
+                    // ケイどろ: 逃走者は最初からバニラ側でエンジニアとして配る。
+                    // (配った後に役職を変えると、クライアント側のベントボタンがおかしくなるため)
+                    RoleTypes[] KedoroRoleTypes = { RoleTypes.Scientist, RoleTypes.Engineer, RoleTypes.Tracker, RoleTypes.Noisemaker, RoleTypes.Shapeshifter, RoleTypes.Phantom, RoleTypes.Detective, RoleTypes.Viper, RoleTypes.Judge };
+                    foreach (var roleTypes in KedoroRoleTypes)
+                    {
+                        if (roleTypes == RoleTypes.Engineer) Main.NormalOptions.roleOptions.SetRoleRate(roleTypes, 15, 100);
+                        else Main.NormalOptions.roleOptions.SetRoleRate(roleTypes, 0, 0);
+                    }
+                }
                 else if (Options.CurrentGameMode == CustomGameMode.DummyHunter)
 
                 {

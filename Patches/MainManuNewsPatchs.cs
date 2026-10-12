@@ -135,22 +135,9 @@ public class ModNewsHistory
                     Title = "久しぶりのリリースだね..汗",
                     SubTitle = "<color=#fb85ff>Town Of Host-hamo v4.00.31α</color>",
                     ShortTitle = "<color=#fb85ff>●TOH-hamo v4.00.31α</color>",
-                    Text = "・リザルター追加\r\n・トゥモロー追加\r\n・リピーター追加\r\n・コレクシス追加\r\n・マッドパラサイト追加\r\n・インフェクト\r\n・リザルター\r\n・マッドスクリーム\r\n・ミューター\r\n・ハトホルとセメクト\r\n・マエストロ"
+                    Text = "・リザルター追加\r\n・トゥモロー追加\r\n・リピーター追加\r\n・コレクシス追加\r\n・マエストロ追加\r\n・その他諸々..NEWついているからここでは省略するね★"
                     ,
                     Date = "2026-9-26"
-                };
-                AllModNews.Add(news);
-            }
-            {
-                var news = new ModNews
-                {
-                    Number = 100009,
-                    Title = "amongusのv19対応、バグ修正",
-                    SubTitle = "<color=#fb85ff>Town Of Host-hamo v4.32.00α</color>",
-                    ShortTitle = "<color=#fb85ff>●TOH-hamo v4.32.00α</color>",
-                    Text = "起動が早くなったよ！ロード長くなったけどね...汗"
-                    ,
-                    Date = "2026-10-4"
                 };
                 AllModNews.Add(news);
             }
@@ -220,6 +207,10 @@ public class ModNewsHistory
     [HarmonyPatch(typeof(PlayerAnnouncementData), nameof(PlayerAnnouncementData.SetAnnouncements)), HarmonyPrefix]
     public static bool SetModAnnouncements(PlayerAnnouncementData __instance, [HarmonyArgument(0)] ref Il2CppReferenceArray<Announcement> aRange)
     {
+#if HAMO_ANDROID
+        // Android では ref の配列を差し替える方法が不安定なので、下の Postfix(SetModAnnouncementsAndroid)で追加する
+        if (true) return true;
+#endif
         if (AllModNews.Count < 1)
         {
             Init();
@@ -242,4 +233,38 @@ public class ModNewsHistory
 
         return true;
     }
+
+#if HAMO_ANDROID && HAMO_ANDROID_MODNEWS
+    // 実機(Pixel 10 / Android 17)で、この方法で追加した後にニュース画面を開くとネイティブクラッシュしたため無効化中。
+    /// <summary>
+    /// Android用: ゲームがニュースを読み込んだ後に、MODニュースを allAnnouncements へ追加して日付順に並べ直す。
+    /// (配列を ref で差し替えないので、IL2CPPの相互運用で落ちにくい。失敗しても公式ニュースはそのまま)
+    /// </summary>
+    [HarmonyPatch(typeof(PlayerAnnouncementData), nameof(PlayerAnnouncementData.SetAnnouncements)), HarmonyPostfix]
+    public static void SetModAnnouncementsAndroid(PlayerAnnouncementData __instance)
+    {
+        try
+        {
+            if (AllModNews.Count < 1)
+            {
+                Init();
+                AllModNews.Do(n => JsonAndAllModNews.Add(n));
+            }
+            var list = __instance.allAnnouncements;
+            if (list == null) return;
+            var merged = new List<Announcement>();
+            foreach (var a in list)
+                if (a != null && !JsonAndAllModNews.Any(x => x.Number == a.Number)) merged.Add(a);
+            JsonAndAllModNews.Do(n => merged.Add(n.ToAnnouncement()));
+            merged.Sort((a1, a2) => DateTime.Compare(ParseDateSafe(a2.Date), ParseDateSafe(a1.Date)));
+            list.Clear();
+            foreach (var a in merged) list.Add(a);
+            TownOfHost.Logger.Info($"ModNews(Android): {JsonAndAllModNews.Count}件を追加 (合計{list.Count}件)", "ModNews");
+        }
+        catch (Exception e)
+        {
+            TownOfHost.Logger.Error($"ModNews(Android)の追加に失敗: {e}", "ModNews");
+        }
+    }
+#endif
 }

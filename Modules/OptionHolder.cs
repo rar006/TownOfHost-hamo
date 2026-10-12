@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Collections.Generic;
 
@@ -224,6 +224,21 @@ namespace TownOfHost
         public static OptionItem KedoroVentMaxTime;
         public static OptionItem KedoroSabotageDelay;
         public static OptionItem KedoroSabotageTime;
+        public static OptionItem KedoroKillCdReduceTaskPercent;
+        public static OptionItem KedoroMinKillCooldown;
+        public static OptionItem KedoroSpeedUpTaskPercent;
+        public static OptionItem KedoroOniMaxSpeed;
+        public static OptionItem KedoroNotifyOnRescue;
+        public static OptionItem KedoroRescueCooldownAfterTasks;
+        public static OptionItem KedoroRescuerSpeed;
+        public static OptionItem KedoroRescuerShield;
+        public static OptionItem KedoroRescuerSpeedTime;
+        public static OptionItem KedoroRescuerShieldTime;
+        public static OptionItem KedoroRescuedSpeed;
+        public static OptionItem KedoroRescuedShield;
+        public static OptionItem KedoroRescuedSpeedTime;
+        public static OptionItem KedoroRescuedShieldTime;
+        public static OptionItem KedoroVentUses;
 
 
 
@@ -1096,6 +1111,7 @@ namespace TownOfHost
         public static OptionItem OptionCommandColist;
 
         public static OptionItem OptionCommandAco;
+        public static OptionItem OptionCommandTitleList, OptionCommandTitleInventory, OptionCommandTitleEquip, OptionCommandTitleDraw, OptionCommandTitleTrade, OptionCommandBugReport;
 
         public static OptionItem OptionCommandAcl;
 
@@ -1562,13 +1578,32 @@ namespace TownOfHost
             ObjectOptionitem.Create(1_000_124, "RoleOption", true, null, TabGroup.MainSettings).SetOptionName(() => "Role Setting").SetTag(CustomOptionTags.Role).SetEnabled(() => GameSettingMenuStartPatch.NowRoleTab is not CustomRoles.NotAssigned && GameSettingMenuStartPatch.NowRoleTab is not CustomRoles.JekyllandHyde);
 
             // ケイドロ
-            KedoroKillCooldown = FloatOptionItem.Create(112500, "KedoroKillCooldown", new(0f, 180f, 1f), 10f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Seconds).SetTag(CustomOptionTags.Kedoro);
+            KedoroKillCooldown = FloatOptionItem.Create(112500, "KedoroKillCooldown", new(0f, 180f, 1f), 20f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Seconds).SetTag(CustomOptionTags.Kedoro);
             KedoroRescueCooldown = FloatOptionItem.Create(112501, "KedoroRescueCooldown", new(0f, 180f, 1f), 30f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Seconds).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
-            KedoroJailCount = IntegerOptionItem.Create(112502, "KedoroJailCount", new(1, 30, 1), 3, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Times).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
+            KedoroJailCount = IntegerOptionItem.Create(112502, "KedoroJailCount", new(1, 30, 1), 3, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Pieces).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
             KedoroVentCooldown = FloatOptionItem.Create(112503, "KedoroVentCooldown", new(0f, 180f, 1f), 15f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Seconds).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
             KedoroVentMaxTime = FloatOptionItem.Create(112504, "KedoroVentMaxTime", new(0f, 180f, 1f), 5f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Seconds).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown).SetZeroNotation(OptionZeroNotation.Infinity);
             KedoroSabotageDelay = FloatOptionItem.Create(112505, "KedoroSabotageDelay", new(30f, 1000f, 1f), 30f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Seconds).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
             KedoroSabotageTime = FloatOptionItem.Create(112506, "KedoroSabotageTime", new(0f, 1000f, 1f), 1f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Seconds).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
+            // 鬼: 逃走者全体のタスク進捗でキルクールが短く・スピードが速くなる
+            KedoroKillCdReduceTaskPercent = FloatOptionItem.Create(112507, "KedoroKillCdReduceTaskPercent", new(0f, 100f, 5f), 20f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Percent).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
+            KedoroMinKillCooldown = FloatOptionItem.Create(112508, "KedoroMinKillCooldown", new(0f, 180f, 1f), 5f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Seconds).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
+            KedoroSpeedUpTaskPercent = FloatOptionItem.Create(112509, "KedoroSpeedUpTaskPercent", new(0f, 100f, 5f), 50f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Percent).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
+            KedoroOniMaxSpeed = FloatOptionItem.Create(112510, "KedoroOniMaxSpeed", new(1f, 5f, 0.25f), 3f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Multiplier).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
+            // 解放
+            KedoroNotifyOnRescue = BooleanOptionItem.Create(112511, "KedoroNotifyOnRescue", false, TabGroup.MainSettings, false).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
+            KedoroRescueCooldownAfterTasks = FloatOptionItem.Create(112512, "KedoroRescueCooldownAfterTasks", new(0f, 180f, 1f), 15f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Seconds).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
+            KedoroRescuerSpeed = FloatOptionItem.Create(112513, "KedoroRescuerSpeed", new(1f, 5f, 0.25f), 1.5f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Multiplier).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
+            KedoroRescuerShield = IntegerOptionItem.Create(112514, "KedoroRescuerShield", new(0, 99, 1), 1, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Pieces).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
+            KedoroRescuerSpeedTime = FloatOptionItem.Create(112515, "KedoroRescuerSpeedTime", new(0f, 180f, 1f), 10f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Seconds).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
+            KedoroRescuerShieldTime = FloatOptionItem.Create(112516, "KedoroRescuerShieldTime", new(0f, 180f, 1f), 5f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Seconds).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
+            KedoroRescuedSpeed = FloatOptionItem.Create(112517, "KedoroRescuedSpeed", new(1f, 5f, 0.25f), 1.25f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Multiplier).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
+            KedoroRescuedShield = IntegerOptionItem.Create(112518, "KedoroRescuedShield", new(0, 99, 1), 2, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Pieces).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
+            KedoroRescuedSpeedTime = FloatOptionItem.Create(112519, "KedoroRescuedSpeedTime", new(0f, 180f, 1f), 15f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Seconds).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
+            // エンジニア(逃走者)のベントを使える回数。0なら無制限
+            KedoroVentUses = IntegerOptionItem.Create(112521, "KedoroVentUses", new(0, 99, 1), 0, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Times).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown).SetZeroNotation(OptionZeroNotation.Infinity)
+                .SetOptionName(() => "ベントを使える回数");
+            KedoroRescuedShieldTime = FloatOptionItem.Create(112520, "KedoroRescuedShieldTime", new(0f, 180f, 1f), 10f, TabGroup.MainSettings, false).SetValueFormat(OptionFormat.Seconds).SetTag(CustomOptionTags.Kedoro).SetParent(KedoroKillCooldown);
 
             //タスクバトル
 
@@ -2421,6 +2456,7 @@ namespace TownOfHost
             CanSeeNextRandomSpawn = BooleanOptionItem.Create(101301, "CanSeeNextRandomSpawn", false, TabGroup.Game, false).SetParent(EnableRandomSpawn);
 
             RandomSpawn.SetupCustomOption();
+            Kedoro.SetupJailOptions(); // ランダムスポーンの部屋一覧を使うので、その後に作る
 
 
 
@@ -3028,6 +3064,17 @@ namespace TownOfHost
 
                 .SetOptionName(() => "/co - 役職をCO(宣言)する");
 
+            // 「/co」コマンドが使える設定(DisableCommandCoがOFF)の時だけ表示する。
+            // ONの場合、役職名が公開される場面(自分自身の役職表示、死亡後の他プレイヤー視認等)で、
+            // /coでCOした役職名を実際の役職名の前に「(CO役職名)役職名」の形で表示する。
+            OptionShowCoRoleWithRole = BooleanOptionItem.Create(1_601_300, "ShowCoRoleWithRole", false, TabGroup.Other2, true)
+
+                .SetParent(OptionCommandCo, invertParentValueForDisplay: true)
+
+                .SetColorcode("#00c1ff")
+
+                .SetOptionName(() => "COした役職を役職名の前に表示する");
+
 
 
             OptionCommandColist = BooleanOptionItem.Create(1_601_270, "DisableCommandColist", false, TabGroup.Other2, true)
@@ -3048,6 +3095,16 @@ namespace TownOfHost
 
                 .SetOptionName(() => "/aco - 属性をCO(宣言)する");
 
+            // 「/aco」コマンドが使える設定(DisableCommandAcoがOFF)の時だけ表示する。
+            // ONの場合、属性が公開される場面で、/acoでCOした属性をマークとして表示する。
+            OptionShowCoAddonMark = BooleanOptionItem.Create(1_601_310, "ShowCoAddonMark", false, TabGroup.Other2, true)
+
+                .SetParent(OptionCommandAco, invertParentValueForDisplay: true)
+
+                .SetColorcode("#00c1ff")
+
+                .SetOptionName(() => "COした属性をマークで表示する");
+
 
 
             OptionCommandAcl = BooleanOptionItem.Create(1_601_290, "DisableCommandAcl", false, TabGroup.Other2, true)
@@ -3058,26 +3115,36 @@ namespace TownOfHost
 
                 .SetOptionName(() => "/acl - 属性COの一覧を表示");
 
-            // 「/co」コマンドが使える設定(DisableCommandCoがOFF)の時だけ表示する。
-            // ONの場合、役職名が公開される場面(自分自身の役職表示、死亡後の他プレイヤー視認等)で、
-            // /coでCOした役職名を実際の役職名の前に「(CO役職名)役職名」の形で表示する。
-            OptionShowCoRoleWithRole = BooleanOptionItem.Create(1_601_300, "ShowCoRoleWithRole", false, TabGroup.Other2, true)
+            // 二つ名(ロビーのみ)のコマンド。ONにするとそのコマンドを使えなくする
+            OptionCommandTitleList = BooleanOptionItem.Create(1_601_320, "DisableCommandTitleList", false, TabGroup.Other2, true)
+                .SetParent(OptionCommandSetting)
+                .SetColorcode("#ffd36e")
+                .SetOptionName(() => "/cmd nil - 二つ名の一覧(確率つき)");
+            OptionCommandTitleInventory = BooleanOptionItem.Create(1_601_330, "DisableCommandTitleInventory", false, TabGroup.Other2, true)
+                .SetParent(OptionCommandSetting)
+                .SetColorcode("#ffd36e")
+                .SetOptionName(() => "/cmd nii - 二つ名のインベントリ");
+            OptionCommandTitleEquip = BooleanOptionItem.Create(1_601_340, "DisableCommandTitleEquip", false, TabGroup.Other2, true)
+                .SetParent(OptionCommandSetting)
+                .SetColorcode("#ffd36e")
+                .SetOptionName(() => "/cmd nig - 二つ名を付ける・外す");
+            OptionCommandTitleDraw = BooleanOptionItem.Create(1_601_350, "DisableCommandTitleDraw", false, TabGroup.Other2, true)
+                .SetParent(OptionCommandSetting)
+                .SetColorcode("#ffd36e")
+                .SetOptionName(() => "/cmd nio - 二つ名を引く");
+            OptionCommandTitleTrade = BooleanOptionItem.Create(1_601_360, "DisableCommandTitleTrade", false, TabGroup.Other2, true)
+                .SetParent(OptionCommandSetting)
+                .SetColorcode("#ffd36e")
+                .SetOptionName(() => "/cmd nit - 二つ名を交換する");
+            // モデレーター用のバグ報告コマンド。ONにすると使えなくする
+            OptionCommandBugReport = BooleanOptionItem.Create(1_601_370, "DisableCommandBugReport", false, TabGroup.Other2, true)
+                .SetParent(OptionCommandSetting)
+                .SetColorcode("#ff6b6b")
+                .SetOptionName(() => "/cmd bug - モデレーターのバグ報告");
 
-                .SetParent(OptionCommandCo, invertParentValueForDisplay: true)
 
-                .SetColorcode("#00c1ff")
 
-                .SetOptionName(() => "COした役職を役職名の前に表示する");
 
-            // 「/aco」コマンドが使える設定(DisableCommandAcoがOFF)の時だけ表示する。
-            // ONの場合、属性が公開される場面で、/acoでCOした属性をマークとして表示する。
-            OptionShowCoAddonMark = BooleanOptionItem.Create(1_601_310, "ShowCoAddonMark", false, TabGroup.Other2, true)
-
-                .SetParent(OptionCommandAco, invertParentValueForDisplay: true)
-
-                .SetColorcode("#00c1ff")
-
-                .SetOptionName(() => "COした属性をマークで表示する");
 
 
 
@@ -3620,6 +3687,50 @@ namespace TownOfHost
             static void CreateRoleOption(IOrderedEnumerable<SimpleRoleInfo> sortedRoleInfo, CustomRoleTypes roleTypes)
 
             {
+                if (RoleGojuon.Enabled)
+                {
+                    var gojuonRoles = sortedRoleInfo.Where(role => role.CustomRoleType == roleTypes).ToList();
+                    int gojuonLastRow = -1;
+                    int gojuonHeaderId = -1;
+                    // 見出しは、その陣営の役職がいちばん多く入っているタブ(インポスタータブ等)に作る。
+                    // 先頭の役職のタブを使っていた時は、か行の先頭がコンビネーションタブの役職(アビューザー)だったため、
+                    // インポスターの「か行」の見出しがコンビネーションタブに作られて見えなかった。
+                    var gojuonMainTab = gojuonRoles.GroupBy(r => r.Tab).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
+                    // 期間限定役職は五十音の行には入れず、最後の「限定役職」にまとめる
+                    foreach (var info in RoleGojuon.Order(gojuonRoles.Where(r => !RoleGojuon.IsLimitedRole(r.RoleName))))
+                    {
+                        if (info.RoleName is CustomRoles.AlienHijack) continue;
+                        // 別のタブ(コンビネーション等)に置かれる役職は、見出しの開閉の対象にしない
+                        if (info.Tab == gojuonMainTab)
+                        {
+                            var gojuonRow = RoleGojuon.GetRow(info.RoleName);
+                            if (gojuonRow != gojuonLastRow)
+                            {
+                                gojuonLastRow = gojuonRow;
+                                gojuonHeaderId = RoleGojuon.CreateRowHeader(gojuonMainTab, roleTypes, gojuonRow);
+                            }
+                            RoleGojuon.AddRoleToHeader(gojuonHeaderId, info.RoleName);
+                        }
+                        SetupRoleOptions(info);
+                        info.OptionCreator?.Invoke();
+                        MonkeyBehaviorBanOption.Create(info);
+                    }
+                    var limitedRoles = RoleGojuon.Order(gojuonRoles.Where(r => RoleGojuon.IsLimitedRole(r.RoleName)));
+                    if (limitedRoles.Count > 0)
+                    {
+                        var limitedHeaderId = RoleGojuon.CreateRowHeader(gojuonMainTab, roleTypes, RoleGojuon.LimitedRow);
+                        foreach (var info in limitedRoles)
+                        {
+                            if (info.RoleName is CustomRoles.AlienHijack) continue;
+                            if (info.Tab == gojuonMainTab) RoleGojuon.AddRoleToHeader(limitedHeaderId, info.RoleName);
+                            SetupRoleOptions(info);
+                            info.OptionCreator?.Invoke();
+                            MonkeyBehaviorBanOption.Create(info);
+                        }
+                    }
+                    return;
+                }
+
 
                 // ===== 修正 =====
 

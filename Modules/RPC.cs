@@ -105,6 +105,7 @@ namespace TownOfHost
         SyncDummyHunterScore,
 
         SyncTestBot,
+        SyncTitle = 200,
 
     }
 
@@ -242,7 +243,8 @@ namespace TownOfHost
 
                 && Enum.IsDefined(typeof(CustomRPC), (int)callId)
 
-                && !(callId is (byte)CustomRPC.VersionCheck or (byte)CustomRPC.RequestRetryVersionCheck or (byte)CustomRPC.ModUnload or (byte)CustomRPC.ClientSendHideMessage or (byte)CustomRPC.RequestCommandProcessing))
+                // SyncTitle(二つ名の更新通知・交換)は各プレイヤーが送るので、ホスト以外からも受け付ける
+                && !(callId is (byte)CustomRPC.VersionCheck or (byte)CustomRPC.RequestRetryVersionCheck or (byte)CustomRPC.ModUnload or (byte)CustomRPC.ClientSendHideMessage or (byte)CustomRPC.RequestCommandProcessing or (byte)CustomRPC.SyncTitle))
 
             {
 
@@ -626,6 +628,10 @@ if (!((CustomRPC)callId is CustomRPC.VersionCheck or CustomRPC.RequestRetryVersi
 
                     DummyHunter.ReceiveSyncScore(reader);
 
+                    break;
+
+                case CustomRPC.SyncTitle:
+                    TitleSystem.ReceiveRpc(__instance, reader);
                     break;
 
                 case CustomRPC.SyncTestBot:

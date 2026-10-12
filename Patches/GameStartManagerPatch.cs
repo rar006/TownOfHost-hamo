@@ -85,8 +85,8 @@ namespace TownOfHost
                 HideName.gameObject.SetActive(true);
                 HideName.name = "HideName";
                 HideName.color =
-                    ColorUtility.TryParseHtmlString(Main.HideColor.Value, out var color) ? color :
-                    ColorUtility.TryParseHtmlString(Main.ModColor, out var modColor) ? modColor : HideName.color;
+                    ColorCompat.TryParseHtmlString(Main.HideColor.Value, out var color) ? color :
+                    ColorCompat.TryParseHtmlString(Main.ModColor, out var modColor) ? modColor : HideName.color;
                 HideName.text = Main.HideName.Value;
 
                 warningText = Object.Instantiate(__instance.GameStartText, __instance.transform);
@@ -148,27 +148,38 @@ namespace TownOfHost
         {
             private static float exitTimer = 0f;
             //private static float ext = 0f;
+            /// <summary>このMODが非表示にした開始ボタン(バニラが隠したものは触らない)</summary>
+            private static GameObject startHiddenByMod;
+            /// <summary>バージョン不一致のプレイヤーがいて開始できない(Postfixで更新)</summary>
+            private static bool versionMismatchHide;
             public static void Prefix(GameStartManager __instance)
             {
                 RenamePrivacyLabel(__instance);
 
                 // 要望により、バグ報告パネルを開いている間は「開始」ボタンがパネルより
                 // 手前に出て誤操作できてしまう問題を避けるため、非表示にする。
-                // 毎フレーム、バグ報告の開閉状態に応じて素直にactiveを合わせるだけにする
-                // (過去にフラグで前回状態を追跡する実装を試したが、シーン遷移をまたいで
-                //  staticフラグの状態がずれ、ロードが極端に遅くなる不具合を引き起こしたため、
-                //  余計な状態を持たないシンプルな形に戻す)。
+                // 以前は「閉じている間は毎フレーム必ず表示」にしていたが、カウントダウン中や
+                // バージョン不一致でバニラ/Postfixが非表示にしたボタンを毎フレーム表示し直してしまい、
+                // 表示⇔非表示が毎フレーム入れ替わってマウスを乗せるとチカチカ(じじじ)していた。
+                // そのため「このMODが隠したボタンだけ」を表示し直す。
+                // (隠したボタンのGameObjectそのものを覚えておくので、シーンが変わって
+                //  ボタンが破棄されれば自然に null になり、古い状態が残ることはない)
                 if (__instance.StartButton != null)
                 {
+                    var startGo = __instance.StartButton.gameObject;
                     var bugReportOpen = TownOfHost.Patches.BugReportWizard.Step != TownOfHost.Patches.BugReportWizardStep.Hidden;
-                    if (bugReportOpen)
+                    if (bugReportOpen || versionMismatchHide)
                     {
-                        if (__instance.StartButton.gameObject.activeSelf)
-                            __instance.StartButton.gameObject.SetActive(false);
+                        if (startGo.activeSelf)
+                        {
+                            startGo.SetActive(false);
+                            startHiddenByMod = startGo;
+                        }
                     }
-                    else if (!__instance.StartButton.gameObject.activeSelf)
+                    else if (startHiddenByMod != null && startHiddenByMod == startGo)
                     {
-                        __instance.StartButton.gameObject.SetActive(true);
+                        startHiddenByMod = null;
+                        if (!startGo.activeSelf) startGo.SetActive(true);
                     }
                 }
 
@@ -213,9 +224,14 @@ namespace TownOfHost
                             mismatchedPlayerNameList.Add(Utils.ColorString(Palette.PlayerColors[client.ColorId], client.Character.Data.PlayerName));
                         }
                     }
+                    versionMismatchHide = !canStartGame;
                     if (!canStartGame)
                     {
-                        __instance.StartButton.gameObject.SetActive(false);
+                        if (__instance.StartButton.gameObject.activeSelf)
+                        {
+                            __instance.StartButton.gameObject.SetActive(false);
+                            startHiddenByMod = __instance.StartButton.gameObject;
+                        }
                         warningMessage = Utils.ColorString(Color.red, string.Format(GetString("Warning.MismatchedVersion"), String.Join(" ", mismatchedPlayerNameList), $"<{Main.ModColor}>{Main.ModName}</color>"));
                     }
 

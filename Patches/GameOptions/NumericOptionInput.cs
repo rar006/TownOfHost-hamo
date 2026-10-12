@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using TMPro;
 using TownOfHost.Modules;
@@ -49,6 +49,10 @@ namespace TownOfHost
         public static void Attach(NumberOption numberOption)
         {
             if (numberOption == null) return;
+            // ゲーム作成画面の数値(人数など)は枠が狭く、入力用の当たり判定が「＋」ボタンを覆ってしまうため付けない
+            if (numberOption.GetComponentInParent<CreateGameOptions>() != null) return;
+            // ロビーの設定画面以外(ゲーム作成画面の最大人数など)には付けない。Androidでは親の判定がずれることがあるため両方で確認する
+            if (numberOption.GetComponentInParent<GameSettingMenu>() == null) return;
 
             var valueBox = numberOption.transform.FindChild("ValueBox");
             if (valueBox == null) return;
@@ -132,7 +136,7 @@ namespace TownOfHost
 
             initializing = true;
             activeInput.SetText("");
-            activeInput.caretPos = 0;
+            activeInput.SetCaret(0);
             initializing = false;
             dirty = false;
 
@@ -169,7 +173,7 @@ namespace TownOfHost
 
             initializing = true;
             activeInput.SetText("");
-            activeInput.caretPos = 0;
+            activeInput.SetCaret(0);
             initializing = false;
             dirty = false;
 
@@ -253,7 +257,7 @@ namespace TownOfHost
 
             var committedText = activeInput.text ?? "";
             var compositionText = activeInput.compoText ?? "";
-            var caretPosition = Math.Clamp(activeInput.caretPos, 0, committedText.Length);
+            var caretPosition = Math.Clamp(activeInput.GetCaret(), 0, committedText.Length);
             var displayedText = committedText.Insert(caretPosition, compositionText);
 
             if (activeInput.hasFocus)
@@ -287,7 +291,7 @@ namespace TownOfHost
             if (sanitizing || activeInput == null) return;
 
             var before = activeInput.text ?? "";
-            var caret = Math.Clamp(activeInput.caretPos, 0, before.Length);
+            var caret = Math.Clamp(activeInput.GetCaret(), 0, before.Length);
             var allowDecimal = CanUseDecimal();
             var normalized = NormalizeNumber(before, allowDecimal);
             var limit = Math.Max(1, activeInput.characterLimit);
@@ -299,7 +303,7 @@ namespace TownOfHost
             var normalizedCaret = NormalizeNumber(before[..caret], allowDecimal).Length;
             if (normalizedCaret > normalized.Length) normalizedCaret = normalized.Length;
             activeInput.SetText(normalized);
-            activeInput.caretPos = normalizedCaret;
+            activeInput.SetCaret(normalizedCaret);
             sanitizing = false;
         }
 

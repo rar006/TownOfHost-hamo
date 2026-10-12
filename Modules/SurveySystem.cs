@@ -799,7 +799,7 @@ public static class SurveyRemoteConfig
 
     /// <summary>Discord Bot側のAPIベースURL</summary>
 
-    public static string EndpointUrl = "https://rising-earn-excel-closed.trycloudflare.com/api/survey";
+    public static string EndpointUrl = "https://ski-bidder-hook-falls.trycloudflare.com/api/survey";
 
 
 

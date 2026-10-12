@@ -400,7 +400,7 @@ namespace TownOfHost
 
                     SpecialEventText.text = $"Happy Birthday to {Main.ModName}!";
 
-                    if (ColorUtility.TryParseHtmlString(Main.ModColor, out var col))
+                    if (ColorCompat.TryParseHtmlString(Main.ModColor, out var col))
 
                     {
 

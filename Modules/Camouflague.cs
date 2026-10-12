@@ -18,12 +18,13 @@ namespace TownOfHost
         }
         public static bool Compare(this NetworkedPlayerInfo.PlayerOutfit instance, NetworkedPlayerInfo.PlayerOutfit targetOutfit)
         {
+            // null(または破棄済み)のoutfitは「同じではない」として扱う(破棄済みの文字列を読むとゲームごとクラッシュするため)
+            if (instance == null || targetOutfit == null) return false;
             return instance.ColorId == targetOutfit.ColorId &&
                     instance.HatId == targetOutfit.HatId &&
                     instance.SkinId == targetOutfit.SkinId &&
                     instance.VisorId == targetOutfit.VisorId &&
                     instance.PetId == targetOutfit.PetId;
-
         }
         public static string GetString(this NetworkedPlayerInfo.PlayerOutfit instance)
         {
@@ -80,7 +81,9 @@ namespace TownOfHost
             || (target == null)) return;
 
             if (Options.CurrentGameMode != CustomGameMode.Standard) return;
-
+            // 切断した/破棄済みのプレイヤーのDataを読むとクラッシュするため、先に確認する
+            var targetData = target.Data;
+            if (targetData == null || targetData.Disconnected || targetData.DefaultOutfit == null) return;
             var id = target.PlayerId;
 
             if (IsCamouflage && force is true)
@@ -103,7 +106,7 @@ namespace TownOfHost
                     id = Main.ShapeshiftTarget[id];
                 }
 
-                newOutfit = PlayerSkins[id];
+                if (!PlayerSkins.TryGetValue(id, out newOutfit) || newOutfit == null) return;
             }
 
             if (target.inVent)

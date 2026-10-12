@@ -711,6 +711,8 @@ namespace TownOfHost
 
 
             if (player.Is(CustomRoles.Amnesia) && Amnesia.OptionDefaultKillCool.GetBool()) Main.AllPlayerKillCooldown[player.PlayerId] = Options.DefaultKillCooldown;
+            // ケイドロの鬼は、ケイドロのキルクール(タスク進捗で短くなる)を使う
+            if (Kedoro.IsActive && Kedoro.IsOni(player)) Main.AllPlayerKillCooldown[player.PlayerId] = Kedoro.CurrentOniKillCooldown();
 
         }
 

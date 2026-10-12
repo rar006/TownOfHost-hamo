@@ -154,7 +154,7 @@ namespace TownOfHost.Patches
             }
 
 
-            var loadText = GameObject.Instantiate(__instance.errorPopup.InfoText, null);
+            var loadText = GameObject.Instantiate(__instance.errorPopup.InfoText, (Transform)null);
             loadText.transform.localPosition = new Vector3(0f, logoY - 1.5f, -10f);
             loadText.fontStyle = FontStyles.Bold;
             loadText.text = "";

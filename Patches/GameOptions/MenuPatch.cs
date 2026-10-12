@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Collections.Generic;
 
@@ -451,6 +451,8 @@ namespace TownOfHost
         public static TMPro.TextMeshPro InfoCount;
 
         public static StringOption BaseOption;
+        /// <summary>五十音の見出しID → (見出しの文字, 見出し名)。検索で見出しを開いた時に [+]/[-] を更新するため</summary>
+        static readonly System.Collections.Generic.Dictionary<int, (TMPro.TextMeshPro, string)> GojuonHeaderTitles = new();
 
         public static float roletaby;
 
@@ -741,7 +743,7 @@ namespace TownOfHost
 
                     // 上のTOH HAMO/GAME/OTHERアイコン行と被らない高さにする。
 
-                    activeonly.transform.localPosition = new Vector3(-2.0f, 3.25f, -400f);
+                    activeonly.transform.localPosition = new Vector3(-0.08f, 3.6f, -400f); // 「ゲーム・プリセット」の右隣(同じ段)
 
                     activeonly.transform.localScale = new Vector3(0.6f, 0.46f, 0f); // 横にしっかり・縦は少しだけ拡大
                     // 横に伸びた分、文字が横長にならないよう打ち消す
@@ -1925,7 +1927,7 @@ namespace TownOfHost
 
                 {
 
-                    search.transform.localPosition = new Vector3(0.1f, 3.15f); // もっと下へ(旧プリセット名編集の位置)
+                    search.transform.localPosition = new Vector3(-0.82f, 3.15f); // プリセット/有効のみ表示の段の下、左端をそろえる
 
                     search.transform.localScale = new Vector3(0.46f, 0.46f, 0f); // 拡大
 
@@ -1937,63 +1939,36 @@ namespace TownOfHost
 
                     {
 
-                        bool ch = false;
-
-                        List<OptionItem> subopt = new();
-
-                        foreach (var op in OptionItem.AllOptions.Where(o => (o as ObjectOptionitem)?.IsHedderObject is not true))
-
+                        // ===== 検索 =====
+                        // ・ひらがな/カタカナ、全角/半角、大文字/小文字、空白の違いは無視する
+                        // ・完全一致 → 前方一致 → 部分一致 の順に並べる
+                        // ・同じ言葉でもう一度送信すると次の候補へ進む(入力欄は消さない)。ラベルに「何件目/全件」を出す
+                        var query = OptionSearch.Normalize(search.textArea.text);
+                        if (query.Length == 0) return;
+                        if (query != OptionSearch.LastQuery)
                         {
-
-                            var name = op.GetName().RemoveHtmlTags();
-
-
-
-                            if (name == search.textArea.text)
-
-                            {
-
-                                scroll(op);
-
-                                ch = true;
-
-                                break;
-
-                            }
-
-
-
-                            if (name.Contains(search.textArea.text))
-
-                            {
-
-                                subopt.Add(op);
-
-                            }
-
+                            OptionSearch.LastQuery = query;
+                            OptionSearch.Index = 0;
+                            OptionSearch.Results = OptionItem.AllOptions
+                                .Where(o => (o as ObjectOptionitem)?.IsHedderObject is not true)
+                                .Select(o => (op: o, rank: OptionSearch.Rank(OptionSearch.Normalize(o.GetName().RemoveHtmlTags()), query)))
+                                .Where(x => x.rank >= 0)
+                                .OrderBy(x => x.rank)
+                                .Select(x => x.op)
+                                .ToList();
                         }
+                        else OptionSearch.Index++;
 
-
-
-                        //不必要なループをなくしてみる
-
-                        if (!ch)
-
+                        var results = OptionSearch.Results;
+                        if (results.Count == 0)
                         {
-
-                            foreach (var op in subopt)
-
-                            {
-
-                                scroll(op);
-
-                                break;
-
-                            }
-
+                            if (searchtext != null) searchtext.text = $"<size=120%><#ff6b6b><b>{GetString("Search")} 0件</b></color></size>";
+                            return;
                         }
-
-                        search.textArea.Clear();
+                        OptionSearch.Index %= results.Count;
+                        if (searchtext != null)
+                            searchtext.text = $"<size=120%><#ffa826><b>{GetString("Search")} {OptionSearch.Index + 1}/{results.Count}</b></color></size>";
+                        scroll(results[OptionSearch.Index]);
 
 
 
@@ -2002,6 +1977,9 @@ namespace TownOfHost
                         void scroll(OptionItem op)
 
                         {
+
+                            // 閉じている五十音の見出しの中にある役職なら、先に開いておく
+                            RoleGojuon.ExpandFor(op);
 
                             var opt = op;
 
@@ -2372,6 +2350,10 @@ namespace TownOfHost
             var template = GetTeamplate();
 
             if (template == null) return;
+            // 途中で例外が起きても、ひな形(バニラの「キル可能距離」の複製)が画面に残らないよう必ず破棄する
+            // (Androidで設定画面に「キル可能距離」が重なって表示されていた原因)
+            try
+            {
 
 
 
@@ -2512,6 +2494,55 @@ namespace TownOfHost
                         chm.Title.text = $"<b>{option.GetName(false)}</b>";
 
                         option.OptionHedder = chm;
+
+                        // ===== 五十音の見出し(あ行〜わ行/その他/限定役職)はクリックで開閉できる =====
+                        if (RoleGojuon.IsRowHeader(option.Id))
+                        {
+                            var headerId = option.Id;
+                            var headerName = option.GetName(false);
+                            var headerTitle = chm.Title;
+                            headerTitle.text = $"<b>{RoleGojuon.HeaderTitle(headerId, headerName)}</b>";
+                            var headerGo = chm.gameObject;
+                            var headerCollider = headerGo.GetComponent<BoxCollider2D>() ?? headerGo.AddComponent<BoxCollider2D>();
+                            // 見出しの背景画像の範囲をクリックできるようにする(下の役職の行に被らないよう大きさに上限を付ける)
+                            bool hasBounds = false;
+                            Bounds headerBounds = default;
+                            foreach (var r in headerGo.GetComponentsInChildren<SpriteRenderer>(true))
+                            {
+                                if (r == null) continue;
+                                if (!hasBounds) { headerBounds = r.bounds; hasBounds = true; }
+                                else headerBounds.Encapsulate(r.bounds);
+                            }
+                            if (hasBounds)
+                            {
+                                var localCenter = headerGo.transform.InverseTransformPoint(headerBounds.center);
+                                var localSize = headerGo.transform.InverseTransformVector(headerBounds.size);
+                                // 左端はそのまま、右側だけ短くする(見出しの右の何もない所まで反応していたため)
+                                var fullWidth = Mathf.Abs(localSize.x);
+                                var width = Mathf.Min(fullWidth, 3.2f);
+                                var left = localCenter.x - fullWidth / 2f;
+                                headerCollider.offset = new Vector2(left + width / 2f, localCenter.y);
+                                headerCollider.size = new Vector2(width, Mathf.Min(Mathf.Abs(localSize.y), 0.5f));
+                            }
+                            else headerCollider.size = new Vector2(3.2f, 0.45f);
+                            var headerButton = headerGo.GetComponent<PassiveButton>() ?? headerGo.AddComponent<PassiveButton>();
+                            headerButton.Colliders = new Collider2D[] { headerCollider };
+                            headerButton.OnMouseOut = new();
+                            headerButton.OnMouseOver = new();
+                            headerButton.OnClick = new();
+                            headerButton.ClickMask = optionsMenu.ButtonClickMask;
+                            headerButton.OnClick.AddListener((Action)(() =>
+                            {
+                                RoleGojuon.ToggleHeader(headerId);
+                                if (headerTitle != null) headerTitle.text = $"<b>{RoleGojuon.HeaderTitle(headerId, headerName)}</b>";
+                            }));
+                            GojuonHeaderTitles[headerId] = (headerTitle, headerName);
+                            RoleGojuon.OnHeaderStateChanged = id =>
+                            {
+                                if (GojuonHeaderTitles.TryGetValue(id, out var t) && t.Item1 != null)
+                                    t.Item1.text = $"<b>{RoleGojuon.HeaderTitle(id, t.Item2)}</b>";
+                            };
+                        }
 
                         tabtitle.name = option.Name;
 
@@ -3070,7 +3101,8 @@ namespace TownOfHost
                                     badgeRenderer.drawMode = SpriteDrawMode.Simple;
                                     // 元画像の透明・余白・配色を含めて一切加工せず、
                                     // 役職名ヘッダー左上（最大数欄より左側）へ配置する。
-                                    badgeRenderer.transform.localPosition = new Vector3(-4.10f, 0.55f, -10.2f);
+                                    // 役職名の右横、Hボタン(x=-0.58)のすぐ左に、Hと同じ高さで置く
+                                    badgeRenderer.transform.localPosition = new Vector3(-1.45f, stringOption.MinusBtn.transform.localPosition.y, -10.2f);
                                     badgeRenderer.transform.localScale = Vector3.one;
                                     badgeRenderer.sortingOrder = 50;
                                 }
@@ -3269,8 +3301,11 @@ namespace TownOfHost
 
 
             tabGenerated.Add(tab);
-
-            Object.Destroy(template.gameObject);
+            }
+            finally
+            {
+                if (template != null) Object.Destroy(template.gameObject);
+            }
 
         }
 
@@ -3415,6 +3450,11 @@ namespace TownOfHost
                 case "ShowAirship": ShowRandomSpawnOption.CreateSpawanOptionMenu(parent, MapNames.Airship); break;
 
                 case "ShowFungle": ShowRandomSpawnOption.CreateSpawanOptionMenu(parent, MapNames.Fungle); break;
+
+                default:
+                    // ケイどろの牢屋の位置 ("KedoroJailSkeld" など)
+                    if (actionkey.StartsWith("KedoroJail")) Kedoro.OpenJailMenu(parent, actionkey);
+                    break;
 
             }
 

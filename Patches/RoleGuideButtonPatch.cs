@@ -876,6 +876,13 @@ public static class RoleGuideButtonPatch
         scrollEntries.Clear();
 
         scrollThumb = null;
+        // 前のタブ(役職一覧など)のスナップ位置・カテゴリ位置が残っていると、
+        // コマンド説明タブを最初に開いた時にホイールが古い位置へ吸い寄せられて動かなかった。タブを作り直すたびに消す
+        scrollSnapTargets.Clear();
+        categoryScrollTargets.Clear();
+        maxScrollY = 0f;
+        scrollBarDragging = false;
+        roleListDragging = false;
 
 
 
@@ -1485,7 +1492,10 @@ public static class RoleGuideButtonPatch
 
 
 
-        float bottomY = activeListTop - chunkIndex * lineHeight;
+        // 最後の行が表示領域の下端ぴったりで止まると、下端付近の非表示判定(ItemH)や
+        // パネル下部のUIに隠れて「下までスクロールできない」状態になっていたため、
+        // 末尾に数行分の余白を足して最後の行まで確実に見えるところまでスクロールできるようにする。
+        float bottomY = activeListTop - (chunkIndex + 3) * lineHeight;
 
 
 
@@ -2397,7 +2407,7 @@ public static class RoleGuideButtonPatch
 
         textBox.text = roleSearchText ?? "";
 
-        textBox.caretPos = textBox.text.Length;
+        textBox.SetCaret(textBox.text.Length);
 
         textBox.characterLimit = 32;
 
@@ -2457,7 +2467,7 @@ public static class RoleGuideButtonPatch
 
             textBox.GiveFocus();
 
-            textBox.caretPos = (textBox.text ?? "").Length;
+            textBox.SetCaret((textBox.text ?? "").Length);
 
             roleSearchCaretTimer = 0f;
 
@@ -2537,7 +2547,7 @@ public static class RoleGuideButtonPatch
 
         string compositionText = roleSearchBox.compoText ?? "";
 
-        int caretPosition = Mathf.Clamp(roleSearchBox.caretPos, 0, committedText.Length);
+        int caretPosition = Mathf.Clamp(roleSearchBox.GetCaret(), 0, committedText.Length);
 
         string displayedText = committedText.Insert(caretPosition, compositionText);
 

@@ -7,3 +7,8 @@ FodyWeavers.xsd
 .tmp_ehr_ref/
 .TownOfHost.proj/
 memo.md
+
+# ローカル専用(公開しない): Android用参照DLL・APK作業フォルダ・ビルド出力
+apkwork/
+AndroidRefs/
+dist/

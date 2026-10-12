@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 using System.Linq;
 
@@ -1091,6 +1091,9 @@ namespace TownOfHost
             var user = pp.myPlayer;
 
 
+
+            // ケイどろ: 牢屋に入っている間はベントを使えない
+            if (Kedoro.IsActive && !Kedoro.TryUseVent(user, log)) return false; // 牢屋の中・回数切れ
 
             if (Sealer.BlocksVent(user))
 

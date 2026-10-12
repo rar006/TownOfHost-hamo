@@ -41,6 +41,17 @@ namespace TownOfHost
     {
 
         private static readonly string URL = "https://github.com/rar006/TownOfHost-hamo";
+        // リリース情報はAPIのURLから取る(github.com の /releases/latest はWebページ(HTML)を返すので、
+        // JSONとして読めずに毎回「MODを構成するファイルが破損しています」扱いになっていた)
+        private static readonly string ApiURL = "https://api.github.com/repos/rar006/TownOfHost-hamo";
+        /// <summary>起動を早くするため、MOD読み込み直後にリリース情報の取得を始めておく</summary>
+        public static void StartPrefetch()
+        {
+            if (Main.IsAndroid()) return;
+            TownOfHost.Modules.StartupPrefetch.Start(ReleaseUrl(Main.BetaBuildURL.Value != "", false));
+        }
+        private static string ReleaseUrl(bool beta, bool all)
+            => beta ? Main.BetaBuildURL.Value : ApiURL + "/releases" + (all ? "?page=1&per_page=100" : "/latest");
 
         public static bool hasUpdate = false;
 
@@ -150,15 +161,47 @@ namespace TownOfHost
 
 
 
+        /// <summary>
+        /// リリースのタグ(例: "v4.32.00α", "v4.31.01β", "S4.00.00.10")からバージョンを取り出す。
+        /// 以前は new Version(...) に α/β 付きの文字列をそのまま渡していたため例外になり、
+        /// 「MODを構成するファイルが破損しています」と誤判定されて公開(マッチメイキング)できなかった。
+        /// 数字と '.' 以外は無視し、読めなければ例外ではなく null を返す。
+        /// また、タグは「4.32.00」(3つ区切り)、MOD本体は「4.00.32.00」(PluginVersion)と書き方が違うので、
+        /// 3つ区切りのタグは PluginVersion と同じ4つ区切りにそろえて比較する。
+        ///   4.32.00 → 4.0.32.0 / 4.31.01 → 4.0.31.1 / 4.00.31 → 4.0.31.0 / 4.00.00.10 → そのまま
+        /// </summary>
+        public static Version ParseTagVersion(string tag)
+        {
+            if (string.IsNullOrWhiteSpace(tag)) return null;
+            var digits = new string(tag.SkipWhile(c => !char.IsDigit(c)).TakeWhile(c => char.IsDigit(c) || c == '.').ToArray()).Trim('.');
+            var parts = digits.Split('.', StringSplitOptions.RemoveEmptyEntries);
+            var nums = new List<int>();
+            foreach (var p in parts)
+            {
+                if (!int.TryParse(p, out var n)) return null;
+                nums.Add(n);
+            }
+            if (nums.Count == 3)
+                nums = nums[1] == 0 ? new() { nums[0], 0, nums[2], 0 } : new() { nums[0], 0, nums[1], nums[2] };
+            return nums.Count switch
+            {
+                1 => new Version(nums[0], 0),
+                2 => new Version(nums[0], nums[1]),
+                3 => new Version(nums[0], nums[1], nums[2]),
+                >= 4 => new Version(nums[0], nums[1], nums[2], nums[3]),
+                _ => null,
+            };
+        }
+
         private static bool CheckReleaseSync(bool beta, bool all, bool forced)
 
         {
 
             //bool updateCheck = version != null && version.Update.Version != null;
 
-            string url = beta ? Main.BetaBuildURL.Value : URL + "/releases" + (all ? "" : "/latest");
+            string url = ReleaseUrl(beta, all);
 
-            if (all) url = url + "?page=1&per_page=100";
+            // (?page=1&per_page=100 は ReleaseUrl で付けている)
 
 
 
@@ -174,30 +217,13 @@ namespace TownOfHost
 
             {
 
-                string result;
-
-                using (HttpClient client = new())
-
+                // 通信はバックグラウンド(StartupPrefetch)で行い、ここでは結果を受け取るだけ。
+                // JSONの解析はこのまま呼び出し元(メイン)スレッドで行う(以前、解析をワーカースレッドで行ってクラッシュしたため)
+                string result = TownOfHost.Modules.StartupPrefetch.Get(url);
+                if (result == null)
                 {
-
-                    client.DefaultRequestHeaders.Add("User-Agent", "TownOfHost-hamo Updater");
-
-                    // await ではなく同期呼び出しにすることで、常に呼び出し元と同じ(メイン)スレッドで実行させる
-
-                    using var response = client.GetAsync(new Uri(url), HttpCompletionOption.ResponseContentRead).GetAwaiter().GetResult();
-
-                    if (!response.IsSuccessStatusCode || response.Content == null)
-
-                    {
-
-                        Logger.Error($"ステータスコード: {response.StatusCode}", "CheckRelease");
-
-                        return false;
-
-                    }
-
-                    result = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-
+                    Logger.Error($"リリース情報を取得できませんでした: {url}", "CheckRelease");
+                    return false;
                 }
 
                 JObject data = all ? null : JObject.Parse(result);
@@ -314,11 +340,12 @@ namespace TownOfHost
 
                 {
 
-                    latestVersion = new(data["tag_name"]?.ToString().TrimStart('v')?.Trim('S')?.Trim('s'));
+                    latestVersion = ParseTagVersion(data["tag_name"]?.ToString());
 
-                    latestTitle = $"Ver. {latestVersion}";
+                    latestTitle = $"Ver. {data["tag_name"]?.ToString().TrimStart('v', 'V', 'S', 's')}";
 
-                    JArray assets = (JArray)data["assets"];
+                    // (JArray)data["assets"] は Newtonsoft のバージョン違いで InvalidCastException になっていたので、一覧として読む
+                    var assets = (data.GetJ("assets") as System.Collections.Generic.IEnumerable<JToken>)?.ToList() ?? new System.Collections.Generic.List<JToken>();
 
                     for (int i = 0; i < assets.Count; i++)
 
@@ -354,11 +381,12 @@ namespace TownOfHost
 
                     bool? check = body?.Contains("IsforceUpdate") ?? null;
 
-                    hasUpdate = latestVersion.CompareTo(Main.version) > 0 ||
+                    // タグからバージョンを読めなかった場合は「更新なし」扱い(破損扱いにはしない)
+                    hasUpdate = latestVersion != null && (latestVersion.CompareTo(Main.version) > 0 ||
 
                     //最後のアプデのcheckが有効で～最終バージョンと現バージョンが一緒じゃない
 
-                    (check is true && latestVersion.CompareTo(Main.version) is not 0);
+                    (check is true && latestVersion.CompareTo(Main.version) is not 0));
 
                 }
 
@@ -426,7 +454,9 @@ namespace TownOfHost
 
             {
 
-                isBroken = true;
+                // 通信の失敗(タイムアウト・オフライン等)はファイルの破損ではないので、破損扱いにしない
+                if (ex is not (HttpRequestException or TaskCanceledException or System.Net.Sockets.SocketException))
+                    isBroken = true;
 
                 Logger.Error($"リリースのチェックに失敗しました。\n{ex}", "CheckRelease", false);
 

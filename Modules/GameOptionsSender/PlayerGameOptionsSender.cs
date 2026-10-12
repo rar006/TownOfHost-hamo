@@ -331,6 +331,8 @@ namespace TownOfHost.Modules
                 opt.SetFloat(FloatOptionNames.EngineerCooldown, Options.KedoroVentCooldown.GetFloat());
                 var maxVentTime = Options.KedoroVentMaxTime.GetFloat();
                 opt.SetFloat(FloatOptionNames.EngineerInVentMaxTime, maxVentTime >= 180f ? 0f : maxVentTime);
+                // ここで return するので、スピード(解放・タスク完了のごほうび)もここで反映する
+                AURoleOptions.PlayerSpeedMod = Mathf.Clamp(Kedoro.GetRunnerSpeed(player.PlayerId), Main.MinSpeed, 10f);
                 return opt;
             }
 

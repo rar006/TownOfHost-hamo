@@ -11,7 +11,6 @@ using TownOfHost.Roles.Impostor;
 using TownOfHost.Roles.Madmate;
 using UnityEngine;
 using static Il2CppSystem.Threading.SemaphoreSlim;
-using static MonoMod.RuntimeDetour.DynamicHookGen;
 using static UnityEngine.GraphicsBuffer;
 
 namespace TownOfHost.Roles.Crewmate;

@@ -918,7 +918,25 @@ namespace TownOfHost
 
 
 
-            return text + tpinfo;
+            // 二つ名(ロビーのみ)  ※要望により一覧の一番下に置く
+            var titleHelp = "";
+            if (TitleSystem.Enabled && (GameStates.IsLobby || includeHostOnlyCommands))
+            {
+                titleHelp += $"<size=80%></line-height>\n<#ffd36e>【~~~~~~~二つ名(ロビーのみ)~~~~~~~】</color></size><line-height=1.3pic>";
+                // 「コマンド設定」で無効化されたものは載せない(役職ガイドの全コマンド一覧では全部載せる)
+                bool ShowTitle(string sub) => includeHostOnlyCommands || !TitleSystem.IsCommandDisabled(sub);
+                if (ShowTitle("nil")) titleHelp += "\n/cmd nil - 二つ名の一覧(確率つき・持っているものに✔)";
+                if (ShowTitle("nii")) titleHelp += "\n/cmd nii - インベントリ(★は付けているもの)";
+                if (ShowTitle("nig")) titleHelp += "\n/cmd nig 1.2.3 - インベントリの番号で付ける(複数可) / /cmd nig 0 で外す";
+                if (ShowTitle("nio")) titleHelp += "\n/cmd nio - 二つ名を引く(無料・クールタイム60秒・かぶりあり)";
+                if (ShowTitle("nit"))
+                {
+                    titleHelp += "\n/cmd nit (名前) (自分の番号) (相手の番号) - 二つ名の交換を申し込む";
+                    titleHelp += "\n/cmd nit y - 交換を承諾する(両方承諾→3秒後にもう一度 /cmd nit y で成立)";
+                    titleHelp += "\n/cmd nit n - 交換をキャンセル/断る";
+                }
+            }
+            return text + tpinfo + titleHelp;
 
         }
 
@@ -2527,7 +2545,9 @@ namespace TownOfHost
 
 
 
-        [HarmonyPatch(typeof(IntroCutscene), nameof(IntroCutscene.OnDestroy))]
+        #if !HAMO_ANDROID
+[HarmonyPatch(typeof(IntroCutscene), nameof(IntroCutscene.OnDestroy))]
+#endif
 
         public static class IntroCutsceneOnDestroyPatchForChat
 

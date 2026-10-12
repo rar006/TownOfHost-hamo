@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Collections.Generic;
 
@@ -148,7 +148,7 @@ namespace TownOfHost
 
         {
 
-            if (Options.CurrentGameMode is CustomGameMode.HideAndSeek or CustomGameMode.StandardHAS or CustomGameMode.SuddenDeath or CustomGameMode.MurderMystery) return false;
+            if (Options.CurrentGameMode is CustomGameMode.HideAndSeek or CustomGameMode.StandardHAS or CustomGameMode.SuddenDeath or CustomGameMode.MurderMystery or CustomGameMode.Kedoro) return false;
 
             if (Options.CurrentGameMode != CustomGameMode.Standard || SuddenDeathMode.NowSuddenDeathMode) return false;
 

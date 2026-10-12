@@ -422,7 +422,7 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton
         seen ??= seer;
         if (!Player.IsAlive() || isForMeeting) return false;
 
-        string myColor = "#" + ColorUtility.ToHtmlStringRGB(
+        string myColor = "#" + ColorCompat.ToHtmlStringRGB(
             Palette.PlayerColors[Player.Data.DefaultOutfit.ColorId]);
 
         if (IsCharging && seen.PlayerId == Player.PlayerId)

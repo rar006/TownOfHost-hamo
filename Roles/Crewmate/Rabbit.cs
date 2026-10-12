@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using AmongUs.GameOptions;
 using TownOfHost.Roles.Core;
-using Steamworks;
-
 namespace TownOfHost.Roles.Crewmate;
 
 public sealed class Rabbit : RoleBase

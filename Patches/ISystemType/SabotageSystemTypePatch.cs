@@ -1,4 +1,4 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 
 using Hazel;
 
@@ -54,7 +54,7 @@ public static class SabotageSystemTypeUpdateSystemPatch
 
 
 
-        if (Options.CurrentGameMode is CustomGameMode.SuddenDeath or CustomGameMode.MurderMystery) return false;
+        if (Options.CurrentGameMode is CustomGameMode.SuddenDeath or CustomGameMode.MurderMystery or CustomGameMode.Kedoro) return false; // ケイどろ: 鬼のサボタージュ不可(時間切れの妨害はホストが別経路で起こす)
 
         if (GameStates.CalledMeeting && !Utils.IsActive(nextSabotage)) return false;
 

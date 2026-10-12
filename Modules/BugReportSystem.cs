@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -53,6 +53,8 @@ public static class BugReportSystem
         public long CreatedAtMs { get; set; } = 0;
         public long LastPolledAtMs { get; set; } = 0;
         public bool HasUnread { get; set; } = false;
+        /// <summary>モデレーターが /cmd bug で送ったチケット(返信をロビーのモデレーターにも見せる)</summary>
+        public bool ViaModerator { get; set; } = false;
         public List<TicketMessage> Messages { get; set; } = new();
     }
 
@@ -141,7 +143,7 @@ public static class BugReportSystem
     /// バグ報告を新規送信する。discordUserIdは空文字でも良い(白紙=Discordで会話しない/IDが無い)。
     /// 戻り値: (成功したか, ユーザーに見せるメッセージ, 作成されたチケットID)
     /// </summary>
-    public static async Task<(bool ok, string message, string ticketId)> SubmitAsync(string discordUserId, string description, string playerName)
+    public static async Task<(bool ok, string message, string ticketId)> SubmitAsync(string discordUserId, string description, string playerName, string moderatorFriendCode = null, string roomCodeOverride = null)
     {
         if (string.IsNullOrEmpty(BugReportRemoteConfig.EndpointUrl))
             return (false, "現在バグ報告サーバーに接続できません。", null);
@@ -155,9 +157,12 @@ public static class BugReportSystem
             {
                 discordUserId = discordUserId ?? "",
                 description,
-                roomCode = GetCurrentRoomCode(),
+                roomCode = roomCodeOverride ?? GetCurrentRoomCode(),
                 playerName,
-                friendCode = GetLocalFriendCode(),
+                // モデレーター経由(/cmd bug)の時は、報告者=モデレーター、hostFriendCode=部屋主(この端末)
+                friendCode = moderatorFriendCode ?? GetLocalFriendCode(),
+                hostFriendCode = moderatorFriendCode != null ? GetLocalFriendCode() : "",
+                viaModerator = moderatorFriendCode != null,
                 gameVersion = Main.PluginShowVersion ?? "",
             };
 
@@ -229,6 +234,7 @@ public static class BugReportSystem
                 CreatedAtMs = now,
                 LastPolledAtMs = 0,
                 HasUnread = false,
+                ViaModerator = moderatorFriendCode != null,
                 Messages = new List<TicketMessage>
                 {
                     new TicketMessage
@@ -371,6 +377,7 @@ public static class BugReportSystem
                     ticket.Messages.Add(msg);
                     ticket.HasUnread = true;
                     changed = true;
+                    if (ticket.ViaModerator) ModeratorBugRelay.Enqueue(ticket.Summary, msg.Author, msg.Text);
 
                     // 修正完了メッセージも履歴として保持する。修正完了後に
                     // チケットを削除すると、利用者が過去の対応内容を確認できず、
@@ -408,6 +415,9 @@ public static class BugReportSystem
         try
         {
             var logPath = Path.Combine(Environment.CurrentDirectory, "BepInEx", "LogOutput.log");
+            // Androidでは作業フォルダが違うので、BepInExのフォルダから探す
+            if (!File.Exists(logPath) && !string.IsNullOrEmpty(BepInEx.Paths.BepInExRootPath))
+                logPath = Path.Combine(BepInEx.Paths.BepInExRootPath, "LogOutput.log");
             if (!File.Exists(logPath)) return false;
 
             // 大きすぎる場合はDiscordの添付上限に配慮して末尾だけ切り出す(3MBまで)。
@@ -545,7 +555,7 @@ public static class BugReportSystem
 public static class BugReportRemoteConfig
 {
     /// <summary>Discord Bot側のバグ報告APIベースURL</summary>
-    public static string EndpointUrl = "https://rising-earn-excel-closed.trycloudflare.com/api/bugreport";
+    public static string EndpointUrl = "https://ski-bidder-hook-falls.trycloudflare.com/api/bugreport";
 
     /// <summary>修正完了後も追加のバグ報告ボタンを表示するか。Discord運用に合わせて切り替える。</summary>
     public static bool AllowAdditionalReports = true;
@@ -584,6 +594,66 @@ public static class BugReportPollLobbyStartPatch
             _pollTimer = 0f;
             _ = BugReportSystem.PollAllTicketsAsync();
             _ = LobbyChatRelay.PollAsync();
+        }
+    }
+}
+
+
+/// <summary>
+/// モデレーター経由(/cmd bug)のバグ報告に付いたDiscordからの返信を、ロビーにいるモデレーターだけに個別チャットで見せる。
+/// 試合中は溜めておき、次のロビーで送る。アンチチート対策として、まとめて送り・送信間隔を空け・1回の量を制限する。
+/// </summary>
+public static class ModeratorBugRelay
+{
+    private static readonly System.Collections.Concurrent.ConcurrentQueue<string> Pending = new();
+    private const int MaxPending = 30;          // 溜めすぎたら古いものから捨てる
+    private const int MaxLinesPerMessage = 4;    // 1回のチャットにまとめる件数
+    private const float SendIntervalSeconds = 4f; // チャット送信の間隔
+    private const float LobbyWarmupSeconds = 5f;  // ロビーに入ってすぐは送らない(参加処理との重なりを避ける)
+    private static float _nextSendAt;
+    private static float _lobbySince = -1f;
+
+    public static void Enqueue(string summary, string author, string text)
+    {
+        var line = $"<#ff6b6b>[BUG:{Trim(summary, 12)}]</color> {Trim(author, 16)}: {Trim(text, 120)}";
+        Pending.Enqueue(line);
+        while (Pending.Count > MaxPending && Pending.TryDequeue(out _)) { }
+    }
+
+    private static string Trim(string s, int max)
+    {
+        s = (s ?? "").Replace("\n", " ").RemoveHtmlTags();
+        return s.Length > max ? s[..max] + "…" : s;
+    }
+
+    [HarmonyLib.HarmonyPatch(typeof(HudManager), nameof(HudManager.Update))]
+    private static class TickPatch
+    {
+        public static void Postfix()
+        {
+            try
+            {
+                if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost || !GameStates.IsLobby || GameStates.IsCountDown)
+                {
+                    _lobbySince = -1f;
+                    return;
+                }
+                var now = UnityEngine.Time.time;
+                if (_lobbySince < 0f) _lobbySince = now;
+                if (Pending.IsEmpty || now - _lobbySince < LobbyWarmupSeconds || now < _nextSendAt) return;
+
+                var mods = PlayerControl.AllPlayerControls.ToArray()
+                    .Where(p => p != null && !p.AmOwner && TownOfHost.Modules.Moderator.IsModerator(p)).ToList();
+                if (mods.Count == 0) return; // モデレーターが来るまで溜めておく
+
+                var lines = new List<string>();
+                while (lines.Count < MaxLinesPerMessage && Pending.TryDequeue(out var l)) lines.Add(l);
+                var body = "<#ff6b6b>【BUGチャット(モデレーターのみ)】</color>\n" + string.Join("\n", lines);
+                foreach (var m in mods) Utils.SendMessage(body, m.PlayerId);
+                // 送った人数が多いほど間隔を空ける
+                _nextSendAt = now + SendIntervalSeconds * Math.Max(1, mods.Count);
+            }
+            catch (Exception e) { Logger.Warn($"ModeratorBugRelay: {e.Message}", "BugReportSystem"); }
         }
     }
 }

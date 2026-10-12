@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Text;
 using HarmonyLib;
@@ -76,6 +76,9 @@ namespace TownOfHost.Patches
             RefreshHistory();
             _pollTimer = PollIntervalSeconds; // 開いた瞬間にも1回取得する
         }
+
+        /// <summary>専用チャットを表示中か(ロビーの「ホスト：」「開始」を隠すのに使う)</summary>
+        public static bool IsShowing => _isOpen && _panelRoot != null && !_panelRoot.IsDestroyedOrNull() && _panelRoot.activeSelf;
 
         public static void Close()
         {
@@ -181,11 +184,13 @@ namespace TownOfHost.Patches
                     // 要望により、自分(game)は右寄せ、Discord側は左寄せにして見分けやすくする。
                     if (isDiscord)
                     {
-                        sb.Append($"<align=left><color=#7289da>{msg.Author}</color>\n{msg.Text}</align>\n\n");
+                        // 運営(Discord)側: 左寄せ・ピンクの名前に「運営」と時刻
+                        sb.Append($"<align=left><size=85%><color=#ff5c8a><b>{msg.Author}</b></color> <color=#b0a4c4>運営 {Time(msg.At)}</color></size>\n<color=#f2ecfa>{msg.Text}</color></align>\n\n");
                     }
                     else
                     {
-                        sb.Append($"<align=right><color=#8cffff>{msg.Author}</color>\n{msg.Text}</align>\n\n");
+                        // 自分側: 右寄せ・水色の名前と時刻
+                        sb.Append($"<align=right><size=85%><color=#b0a4c4>{Time(msg.At)}</color> <color=#7fd8ff><b>{msg.Author}</b></color></size>\n<color=#f2ecfa>{msg.Text}</color></align>\n\n");
                     }
                 }
 
@@ -197,6 +202,12 @@ namespace TownOfHost.Patches
             _historyText.text = sb.ToString();
 
             UpdateScrollButtonsInteractable(_scrollOffset, maxOffset);
+        }
+
+        private static string Time(long at)
+        {
+            try { return at > 0 ? System.DateTimeOffset.FromUnixTimeMilliseconds(at).ToLocalTime().ToString("HH:mm") : ""; }
+            catch { return ""; }
         }
 
         /// <summary>▲(古い方へ)/▼(新しい方へ)ボタンの見た目を、これ以上動かせない端では薄く表示する。</summary>
@@ -275,13 +286,13 @@ namespace TownOfHost.Patches
                     alignment: TextAlignmentOptions.Top,
                     setActive: true,
                     parent: _panelRoot.transform);
-                SetTmpPosition(title, new Vector3(-0.3f, 2.0f, -1f), new Vector2(3.4f, 0.4f));
+                SetTmpPosition(title, new Vector3(0.3f, 2.0f, -1f), new Vector2(3.4f, 0.4f));
                 SetSortingOrder(title, 960);
 
                 var closeButton = new SimpleButton(
                     parent: _panelRoot.transform,
                     name: "BugChatCloseButton",
-                    localPosition: new Vector3(2.15f, 2.0f, -1f),
+                    localPosition: new Vector3(-2.15f, 2.0f, -1f), // 要望により左上
                     normalColor: new Color32(120, 30, 30, 255),
                     hoverColor: new Color32(160, 40, 40, 255),
                     action: () => Close(),
@@ -292,7 +303,7 @@ namespace TownOfHost.Patches
                 _reloadButton = new SimpleButton(
                     parent: _panelRoot.transform,
                     name: "BugChatReloadButton",
-                    localPosition: new Vector3(1.55f, 2.0f, -1f),
+                    localPosition: new Vector3(-1.55f, 2.0f, -1f), // 要望により左上
                     normalColor: new Color32(60, 90, 150, 230),
                     hoverColor: new Color32(80, 110, 180, 230),
                     action: () => ManualReload(),
@@ -310,7 +321,7 @@ namespace TownOfHost.Patches
                     parent: _panelRoot.transform);
                 // 上端(タイトル下)〜下端(入力欄上)の範囲に収まるよう高さを調整。
                 // 右側に▲/▼スクロールボタンを置くため、少し幅を狭めている。
-                SetTmpPosition(_historyText, new Vector3(-0.25f, 0.55f, -1f), new Vector2(4.1f, 2.9f));
+                SetTmpPosition(_historyText, new Vector3(-0.25f, 0.2f, -1f), new Vector2(4.1f, 2.9f)); // 更新ボタン等と重ならないよう少し下げる
                 _historyText.enableWordWrapping = true; // 要望により、長いメッセージは自動で折り返す
                 _historyText.overflowMode = TextOverflowModes.Truncate;
                 _historyText.lineSpacing = 4f; // 行間を少し広げて見やすくする
@@ -364,6 +375,7 @@ namespace TownOfHost.Patches
                 _sendButton.Scale = new Vector2(1.1f, 0.45f);
                 _sendButton.FontSize = 1.3f;
 
+                BugUiTheme.Apply(_panelRoot, PanelSize, title);
                 _panelRoot.SetActive(false);
                 return true;
             }
@@ -438,6 +450,31 @@ namespace TownOfHost.Patches
                 _mainMenuPollTimer = 0f;
                 _ = BugReportSystem.PollAllTicketsAsync();
             }
+        }
+    }
+}
+
+namespace TownOfHost
+{
+    /// <summary>BUG専用チャットを開いている間は、ロビーの「ホスト：」「開始」等が重なって見えるので隠す</summary>
+    [HarmonyLib.HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.Update))]
+    public static class BugChatHideLobbyUiPatch
+    {
+        private static bool _hidden;
+        public static void Postfix(GameStartManager __instance)
+        {
+            try
+            {
+                var hide = TownOfHost.Patches.BugChatPanel.IsShowing;
+                if (!hide && !_hidden) return;
+                _hidden = hide;
+                if (__instance.HostInfoPanel != null) __instance.HostInfoPanel.gameObject.SetActive(!hide);
+                if (__instance.StartButton != null && hide) __instance.StartButton.gameObject.SetActive(false);
+                if (__instance.GameStartTextParent != null && hide) __instance.GameStartTextParent.SetActive(false);
+                if (!hide && __instance.StartButton != null && AmongUsClient.Instance != null && AmongUsClient.Instance.AmHost)
+                    __instance.StartButton.gameObject.SetActive(true);
+            }
+            catch { }
         }
     }
 }
