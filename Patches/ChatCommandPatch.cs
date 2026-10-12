@@ -248,7 +248,7 @@ namespace TownOfHost
 
         // ホストだけを宛先にした専用RPCで処理を依頼する。
 
-        private static void RequestCommandProcessingFromHost(string text)
+        internal static void RequestCommandProcessingFromHost(string text)
 
         {
 

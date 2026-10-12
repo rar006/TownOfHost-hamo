@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Hazel;
 using System;
@@ -593,31 +593,47 @@ namespace TownOfHost.Modules.ChatManager
                 DestroyableSingleton<HudManager>.Instance.Chat.AddChat(senderplayer, msg);
                 senderplayer.SetName(name);
             }
-            var Nwriter = CustomRpcSender.Create("MessagesToSend", SendOption.None);
-            Nwriter.StartMessage(clientId);
-            Nwriter.StartRpc(senderplayer.NetId, (byte)RpcCalls.SetName)
-            .Write(senderplayer.Data.NetId)
-            .Write(title)
-            .EndRpc();
-            if (ChatControllerUpdatePatch.IsQuickChatOnly)
+            void SendLobbyChat(int cid, string shownName)
             {
-                Nwriter.StartRpc(senderplayer.NetId, (byte)RpcCalls.SendQuickChat)
-                .Write((byte)QuickChatPhraseType.SimplePhrase)
-                .Write((uint)StringNames.QCGG)
+                var Nwriter = CustomRpcSender.Create("MessagesToSend", SendOption.None);
+                Nwriter.StartMessage(cid);
+                Nwriter.StartRpc(senderplayer.NetId, (byte)RpcCalls.SetName)
+                .Write(senderplayer.Data.NetId)
+                .Write(shownName)
                 .EndRpc();
+                if (ChatControllerUpdatePatch.IsQuickChatOnly)
+                {
+                    Nwriter.StartRpc(senderplayer.NetId, (byte)RpcCalls.SendQuickChat)
+                    .Write((byte)QuickChatPhraseType.SimplePhrase)
+                    .Write((uint)StringNames.QCGG)
+                    .EndRpc();
+                }
+                else
+                {
+                    Nwriter.StartRpc(senderplayer.NetId, (byte)RpcCalls.SendChat)
+                    .Write(msg)
+                    .EndRpc();
+                }
+                Nwriter.StartRpc(senderplayer.NetId, (byte)RpcCalls.SetName)
+                .Write(senderplayer.Data.NetId)
+                .Write(name)
+                .EndRpc();
+                Nwriter.EndMessage();
+                Nwriter.SendMessage();
             }
-            else
+            // ホスト本人のチャット: MOD未導入の人には、名前の上に二つ名が付いた名前で見せる(MOD導入者は自分の画面で描く)
+            var titledName = clientId is -1 && title.RemoveHtmlTags() == title ? TitleSystem.VanillaChatName(senderplayer, title) : null;
+            if (titledName != null)
             {
-                Nwriter.StartRpc(senderplayer.NetId, (byte)RpcCalls.SendChat)
-                .Write(msg)
-                .EndRpc();
+                foreach (var pc in PlayerCatch.AllPlayerControls)
+                {
+                    if (pc == null || pc.AmOwner) continue;
+                    var cid = pc.GetClientId();
+                    if (cid == -1) continue;
+                    SendLobbyChat(cid, pc.IsModClient() ? title : titledName);
+                }
             }
-            Nwriter.StartRpc(senderplayer.NetId, (byte)RpcCalls.SetName)
-            .Write(senderplayer.Data.NetId)
-            .Write(name)
-            .EndRpc();
-            Nwriter.EndMessage();
-            Nwriter.SendMessage();
+            else SendLobbyChat(clientId, title);
             if (title.RemoveHtmlTags() != title)
             {
                 chatController.timeSinceLastMessage = sendTo is byte.MaxValue ? 0 : Main.MessageWait.Value - 0.2f;

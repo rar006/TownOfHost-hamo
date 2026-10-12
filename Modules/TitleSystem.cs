@@ -35,7 +35,7 @@ namespace TownOfHost;
 ///   → 4. 申し込んだ側がサーバーの POST {BaseUrl}/trade を呼んで交換が成立する。
 ///   (サーバー側で所持を確認して入れ替える。MOD側には何も保存しない)
 /// </summary>
-public static class TitleSystem
+public static partial class TitleSystem
 {
     public sealed class TitleDef
     {
@@ -239,6 +239,7 @@ public static class TitleSystem
     // =====================================================================
     private static void LobbyTick()
     {
+        if (AmongUsClient.Instance != null && AmongUsClient.Instance.AmHost) HostTradeTick();
         if (!GameStates.IsLobby)
         {
             initDone = false;
@@ -364,6 +365,14 @@ public static class TitleSystem
     }
 
     private const string VanillaNameHead = "<line-height=-72%>"; // -100%だと二つ名が上に行きすぎてチャット欄からはみ出るので少し下げる
+    /// <summary>チャット用: 二つ名があれば「二つ名付きの名前」、なければ null(ホストのみ・ロビーのみ)</summary>
+    internal static string VanillaChatName(PlayerControl target, string baseName)
+    {
+        if (!Enabled || !GameStates.IsLobby || AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return null;
+        var n = VanillaNameOf(target, baseName);
+        return ReferenceEquals(n, baseName) ? null : n;
+    }
+
     private static string VanillaNameOf(PlayerControl target, string baseName)
     {
         var titles = TitlePrefixOf(target);
@@ -643,9 +652,39 @@ public static class TitleSystem
         if (IsCommandDisabled(sub)) { Reply("このコマンドは部屋の設定で無効化されています。"); return true; }
 
         var args = tokens.Skip(2).ToArray();
-        if (sub == "nit") HandleTradeCommand(args);
+        if (sub == "nit")
+        {
+            if (UseHostTrade(args)) RouteToHostTrade(raw, args);
+            else HandleTradeCommand(args);
+        }
         else RunCommandAsync(sub, args);
         return true;
+    }
+
+    /// <summary>
+    /// この /cmd nit をホスト仲介で行うか。
+    /// 相手がMOD未導入の時、または y/n でホスト仲介の交換に入っている(端末どうしの交換をしていない)時。
+    /// </summary>
+    private static bool UseHostTrade(string[] args)
+    {
+        if (args.Length == 0) return false;
+        var first = args[0].ToLowerInvariant();
+        if (args.Length == 1 && (IsYes(first) || IsNo(first)))
+        {
+            if (trade != null) return false; // 端末どうしの交換中
+            return AmongUsClient.Instance != null && (!AmongUsClient.Instance.AmHost || InHostTrade(PlayerControl.LocalPlayer.PlayerId));
+        }
+        int dummy;
+        var isPropose = args.Length >= 3 && int.TryParse(args[^2], out dummy) && int.TryParse(args[^1], out dummy);
+        var name = string.Join(" ", isPropose ? args[..^2] : args);
+        var target = FindPlayerByName(name, out _);
+        return target != null && !target.AmOwner && !target.IsModClient();
+    }
+
+    private static void RouteToHostTrade(string raw, string[] args)
+    {
+        if (AmongUsClient.Instance.AmHost) HostTradeCommand(PlayerControl.LocalPlayer, args);
+        else ChatCommands.RequestCommandProcessingFromHost(raw.Trim()); // ホストに処理してもらう
     }
 
     /// <summary>設定画面の「コマンド設定」で、そのコマンドが無効化されているか(ON=無効)</summary>
@@ -690,7 +729,7 @@ public static class TitleSystem
         if (!GameStates.IsLobby) return false;
         var id = player.PlayerId;
         if (IsCommandDisabled(sub)) { Utils.SendMessage("このコマンドは部屋の設定で無効化されています。", id); return true; }
-        if (sub == "nit") { Utils.SendMessage("二つ名の交換は、MODを入れているプレイヤー同士でのみ使えます。", id); return true; }
+        if (sub == "nit") { HostTradeCommand(player, tokens.Skip(2).ToArray()); return true; } // MOD未導入の人の交換はホストが仲介
         RunCommandAsync(sub, tokens.Skip(2).ToArray(), player);
         return true;
     }
