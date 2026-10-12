@@ -1064,6 +1064,7 @@ public static class Moderator
         public static void Prefix()
         {
             StripModeratorDisplayNamesForGame();
+            TitleSystem.StripVanillaNamesForGame();
         }
     }
 

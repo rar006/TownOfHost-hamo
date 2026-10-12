@@ -250,6 +250,7 @@ public static class TitleSystem
             return;
         }
         TradeTick();
+        VanillaNameTick();
         // hamoのロビー(ホストがhamo)に入ったら、今やっている「参加者限定配布」を受け取る(ロビーごとに1回)
         if (!claimDone && GameStates.IsModHost && PlayerControl.LocalPlayer != null)
         {
@@ -277,6 +278,66 @@ public static class TitleSystem
     }
 
     private static bool claimDone;
+
+    // =====================================================================
+    //  MOD未導入の人にも二つ名を見せる(ホストのみ・ロビーのみ)
+    //  MOD導入者は自分の画面で名前の上に描くので、未導入の人にだけ「名前そのもの」に二つ名を付けて送る。
+    //  ホスト側の本当の名前は変えない(未導入の人それぞれにだけ見える名前を送る)。
+    // =====================================================================
+    private static float nextVanillaNameAt;
+
+    private static string TitlePrefixOf(PlayerControl pc)
+    {
+        if (pc == null || !Shown.TryGetValue(pc.PlayerId, out var shown) || shown.Fc != CachedFriendCode(pc)) return "";
+        var parts = new List<string>();
+        foreach (var id in shown.Ids)
+        {
+            if (!Catalog.TryGetValue(id, out var def)) continue;
+            var color = (def.Color ?? "#ffffff").Trim();
+            if (!color.StartsWith("#")) color = "#" + color;
+            parts.Add($"<color={color}>{def.Name}</color>");
+        }
+        return parts.Count == 0 ? "" : $"<size=60%>{string.Join(" ", parts)}</size>\n";
+    }
+
+    private static void VanillaNameTick()
+    {
+        if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
+        if (Time.time < nextVanillaNameAt) return;
+        nextVanillaNameAt = Time.time + 1f;
+        try
+        {
+            var all = PlayerControl.AllPlayerControls.ToArray().Where(p => p != null && p.Data != null).ToArray();
+            foreach (var seer in all)
+            {
+                if (seer.AmOwner || seer.IsModClient()) continue; // 未導入の人だけ
+                foreach (var target in all)
+                {
+                    var baseName = target.Data.PlayerName ?? target.name;
+                    // 同じ名前なら送らない(RpcSetNamePrivate 側で前回と同じかを確認している)
+                    target.RpcSetNamePrivate(TitlePrefixOf(target) + baseName, false, seer);
+                }
+            }
+        }
+        catch (Exception e) { Logger.Warn($"VanillaNameTick: {e.Message}", Tag); }
+    }
+
+    /// <summary>試合開始時: 未導入の人に送っていた「二つ名付きの名前」を、元の名前に戻す</summary>
+    public static void StripVanillaNamesForGame()
+    {
+        if (!Enabled || AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
+        try
+        {
+            var all = PlayerControl.AllPlayerControls.ToArray().Where(p => p != null && p.Data != null).ToArray();
+            foreach (var seer in all)
+            {
+                if (seer.AmOwner || seer.IsModClient()) continue;
+                foreach (var target in all)
+                    if (TitlePrefixOf(target).Length > 0) target.RpcSetNamePrivate(target.Data.PlayerName ?? target.name, false, seer, true);
+            }
+        }
+        catch (Exception e) { Logger.Warn($"StripVanillaNamesForGame: {e.Message}", Tag); }
+    }
 
     private static async void ClaimEventsAsync(string fc)
     {
