@@ -297,7 +297,8 @@ public static class TitleSystem
             if (!color.StartsWith("#")) color = "#" + color;
             parts.Add($"<color={color}>{def.Name}</color>");
         }
-        return parts.Count == 0 ? "" : $"<size=60%>{string.Join(" ", parts)}</size>\n";
+        // 改行すると、チャットの吹き出しで名前が2行になって本文と重なるので、名前と同じ行の前に小さく付ける
+        return parts.Count == 0 ? "" : $"<size=60%>{string.Join(" ", parts)}</size> ";
     }
 
     private static void VanillaNameTick()
@@ -315,7 +316,9 @@ public static class TitleSystem
                 {
                     var baseName = target.Data.PlayerName ?? target.name;
                     // 同じ名前なら送らない(RpcSetNamePrivate 側で前回と同じかを確認している)
-                    target.RpcSetNamePrivate(TitlePrefixOf(target) + baseName, false, seer);
+                    // ホストの名前は「ホスト：」の欄にも出るので、二つ名は付けない
+                    var prefix = target.OwnerId == AmongUsClient.Instance.HostId ? "" : TitlePrefixOf(target);
+                    target.RpcSetNamePrivate(prefix + baseName, false, seer);
                 }
             }
         }
