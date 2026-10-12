@@ -36,9 +36,7 @@ public static class BountyGuesser
 
     public static void SetupCustomOption()
     {
-        SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.BountyGuesser, fromtext: UtilsOption.GetFrom(From.TownOfHost_K));
-        // キル可能役職(クルー/インポスター/マッドメイト/ニュートラルのキル役)への配布は
-        // Serial.cs と同じ AddOnsAssignDataOnlyKiller を使う。
+        SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.BountyGuesser);
         AddOnsAssignDataOnlyKiller.Create(Id + 10, CustomRoles.BountyGuesser, true, true, true, true);
 
         ObjectOptionitem.Create(Id + 20, "AddonOption", true, "", TabGroup.Addons)

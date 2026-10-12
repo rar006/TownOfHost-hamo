@@ -935,7 +935,7 @@ public static bool IsAndroid()//蜿り・・縲ヾNR
         Retaliation,
 
         RuleViolation,
-
+        MagicC,
         etc = -1
 
     }
