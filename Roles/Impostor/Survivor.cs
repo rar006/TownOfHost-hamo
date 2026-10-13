@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using AmongUs.GameOptions;
 
 using TownOfHost.Roles.Core;
@@ -19,8 +19,7 @@ public sealed class Survivor : RoleBase, IImpostor
             SetupOptionItem,
             "Sur",
             OptionSort: (7, 7),
-            from: From.SuperNewRoles,
-            isNewRole: true
+            from: From.SuperNewRoles
         );
     public Survivor(PlayerControl player)
     : base(

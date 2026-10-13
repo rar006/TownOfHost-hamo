@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+﻿using AmongUs.GameOptions;
 
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
@@ -28,8 +28,7 @@ public sealed class Infected : RoleBase, IAdditionalWinner
             "Ifd",
             "#8B0000",
             (5, 9),
-            from: From.TownOfHost_hamo,
-            isNewRole: true
+            from: From.TownOfHost_hamo
         );
 
     public Infected(PlayerControl player) : base(RoleInfo, player)

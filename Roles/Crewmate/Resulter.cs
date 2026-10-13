@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+﻿using AmongUs.GameOptions;
 
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
@@ -26,8 +26,7 @@ public sealed class Resulter : RoleBase, ISelfVoter
             "Rst",
             "#F5A623",
             (5, 2),
-            from: From.TownOfHost_hamo,
-            isNewRole: true
+            from: From.TownOfHost_hamo
         );
 
     public Resulter(PlayerControl player) : base(RoleInfo, player)

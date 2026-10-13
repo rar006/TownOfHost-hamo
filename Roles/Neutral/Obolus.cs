@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
@@ -23,8 +23,7 @@ public sealed class Obolus : RoleBase, ILNKiller, IAdditionalWinner
             "#bd871a",
             (2, 5),
             true,
-            from: From.NebulaontheShip,
-            isNewRole: true
+            from: From.NebulaontheShip
         );
     public Obolus(PlayerControl player)
     : base(

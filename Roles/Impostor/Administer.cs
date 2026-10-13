@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,7 +27,6 @@ public sealed class Administer : RoleBase, IImpostor
             null,
             "Ads",
             OptionSort: (5, 3),
-            isNewRole: true,
             from: From.TownOfHost_Y
         );
     public Administer(PlayerControl player)

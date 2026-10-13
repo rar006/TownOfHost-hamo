@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+﻿using AmongUs.GameOptions;
 
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
@@ -30,8 +30,7 @@ public sealed class Infect : RoleBase, IKiller
             "#8B0000",
             (5, 8),
             isDesyncImpostor: true,
-            from: From.TownOfHost_hamo,
-            isNewRole: true
+            from: From.TownOfHost_hamo
         );
 
     public Infect(PlayerControl player) : base(RoleInfo, player)

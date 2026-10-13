@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Collections.Generic;
 
@@ -2127,7 +2127,10 @@ public enum CustomRoles
     //===== Y移植役職 =====
     DarkHide,
     Greedier,
-    Administer
+    Administer,
+    // ===== 新規追加役職 (2026-10 ユーザー提案)。値は空いている342番から(後で追加する役職と番号を揃えるため固定) =====
+    Messenger = 342,
+    Fugitive,
 }
 
 public enum CustomRoleTypes

@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+﻿using AmongUs.GameOptions;
 
 using TownOfHost.Patches;
 using TownOfHost.Roles.Core;
@@ -28,8 +28,7 @@ public sealed class Tomorrow : RoleBase
             "Tmr",
             "#00FFEA",
             (5, 5),
-            from: From.TownOfHost_hamo,
-            isNewRole: true
+            from: From.TownOfHost_hamo
         );
 
     public Tomorrow(PlayerControl player) : base(RoleInfo, player)

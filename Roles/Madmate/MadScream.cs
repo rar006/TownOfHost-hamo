@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+﻿using AmongUs.GameOptions;
 using UnityEngine;
 
 using TownOfHost.Roles.Core;
@@ -34,8 +34,7 @@ public sealed class MadScream : RoleBase, IImpostor
             "Msc",
             "#FF1919",
             (5, 3),
-            from: From.TownOfHost_hamo,
-            isNewRole: true
+            from: From.TownOfHost_hamo
         );
 
     public MadScream(PlayerControl player) : base(RoleInfo, player)

@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+﻿using AmongUs.GameOptions;
 
 using TownOfHost.Roles.Core;
 
@@ -27,8 +27,7 @@ public sealed class MadParasite : RoleBase
             "Mps",
             "#7A9E2E",
             (5, 7),
-            from: From.TownOfHost_hamo,
-            isNewRole: true
+            from: From.TownOfHost_hamo
         );
 
     public MadParasite(PlayerControl player) : base(RoleInfo, player)

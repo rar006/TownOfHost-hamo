@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+﻿using AmongUs.GameOptions;
 using Hazel;
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
@@ -22,7 +22,6 @@ public sealed class Mario : RoleBase, IKiller, IUsePhantomButton
             "#ff6201",
             (5, 7),
             from: From.TownOfHost_Enhanced,
-            isNewRole: true,
             Desc: () =>
             {
                 return string.Format(GetString("MarioDesc"), OptionWinVentCount.GetInt());

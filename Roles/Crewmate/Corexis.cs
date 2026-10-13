@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 using AmongUs.GameOptions;
 using Hazel;
@@ -34,8 +34,7 @@ public sealed class Corexis : RoleBase, ISelfVoter
             "Cor",
             "#06C755",
             (5, 1),
-            from: From.TownOfHost_hamo,
-            isNewRole: true
+            from: From.TownOfHost_hamo
         );
 
     public Corexis(PlayerControl player) : base(RoleInfo, player)

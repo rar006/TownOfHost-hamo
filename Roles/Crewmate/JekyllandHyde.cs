@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using AmongUs.GameOptions;
 using Hazel;
 using Rewired;
@@ -25,7 +25,6 @@ public sealed class JekyllandHydeRole : RoleBase
             "#ffffff",
             (4, 2),
             introSound: () => GetIntroSound(RoleTypes.Shapeshifter),
-            isNewRole: true,
             from: From.NebulaontheShip
         );
 

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using AmongUs.GameOptions;
 using Hazel;
 using InnerNet;
@@ -26,7 +26,6 @@ namespace TownOfHost.Roles.Neutral
                 "#483d8b",
                 (2, 6),
                 true,
-                isNewRole: true,
                 from: From.TownOfHost_Y
             );
         public DarkHide(PlayerControl player)

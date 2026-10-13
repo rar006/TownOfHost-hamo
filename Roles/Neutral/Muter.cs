@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+﻿using AmongUs.GameOptions;
 using Hazel;
 
 using TownOfHost.Roles.Core;
@@ -27,8 +27,7 @@ public sealed class Muter : RoleBase, IAdditionalWinner
             "Mut",
             "#A77AFF",
             (5, 0),
-            from: From.TownOfHost_hamo,
-            isNewRole: true
+            from: From.TownOfHost_hamo
         );
 
     public Muter(PlayerControl player) : base(RoleInfo, player)

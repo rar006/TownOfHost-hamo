@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using TownOfHost.Roles.Core;
@@ -255,6 +255,8 @@ public static class RoleGojuon
         ["Serial"] = (2, "しりある"),
         ["SerialKiller"] = (2, "しりあるきら"),
         ["SilverBuzzer"] = (2, "しるはふさ"),
+        ["Messenger"] = (6, "めつせんしやあ"),
+        ["Fugitive"] = (5, "ひゆうしていふ"),
         ["Symbol"] = (2, "しんほる"),
         ["SwitchSheriff"] = (2, "すいつちしえりふ"),
         ["Swooper"] = (2, "すうは"),

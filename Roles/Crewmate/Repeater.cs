@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+﻿using AmongUs.GameOptions;
 
 using TownOfHost.Patches;
 using TownOfHost.Roles.Core;
@@ -28,8 +28,7 @@ public sealed class Repeater : RoleBase, ISelfVoter
             "Rpt",
             "#8CFF19",
             (5, 6),
-            from: From.TownOfHost_hamo,
-            isNewRole: true
+            from: From.TownOfHost_hamo
         );
 
     public Repeater(PlayerControl player) : base(RoleInfo, player)

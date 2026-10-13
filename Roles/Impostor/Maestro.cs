@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+﻿using AmongUs.GameOptions;
 
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
@@ -26,8 +26,7 @@ public sealed class Maestro : RoleBase, IImpostor
             "Mae",
             "#FF1919",
             (5, 4),
-            from: From.TownOfHost_hamo,
-            isNewRole: true
+            from: From.TownOfHost_hamo
         );
 
     public Maestro(PlayerControl player) : base(RoleInfo, player)

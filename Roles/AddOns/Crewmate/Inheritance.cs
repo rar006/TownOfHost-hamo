@@ -14,7 +14,7 @@ namespace TownOfHost.Roles.AddOns.Common;
 public static class Inheritance
 {
     // 属性はSimpleRoleInfoを持たないため、NEWバッジ用フラグを属性本体で公開する。
-    public const bool IsNewRole = true;
+    public const bool IsNewRole = false;
     // 他役職の親設定ID・子設定IDと重ならない専用範囲。
     private const int Id = 95200;
     private static OptionItem OptionTransferOnKill;

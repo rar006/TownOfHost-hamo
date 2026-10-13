@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
@@ -87,6 +87,9 @@ namespace TownOfHost.Roles
                     .SetEnabled(() => OptionAssignMode.GetBool() && OptionAssignPerPlayerCount.GetBool());
                 header.ReplacementDictionary = new Dictionary<string, string>() { { "%count%", playerCount.ToString() } };
                 Enabled = header;
+                // 「編集する人数」で選んだ人数の分だけ表示する(13人分が縦に並んで見えにくかったため)
+                bool Shown() => OptionAssignMode.GetBool() && OptionAssignPerPlayerCount.GetBool() && OptionAssignPerPlayerCountEdit?.GetInt() == playerCount;
+                header.SetEnabled(Shown);
 
                 var offset = 1;
                 foreach (var roleTypes in new[] { CustomRoleTypes.Impostor, CustomRoleTypes.Madmate, CustomRoleTypes.Crewmate, CustomRoleTypes.Neutral })
@@ -98,13 +101,13 @@ namespace TownOfHost.Roles
                     var minOption = (IntegerOptionItem)IntegerOptionItem.Create(idBase + offset++, "RoleTypeMin", new(0, maxCount, 1), 0, TabGroup.MainSettings, false)
                         .SetParent(header)
                         .SetValueFormat(OptionFormat.Players)
-                        .SetEnabled(() => OptionAssignMode.GetBool() && OptionAssignPerPlayerCount.GetBool() && header.GetBool());
+                        .SetEnabled(() => Shown() && header.GetBool());
                     minOption.ReplacementDictionary = replacementDictionary;
 
                     var maxOption = (IntegerOptionItem)IntegerOptionItem.Create(idBase + offset++, "RoleTypeMax", new(0, maxCount, 1), 0, TabGroup.MainSettings, false)
                         .SetParent(header)
                         .SetValueFormat(OptionFormat.Players)
-                        .SetEnabled(() => OptionAssignMode.GetBool() && OptionAssignPerPlayerCount.GetBool() && header.GetBool());
+                        .SetEnabled(() => Shown() && header.GetBool());
                     maxOption.ReplacementDictionary = replacementDictionary;
 
                     minOptions[roleTypes] = minOption;
@@ -114,7 +117,7 @@ namespace TownOfHost.Roles
                 madFromCrewMaxOption = (IntegerOptionItem)IntegerOptionItem.Create(idBase + offset++, "AssignMadmateFromCrewmateSlotMax", new(0, playerCount, 1), playerCount, TabGroup.MainSettings, false)
                     .SetParent(header)
                     .SetValueFormat(OptionFormat.Players)
-                    .SetEnabled(() => OptionAssignMode.GetBool() && OptionAssignPerPlayerCount.GetBool() && header.GetBool() && OptionAssignMadmateFromCrewmateSlot.GetBool());
+                    .SetEnabled(() => Shown() && header.GetBool() && OptionAssignMadmateFromCrewmateSlot.GetBool());
             }
 
             public int Min(CustomRoleTypes roleTypes) => minOptions.TryGetValue(roleTypes, out var opt) ? opt.GetInt() : 0;
@@ -140,6 +143,8 @@ namespace TownOfHost.Roles
         public static OptionItem OptionAssignPerPlayerCount;
         // 参加/退出のたびに人数別設定を自動で反映するか
         public static OptionItem OptionAssignPerPlayerCountAuto;
+        /// <summary>人数ごとの設定で、今どの人数を編集するか(表示の切り替え用)</summary>
+        public static OptionItem OptionAssignPerPlayerCountEdit;
         private static Dictionary<CustomRoleTypes, RandomAssignOptions> RandomAssignOptionsCollection = new(CustomRolesHelper.AllRoleTypes.Length);
         // 要望により追加: 3人〜15人それぞれに個別の配役数設定を持たせるための辞書。
         private const int MinSupportedPlayerCount = 3;
@@ -279,6 +284,10 @@ namespace TownOfHost.Roles
 
             OptionAssignPerPlayerCountAuto = BooleanOptionItem.Create(idStart + 61, "AssignPerPlayerCountAuto", true, TabGroup.MainSettings, false)
                 .SetParent(OptionAssignPerPlayerCount)
+                .SetEnabled(() => OptionAssignMode.GetBool() && OptionAssignPerPlayerCount.GetBool());
+            OptionAssignPerPlayerCountEdit = IntegerOptionItem.Create(idStart + 62, "AssignPerPlayerCountEdit", new(MinSupportedPlayerCount, MaxSupportedPlayerCount, 1), 10, TabGroup.MainSettings, false)
+                .SetParent(OptionAssignPerPlayerCount)
+                .SetValueFormat(OptionFormat.Players)
                 .SetEnabled(() => OptionAssignMode.GetBool() && OptionAssignPerPlayerCount.GetBool());
             PerCountOptionsCollection.Clear();
             const int perCountIdBase = 590000;

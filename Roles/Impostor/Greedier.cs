@@ -1,4 +1,4 @@
-//バグってるから(
+﻿//バグってるから(
 /*using AmongUs.GameOptions;
 using TownOfHost;
 using TownOfHost.Roles.Core;
@@ -19,8 +19,7 @@ public sealed class Greedier : RoleBase, IImpostor
             SetupOptionItem,
             "gr",
             OptionSort: (7, 8),
-            from: From.TownOfHost_Y,
-            isNewRole: true
+            from: From.TownOfHost_Y
         );
     public Greedier(PlayerControl player)
     : base(

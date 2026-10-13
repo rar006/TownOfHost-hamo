@@ -1107,6 +1107,12 @@ namespace TownOfHost
 
 
 
+            if (UserRoles2026.TryHandleCommand(PlayerControl.LocalPlayer, args))
+            {
+                canceled = true;
+                __instance.freeChatField.textArea.Clear();
+                return false;
+            }
             if (Moderator.TryHandleCommand(PlayerControl.LocalPlayer, args, out var moderatorCanceled))
 
             {
@@ -4808,6 +4814,7 @@ namespace TownOfHost
 
 
 
+            if (UserRoles2026.TryHandleCommand(player, args)) { canceled = true; return; }
             if (Moderator.TryHandleCommand(player, args, out var moderatorCanceled))
 
             {
