@@ -3302,7 +3302,7 @@ namespace TownOfHost
 
                 .SetColorcode("#00c1ff")
 
-                .SetOptionName(() => "最低人数を指定する(OFFなら人数に関係なく作動)");
+                .SetOptionName(() => "最低人数を指定する");
 
 
 
@@ -3312,7 +3312,7 @@ namespace TownOfHost
 
                 .SetColorcode("#00c1ff")
 
-                .SetOptionName(() => "作動する最低人数(この人数以上なら作動)")
+                .SetOptionName(() => "作動する最低人数")
 
                 .SetValueFormat(OptionFormat.Players);
 
@@ -3324,7 +3324,7 @@ namespace TownOfHost
 
                 .SetColorcode("#00c1ff")
 
-                .SetOptionName(() => "廃村(引き分け終了)はカウントしない");
+                .SetOptionName(() => "廃村はカウントしない");
 
 
 
@@ -3336,7 +3336,7 @@ namespace TownOfHost
 
                 .SetColorcode("#00c1ff")
 
-                .SetOptionName(() => "設定試合数ごとにデータをリセットする(軽量化)");
+                .SetOptionName(() => "設定試合数ごとにデータをリセットする");
 
 
 
@@ -3358,7 +3358,7 @@ namespace TownOfHost
 
                 .SetColorcode("#00c1ff")
 
-                .SetOptionName(() => "廃村(引き分け終了)はカウントしない");
+                .SetOptionName(() => "廃村はカウントしない");
 
 
 
@@ -3422,7 +3422,7 @@ namespace TownOfHost
 
                 .SetColorcode("#00c1ff")
 
-                .SetOptionName(() => "次のロビーで一定時間経過後に自動で立て直す(1回のみ)");
+                .SetOptionName(() => "次のロビーで一定時間経過後に自動で立て直す");
 
 
 

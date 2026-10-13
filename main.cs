@@ -138,13 +138,13 @@ namespace TownOfHost
         public const string BepInExPluginName = "Town Of Host-hamo";
 #endif
 
-        public const string BepInExPluginVersion = "4.00.33.01";
+        public const string BepInExPluginVersion = "4.00.33.02";
 
-        public const string PluginVersion = "4.00.33.01";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
+        public const string PluginVersion = "4.00.33.02";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
 
-        public const string PluginShowVersion = "4.33.01α";
+        public const string PluginShowVersion = "4.33.02α";
 
-        public const string ModVersion = ".33.01";//リリースver用バージョン変更dc9b79
+        public const string ModVersion = ".33.02";//リリースver用バージョン変更dc9b79
 
 
 

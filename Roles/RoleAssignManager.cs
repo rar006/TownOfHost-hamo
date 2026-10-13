@@ -138,7 +138,7 @@ namespace TownOfHost.Roles
         public static OptionItem OptionAssignMadmateFromCrewmateSlot;
         public static OptionItem OptionAssignMadmateFromCrewmateSlotMax;
         public static OptionItem OptionAssignPerPlayerCount;
-        // 参加/退出のたびに人数別設定を自動で反映するか(OFF=試合開始前にだけ反映して負荷を抑える)
+        // 参加/退出のたびに人数別設定を自動で反映するか
         public static OptionItem OptionAssignPerPlayerCountAuto;
         private static Dictionary<CustomRoleTypes, RandomAssignOptions> RandomAssignOptionsCollection = new(CustomRolesHelper.AllRoleTypes.Length);
         // 要望により追加: 3人〜15人それぞれに個別の配役数設定を持たせるための辞書。

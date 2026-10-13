@@ -1605,7 +1605,7 @@
 "AssignMadmateFromCrewmateSlot","Assign Madmate From Crewmate Slots","マッドメイトをクルー枠からアサインする"
 "AssignMadmateFromCrewmateSlotMax","Max Madmate Assigned From Crewmate Slots","クルー枠からアサインするマッドの最大人数"
 "AssignPerPlayerCount","Configure by Player Count","人数ごとに設定する"
-"AssignPerPlayerCountAuto","Auto-apply on join/leave (OFF: apply before start)","参加・退出ごとに自動で変更(OFF:試合開始前に変更)"
+"AssignPerPlayerCountAuto","Auto-apply on join/leave (OFF: apply before start)","参加・退出ごとに自動で変更"
 
 "PlayerCountSettingHeader","%count% Players","%count%人の設定"
 "%roleTypes%Maximum","Max Players In %roleTypes%","%roleTypes%の最大アサイン数","%roleTypes%最大玩家数","","Максимум для %roleTypes%","Máximo de Jogadores em %roleTypes%",""
