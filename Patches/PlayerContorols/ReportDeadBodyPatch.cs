@@ -307,6 +307,7 @@ namespace TownOfHost
                         case DontReportreson.Eat: return "<size=120%><#6f4204>×</color></size>";
 
                         case DontReportreson.Impostor: return "<size=120%><#ff1919>×</color></size>";
+                        case DontReportreson.Jiangshi: return $"<size=120%><{Jiangshi.RoleInfo.RoleColorCode}>×</color></size>";
 
                     }
 
@@ -642,7 +643,7 @@ namespace TownOfHost
 
             GameStates.task = false;
 
-            bool IsMeetingBlackout = Options.ExCallMeetingBlackout.GetBool() || CustomRoles.Monochromer.IsEnable() || GameStates.AlreadyDied;
+            bool IsMeetingBlackout = Options.ExCallMeetingBlackout.GetBool() || CustomRoles.Monochromer.IsEnable() || CustomRoles.Daoshi.IsEnable() || CustomRoles.BlackVisioner.IsEnable() || GameStates.AlreadyDied;
 
             IsMeetingBlackout &= (Options.firstturnmeeting && MeetingStates.FirstMeeting) is false;
 

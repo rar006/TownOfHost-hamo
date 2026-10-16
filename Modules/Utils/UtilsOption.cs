@@ -2015,7 +2015,7 @@ namespace TownOfHost
 
                 case From.TownOfHost_Enhanced: Fromtext += $"<#ffc0cb>TownOfHost Enhanced</color>"; break;
 
-                case From.TownOfHost_Pko: Fromtext += $"<#FF9631>TownOfHost Pko</color>"; break;
+                case From.TownOfHost_Pko: Fromtext += $"<#FF9631>TownOfHost-Pko</color>"; break;
 
                 case From.RevolutionaryHostRoles: Fromtext += $"<#3cb371>RevolutionaryHostRoles</color>"; break;
 

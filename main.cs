@@ -963,7 +963,7 @@ public static bool IsAndroid()//蜿り・・縲ヾNR
         Jester = CustomRoles.Jester,
 
         FakeJester = CustomRoles.FakeJester,
-
+        Daoshi = CustomRoles.Daoshi,
         AntiHero = CustomRoles.AntiHero,
 
         HappyJester = CustomRoles.HappyJester,

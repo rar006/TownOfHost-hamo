@@ -21,7 +21,8 @@ public sealed class Monochromer : RoleBase
             assignInfo: new RoleAssignInfo(CustomRoles.Monochromer, CustomRoleTypes.Neutral)
             {
                 AssignCountRule = new(0, 15, 1)
-            }
+            },
+            from: From.TownOfHost_K
         );
     public Monochromer(PlayerControl player)
     : base(
@@ -87,7 +88,7 @@ public sealed class Monochromer : RoleBase
     {
         if (AddOns.Common.Amnesia.CheckAbilityreturn(Player)) return;
         if (!Player.IsAlive()) return;
-        foreach (var pc in PlayerCatch.AllPlayerControls)
+        foreach (var pc in PlayerCatch.AllAlivePlayerControls)
         {
             if (pc == Player) continue;
             if (pc == null) continue;

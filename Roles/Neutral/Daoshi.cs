@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
@@ -37,24 +37,24 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
         );
 
     static OptionItem OptionKillCooldown;
-    static OptionItem OptionMaxKyonshi;
+    static OptionItem OptionMaxJiangshi;
     static OptionItem OptionKillFlash;
     static OptionItem OptionBodyArrow;
     static OptionItem OptionNotify;
-    internal static OptionItem OptionKyonshiCooldown;
+    internal static OptionItem OptionJiangshiCooldown;
     internal static OptionItem OptionSightTime;
-    enum OptionName { DaoshiMaxKyonshi, DaoshiKillFlash, DaoshiBodyArrow, DaoshiNotify, KyonshiCooldown, KyonshiSightTime }
+    enum OptionName { DaoshiMaxJiangshi, DaoshiKillFlash, DaoshiBodyArrow, DaoshiNotify, JiangshiCooldown, JiangshiSightTime }
 
     static void SetupOptionItem()
     {
         SoloWinOption.Create(RoleInfo, 9, defo: 1);
         OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(0f, 180f, 1f), 40f, false).SetValueFormat(OptionFormat.Seconds);
-        OptionMaxKyonshi = IntegerOptionItem.Create(RoleInfo, 11, OptionName.DaoshiMaxKyonshi, new(0, 15, 1), 3, false).SetValueFormat(OptionFormat.Players);
+        OptionMaxJiangshi = IntegerOptionItem.Create(RoleInfo, 11, OptionName.DaoshiMaxJiangshi, new(0, 15, 1), 3, false).SetValueFormat(OptionFormat.Players);
         OptionKillFlash = BooleanOptionItem.Create(RoleInfo, 12, OptionName.DaoshiKillFlash, true, false);
         OptionBodyArrow = BooleanOptionItem.Create(RoleInfo, 13, OptionName.DaoshiBodyArrow, false, false);
         OptionNotify = BooleanOptionItem.Create(RoleInfo, 14, OptionName.DaoshiNotify, true, false);
-        OptionKyonshiCooldown = FloatOptionItem.Create(RoleInfo, 15, OptionName.KyonshiCooldown, new(0f, 180f, 1f), 25f, false).SetValueFormat(OptionFormat.Seconds);
-        OptionSightTime = FloatOptionItem.Create(RoleInfo, 16, OptionName.KyonshiSightTime, new(0f, 999f, 1f), 3f, false).SetValueFormat(OptionFormat.Seconds);
+        OptionJiangshiCooldown = FloatOptionItem.Create(RoleInfo, 15, OptionName.JiangshiCooldown, new(0f, 180f, 1f), 25f, false).SetValueFormat(OptionFormat.Seconds);
+        OptionSightTime = FloatOptionItem.Create(RoleInfo, 16, OptionName.JiangshiSightTime, new(0f, 999f, 1f), 3f, false).SetValueFormat(OptionFormat.Seconds);
     }
 
     public Daoshi(PlayerControl player) : base(RoleInfo, player, () => HasTask.False) { }
@@ -65,7 +65,7 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
     bool abilityMode;
     float lastReportAttempt = -10f;
     byte lastReportTarget = byte.MaxValue;
-    readonly HashSet<byte> kyonshi = new();
+    readonly HashSet<byte> Jiangshi = new();
     /// <summary>霊視されている人 → 見える期限</summary>
     readonly Dictionary<byte, float> sight = new();
     readonly List<Vector3> bodyArrows = new();
@@ -179,24 +179,24 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
     {
         if (reporter == null || reporter.PlayerId != Player.PlayerId || target == null) return false;
         // キョンシーにした人の死体は通報できない
-        if (kyonshi.Contains(target.PlayerId)) { reason = DontReportreson.Other; return true; }
+        if (Jiangshi.Contains(target.PlayerId)) { reason = DontReportreson.Other; return true; }
         if (!abilityMode) return false;
         // 素早く2回押すと通常通報
         if (lastReportTarget == target.PlayerId && Time.time - lastReportAttempt < 0.6f) return false;
         lastReportAttempt = Time.time;
         lastReportTarget = target.PlayerId;
-        if (kyonshi.Count >= OptionMaxKyonshi.GetInt()) { reason = DontReportreson.Other; return true; }
+        if (Jiangshi.Count >= OptionMaxJiangshi.GetInt()) { reason = DontReportreson.Other; return true; }
         var pc = PlayerCatch.GetPlayerById(target.PlayerId);
         _ = new LateTask(() =>
         {
             // 2回目の通報が来ていなければキョンシーにする
-            if (pc == null || GameStates.CalledMeeting || kyonshi.Contains(pc.PlayerId) || Time.time - lastReportAttempt < 0.55f) return;
-            kyonshi.Add(pc.PlayerId);
-            UserRoles2026.MakeGhost(pc, CustomRoles.Kyonshi);
-            Utils.SendMessage(GetString("KyonshiBorn"), pc.PlayerId);
+            if (pc == null || GameStates.CalledMeeting || Jiangshi.Contains(pc.PlayerId) || Time.time - lastReportAttempt < 0.55f) return;
+            Jiangshi.Add(pc.PlayerId);
+            UserRoles2026.MakeGhost(pc, CustomRoles.Jiangshi);
+            Utils.SendMessage(GetString("JiangshiBorn"), pc.PlayerId);
             SendRPC();
             UtilsNotifyRoles.NotifyRoles(SpecifySeer: Player);
-        }, 0.6f, "Daoshi.MakeKyonshi", true);
+        }, 0.6f, "Daoshi.MakeJiangshi", true);
         reason = DontReportreson.Other;
         return true;
     }
@@ -223,9 +223,9 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
     }
 
     public override string GetProgressText(bool comms = false, bool gamelog = false)
-        => Utils.ColorString(RoleInfo.RoleColor, $"({kyonshi.Count}/{OptionMaxKyonshi.GetInt()})");
+        => Utils.ColorString(RoleInfo.RoleColor, $"({Jiangshi.Count}/{OptionMaxJiangshi.GetInt()})");
 
-    public bool IsKyonshiOf(byte id) => kyonshi.Contains(id);
+    public bool IsJiangshiOf(byte id) => Jiangshi.Contains(id);
 
     /// <summary>単独勝利: キョンシー+ダオシーの数が他の生存数を超え、他が無害(キル陣営なし)</summary>
     public static bool CheckInstantWin(out GameOverReason reason)
@@ -234,12 +234,12 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
         var d = Instance;
         if (d == null || !d.Player.IsAlive()) return false;
         var others = PlayerCatch.AllAlivePlayerControls.Where(p => p.PlayerId != d.Player.PlayerId).ToList();
-        if (d.kyonshi.Count + 1 <= others.Count) return false;
+        if (d.Jiangshi.Count + 1 <= others.Count) return false;
         if (others.Any(p => p.GetCountTypes() is not CountTypes.Crew || (p.GetRoleClass() is IKiller k && k.CanUseKillButton()))) return false;
         if (!CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Daoshi, d.Player.PlayerId)) return false;
         CustomWinnerHolder.NeutralWinnerIds.Add(d.Player.PlayerId);
-        foreach (var id in d.kyonshi) { CustomWinnerHolder.WinnerIds.Add(id); }
-        CustomWinnerHolder.AdditionalWinnerRoles.Add(CustomRoles.Kyonshi);
+        foreach (var id in d.Jiangshi) { CustomWinnerHolder.WinnerIds.Add(id); }
+        CustomWinnerHolder.AdditionalWinnerRoles.Add(CustomRoles.Jiangshi);
         return true;
     }
 
@@ -247,15 +247,15 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
     {
         using var sender = CreateSender();
         sender.Writer.Write(abilityMode);
-        sender.Writer.Write(kyonshi.Count);
-        foreach (var id in kyonshi) sender.Writer.Write(id);
+        sender.Writer.Write(Jiangshi.Count);
+        foreach (var id in Jiangshi) sender.Writer.Write(id);
     }
     public override void ReceiveRPC(MessageReader reader)
     {
         abilityMode = reader.ReadBoolean();
-        kyonshi.Clear();
+        Jiangshi.Clear();
         var n = reader.ReadInt32();
-        for (int i = 0; i < n; i++) kyonshi.Add(reader.ReadByte());
+        for (int i = 0; i < n; i++) Jiangshi.Add(reader.ReadByte());
     }
 }
 
@@ -265,15 +265,15 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
 /// ダオシー生存時はダオシーの勝利で追加勝利。ダオシー死亡時は元の役職の勝利条件に戻る。
 /// この役職になるとクルーのタスク勝利に含まれない。
 /// </summary>
-public static class Kyonshi
+public static class Jiangshi
 {
     public static void UseAbility(PlayerControl pc, PlayerControl target)
     {
-        if (pc == null || !pc.Is(CustomRoles.Kyonshi)) return;
+        if (pc == null || !pc.Is(CustomRoles.Jiangshi)) return;
         pc.RpcResetAbilityCooldown();
         var d = Daoshi.Instance;
         if (d == null || target == null) return;
         d.AddSight(target.PlayerId);
-        Logger.Info($"キョンシー {pc.Data?.GetLogPlayerName()} が {target.Data?.GetLogPlayerName()} を霊視", "Kyonshi");
+        Logger.Info($"キョンシー {pc.Data?.GetLogPlayerName()} が {target.Data?.GetLogPlayerName()} を霊視", "Jiangshi");
     }
 }

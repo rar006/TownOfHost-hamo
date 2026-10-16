@@ -446,7 +446,7 @@ namespace TownOfHost
 
                 // 全員の外見復元は毎フレーム不要なため、役職表示の更新周期に合わせて間引く。
 
-                if (PlayerCatch.AllPlayerControls.Any(pc => pc.Is(CustomRoles.Monochromer)))
+                if (PlayerCatch.AllPlayerControls.Any(pc => pc.Is(CustomRoles.Monochromer) || pc.Is(CustomRoles.Daoshi) || pc.Is(CustomRoles.BlackVisioner)))
 
                 {
 
@@ -817,7 +817,10 @@ namespace TownOfHost
 
                         if ((Utils.IsActive(SystemTypes.Comms) && Options.CommsCamouflage.GetBool())
 
-                        || (seer.Is(CustomRoles.Monochromer) && seer.IsAlive())
+                        || (seer.Is(CustomRoles.Monochromer) && seer.IsAlive() && target != seer)
+                        || (seer.Is(CustomRoles.Daoshi) && seer.IsAlive() && target != seer)
+                        || (seer.Is(CustomRoles.BlackVisioner) && seer.IsAlive() && target != seer)
+                        || (seer.Is(CustomRoles.BlackMadMate) && seer.IsAlive() && target != seer)
 
                         //|| Camouflager.NowUse
 

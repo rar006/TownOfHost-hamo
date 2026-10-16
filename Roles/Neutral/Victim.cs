@@ -19,7 +19,7 @@ public sealed class Victim : RoleBase, IKiller, IAdditionalWinner
             CustomRoles.Victim,
             () => Abuser.CanVictimVentBeforeAwakening ? RoleTypes.Engineer : RoleTypes.Crewmate,
             CustomRoleTypes.Neutral,
-            78400,
+            78500,
             null,
             "vic",
             "#6f8fa8",

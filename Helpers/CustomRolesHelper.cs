@@ -1,4 +1,4 @@
-﻿using AmongUs.GameOptions;
+using AmongUs.GameOptions;
 
 using System.Linq;
 
@@ -54,7 +54,7 @@ namespace TownOfHost
             if (role is CustomRoles.Inheritance && Inheritance.IsNewRole) return true;
             // 2026-10 追加の属性・ゴースト役職
             return role is CustomRoles.Surviving or CustomRoles.Berserker or CustomRoles.ToughGuy or CustomRoles.Comorbidity or CustomRoles.Murder or CustomRoles.BetrayGuesser
-                or CustomRoles.Arsene or CustomRoles.Kyonshi;
+                or CustomRoles.Arsene or CustomRoles.Jiangshi;
         }
 
         public static bool IsImpostor(this CustomRoles role)
@@ -620,7 +620,7 @@ namespace TownOfHost
 
                         or CustomRoles.AsistingAngel
                         or CustomRoles.Arsene
-                        or CustomRoles.Kyonshi
+                        or CustomRoles.Jiangshi
                         ;
 
         }
@@ -861,8 +861,8 @@ namespace TownOfHost
 
         StandMaster,
 
-        Villain
-
+        Villain,
+        Daoshi
     }
 
 }

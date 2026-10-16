@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 using System.Linq;
 
@@ -1342,6 +1342,10 @@ namespace TownOfHost
         {
              if (__instance.Data?.Role?.Role == RoleTypes.SpiritGuide)
                 return true;
+            if (__instance.Is(CustomRoles.Jiangshi))
+            {
+                Jiangshi.UseAbility(__instance, target);
+            }
 
             // ゴースト系能力
 
@@ -1371,7 +1375,7 @@ namespace TownOfHost
 
                 AsistingAngel.UseAbility(__instance, target);
                 TownOfHost.Roles.Neutral.Arsene.UseAbility(__instance, target);
-                TownOfHost.Roles.Neutral.Kyonshi.UseAbility(__instance, target);
+                TownOfHost.Roles.Neutral.Jiangshi.UseAbility(__instance, target);
 
                 return false;
 

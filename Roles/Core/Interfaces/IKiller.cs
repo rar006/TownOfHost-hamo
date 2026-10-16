@@ -64,7 +64,7 @@ public interface IKiller
 
     /// <returns>trueを返した場合，サボタージュボタンを使える</returns>
 
-    public bool CanUseSabotageButton();
+    public bool CanUseSabotageButton() => false;
 
     /// <summary>
 

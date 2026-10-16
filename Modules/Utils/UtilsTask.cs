@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using AmongUs.GameOptions;
 using TownOfHost.Roles.Core;
 
@@ -94,7 +94,7 @@ namespace TownOfHost
                         }
 
                     if (States.GhostRole is CustomRoles.AsistingAngel) hasTasks = false;
-                    if (States.GhostRole is CustomRoles.Kyonshi) hasTasks &= !ForRecompute;
+                    if (States.GhostRole is CustomRoles.Jiangshi) hasTasks &= !ForRecompute;
 
                     //ラバーズはタスクを勝利用にカウントしない
                     //回線落ちになってもタスクは復活しない

@@ -74,9 +74,9 @@ namespace TownOfHost
             }
         }
         public static List<byte> ventplayr = new();
-        public static void RpcSetSkin(PlayerControl target, bool ForceRevert = false, bool RevertToDefault = false, bool? force = false)
+        public static void RpcSetSkin(PlayerControl target, bool ForceRevert = false, bool RevertToDefault = false, bool? force = false, PlayerControl seer = null)
         {
-            if ((!AmongUsClient.Instance.AmHost && !(Options.CommsCamouflage.GetBool() || (force is null or true)))
+            if ((seer == null && !AmongUsClient.Instance.AmHost && !(Options.CommsCamouflage.GetBool() || (force is null or true)))
             || (GameStates.IsLobby)
             || (target == null)) return;
 
@@ -86,7 +86,7 @@ namespace TownOfHost
             if (targetData == null || targetData.Disconnected || targetData.DefaultOutfit == null) return;
             var id = target.PlayerId;
 
-            if (IsCamouflage && force is true)
+            if (IsCamouflage && force is true && seer == null)
             {
                 //コミュサボ中
 
@@ -96,11 +96,11 @@ namespace TownOfHost
 
             var newOutfit = CamouflageOutfit;
 
-            if (!IsCamouflage || ForceRevert || force is true)
+            if ((!IsCamouflage || ForceRevert || force is true) && seer == null)
             {
                 //コミュサボ解除または強制解除
 
-                if (Main.CheckShapeshift.TryGetValue(id, out var shapeshifting) && shapeshifting && !RevertToDefault && force is not null)
+                if (Main.CheckShapeshift.TryGetValue(id, out var shapeshifting) && shapeshifting && !RevertToDefault && force is not null && seer == null)
                 {
                     //シェイプシフターなら今の姿のidに変更
                     id = Main.ShapeshiftTarget[id];
@@ -122,35 +122,63 @@ namespace TownOfHost
             if (newOutfit.Compare(target.Data.DefaultOutfit) && force is false) return;
 
             //Logger.Info($"newOutfit={newOutfit.GetString()}", "RpcSetSkin");
-
             var sender = CustomRpcSender.Create(name: $"Camouflage.RpcSetSkin({target.Data.GetLogPlayerName()})");
 
-            target.SetColor(newOutfit.ColorId);
-            sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetColor)
-                .Write(target.Data.NetId)
-                .Write(newOutfit.ColorId)
-                .EndRpc();
+            if (seer is not null)
+            {
+                target.SetColor(newOutfit.ColorId);
+                sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetColor)
+                    .Write(target.Data.NetId)
+                    .Write(newOutfit.ColorId)
+                    .EndRpc();
 
-            /*
-            target.SetHat(newOutfit.HatId, newOutfit.ColorId);
-            sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetHatStr)
-                .Write(newOutfit.HatId)
-                .Write(target.GetNextRpcSequenceId(RpcCalls.SetHatStr))
-                .EndRpc();
 
-            target.SetSkin(newOutfit.SkinId, newOutfit.ColorId);
-            sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetSkinStr)
-                .Write(newOutfit.SkinId)
-                .Write(target.GetNextRpcSequenceId(RpcCalls.SetSkinStr))
-                .EndRpc();
+                target.SetHat(newOutfit.HatId, newOutfit.ColorId);
+                sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetHatStr)
+                    .Write(newOutfit.HatId)
+                    .Write(target.GetNextRpcSequenceId(RpcCalls.SetHatStr))
+                    .EndRpc();
 
-            target.SetVisor(newOutfit.VisorId, newOutfit.ColorId);
-            sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetVisorStr)
-                .Write(newOutfit.VisorId)
-                .Write(target.GetNextRpcSequenceId(RpcCalls.SetVisorStr))
-                .EndRpc();
-                */
+                target.SetSkin(newOutfit.SkinId, newOutfit.ColorId);
+                sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetSkinStr)
+                    .Write(newOutfit.SkinId)
+                    .Write(target.GetNextRpcSequenceId(RpcCalls.SetSkinStr))
+                    .EndRpc();
 
+                target.SetVisor(newOutfit.VisorId, newOutfit.ColorId);
+                sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetVisorStr)
+                    .Write(newOutfit.VisorId)
+                    .Write(target.GetNextRpcSequenceId(RpcCalls.SetVisorStr))
+                    .EndRpc();
+            }
+            else
+            {
+                target.SetColor(newOutfit.ColorId);
+                sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetColor, seer.GetClientId())
+                    .Write(target.Data.NetId)
+                    .Write(newOutfit.ColorId)
+                    .EndRpc();
+
+
+                target.SetHat(newOutfit.HatId, newOutfit.ColorId);
+                sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetHatStr, seer.GetClientId())
+                    .Write(newOutfit.HatId)
+                    .Write(target.GetNextRpcSequenceId(RpcCalls.SetHatStr))
+                    .EndRpc();
+
+                target.SetSkin(newOutfit.SkinId, newOutfit.ColorId);
+                sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetSkinStr, seer.GetClientId())
+                    .Write(newOutfit.SkinId)
+                    .Write(target.GetNextRpcSequenceId(RpcCalls.SetSkinStr))
+                    .EndRpc();
+
+                target.SetVisor(newOutfit.VisorId, newOutfit.ColorId);
+                sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetVisorStr, seer.GetClientId())
+                    .Write(newOutfit.VisorId)
+                    .Write(target.GetNextRpcSequenceId(RpcCalls.SetVisorStr))
+                    .EndRpc();
+
+            }
             sender.SendMessage();
             if (ventplayr.Contains(target.PlayerId)) ventplayr.Remove(target.PlayerId);
         }

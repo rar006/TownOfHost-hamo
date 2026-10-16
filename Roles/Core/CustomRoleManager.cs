@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using System.Collections.Generic;
 
@@ -1779,6 +1779,8 @@ public enum CustomRoles
     SmokeMaker,
     Whiteshark,
     HateKiller,
+    //TOH-hm
+    Experiencer,
     //DEBUG only Impostor
     //Madmate
     MadGuardian,
@@ -1998,9 +2000,10 @@ public enum CustomRoles
     Ruler,
     Abuser,
     Victim,
-    Influencer = 286,
-    // Sub-roll after 500
-    NotAssigned = 500,
+    Influencer = 287,
+    // Sub-role after 1000←今後の拡張のため広げます。
+    //NotAssigned = 500,
+    NotAssigned = 1000,
     LastImpostor,
     LastNeutral,
     Workhorse,
@@ -2064,7 +2067,7 @@ public enum CustomRoles
     GhostNoiseSender,
     GhostReseter,
     GuardianAngel,
-    GhostRumour = 565,
+    GhostRumour,
     //Pko
     GhostFloodlight,
     GhostSaboteur,
@@ -2087,7 +2090,7 @@ public enum CustomRoles
     // 値を500未満(空いている283番から)に振り直すことで、他の正規のメイン役職と
     // 同じ扱いになるようにする。283〜323は他のどの役職にも使われていない
     // (列挙体全体を走査して確認済み)。
-    Professional = 287,
+    Professional = 288,
     EvilCommander,
     VillainWolf,
     BlackVisioner,
@@ -2144,15 +2147,17 @@ public enum CustomRoles
     // ===== 新規追加属性 (2026-10 ユーザー提案) =====
     // ===== 新規ゴースト役職 (2026-10)。ルパン・ダオシーが作る =====
     Arsene = 575,
-    Kyonshi,
+    Jiangshi,
     Surviving = 7010,
     Berserker,
     ToughGuy,
     Comorbidity,
     Murder,
     BetrayGuesser,
+    Daoshi = 336,
+    Jiangshi,
     // ===== N移植役職 =====
-    Survivor = 329,
+    Survivor,
     Mario,
     Obolus,
     HydeImp,
@@ -2174,7 +2179,6 @@ public enum CustomRoles
     MadMagic,
     Flatfish,
     Lupin,
-    Daoshi,
     Catalyst,
     Conductor,
     Sender,
