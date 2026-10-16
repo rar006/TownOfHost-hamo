@@ -3696,8 +3696,21 @@ namespace TownOfHost
                     // 先頭の役職のタブを使っていた時は、か行の先頭がコンビネーションタブの役職(アビューザー)だったため、
                     // インポスターの「か行」の見出しがコンビネーションタブに作られて見えなかった。
                     var gojuonMainTab = gojuonRoles.GroupBy(r => r.Tab).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
-                    // 期間限定役職は五十音の行には入れず、最後の「限定役職」にまとめる
-                    foreach (var info in RoleGojuon.Order(gojuonRoles.Where(r => !RoleGojuon.IsLimitedRole(r.RoleName))))
+                    // NEWの役職は五十音の行には入れず、先頭の「NEW」見出しにまとめる(NEWを外せば自動で五十音の行に戻る)
+                    var newRoles = RoleGojuon.Order(gojuonRoles.Where(r => RoleGojuon.IsNewRow(r.RoleName)));
+                    if (newRoles.Count > 0)
+                    {
+                        var newHeaderId = RoleGojuon.CreateRowHeader(gojuonMainTab, roleTypes, RoleGojuon.NewRow);
+                        foreach (var info in newRoles)
+                        {
+                            if (info.RoleName is CustomRoles.AlienHijack) continue;
+                            if (info.Tab == gojuonMainTab) RoleGojuon.AddRoleToHeader(newHeaderId, info.RoleName);
+                            SetupRoleOptions(info);
+                            info.OptionCreator?.Invoke();
+                            MonkeyBehaviorBanOption.Create(info);
+                        }
+                    }
+                    foreach (var info in RoleGojuon.Order(gojuonRoles.Where(r => !RoleGojuon.IsNewRow(r.RoleName))))
                     {
                         if (info.RoleName is CustomRoles.AlienHijack) continue;
                         // 別のタブ(コンビネーション等)に置かれる役職は、見出しの開閉の対象にしない
@@ -3714,19 +3727,6 @@ namespace TownOfHost
                         SetupRoleOptions(info);
                         info.OptionCreator?.Invoke();
                         MonkeyBehaviorBanOption.Create(info);
-                    }
-                    var limitedRoles = RoleGojuon.Order(gojuonRoles.Where(r => RoleGojuon.IsLimitedRole(r.RoleName)));
-                    if (limitedRoles.Count > 0)
-                    {
-                        var limitedHeaderId = RoleGojuon.CreateRowHeader(gojuonMainTab, roleTypes, RoleGojuon.LimitedRow);
-                        foreach (var info in limitedRoles)
-                        {
-                            if (info.RoleName is CustomRoles.AlienHijack) continue;
-                            if (info.Tab == gojuonMainTab) RoleGojuon.AddRoleToHeader(limitedHeaderId, info.RoleName);
-                            SetupRoleOptions(info);
-                            info.OptionCreator?.Invoke();
-                            MonkeyBehaviorBanOption.Create(info);
-                        }
                     }
                     return;
                 }

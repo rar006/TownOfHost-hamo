@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Collections.Generic;
 
@@ -621,6 +621,7 @@ public static class AutoRehost
     // インスタンスが変わった(=新しいダイアログが開いた)時だけ呼ぶ。
 
     private static int _lastConfirmedInstanceId;
+    private static float _lastConfirmAt;
 
 
 
@@ -648,7 +649,8 @@ public static class AutoRehost
 
         var instanceId = cgo.GetInstanceID();
 
-        if (instanceId == _lastConfirmedInstanceId) return false; // 同じダイアログには1回だけ
+        // 同じダイアログには連打しない。ただし確認ポップアップが後から開くこともあるので、2秒おきに再試行する
+        if (instanceId == _lastConfirmedInstanceId && UnityEngine.Time.realtimeSinceStartup - _lastConfirmAt < 2f) return false;
 
 
 
@@ -677,6 +679,7 @@ public static class AutoRehost
             confirmMethod.Invoke(cgo, null);
 
             _lastConfirmedInstanceId = instanceId;
+            _lastConfirmAt = UnityEngine.Time.realtimeSinceStartup;
 
             Logger.Info("Auto-rehost: CreateGameOptions.Confirm() を直接呼び出しました。", "AutoRehost");
 

@@ -19,15 +19,15 @@ public static class RoleGojuon
 
     public static readonly string[] RowNames =
     {
-        "あ行", "か行", "さ行", "た行", "な行", "は行", "ま行", "や行", "ら行", "わ行", "その他", "限定役職",
+        "あ行", "か行", "さ行", "た行", "な行", "は行", "ま行", "や行", "ら行", "わ行", "その他", "NEW",
     };
     private static readonly string[] RowColors =
     {
         "#ff8a80", "#ffb74d", "#fff176", "#aed581", "#4db6ac", "#4fc3f7", "#7986cb", "#ba68c8", "#f06292", "#a1887f", "#b0bec5", "#ffd54f",
     };
     public const int OtherRow = 10;
-    /// <summary>期間限定役職(Event.EventRoles)を、各陣営タブの最後にまとめて置く見出しの行番号</summary>
-    public const int LimitedRow = 11;
+    /// <summary>NEWの役職(SimpleRoleInfo の isNewRole: true)を、各陣営タブの先頭にまとめて置く見出しの行番号</summary>
+    public const int NewRow = 11;
 
     // ===== 見出しの開閉(この端末の画面だけの状態。設定の同期には関係しない) =====
     /// <summary>役職 → その役職が並んでいる見出し(あ行など)のオプションID</summary>
@@ -37,13 +37,21 @@ public static class RoleGojuon
     /// <summary>閉じている見出しのオプションID</summary>
     private static readonly HashSet<int> Collapsed = new();
 
-    // フォーチュナー・アンフォーチュナーは内部的にはイベント役職扱い(ID等)だが、限定役職ではないので通常の行に並べる
-    public static bool IsLimitedRole(CustomRoles role) => Event.IsEventRole(role) && role is not (CustomRoles.Fortuner or CustomRoles.UnFortuner);
+    /// <summary>NEWの役職か(五十音の行から外して「NEW」見出しにまとめる)</summary>
+    public static bool IsNewRow(CustomRoles role) => role.IsNewRole();
 
     /// <summary>見出しのIDか(あ行〜限定役職)</summary>
     public static bool IsRowHeader(int optionId) => HeaderRoles.ContainsKey(optionId);
 
     public static bool IsHeaderCollapsed(int optionId) => Collapsed.Contains(optionId);
+
+    /// <summary>全部の見出しを開く/閉じる(クライアント設定の切り替え時)</summary>
+    public static void SetAllCollapsed(bool collapsed)
+    {
+        Collapsed.Clear();
+        if (collapsed) foreach (var id in HeaderRoles.Keys) Collapsed.Add(id);
+        foreach (var id in HeaderRoles.Keys) OnHeaderStateChanged?.Invoke(id);
+    }
 
     /// <summary>見出しをクリックした時: 開いていれば閉じ、閉じていれば開く</summary>
     public static bool ToggleHeader(int optionId)
@@ -79,10 +87,9 @@ public static class RoleGojuon
             && Collapsed.Contains(header);
     }
 
-    /// <summary>「限定役職」見出しの下の役職が、今どれも使えない(期間外)なら true(見出しごと隠す)</summary>
+    /// <summary>見出しの下に役職が1つもなければ true(見出しごと隠す)</summary>
     public static bool IsEmptyLimitedHeader(int optionId)
-        => HeaderRoles.TryGetValue(optionId, out var roles)
-           && (roles.Count == 0 || !roles.Any(r => Event.CheckRole(r)));
+        => HeaderRoles.TryGetValue(optionId, out var roles) && roles.Count == 0;
 
     /// <summary>役職名(CustomRolesの名前) -> (行番号, 読みの並び替えキー)</summary>
     private static readonly Dictionary<string, (int Row, string Key)> Table = new()
@@ -96,6 +103,7 @@ public static class RoleGojuon
         ["Analyzer"] = (0, "あならいさ"),
         ["Absorb"] = (0, "あふそふ"),
         ["Amateras"] = (0, "あまてらす"),
+        ["Amanojaku"] = (0, "あまのしやく"),
         ["Amnesia"] = (0, "あむねしあ"),
         ["SuspiciousTeller"] = (0, "あやしい占い師"),
         ["RaccoonParent"] = (0, "あらいくま"),
@@ -255,8 +263,32 @@ public static class RoleGojuon
         ["Serial"] = (2, "しりある"),
         ["SerialKiller"] = (2, "しりあるきら"),
         ["SilverBuzzer"] = (2, "しるはふさ"),
+        ["Trauma"] = (3, "とらうま"),
+        ["MadInvisible"] = (6, "まついんひしふる"),
+        ["MadMagic"] = (6, "まつとましつく"),
+        ["Flatfish"] = (1, "かれい"),
+        ["Lupin"] = (8, "るはん"),
+        ["Daoshi"] = (3, "たおしい"),
+        ["Catalyst"] = (1, "かたりすと"),
+        ["Conductor"] = (1, "こんたくたあ"),
+        ["Sender"] = (2, "せんたあ"),
+        ["MadSender"] = (6, "まつとせんたあ"),
+        ["Parity"] = (5, "はりてい"),
+        ["BetrayGuesser"] = (5, "へといけつさあ"),
+        ["ArchVillain"] = (0, "ういらん"),
+        ["LonelyWolf"] = (1, "ことくなおおかみ"),
+        ["Clockworker"] = (1, "くろつくわあかあ"),
+        ["Abductor"] = (0, "あふたくたあ"),
+        ["Surmount"] = (2, "さあまうんと"),
         ["Messenger"] = (6, "めつせんしやあ"),
         ["Fugitive"] = (5, "ひゆうしていふ"),
+        ["MemoryRestorer"] = (1, "きおくふくけんしや"),
+        ["Surviving"] = (2, "さはいひんく"),
+        ["Berserker"] = (5, "はあさあかあ"),
+        ["ToughGuy"] = (3, "たふかい"),
+        ["Comorbidity"] = (1, "きようそんしよう"),
+        ["Murder"] = (6, "まあたあ"),
+
         ["Symbol"] = (2, "しんほる"),
         ["SwitchSheriff"] = (2, "すいつちしえりふ"),
         ["Swooper"] = (2, "すうは"),
@@ -503,13 +535,54 @@ public static class RoleGojuon
         // 役職タイプごとにIDを分ける(同じタブを複数のタイプが使っても重ならない)
         var id = 1_900_000 + (int)roleType * 100 + row;
         HeaderRoles[id] = new();
-        // 最初は全部閉じた状態にする(見出しを押すと開く)
-        Collapsed.Add(id);
+        // 最初は全部閉じた状態にする(見出しを押すと開く)。クライアント設定で「開いておく」ならそのまま
+        if (Main.ExpandRoleHeaders?.Value != true) Collapsed.Add(id);
         var title = RowNames[row];
         ObjectOptionitem.Create(id, $"GojuonRow_{roleType}_{row}", true, null, tab)
             .SetOptionName(() => title)
             .SetColorcode(RowColors[row]);
         return id;
+    }
+
+    /// <summary>
+    /// 属性・ゴースト役職・コンビネーションなど用: タブとグループ番号ごとに見出しを作る
+    /// (ID: 1_950_000 + グループ番号*100 + 行)
+    /// </summary>
+    public static int CreateGroupHeader(TabGroup tab, int groupKey, int row)
+    {
+        var id = 1_950_000 + groupKey * 100 + row;
+        HeaderRoles[id] = new();
+        if (Main.ExpandRoleHeaders?.Value != true) Collapsed.Add(id);
+        var title = RowNames[row];
+        ObjectOptionitem.Create(id, $"GojuonGroup_{groupKey}_{row}", true, null, tab)
+            .SetOptionName(() => title)
+            .SetColorcode(RowColors[row])
+            .SetTag(CustomOptionTags.Role);
+        return id;
+    }
+
+    /// <summary>
+    /// 設定を作る処理を「NEW → あ行〜わ行 → その他」の順に並べ替えて、見出しの下に作る
+    /// </summary>
+    public static void SetupGrouped(TabGroup tab, int groupKey, IEnumerable<(CustomRoles Role, System.Action Setup)> items)
+    {
+        var list = items.ToList();
+        IEnumerable<(CustomRoles Role, System.Action Setup)> Sort(IEnumerable<(CustomRoles Role, System.Action Setup)> src)
+            => src.OrderBy(x => GetRow(x.Role)).ThenBy(x => GetKey(x.Role), StringComparer.Ordinal);
+        var news = Sort(list.Where(x => x.Role.IsNewRole())).ToList();
+        if (news.Count > 0)
+        {
+            var header = CreateGroupHeader(tab, groupKey, NewRow);
+            foreach (var x in news) { AddRoleToHeader(header, x.Role); x.Setup(); }
+        }
+        int lastRow = -1, rowHeader = -1;
+        foreach (var x in Sort(list.Where(x => !x.Role.IsNewRole())))
+        {
+            var row = GetRow(x.Role);
+            if (row != lastRow) { lastRow = row; rowHeader = CreateGroupHeader(tab, groupKey, row); }
+            AddRoleToHeader(rowHeader, x.Role);
+            x.Setup();
+        }
     }
 
     /// <summary>役職を見出しの下に登録する(開閉で一緒に隠すため)</summary>

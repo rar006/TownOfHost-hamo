@@ -46,6 +46,7 @@ namespace TownOfHost
 
             //注:この時点では役職は設定されていません。
 
+            Roles.RoleAssignManager.SyncImpostorCountBeforeStart(); // オプションの控えを取る前に、人数別設定のインポスター数に合わせる
             GameStates.Intro = true;
 
             Main.NormalOptions.roleOptions.SetRoleRate(RoleTypes.GuardianAngel, 0, 0);

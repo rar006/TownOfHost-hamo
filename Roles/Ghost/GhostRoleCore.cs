@@ -1,4 +1,4 @@
-using TownOfHost.Roles.AddOns.Common;
+﻿using TownOfHost.Roles.AddOns.Common;
 
 using TownOfHost.Roles.AddOns.Crewmate;
 
@@ -132,6 +132,8 @@ class GhostRoleCore
         Sealer.Init();
 
         SilverBuzzer.Init();
+        UserAddons2026.Init();
+        TownOfHost.Roles.Core.UserRoles2026.Reset();
 
         Twins.Init();
 
@@ -154,162 +156,91 @@ class GhostRoleCore
     }
 
     public static void SetupCustomOptionAddonAndIsGhostRole()
-
     {
-
+        // ※ Reversal.SetupCustomOption() は Modules/OptionHolder.cs 側で呼ぶ(二重登録を避けるため)
         // Add-Ons
-
         Amanojaku.SetupCustomOption();
-
         LastImpostor.SetupCustomOption();
-
         LastCrewmate.SetupCustomOption();
         Inheritance.SetupCustomOption();
         LastNeutral.SetupCustomOption();
-
         Workhorse.SetupCustomOption();
-
-
-
         Stack.SetupCustomOption();
-
         ObjectOptionitem.Create(1_000_116, "Buff-Addon", true, null, TabGroup.Addons)
-
             .SetOptionName(() => "Buff Add-on").SetColor(UtilsRoleText.GetRoleColor(CustomRoles.Moon)).SetTag(CustomOptionTags.Role);
-
-        //バフ(ゲッサー→特定陣営→会議効果→タスクターン)
-
-        Guesser.SetupCustomOption();
-
-        Serial.SetupCustomOption();
-        BountyGuesser.SetupCustomOption();
-
-        MagicHand.SetupCustomOption();
-
-        Powerful.SetupCustomOption();
-
-        Connecting.SetupCustomOption();
-
-        Watching.SetupCustomOption();
-
-        PlusVote.SetupCustomOption();
-
-        Tiebreaker.SetupCustomOption();
-
-        Autopsy.SetupCustomOption();
-
-        Revenger.SetupCustomOption();
-
-        Speeding.SetupCustomOption();
-
-        Guarding.SetupCustomOption();
-
-        Absorb.SetupCustomOption();
-
-        Symbol.SetupCustomOption();
-
-        // Reversal.SetupCustomOption() は Modules/OptionHolder.cs 側で
-
-        // クルー役職タブの生成直前に呼ぶよう変更したため、ここでは呼ばない
-
-        // (二重登録を避けるため)。
-
-        Management.SetupCustomOption();
-
-        Seeing.SetupCustomOption();
-
-        Opener.SetupCustomOption();
-
-        //AntiTeleporter.SetupCustomOption();
-
-        Lighting.SetupCustomOption();
-
-        Moon.SetupCustomOption();
-
+        // バフ属性: 「NEW → あ行〜わ行」の見出しに分けて並べる
+        RoleGojuon.SetupGrouped(TabGroup.Addons, 12, new (CustomRoles, System.Action)[]
+        {
+            (CustomRoles.Guesser, Guesser.SetupCustomOption),
+            (CustomRoles.Serial, Serial.SetupCustomOption),
+            (CustomRoles.BountyGuesser, BountyGuesser.SetupCustomOption),
+            (CustomRoles.MagicHand, MagicHand.SetupCustomOption),
+            (CustomRoles.Powerful, Powerful.SetupCustomOption),
+            (CustomRoles.Connecting, Connecting.SetupCustomOption),
+            (CustomRoles.Watching, Watching.SetupCustomOption),
+            (CustomRoles.PlusVote, PlusVote.SetupCustomOption),
+            (CustomRoles.Tiebreaker, Tiebreaker.SetupCustomOption),
+            (CustomRoles.Autopsy, Autopsy.SetupCustomOption),
+            (CustomRoles.Revenger, Revenger.SetupCustomOption),
+            (CustomRoles.Speeding, Speeding.SetupCustomOption),
+            (CustomRoles.Guarding, Guarding.SetupCustomOption),
+            (CustomRoles.Absorb, Absorb.SetupCustomOption),
+            (CustomRoles.Symbol, Symbol.SetupCustomOption),
+            (CustomRoles.Management, Management.SetupCustomOption),
+            (CustomRoles.Seeing, Seeing.SetupCustomOption),
+            (CustomRoles.Opener, Opener.SetupCustomOption),
+            (CustomRoles.Lighting, Lighting.SetupCustomOption),
+            (CustomRoles.Moon, Moon.SetupCustomOption),
+        });
         //デバフ達
-
         ObjectOptionitem.Create(1_000_117, "Debuff-Addon", true, null, TabGroup.Addons)
-
             .SetOptionName(() => "Debuff Add-on").SetColor(UtilsRoleText.GetRoleColor(CustomRoles.SlowStarter)).SetTag(CustomOptionTags.Role);
-
-        Amnesia.SetupCustomOption();
-
-        News.SetupCustomOption();
-
-        OneWolf.SetupCustomOption();
-
-        Securer.SetupCustomOption();
-
-        Sealer.SetupCustomOption();
-
-        SilverBuzzer.SetupCustomOption();
-
-        SlowStarter.SetupCustomOption();
-
-        Notvoter.SetupCustomOption();
-
-        Elector.SetupCustomOption();
-
-        InfoPoor.SetupCustomOption();
-
-        NonReport.SetupCustomOption();
-
-        Sunglasses.SetupCustomOption();
-
-        Transparent.SetupCustomOption();
-
-        Water.SetupCustomOption();
-
-        Clumsy.SetupCustomOption();
-
-        Slacker.SetupCustomOption();
-
-        Stamina.SetupCustomOption();
-
-        Jumbo.SetupCustomOption();
-
-        Surrender.SetupCustomOption();
-
-        Reporting.SetupCustomOption();
-
-        //ゆーれーやくしょく
-
-        ObjectOptionitem.Create(1_000_118, "Madmate", true, null, TabGroup.GhostRoles)
-
-            .SetOptionName(() => "Mad Ghost").SetColor(ModColors.MadMateOrenge).SetTag(CustomOptionTags.Role);
-
-        DemonicTracker.SetupCustomOption();
-
-        DemonicCrusher.SetupCustomOption();
-
-        DemonicVenter.SetupCustomOption();
-
-        DemonicSupporter.SetupCustomOption();
-
-        ObjectOptionitem.Create(1_000_119, "Madmate", true, null, TabGroup.GhostRoles)
-
-            .SetOptionName(() => "Neutral Ghost").SetColor(ModColors.NeutralGray).SetTag(CustomOptionTags.Role);
-
-        AsistingAngel.SetupCustomOption();
-
-        ObjectOptionitem.Create(1_000_120, "Madmate", true, null, TabGroup.GhostRoles)
-
-            .SetOptionName(() => "Crew Ghost").SetColor(ModColors.CrewMateBlue).SetTag(CustomOptionTags.Role);
-
-        Ghostbuttoner.SetupCustomOption();
-
-        GhostSaboteur.SetupCustomOption();
-
-        GhostFloodlight.SetupCustomOption();
-
-        GhostNoiseSender.SetupCustomOption();
-
-        GhostReseter.SetupCustomOption();
-
-        GhostRumour.SetupCustomOption();
-
-        GuardianAngel.SetupCustomOption();
-
+        // デバフ属性: 「NEW → あ行〜わ行」の見出しに分けて並べる
+        RoleGojuon.SetupGrouped(TabGroup.Addons, 13, new (CustomRoles, System.Action)[]
+        {
+            (CustomRoles.Amnesia, Amnesia.SetupCustomOption),
+            (CustomRoles.News, News.SetupCustomOption),
+            (CustomRoles.OneWolf, OneWolf.SetupCustomOption),
+            (CustomRoles.Securer, Securer.SetupCustomOption),
+            (CustomRoles.Sealer, Sealer.SetupCustomOption),
+            (CustomRoles.SilverBuzzer, SilverBuzzer.SetupCustomOption),
+            (CustomRoles.Surviving, Surviving.SetupCustomOption),
+            (CustomRoles.Berserker, Berserker.SetupCustomOption),
+            (CustomRoles.ToughGuy, ToughGuy.SetupCustomOption),
+            (CustomRoles.Comorbidity, Comorbidity.SetupCustomOption),
+            (CustomRoles.Murder, Murder.SetupCustomOption),
+            (CustomRoles.BetrayGuesser, BetrayGuesser.SetupCustomOption),
+            (CustomRoles.SlowStarter, SlowStarter.SetupCustomOption),
+            (CustomRoles.Notvoter, Notvoter.SetupCustomOption),
+            (CustomRoles.Elector, Elector.SetupCustomOption),
+            (CustomRoles.InfoPoor, InfoPoor.SetupCustomOption),
+            (CustomRoles.NonReport, NonReport.SetupCustomOption),
+            (CustomRoles.Sunglasses, Sunglasses.SetupCustomOption),
+            (CustomRoles.Transparent, Transparent.SetupCustomOption),
+            (CustomRoles.Water, Water.SetupCustomOption),
+            (CustomRoles.Clumsy, Clumsy.SetupCustomOption),
+            (CustomRoles.Slacker, Slacker.SetupCustomOption),
+            (CustomRoles.Stamina, Stamina.SetupCustomOption),
+            (CustomRoles.Jumbo, Jumbo.SetupCustomOption),
+            (CustomRoles.Surrender, Surrender.SetupCustomOption),
+            (CustomRoles.Reporting, Reporting.SetupCustomOption),
+        });
+        // ゴースト役職は「NEW → あ行〜わ行」の見出しに分けて並べる(見出しを押すと開閉できる)
+        RoleGojuon.SetupGrouped(TabGroup.GhostRoles, 11, new (CustomRoles, System.Action)[]
+        {
+            (CustomRoles.DemonicTracker, DemonicTracker.SetupCustomOption),
+            (CustomRoles.DemonicCrusher, DemonicCrusher.SetupCustomOption),
+            (CustomRoles.DemonicVenter, DemonicVenter.SetupCustomOption),
+            (CustomRoles.DemonicSupporter, DemonicSupporter.SetupCustomOption),
+            (CustomRoles.AsistingAngel, AsistingAngel.SetupCustomOption),
+            (CustomRoles.Ghostbuttoner, Ghostbuttoner.SetupCustomOption),
+            (CustomRoles.GhostSaboteur, GhostSaboteur.SetupCustomOption),
+            (CustomRoles.GhostFloodlight, GhostFloodlight.SetupCustomOption),
+            (CustomRoles.GhostNoiseSender, GhostNoiseSender.SetupCustomOption),
+            (CustomRoles.GhostReseter, GhostReseter.SetupCustomOption),
+            (CustomRoles.GhostRumour, GhostRumour.SetupCustomOption),
+            (CustomRoles.GuardianAngel, GuardianAngel.SetupCustomOption),
+        });
     }
 
 }

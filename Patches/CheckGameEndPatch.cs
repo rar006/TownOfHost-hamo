@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Collections;
 
@@ -447,6 +447,9 @@ namespace TownOfHost
                     Fox.SFoxCheckWin(ref reason);
 
                     Tuna.CheckWin(ref reason);
+                    TownOfHost.Roles.Neutral.Flatfish.CheckWin(ref reason);
+                    TownOfHost.Roles.Neutral.Parity.CheckWin();
+                    TownOfHost.Roles.Neutral.Lupin.CheckWin(ref reason);
 
                     DarkSheriff.CheckWin(ref reason);
 
@@ -553,6 +556,7 @@ namespace TownOfHost
                     Triplets.CheckAddWin();
 
                     Faction.CheckWin();
+                    TownOfHost.Roles.AddOns.Common.UserAddons2026.CheckWin(reason);
 
                 }
 

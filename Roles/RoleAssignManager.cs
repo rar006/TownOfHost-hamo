@@ -371,12 +371,78 @@ namespace TownOfHost.Roles
                         changed = true;
                     }
                 }
+                // Among Us 側のインポスター数も合わせる(試合開始の処理が始まった後に変えると配役とずれるので、ロビーの間だけ)
+                if (GameStates.IsLobby && SyncImpostorCount(pc)) changed = true;
                 if (changed) Logger.Info($"人数別アサイン設定を反映({reason}): {GetAssignTargetPlayerCount()}人", "RoleAssignManager");
             }
             catch (Exception e)
             {
                 Logger.Warn($"ApplyPerCountSettings: {e.Message}", "RoleAssignManager");
             }
+        }
+        /// <summary>Among Us 側のインポスター数を、人数別設定のインポスター最大数(1〜3)にする。変えたら true</summary>
+        private static bool SyncImpostorCount(PerCountAssignOptions pc)
+        {
+            var imp = Math.Clamp(pc.Max(CustomRoleTypes.Impostor), 1, 3);
+            if (Main.NormalOptions.NumImpostors == imp) return false;
+            Main.NormalOptions.NumImpostors = imp;
+            GameOptionsSender.RpcSendOptions();
+            return true;
+        }
+        /// <summary>試合開始の一番最初(オプションの控えを取る前)に呼ぶ</summary>
+        public static void SyncImpostorCountBeforeStart()
+        {
+            try
+            {
+                if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
+                if (AssignMode != AssignAlgorithm.Random || !TryGetPerCountOverride(out var pc)) return;
+                if (SyncImpostorCount(pc)) Logger.Info($"人数別設定に合わせてインポスター数を{Main.NormalOptions.NumImpostors}人に変更(試合開始前)", "RoleAssignManager");
+            }
+            catch (Exception e) { Logger.Warn($"SyncImpostorCountBeforeStart: {e.Message}", "RoleAssignManager"); }
+        }
+        // ===== アサインモードのインポスター数 ⇔ ゲーム設定のインポスター数 の同期(ロビー・ホスト) =====
+        private static int lastSyncedMax = -1;
+        private static int lastSyncedVanilla = -1;
+        private static float nextImpSyncCheck;
+        /// <summary>
+        /// どちらかを変えたら、もう片方を合わせる。
+        /// ・アサインモードの「インポスター 最大」を変えた → ゲーム設定のインポスター数を同じにする
+        /// ・ゲーム設定のインポスター数を変えた → アサインモードの最大を同じにする(最小が上回る時は最小も下げる)
+        /// 人数別設定が効いている時は、そちら(ApplyPerCountSettings)に任せる。
+        /// </summary>
+        public static void TickImpostorSync()
+        {
+            try
+            {
+                if (UnityEngine.Time.time < nextImpSyncCheck) return;
+                nextImpSyncCheck = UnityEngine.Time.time + 0.3f;
+                if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost || !GameStates.IsLobby) return;
+                if (Main.NormalOptions == null || OptionAssignMode?.GetBool() != true || AssignMode != AssignAlgorithm.Random) { lastSyncedMax = lastSyncedVanilla = -1; return; }
+                if (TryGetPerCountOverride(out _)) { lastSyncedMax = lastSyncedVanilla = -1; return; }
+                if (!RandomAssignOptionsCollection.TryGetValue(CustomRoleTypes.Impostor, out var imp)) return;
+
+                var max = imp.Max;
+                var vanilla = Main.NormalOptions.NumImpostors;
+                if (lastSyncedMax < 0) { lastSyncedMax = max; lastSyncedVanilla = vanilla; } // 初回は今の値を基準にする(下で揃える)
+
+                if (max != lastSyncedMax)
+                {
+                    // アサインモード側を変えた
+                    var v = Math.Clamp(max, 1, 3);
+                    if (vanilla != v) { Main.NormalOptions.NumImpostors = v; GameOptionsSender.RpcSendOptions(); }
+                    vanilla = v;
+                }
+                else if (vanilla != lastSyncedVanilla || vanilla != Math.Clamp(max, 1, 3))
+                {
+                    // ゲーム設定側を変えた(または初回でずれている)
+                    imp.SetMaxValue(vanilla);
+                    if (imp.Min > vanilla) imp.SetMinValue(vanilla);
+                    max = imp.Max;
+                }
+                lastSyncedMax = max;
+                lastSyncedVanilla = vanilla;
+            }
+            catch (Exception e) { Logger.Warn($"TickImpostorSync: {e.Message}", "RoleAssignManager"); }
         }
         private static bool perCountApplyScheduled;
         /// <summary>ロビーで人が増減した時に呼ぶ。「自動で変更」がONの時だけ、少し待ってから(連続参加をまとめて)反映する。</summary>
@@ -796,5 +862,11 @@ namespace TownOfHost.Roles
         /// 実際にアサインされる役職の内訳
         /// </summary>
         public CustomRoles[] AssignUnitRoles { get; init; }
+    }
+
+    [HarmonyLib.HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.Update))]
+    static class ImpostorSyncPatch
+    {
+        public static void Postfix() => RoleAssignManager.TickImpostorSync();
     }
 }

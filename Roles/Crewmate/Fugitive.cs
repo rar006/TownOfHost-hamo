@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+﻿using AmongUs.GameOptions;
 using Hazel;
 using TownOfHost.Modules;
 using TownOfHost.Roles.Core;
@@ -25,8 +25,7 @@ public sealed class Fugitive : RoleBase, ISelfVoter
             87300,
             SetupOptionItem,
             "fug",
-            "#D9D9D9",
-            isNewRole: true
+            "#D9D9D9"
         );
 
     static OptionItem OptionSenseKill;

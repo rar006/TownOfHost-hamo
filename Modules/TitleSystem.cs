@@ -49,6 +49,8 @@ public static partial class TitleSystem
     {
         public readonly HashSet<string> Owned = new(StringComparer.Ordinal);
         public readonly List<string> Equipped = new();
+        /// <summary>二つ名ID → 名前の前に付く属性マーク(サーバーが作ったリッチテキスト。レア度順)</summary>
+        public readonly Dictionary<string, string> Marks = new(StringComparer.Ordinal);
         public DateTime FetchedAt = DateTime.MinValue;
     }
 
@@ -179,7 +181,16 @@ public static partial class TitleSystem
             foreach (var e in owned.EnumerateArray()) if (e.ValueKind == JsonValueKind.String) rec.Owned.Add(e.GetString());
         if (root.TryGetProperty("equipped", out var eq) && eq.ValueKind == JsonValueKind.Array)
             foreach (var e in eq.EnumerateArray()) if (e.ValueKind == JsonValueKind.String) rec.Equipped.Add(e.GetString());
+        if (root.TryGetProperty("marks", out var mk) && mk.ValueKind == JsonValueKind.Object)
+            foreach (var p in mk.EnumerateObject()) if (p.Value.ValueKind == JsonValueKind.String) rec.Marks[p.Name] = p.Value.GetString();
         return rec;
+    }
+
+    /// <summary>その人のその二つ名に付いている属性マーク(無ければ "")</summary>
+    private static string MarkOf(string fc, string id)
+    {
+        var key = NormalizeFriendCode(fc ?? "");
+        return key.Length > 0 && Users.TryGetValue(key, out var rec) && rec.Marks.TryGetValue(id, out var m) ? m : "";
     }
 
     /// <summary>フレンドコードの所持・装備(サーバーの記録)。失敗時は前回のキャッシュか空。</summary>
@@ -359,7 +370,7 @@ public static partial class TitleSystem
             if (!Catalog.TryGetValue(id, out var def)) continue;
             var color = (def.Color ?? "#ffffff").Trim();
             if (!color.StartsWith("#")) color = "#" + color;
-            parts.Add($"<color={color}>{def.Name}</color>");
+            parts.Add($"{MarkOf(shown.Fc, id)}<color={color}>{def.Name}</color>");
         }
         return parts.Count == 0 ? "" : string.Join(" ", parts);
     }
@@ -603,7 +614,7 @@ public static partial class TitleSystem
                     if (!Catalog.TryGetValue(id, out var def)) continue;
                     var color = (def.Color ?? "#ffffff").Trim();
                     if (!color.StartsWith("#")) color = "#" + color;
-                    parts.Add($"<color={color}>{def.Name}</color>");
+                    parts.Add($"{MarkOf(shown.Fc, id)}<color={color}>{def.Name}</color>");
                 }
                 if (parts.Count > 0) text = "<size=65%>" + string.Join(" ", parts) + "</size>"; // 名前より小さく表示
             }
@@ -786,9 +797,11 @@ public static partial class TitleSystem
         var rec = await FetchUserAsync(fc, true).ConfigureAwait(false);
         var inv = InventoryOf(rec);
         if (inv.Count == 0) { Reply("持っている二つ名はありません。 /cmd nio で引けます(無料)。"); return; }
-        var sb = new StringBuilder($"<b>インベントリ</b>({inv.Count}個 / ★=付けている)\n");
+        // 付けている印は ▶(★は属性マークと紛らわしいので)
+        var sb = new StringBuilder($"<b>インベントリ</b>({inv.Count}個 / ▶=付けている)\n");
         for (int i = 0; i < inv.Count; i++)
-            sb.Append(rec.Equipped.Contains(inv[i]) ? "★" : "　").Append(i + 1).Append(". ").Append(Colored(Catalog[inv[i]])).Append('\n');
+            sb.Append(rec.Equipped.Contains(inv[i]) ? "▶" : "　").Append(i + 1).Append(". ")
+              .Append(rec.Marks.TryGetValue(inv[i], out var mk) ? mk : "").Append(Colored(Catalog[inv[i]])).Append('\n');
         sb.Append($"\n/cmd nih 1.2.3 のように番号で付けます(最大{maxEquipped}個) / /cmd nih 0 で外す");
         Reply(sb.ToString());
     }
@@ -855,9 +868,15 @@ public static partial class TitleSystem
                 var color = GetString(root, "color", "#ffffff");
                 var dup = root.TryGetProperty("duplicate", out var d) && d.ValueKind == JsonValueKind.True;
                 var p = GetDouble(root, "probability");
+                var marks = GetString(root, "marks");
+                var traitText = new StringBuilder();
+                if (root.TryGetProperty("newTraits", out var nt) && nt.ValueKind == JsonValueKind.Array)
+                    foreach (var t in nt.EnumerateArray())
+                        traitText.Append($"\n属性が付いた!  <color={GetString(t, "color", "#ffffff")}>{GetString(t, "mark")}</color> {GetString(t, "name")} 【{GetString(t, "rarityName")}】");
                 await FetchUserAsync(fc, true).ConfigureAwait(false);
-                Reply($"二つ名を引きました!  <color={color}>{name}</color>  (確率 {Pct(p)})\n"
-                    + (dup ? "すでに持っているのでかぶりです。" : "インベントリに追加されました。/cmd nii で確認・/cmd nih で付けられます。"));
+                Reply($"二つ名を引きました!  {marks}<color={color}>{name}</color>  (確率 {Pct(p)})"
+                    + traitText
+                    + "\n" + (dup ? "すでに持っているのでかぶりです。" : "インベントリに追加されました。/cmd nii で確認・/cmd nih で付けられます。"));
                 return;
             }
             var err = GetString(root, "error");

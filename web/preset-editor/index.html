@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TOH-hamo プリセットエディタ</title>
+<style>
+:root{--bg:#f6f5fb;--panel:#fff;--text:#1d1b26;--sub:#6b6880;--line:#e3e0ee;--accent:#c74fd6;--accent-ink:#fff;--changed:#fbeefd;--warn:#b54708}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15131c;--panel:#1f1c29;--text:#ece9f5;--sub:#a29fb5;--line:#34303f;--accent:#e08ae9;--accent-ink:#1b0f1e;--changed:#3a2342;--warn:#f5a35a}}
+:root[data-theme="dark"]{--bg:#15131c;--panel:#1f1c29;--text:#ece9f5;--sub:#a29fb5;--line:#34303f;--accent:#e08ae9;--accent-ink:#1b0f1e;--changed:#3a2342;--warn:#f5a35a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,"Hiragino Sans","Noto Sans JP",sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);padding:12px 16px}
+h1{font-size:18px;margin:0 0 8px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,select,input,textarea{font:inherit;color:inherit}
+button{background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:600}
+button.ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500}
+input[type=search],select,input[type=number]{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;max-width:100%}
+.meta{color:var(--sub);font-size:13px}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:10px 16px 0;background:var(--panel);border-bottom:1px solid var(--line)}
+.tab{white-space:nowrap;padding:6px 10px;border-radius:8px 8px 0 0;border:1px solid transparent;cursor:pointer;color:var(--sub)}
+.tab.on{color:var(--text);border-color:var(--line);border-bottom-color:var(--panel);background:var(--panel);font-weight:600}
+main{max-width:980px;margin:0 auto;padding:12px 16px 80px}
+.opt{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:6px 8px;border-bottom:1px solid var(--line);background:var(--panel)}
+.opt.changed{background:var(--changed)}
+.opt .name{flex:1;min-width:0;overflow-wrap:anywhere}
+.opt select{min-width:120px}
+.empty{padding:40px 16px;text-align:center;color:var(--sub)}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);width:min(640px,calc(100vw - 32px))}
+textarea{width:100%;min-height:140px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;font-family:ui-monospace,monospace;font-size:12px}
+.warn{color:var(--warn)}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:28px;text-align:center;color:var(--sub);margin:24px 0}
+.bar{display:none}
+/* スマホ: 1行に名前と選択肢を縦に並べ、押しやすくする */
+@media (max-width:640px){
+  header{padding:10px 12px}
+  h1{font-size:16px}
+  header .row button{display:none}
+  header .row input[type=search]{flex:1;min-width:0}
+  .tabs{padding:8px 12px 0}
+  main{padding:8px 0 96px}
+  .opt{flex-direction:column;align-items:stretch;gap:6px;padding:10px 12px}
+  .opt select,.opt input[type=number]{width:100%;min-height:42px;font-size:16px}
+  .bar{display:flex;gap:8px;position:fixed;left:0;right:0;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line);z-index:6}
+  .bar button{flex:1;min-height:44px}
+  textarea{font-size:14px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>TOH-hamo プリセットエディタ</h1>
+  <div class="row">
+    <input type="search" id="q" placeholder="設定名で検索">
+    <label class="meta"><input type="checkbox" id="onlyChanged"> 変更したものだけ</label>
+    <button class="ghost" id="btnImport">コードを読み込む</button>
+    <button id="btnExport">コードを作る</button>
+    <button class="ghost" id="btnReset">1から作る</button>
+  </div>
+  <div class="meta" id="info">設定一覧(OptionSchema)を読み込んでください</div>
+</header>
+<nav class="tabs" id="tabs"></nav>
+<main id="main">
+  <div class="drop" id="drop">
+    <p><b>OptionSchema_*.json</b> をここにドロップするか、選んでください。</p>
+    <p class="meta">ゲームを起動してメインメニューに行くと、<br>Among Us のフォルダの「TOHhm_DATA/OptionOutputs」に自動で作られます。</p>
+    <input type="file" id="file" accept=".json">
+  </div>
+</main>
+
+<div class="bar">
+  <button class="ghost" onclick="btnReset.click()">1から</button>
+  <button class="ghost" onclick="btnImport.click()">読み込む</button>
+  <button onclick="btnExport.click()">コードを作る</button>
+</div>
+
+<dialog id="dlgImport">
+  <h3>コードを読み込む</h3>
+  <p class="meta">ゲームでコピーした設定のコード（%TOH-hamoOptions%…%End%）を貼り付けてください。</p>
+  <textarea id="importText"></textarea>
+  <p class="warn" id="importErr"></p>
+  <div class="row"><button id="doImport">読み込む</button><button class="ghost" onclick="dlgImport.close()">閉じる</button></div>
+</dialog>
+<dialog id="dlgExport">
+  <h3>プリセットのコード</h3>
+  <p class="meta">これをコピーして、ゲームのロビーで設定の読み込みを使ってください。</p>
+  <textarea id="exportText" readonly></textarea>
+  <div class="row"><button id="doCopy">コピー</button><button class="ghost" id="doDownload">ファイルで保存</button><button class="ghost" onclick="dlgExport.close()">閉じる</button></div>
+</dialog>
+
+<script>
+const B62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+const toB62 = n => { if (n === 0) return "0"; const neg = n < 0; n = Math.abs(n); let s = ""; while (n > 0) { s = B62[n % 62] + s; n = Math.floor(n / 62); } return (neg ? "-" : "") + s; };
+const fromB62 = s => { let neg = s[0] === "-"; if (neg) s = s.slice(1); let n = 0; for (const c of s) { const i = B62.indexOf(c); if (i < 0) throw new Error("bad base62"); n = n * 62 + i; } return neg ? -n : n; };
+
+const TAB_NAMES = { MainSettings: "全体設定", ImpostorRoles: "インポスター", MadmateRoles: "マッドメイト", CrewmateRoles: "クルーメイト", NeutralRoles: "第三陣営", Combinations: "コンビ", Addons: "属性", GhostRoles: "ゴースト役職", OtherRoles: "その他" };
+const STORE_KEY = "tohhamo-preset-draft";
+
+let schema = null, byId = new Map(), children = new Map();
+let values = new Map();      // id -> 値(インデックス)。0 は書き出さない
+let extra = new Map();       // 一覧に無いIDの値(読み込んだコードの分を失わないため)
+let vanilla = "";
+let curTab = null;
+
+const $ = id => document.getElementById(id);
+
+function loadSchema(s) {
+  if (!s || !Array.isArray(s.options)) throw new Error("OptionSchema ではありません");
+  schema = s; byId.clear(); children.clear();
+  for (const o of s.options) { byId.set(o.id, o); if (!children.has(o.parent)) children.set(o.parent, []); children.get(o.parent).push(o); }
+  vanilla = s.vanilla || "";
+  resetValues();
+  try { const d = JSON.parse(localStorage.getItem(STORE_KEY) || "null"); if (d && d.optionVersion === s.optionVersion) { values = new Map(d.values); extra = new Map(d.extra || []); vanilla = d.vanilla || vanilla; } } catch {}
+  const tabs = [...new Set(s.options.map(o => o.tab))];
+  curTab = tabs.includes("MainSettings") ? "MainSettings" : tabs[0];
+  $("tabs").innerHTML = "";
+  for (const t of tabs) { const b = document.createElement("div"); b.className = "tab"; b.textContent = TAB_NAMES[t] || t; b.onclick = () => { curTab = t; render(); }; b.dataset.tab = t; $("tabs").appendChild(b); }
+  $("info").textContent = `MOD ${s.modVersion} / 設定形式 v${s.optionVersion} / ${s.options.length}項目`;
+  render();
+}
+
+function resetValues() { values = new Map(); extra = new Map(); for (const o of schema.options) values.set(o.id, o.default); }
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify({ optionVersion: schema.optionVersion, values: [...values], extra: [...extra], vanilla })); } catch {} }
+
+// 親がONの時だけ子を見せる(ゲーム内の表示とほぼ同じ)
+function parentOn(o) { let p = byId.get(o.parent); while (p) { if ((values.get(p.id) ?? 0) === 0) return false; p = byId.get(p.parent); } return true; }
+
+function render() {
+  if (!schema) return;
+  for (const t of $("tabs").children) t.classList.toggle("on", t.dataset.tab === curTab);
+  const q = $("q").value.trim().toLowerCase(), only = $("onlyChanged").checked;
+  const main = $("main"); main.innerHTML = "";
+  const frag = document.createDocumentFragment();
+  const walk = (list, depth) => {
+    for (const o of list) {
+      if (o.tab !== curTab || o.hidden) continue;
+      const v = values.get(o.id) ?? 0, changed = v !== o.default;
+      const match = (!q || o.name.toLowerCase().includes(q)) && (!only || changed);
+      if (match && (q || parentOn(o))) frag.appendChild(row(o, v, changed, depth));
+      if (q || only || v !== 0) walk(children.get(o.id) || [], depth + 1);
+    }
+  };
+  walk((children.get(-1) || []), 0);
+  if (!frag.childNodes.length) { main.innerHTML = '<div class="empty">表示する設定がありません</div>'; return; }
+  main.appendChild(frag);
+}
+
+function row(o, v, changed, depth) {
+  const d = document.createElement("div"); d.className = "opt" + (changed ? " changed" : "");
+  d.style.paddingLeft = (8 + depth * 18) + "px";
+  const n = document.createElement("div"); n.className = "name"; n.textContent = o.name; d.appendChild(n);
+  let input;
+  if (o.values && o.values.length) {
+    input = document.createElement("select");
+    o.values.forEach((label, i) => { const op = document.createElement("option"); op.value = i; op.textContent = label; input.appendChild(op); });
+    input.value = Math.min(v, o.values.length - 1);
+  } else { input = document.createElement("input"); input.type = "number"; input.value = v; input.title = "特殊な設定(数値のまま)"; }
+  input.onchange = () => { values.set(o.id, parseInt(input.value, 10) || 0); save(); render(); };
+  d.appendChild(input);
+  return d;
+}
+
+// ===== OptionSerializer と同じ形式 =====
+function buildCode() {
+  const all = new Map([...extra, ...values]);
+  const ids = [...all.keys()].sort((a, b) => a - b);
+  let mod = "", last = 0;
+  for (const id of ids) {
+    const v = all.get(id); if (!v) continue;
+    const delta = id - last;
+    mod += (delta === 1 ? "" : toB62(delta)) + "," + (v === 1 ? "" : toB62(v)) + "!";
+    last = id;
+  }
+  return `${schema.header}${schema.optionVersion}|${mod}&${vanilla}${schema.footer}`;
+}
+
+function parseCode(src) {
+  const h = schema.header, f = schema.footer;
+  const a = src.indexOf(h); if (a < 0) throw new Error("コードの始まり(%TOH-hamoOptions%)がありません");
+  const b = src.indexOf(f, a); if (b < 0) throw new Error("コードの終わり(%End%)がありません");
+  let body = src.slice(a + h.length, b).trim();
+  const bar = body.indexOf("|"); if (bar < 0) throw new Error("バージョン情報がありません");
+  const ver = body.slice(0, bar);
+  if (ver !== String(schema.optionVersion)) throw new Error(`設定形式のバージョンが違います(コード: v${ver} / 一覧: v${schema.optionVersion})`);
+  const [modPart, vanPart] = body.slice(bar + 1).split("&");
+  const parsed = new Map(); let last = 0;
+  for (const e of modPart.split("!")) {
+    if (!e) continue;
+    const [d, v] = e.split(",");
+    last += d === "" ? 1 : fromB62(d);
+    parsed.set(last, v === "" || v === undefined ? 1 : fromB62(v));
+  }
+  values = new Map(); extra = new Map();
+  for (const o of schema.options) values.set(o.id, parsed.get(o.id) ?? 0);
+  for (const [id, v] of parsed) if (!byId.has(id)) extra.set(id, v);
+  if (vanPart) vanilla = vanPart.trim();
+}
+
+$("file").onchange = e => readFile(e.target.files[0]);
+document.addEventListener("dragover", e => e.preventDefault());
+document.addEventListener("drop", e => { e.preventDefault(); if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]); });
+function readFile(f) { if (!f) return; f.text().then(t => { try { loadSchema(JSON.parse(t)); } catch (err) { alert("読み込めませんでした: " + err.message); } }); }
+
+$("q").oninput = render; $("onlyChanged").onchange = render;
+$("btnImport").onclick = () => { if (!schema) return alert("先に OptionSchema を読み込んでください"); $("importErr").textContent = ""; $("dlgImport").showModal(); };
+$("doImport").onclick = () => { try { parseCode($("importText").value); save(); render(); $("dlgImport").close(); } catch (e) { $("importErr").textContent = e.message; } };
+$("btnExport").onclick = () => { if (!schema) return alert("先に OptionSchema を読み込んでください"); $("exportText").value = buildCode(); $("dlgExport").showModal(); };
+$("doCopy").onclick = () => navigator.clipboard.writeText($("exportText").value).then(() => $("doCopy").textContent = "コピーしました");
+$("doDownload").onclick = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([$("exportText").value], { type: "text/plain" })); a.download = "TOH-hamo-preset.txt"; a.click(); };
+$("btnReset").onclick = () => { if (schema && confirm("全部の設定を初期値にして、1から作りますか？")) { resetValues(); vanilla = schema.vanilla || ""; save(); render(); } };
+
+// 同じ場所に schema.json を置いておけば自動で読み込む(サイトとして公開する時用)
+fetch("schema.json").then(r => r.ok ? r.json() : null).then(s => { if (s) loadSchema(s); }).catch(() => {});
+</script>
+</body>
+</html>

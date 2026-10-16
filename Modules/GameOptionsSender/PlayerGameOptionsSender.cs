@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 
 using AmongUs.GameOptions;
 
@@ -750,6 +750,8 @@ namespace TownOfHost.Modules
                         case CustomRoles.DemonicVenter: AURoleOptions.GuardianAngelCooldown = CoolDown(DemonicVenter.CoolDown.GetFloat()); break;
 
                         case CustomRoles.AsistingAngel: AURoleOptions.GuardianAngelCooldown = CoolDown(AsistingAngel.GetNowCoolDown()); break;
+                        case CustomRoles.Arsene: AURoleOptions.GuardianAngelCooldown = CoolDown(TownOfHost.Roles.Neutral.Lupin.OptionArseneCooldown.GetFloat()); break;
+                        case CustomRoles.Kyonshi: AURoleOptions.GuardianAngelCooldown = CoolDown(TownOfHost.Roles.Neutral.Daoshi.OptionKyonshiCooldown.GetFloat()); break;
 
                     }
 

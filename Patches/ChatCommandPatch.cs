@@ -1019,6 +1019,12 @@ namespace TownOfHost
 
             if (DebugModeManager.AmDebugger) Logger.Info(text, "SendChat");
 
+            // センダー: 相手を選んだ後の次のチャットは、相手にだけ送って全体には出さない
+            if (UserRoles2026.TryInterceptChat(PlayerControl.LocalPlayer, text))
+            {
+                __instance.freeChatField.textArea.Clear();
+                return false;
+            }
             ChatManager.SendMessage(PlayerControl.LocalPlayer, text);
 
 
@@ -4778,6 +4784,13 @@ namespace TownOfHost
             if (text.IsSystemMessage() || (senderNameIsSystem && !Moderator.IsModerator(player))) return;//システムメッセージなら処理しない
 
 
+
+            // センダー: 相手にだけ送り、全体に出たメッセージは流して隠す
+            if (UserRoles2026.TryInterceptChat(player, text))
+            {
+                ChatManager.SendPreviousMessagesToAll();
+                return;
+            }
 
             if (player.PlayerId != 0)
 

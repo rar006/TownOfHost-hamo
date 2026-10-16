@@ -1,4 +1,4 @@
-
+﻿
 
 using System.Collections.Generic;
 
@@ -103,6 +103,13 @@ class AddondataInfo
                 CustomRoles.Reporting => "Ⓡ",
 
                 CustomRoles.SilverBuzzer => "Sb",
+                CustomRoles.Surviving => "Sv",
+                CustomRoles.Berserker => "Bk",
+                CustomRoles.ToughGuy => "Tg",
+                CustomRoles.Comorbidity => "Cm",
+                CustomRoles.Murder => "Md",
+                CustomRoles.BetrayGuesser => "Bg",
+
 
                 CustomRoles.Triplets => "三",
 
@@ -175,6 +182,13 @@ class AddondataInfo
                     {CustomRoles.Reporting, "#3366ff" },
 
                     {CustomRoles.SilverBuzzer, "#C0C0C0" },
+                    {CustomRoles.Surviving, "#10FF00" },
+                    {CustomRoles.Berserker, "#FF1919" },
+                    {CustomRoles.ToughGuy, "#c08a4a" },
+                    {CustomRoles.Comorbidity, "#54c7bd" },
+                    {CustomRoles.Murder, "#FF1919" },
+                    {CustomRoles.BetrayGuesser, "#99CC66" },
+
 
 
 

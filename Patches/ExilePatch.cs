@@ -1,4 +1,4 @@
-using AmongUs.Data;
+﻿using AmongUs.Data;
 using AmongUs.GameOptions;
 using HarmonyLib;
 using TownOfHost.Modules;
@@ -98,7 +98,9 @@ namespace TownOfHost
                     // OnExileWrapUpの結果、対象のPlayerState.IsDeadがfalseのまま(蘇生済み)であれば、
                     // ここでの死亡確定処理はスキップする。
                     var exiledState = PlayerState.GetByPlayerId(exiled.PlayerId);
-                    if (CustomWinnerHolder.WinnerTeam != CustomWinner.Terrorist && exiledState.IsDead) exiledState.SetDead();
+                    // PlayerState.IsDead はまだ false なので、それを条件にすると追放者が死亡せず「生き返る」不具合になっていた。
+                    // 蘇生役職は exiled.IsDead(上で true にしたもの)を false に戻すので、そちらで判定する。
+                    if (CustomWinnerHolder.WinnerTeam != CustomWinner.Terrorist && exiled.IsDead) exiledState.SetDead();
                 }
             }
             AfterMeetingTasks();

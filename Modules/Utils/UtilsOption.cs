@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Data;
 
@@ -1631,6 +1631,13 @@ namespace TownOfHost
                 CustomRoles.BountyGuesser => AddonInfo(role, "؟"),
 
                 CustomRoles.MagicHand => AddonInfo(role, "ж"),
+                CustomRoles.Surviving => AddonInfo(role, "Sv"),
+                CustomRoles.Berserker => AddonInfo(role, "Bk"),
+                CustomRoles.ToughGuy => AddonInfo(role, "Tg"),
+                CustomRoles.Comorbidity => AddonInfo(role, "Cm"),
+                CustomRoles.Murder => AddonInfo(role, "Md"),
+                CustomRoles.BetrayGuesser => AddonInfo(role, "Bg"),
+
 
                 CustomRoles.Powerful => AddonInfo(role, "∠"),
 

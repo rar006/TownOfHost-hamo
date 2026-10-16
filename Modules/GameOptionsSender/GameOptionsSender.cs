@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using AmongUs.GameOptions;
 using Hazel;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
@@ -18,7 +18,15 @@ namespace TownOfHost.Modules
             AllSenders.RemoveAll(s => !s.AmValid());
             foreach (var sender in AllSenders)
             {
-                if (sender.IsDirty) sender.SendGameOptions();
+                try
+                {
+                    if (sender.IsDirty) sender.SendGameOptions();
+                }
+                catch (System.Exception e)
+                {
+                    // ここで例外を投げると SendAllStreamedObjects 全体が止まり、バニラ勢の同期が崩れて落ちる原因になる
+                    Logger.Exception(e, "SendAllGameOptions");
+                }
                 sender.IsDirty = false;
             }
         }
@@ -56,6 +64,7 @@ namespace TownOfHost.Modules
             {
                 writer.Recycle();
                 Logger.Error("オプションのキャストに失敗しました", this.ToString());
+                return; // Recycle済みのwriterを使い続けると例外になり、他のデータ送信まで止まる
             }
             writer.EndMessage();
 

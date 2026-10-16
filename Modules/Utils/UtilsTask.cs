@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using AmongUs.GameOptions;
 using TownOfHost.Roles.Core;
 
@@ -57,6 +57,10 @@ namespace TownOfHost
                         case CustomRoles.Jackaldoll:
                             hasTasks = false;
                             break;
+                        case CustomRoles.Clockworker:
+                            // タイマーが0になってクルーになっている間だけタスクを持つ(クルーのタスク勝利には数えない)
+                            hasTasks = roleClass is TownOfHost.Roles.Impostor.Clockworker cw && cw.InTaskMode && !ForRecompute;
+                            break;
                         default:
                             if (role.IsImpostor()) hasTasks = false;
                             break;
@@ -67,6 +71,7 @@ namespace TownOfHost
                         {
                             case CustomRoles.Amanojaku:
                             case CustomRoles.OneLove:
+                            case CustomRoles.Murder:
                                 hasTasks &= !ForRecompute; break;
                             case CustomRoles.Amnesia:
                                 {
@@ -89,6 +94,7 @@ namespace TownOfHost
                         }
 
                     if (States.GhostRole is CustomRoles.AsistingAngel) hasTasks = false;
+                    if (States.GhostRole is CustomRoles.Kyonshi) hasTasks &= !ForRecompute;
 
                     //ラバーズはタスクを勝利用にカウントしない
                     //回線落ちになってもタスクは復活しない

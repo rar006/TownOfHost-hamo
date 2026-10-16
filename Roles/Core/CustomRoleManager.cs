@@ -309,6 +309,18 @@ public static class CustomRoleManager
 
                 }
 
+                //タフガイ(他のガードを使い切った後で1回だけ耐える)
+                if (info.KillPower > info.GuardPower && deathReason is CustomDeathReason.Kill && ToughGuy.TryGuard(attemptTarget))
+                {
+                    info.GuardPower = info.KillPower;
+                    GuardreasonNumber = 6;
+                }
+                //マーダー(シェリフ系のキルを反射)
+                if (deathReason is CustomDeathReason.Kill && Murder.TryReflect(attemptKiller, attemptTarget))
+                {
+                    info.CanKill = false;
+                    info.DoKill = false;
+                }
                 if (info.AttemptKiller.Is(CustomRoles.Faction) && info.AttemptTarget.Is(CustomRoles.Faction) && deathReason is CustomDeathReason.Kill && Faction.CantKillFaction.GetBool())
 
                 {
@@ -447,6 +459,9 @@ public static class CustomRoleManager
 
                         break;
 
+                    case 6://タフガイ
+                        UtilsGameLog.AddGameLog($"Guard", UtilsName.GetPlayerColor(attemptTarget) + ":  " + string.Format(Translator.GetString("GuardMaster.Guard"), UtilsName.GetPlayerColor(attemptKiller, true)));
+                        break;
                     case 5://Guardian(守護者)
 
                         var guardian = Crewmate.Guardian.FindGuardianFor(attemptTarget.PlayerId);
@@ -1194,6 +1209,13 @@ public static class CustomRoleManager
                 case CustomRoles.Sealer: Sealer.Add(pc.PlayerId); break;
 
                 case CustomRoles.SilverBuzzer: SilverBuzzer.Add(pc.PlayerId); break;
+                case CustomRoles.Surviving: Surviving.Add(pc.PlayerId); break;
+                case CustomRoles.Berserker: Berserker.Add(pc.PlayerId); break;
+                case CustomRoles.ToughGuy: ToughGuy.Add(pc.PlayerId); break;
+                case CustomRoles.Comorbidity: Comorbidity.Add(pc.PlayerId); break;
+                case CustomRoles.Murder: Murder.Add(pc.PlayerId); break;
+                case CustomRoles.BetrayGuesser: BetrayGuesser.Add(pc.PlayerId); break;
+
 
 
 
@@ -2119,6 +2141,16 @@ public enum CustomRoles
     Surrender,
     Reporting,
     IceOni,
+    // ===== 新規追加属性 (2026-10 ユーザー提案) =====
+    // ===== 新規ゴースト役職 (2026-10)。ルパン・ダオシーが作る =====
+    Arsene = 575,
+    Kyonshi,
+    Surviving = 7010,
+    Berserker,
+    ToughGuy,
+    Comorbidity,
+    Murder,
+    BetrayGuesser,
     // ===== N移植役職 =====
     Survivor = 329,
     Mario,
@@ -2128,9 +2160,26 @@ public enum CustomRoles
     DarkHide,
     Greedier,
     Administer,
-    // ===== 新規追加役職 (2026-10 ユーザー提案)。値は空いている342番から(後で追加する役職と番号を揃えるため固定) =====
-    Messenger = 342,
+    // ===== 新規追加役職 (2026-10 ユーザー提案)。値は空いている340番から =====
+    Trauma = 340,
+    Surmount,
+    Messenger,
     Fugitive,
+    MemoryRestorer,
+    ArchVillain,
+    LonelyWolf,
+    Clockworker,
+    Abductor,
+    MadInvisible,
+    MadMagic,
+    Flatfish,
+    Lupin,
+    Daoshi,
+    Catalyst,
+    Conductor,
+    Sender,
+    MadSender,
+    Parity,
 }
 
 public enum CustomRoleTypes

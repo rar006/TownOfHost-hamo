@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+﻿using AmongUs.GameOptions;
 using Hazel;
 using TownOfHost.Roles.Core;
 
@@ -20,8 +20,7 @@ public sealed class Messenger : RoleBase
             87200,
             SetupOptionItem,
             "mes",
-            "#00BCFF",
-            isNewRole: true
+            "#00BCFF"
         );
 
     static OptionItem OptionPerMeeting;

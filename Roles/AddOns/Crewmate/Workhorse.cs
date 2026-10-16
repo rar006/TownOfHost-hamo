@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -50,7 +50,7 @@ namespace TownOfHost.Roles.AddOns.Crewmate
         public static (bool, int, int, int) TaskData => (false, NumCommonTasks, NumLongTasks, NumShortTasks);
         private static bool IsAssignTarget(PlayerControl pc)
         {
-            if (!pc.IsAlive() || playerIdList.Contains(pc.PlayerId) || pc.Is(CustomRoles.Amanojaku)) return false;
+            if (!pc.IsAlive() || playerIdList.Contains(pc.PlayerId) || pc.Is(CustomRoles.Amanojaku) || pc.Is(CustomRoles.Surmount)) return false;
             var taskState = pc.GetPlayerTaskState();
             if (taskState.CompletedTasksCount < taskState.AllTasksCount) return false;
             if (!UtilsTask.HasTasks(pc.Data)) return false;

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 using System.Linq;
 
@@ -619,6 +619,7 @@ public static class MeetingHudPatch
 
             }
 
+            TownOfHost.Roles.AddOns.Common.ToughGuy.OnMeetingStart();
             var silverBuzzerMessage = SilverBuzzer.SendMessage();
 
             if (silverBuzzerMessage != "")

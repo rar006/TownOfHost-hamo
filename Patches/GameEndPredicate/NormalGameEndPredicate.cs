@@ -1,4 +1,4 @@
-/*using System.Linq;
+﻿/*using System.Linq;
 
 using TownOfHost.Roles;
 
@@ -507,6 +507,8 @@ namespace TownOfHost
             reason = GameOverReason.ImpostorsByKill;
 
             if (Assassin.assassin?.NowState is Assassin.AssassinMeeting.Collected) return false;
+            if (TownOfHost.Roles.Neutral.Daoshi.CheckInstantWin(out reason)) return true; // ダオシーの単独勝利
+            if (TownOfHost.Roles.Neutral.CatalystPair.CheckInstantWin(out reason)) return true; // カタリスト・コンダクターの勝利
 
 
 

@@ -22,8 +22,8 @@ public static class Kedoro
     /// <summary>タスク全完了のごほうびのスピード倍率(設定項目なし)</summary>
     private const float TaskCompleteSpeedMultiplier = 1.25f;
     /// <summary>牢屋からこれ以上離れたら連れ戻す距離</summary>
-    private const float JailLeashDistance = 2.0f;
-    private const float RescueRange = 1.75f;
+    private const float JailLeashDistance = 0.9f; // 檻の中だけ動ける
+    private const float RescueRange = 2.5f; // 牢屋(または捕まっている人)からこの距離以内
     private const float TickInterval = 0.5f;
 
     private static readonly HashSet<byte> Oni = new();
@@ -467,8 +467,11 @@ public static class Kedoro
         if (LastRescue.TryGetValue(rescuer.PlayerId, out var last) && cooldown > 0f && Time.time - last < cooldown) return;
         var target = PlayerCatch.AllPlayerControls
             .Where(pc => IsCaptured(pc) && pc.IsAlive())
-            .OrderBy(pc => Vector2.Distance(rescuer.GetTruePosition(), pc.GetTruePosition()))
-            .FirstOrDefault(pc => Vector2.Distance(rescuer.GetTruePosition(), pc.GetTruePosition()) <= RescueRange);
+            .Select(pc => (pc, d: Mathf.Min(Vector2.Distance(rescuer.GetTruePosition(), pc.GetTruePosition()), Vector2.Distance(rescuer.GetTruePosition(), Captured[pc.PlayerId]))))
+            .Where(x => x.d <= RescueRange)
+            .OrderBy(x => x.d)
+            .Select(x => x.pc)
+            .FirstOrDefault();
         if (target == null) return;
 
         Captured.Remove(target.PlayerId);
@@ -521,15 +524,11 @@ public static class Kedoro
         return false;
     }
 
-    [HarmonyPatch(typeof(PlayerPhysics), nameof(PlayerPhysics.HandleRpc))]
-    private static class KedoroPetPatch
+    /// <summary>ペットを撫でた時(Petactionpatch.OnPetUse から。ホスト自身もリモートも通る)</summary>
+    public static void OnPet(PlayerControl pc)
     {
-        public static void Prefix(PlayerPhysics __instance, [HarmonyArgument(0)] byte callID)
-        {
-            if (!IsActive || (RpcCalls)callID != RpcCalls.Pet) return;
-            if (AmongUsClient.Instance?.AmHost != true) return;
-            RescueNearby(__instance.myPlayer);
-        }
+        if (!IsActive || AmongUsClient.Instance?.AmHost != true) return;
+        RescueNearby(pc);
     }
 
     public sealed class KedoroGameEndPredicate : GameEndPredicate

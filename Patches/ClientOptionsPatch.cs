@@ -1,4 +1,4 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 
 using UnityEngine;
 
@@ -75,6 +75,7 @@ namespace TownOfHost
         private static ClientActionItem ShowPlayerCount;
 
         private static ClientActionItem ShowRoomCode;
+        private static ClientActionItem ExpandRoleHeaders;
 
         public static OptionsMenuBehaviour Instance;
 
@@ -292,8 +293,15 @@ namespace TownOfHost
             {
 
                 ShowRoomCode = ClientOptionItem.Create("ShowRoomCode", Main.ShowRoomCode, __instance, page: 1);
-
             }
+            // 2ページ目: 役職の見出し(あ行など)を開いておくか
+            if (ExpandRoleHeaders == null || ExpandRoleHeaders.ToggleButton == null)
+            {
+                ExpandRoleHeaders = ClientOptionItem.Create("ExpandRoleHeaders", Main.ExpandRoleHeaders, __instance,
+                    () => RoleGojuon.SetAllCollapsed(!Main.ExpandRoleHeaders.Value), page: 1);
+            }
+            // ロビーでは表示しない
+            if (ExpandRoleHeaders?.ToggleButton != null) ExpandRoleHeaders.ToggleButton.gameObject.SetActive(!GameStates.IsLobby);
 
 #if DEBUG
 
@@ -464,7 +472,7 @@ namespace TownOfHost
             UseWebHook = Yomiage = CustomName = CustomSprite = HideSomeFriendCodes = null;
             ViewPingDetails = DebugChatopen = DebugSendAmout = DebugTours = ShowDistance = null;
             FpsLimitRemoval = AutoSaveScreenShot = PreloadMapAssets = ShowPresetInWebhook = null;
-            AutoRehost = EnableDiscordRichPresence = ShowRoomTimer = ShowPlayerCount = ShowRoomCode = null;
+            AutoRehost = EnableDiscordRichPresence = ShowRoomTimer = ShowPlayerCount = ShowRoomCode = ExpandRoleHeaders = null;
             ModUnloaderScreen.ForgetPopup();
             SoundSettingsScreen.ForgetPopup();
             StreamerHopeMenu.ForgetPopup();

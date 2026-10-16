@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Collections.Generic;
 
@@ -297,11 +297,12 @@ namespace TownOfHost
 
         }
 
+        /// <summary>死亡した日(サバイビング用。-1=生存)</summary>
+        public int DeadDay = -1;
         public void SetDead()
-
         {
-
             IsDead = true;
+            if (DeadDay < 0) DeadDay = UtilsGameLog.day;
 
             if (AmongUsClient.Instance.AmHost)
 

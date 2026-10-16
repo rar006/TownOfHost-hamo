@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Linq;
 
@@ -435,6 +435,13 @@ namespace TownOfHost
                         case CustomRoles.Sealer: sb.Append(Sealer.SubRoleMark); break;
 
                         case CustomRoles.SilverBuzzer: sb.Append(SilverBuzzer.SubRoleMark); break;
+                        case CustomRoles.Surviving: sb.Append(Surviving.SubRoleMark); break;
+                        case CustomRoles.Berserker: sb.Append(Berserker.SubRoleMark); break;
+                        case CustomRoles.ToughGuy: sb.Append(ToughGuy.SubRoleMark); break;
+                        case CustomRoles.Comorbidity: sb.Append(Comorbidity.SubRoleMark); break;
+                        case CustomRoles.Murder: sb.Append(Murder.SubRoleMark); break;
+                        case CustomRoles.BetrayGuesser: sb.Append(BetrayGuesser.SubRoleMark); break;
+
 
                         case CustomRoles.Jumbo: sb.Append(Jumbo.SubRoleMark); break;
 

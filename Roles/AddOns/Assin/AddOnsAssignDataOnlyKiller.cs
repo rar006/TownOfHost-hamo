@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Collections.Generic;
 using HarmonyLib;
@@ -35,6 +35,9 @@ namespace TownOfHost.Roles.AddOns.Common
             CustomRoles.HASTroll,
             CustomRoles.GM,
             CustomRoles.TaskPlayerB,
+            CustomRoles.Trauma,
+            CustomRoles.Surmount,
+            CustomRoles.MadInvisible,
         };
         static readonly IEnumerable<CustomRoles> ValidRoles = CustomRolesHelper.AllRoles.Where(role => !InvalidRoles.Contains(role));
 

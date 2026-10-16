@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using AmongUs.GameOptions;
 using HarmonyLib;
@@ -94,6 +94,9 @@ internal static class ExternalRpcPetPatch
         if (pc == null || !pc.IsAlive()) return;
         if (!AmongUsClient.Instance.AmHost) return;
         if (GameStates.IsLobby || GameStates.IsMeeting) return;
+
+        // ケイドロ: 牢屋の前で撫でると解放(ホスト自身の撫でもここを通る)
+        TownOfHost.Kedoro.OnPet(pc);
 
         if (pc.inVent || pc.inMovingPlat || pc.onLadder || pc.walkingToVent) return;
         if (pc.MyPhysics.Animations.IsPlayingEnterVentAnimation()) return;

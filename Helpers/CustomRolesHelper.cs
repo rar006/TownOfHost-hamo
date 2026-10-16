@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+﻿using AmongUs.GameOptions;
 
 using System.Linq;
 
@@ -51,7 +51,10 @@ namespace TownOfHost
         public static bool IsNewRole(this CustomRoles role)
         {
             if (role.GetRoleInfo()?.IsNewRole == true) return true;
-            return role is CustomRoles.Inheritance && Inheritance.IsNewRole;
+            if (role is CustomRoles.Inheritance && Inheritance.IsNewRole) return true;
+            // 2026-10 追加の属性・ゴースト役職
+            return role is CustomRoles.Surviving or CustomRoles.Berserker or CustomRoles.ToughGuy or CustomRoles.Comorbidity or CustomRoles.Murder or CustomRoles.BetrayGuesser
+                or CustomRoles.Arsene or CustomRoles.Kyonshi;
         }
 
         public static bool IsImpostor(this CustomRoles role)
@@ -256,7 +259,13 @@ namespace TownOfHost
 
                 CustomRoles.Reporting or
 
-                CustomRoles.SilverBuzzer
+                CustomRoles.SilverBuzzer or
+                CustomRoles.Surviving or
+                CustomRoles.Berserker or
+                CustomRoles.ToughGuy or
+                CustomRoles.Comorbidity or
+                CustomRoles.Murder or
+                CustomRoles.BetrayGuesser
 
                 ;
 
@@ -302,6 +311,9 @@ namespace TownOfHost
                 CustomRoles.Tiebreaker or
 
                 CustomRoles.MagicHand or
+                CustomRoles.Berserker or
+                CustomRoles.ToughGuy or
+                CustomRoles.Comorbidity or
 
                 CustomRoles.Powerful or
 
@@ -355,7 +367,10 @@ namespace TownOfHost
 
                 CustomRoles.Reporting or
 
-                CustomRoles.SilverBuzzer
+                CustomRoles.SilverBuzzer or
+                CustomRoles.Surviving or
+                CustomRoles.Murder or
+                CustomRoles.BetrayGuesser
 
                 ;
 
@@ -604,7 +619,8 @@ namespace TownOfHost
                         or CustomRoles.DemonicSupporter
 
                         or CustomRoles.AsistingAngel
-
+                        or CustomRoles.Arsene
+                        or CustomRoles.Kyonshi
                         ;
 
         }

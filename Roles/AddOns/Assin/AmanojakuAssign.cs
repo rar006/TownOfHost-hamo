@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -35,7 +35,9 @@ namespace TownOfHost.Roles.AddOns.Common
             CustomRoles.TaskPlayerB,
             CustomRoles.Fox,
             CustomRoles.King,
-            CustomRoles.Autocrat
+            CustomRoles.Autocrat,
+            CustomRoles.Trauma,
+            CustomRoles.Surmount
         };
         static readonly IEnumerable<CustomRoles> ValidRoles = CustomRolesHelper.AllRoles.Where(role => !InvalidRoles.Contains(role));
 

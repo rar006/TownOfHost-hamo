@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -32,6 +32,8 @@ public static class LobbyChatRelay
     {
         if (string.IsNullOrEmpty(LobbyChatRemoteConfig.EndpointUrl)) return;
         if (DateTime.UtcNow < _retryAfter) return;
+        // ホストが全員に送る(MOD導入者がそれぞれ送ると、同じメッセージが何回も出てしまう)
+        if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
 
         try
         {
@@ -44,7 +46,7 @@ public static class LobbyChatRelay
             using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
             _failCount = 0;
             _retryAfter = DateTime.MinValue;
-            if (!response.IsSuccessStatusCode) return;
+            if (!response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.NoContent) return;
 
             var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             var announcement = JsonSerializer.Deserialize<Announcement>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -95,7 +97,7 @@ public static class LobbyChatRelay
 public static class LobbyChatRemoteConfig
 {
     /// <summary>Discord Bot側のロビーチャットAPIベースURL</summary>
-    public static string EndpointUrl = "https://ski-bidder-hook-falls.trycloudflare.com/api/lobbychat";
+    public static string EndpointUrl = "https://hmbot.nkzk.win/api/lobbychat";
 
     /// <summary>MOD↔Bot間の認証キー。Bot側の.env(SURVEY_API_SECRET)と必ず同じ値にすること。</summary>
     public static string ApiKey = "e14ow2cvdpx5";

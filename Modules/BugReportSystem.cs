@@ -555,7 +555,7 @@ public static class BugReportSystem
 public static class BugReportRemoteConfig
 {
     /// <summary>Discord Bot側のバグ報告APIベースURL</summary>
-    public static string EndpointUrl = "https://ski-bidder-hook-falls.trycloudflare.com/api/bugreport";
+    public static string EndpointUrl = "https://hmbot.nkzk.win/api/bugreport";
 
     /// <summary>修正完了後も追加のバグ報告ボタンを表示するか。Discord運用に合わせて切り替える。</summary>
     public static bool AllowAdditionalReports = true;

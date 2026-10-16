@@ -1370,6 +1370,8 @@ namespace TownOfHost
                 DemonicVenter.UseAbility(__instance, target);
 
                 AsistingAngel.UseAbility(__instance, target);
+                TownOfHost.Roles.Neutral.Arsene.UseAbility(__instance, target);
+                TownOfHost.Roles.Neutral.Kyonshi.UseAbility(__instance, target);
 
                 return false;
 

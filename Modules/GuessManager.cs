@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Linq;
 
@@ -147,6 +147,7 @@ public static class GuessManager
             //Notゲッサーはここで処理を止める。
 
             if (!pc.Is(CustomRoles.Guesser)
+                && !pc.Is(CustomRoles.BetrayGuesser)
 
                 && !(pc.Is(CustomRoles.LastImpostor) && LastImpostor.giveguesser)
 
@@ -415,6 +416,7 @@ public static class GuessManager
 
 
                 GuesserGuessed[pc.PlayerId]++;
+                if (!guesserSuicide) TownOfHost.Roles.AddOns.Common.BetrayGuesser.OnGuessSuccess(pc.PlayerId);
 
                 OneMeetingGuessed[pc.PlayerId]++;
 
@@ -1240,6 +1242,7 @@ public static class GuessManager
 
         }
 
+        if (pc.Is(CustomRoles.BetrayGuesser)) ShotLimit = Math.Max(ShotLimit, TownOfHost.Roles.AddOns.Common.BetrayGuesser.GuessLimit); // ベトレイゲッサーは自分の回数
         //1会議
 
         var OneMeetingShotLimit = 0;
@@ -1250,6 +1253,7 @@ public static class GuessManager
 
 
 
+        if (pc.Is(CustomRoles.BetrayGuesser)) OneMeetingShotLimit = Math.Max(OneMeetingShotLimit, TownOfHost.Roles.AddOns.Common.BetrayGuesser.GuessLimit);
         if (GuesserGuessed[pc.PlayerId] >= ShotLimit)
 
         {

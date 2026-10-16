@@ -138,13 +138,13 @@ namespace TownOfHost
         public const string BepInExPluginName = "Town Of Host-hamo";
 #endif
 
-        public const string BepInExPluginVersion = "4.00.33.03";
+        public const string BepInExPluginVersion = "4.00.35.00";
 
-        public const string PluginVersion = "4.00.33.03";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
+        public const string PluginVersion = "4.00.35.00";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
 
-        public const string PluginShowVersion = "4.33.03α";
+        public const string PluginShowVersion = "4.35.00β";
 
-        public const string ModVersion = ".33.03";//リリースver用バージョン変更dc9b79
+        public const string ModVersion = ".35.00";//リリースver用バージョン変更dc9b79
 
 
 
@@ -164,7 +164,7 @@ namespace TownOfHost
 
 
 
-        public static readonly string MatchmakingRelayUrl = "https://ski-bidder-hook-falls.trycloudflare.com/matchmaking";
+        public static string MatchmakingRelayUrl = "https://hmbot.nkzk.win/matchmaking";
 
         public static readonly string MatchmakingRelaySecret = "z1xjsyqynboz";
 
@@ -235,6 +235,8 @@ namespace TownOfHost
         public static ConfigEntry<bool> ShowPlayerCount { get; private set; }
 
         public static ConfigEntry<bool> ShowRoomCode { get; private set; }
+        /// <summary>設定画面の役職の見出し(あ行など)を、最初から開いておくか</summary>
+        public static ConfigEntry<bool> ExpandRoleHeaders { get; private set; }
 
         public static ConfigEntry<float> MapTheme { get; private set; }
 
@@ -493,6 +495,7 @@ namespace TownOfHost
             ShowPlayerCount = Config.Bind("Client Options", "Show Player Count", false);
 
             ShowRoomCode = Config.Bind("Client Options", "Show Room Code", false);
+            ExpandRoleHeaders = Config.Bind("Client Options", "Expand Role Headers", false);
 
             MapTheme = Config.Bind("Client Options", "MapTheme", AmongUs.Data.Settings.AudioSettingsData.DEFAULT_MUSIC_VOLUME);
 
@@ -625,6 +628,7 @@ namespace TownOfHost
             {
                 TownOfHost.Modules.StartupPrefetch.Start(VersionInfoManager.URL);
                 ModUpdater.StartPrefetch();
+                TownOfHost.Modules.RelayLink.Start(); // Discordの /link で更新されたリンクを読む
             }
             catch (System.Exception e) { UnityEngine.Debug.LogWarning("StartupPrefetch: " + e.Message); }
 
@@ -1038,6 +1042,16 @@ public static bool IsAndroid()//蜿り・・縲ヾNR
 
         Tuna = CustomRoles.Tuna,
 
+        Flatfish = CustomRoles.Flatfish,
+
+        Lupin = CustomRoles.Lupin,
+
+        Daoshi = CustomRoles.Daoshi,
+
+        Catalyst = CustomRoles.Catalyst,
+
+        Parity = CustomRoles.Parity,
+
         DarkSheriff = CustomRoles.DarkSheriff,
 
         RaccoonParent = CustomRoles.RaccoonParent,
@@ -1189,7 +1203,11 @@ public static bool IsAndroid()//蜿り・・縲ヾNR
 
         PokerFace,
 
-        TheThreeLittlePigs
+        TheThreeLittlePigs,
+
+        TraumaandSurmount,
+
+        CatalystandConductor
 
     }
 
