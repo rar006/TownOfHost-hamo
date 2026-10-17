@@ -277,11 +277,38 @@ public static class MeetingHudPatch
 
     public static string Title = "";
 
-    // V11公式ジャッジのOverruleはゲーム本体のJudgeOverruleVote／QueueOverruleVotesへ委ねる。
-    // MeetingVoteManagerとの既存互換のためnonce保管場所だけを残し、未確認のHarmonyフックは登録しない。
+    // V11公式ジャッジの判決(Overrule)。
+    // 投票の集計と会議の終了はMOD側(MeetingVoteManager)で行っているため、ゲーム本体に任せたままだと判決が集計に入らず、
+    // ジャッジが判決しても何も起きなかった。ホストに判決が届いた時(SetJudgeOverrule)にMOD側の集計へ渡す。
+    [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.SetJudgeOverrule))]
     public static class SetJudgeOverrulePatch
     {
         public static ushort OverruleNonce = ushort.MinValue;
+
+        public static void Postfix([HarmonyArgument(0)] InnerNet.PlayerId judgeId, [HarmonyArgument(1)] InnerNet.PlayerId targetId, [HarmonyArgument(2)] ushort nonce)
+        {
+            try
+            {
+                if (!AmongUsClient.Instance.AmHost) return;
+                byte judge = judgeId;
+                byte target = targetId;
+                var judgePc = PlayerCatch.GetPlayerById(judge);
+                var targetPc = PlayerCatch.GetPlayerById(target);
+                if (judgePc == null || targetPc == null || !judgePc.IsAlive()) return;
+                if (!TownOfHost.Roles.Vanilla.Judge.CanOverrule(targetPc))
+                {
+                    Logger.Info($"{judgePc.GetNameWithRole().RemoveHtmlTags()} の判決は対象外のため無効: {targetPc.GetNameWithRole().RemoveHtmlTags()}", "Judge");
+                    return;
+                }
+                OverruleNonce = nonce;
+                MeetingVoteManager.Instance?.SetVote(judge, target, Isjudgevote: true, ovex: target);
+                Logger.Info($"{judgePc.GetNameWithRole().RemoveHtmlTags()} が {targetPc.GetNameWithRole().RemoveHtmlTags()} に判決", "Judge");
+            }
+            catch (System.Exception e)
+            {
+                Logger.Exception(e, "Judge");
+            }
+        }
     }
 
     [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.Start))]

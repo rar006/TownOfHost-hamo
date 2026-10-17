@@ -41,7 +41,10 @@ public interface IUsePhantomButton
         IPPlayerKillCooldown.TryGetValue(player.PlayerId, out var turnTimer);
         Main.AllPlayerKillCooldown.TryGetValue(player.PlayerId, out var killCooldown);
 
-        if (MeetingStates.FirstMeeting
+        // 役職ごとの初期キルクールが設定されていれば、最初の会議まではそれを使う
+        if (MeetingStates.FirstMeeting && InitialKillCooldownOption.TryGet(player, out var initialCooldown))
+            killCooldown = initialCooldown;
+        else if (MeetingStates.FirstMeeting
             && !Options.FixFirstKillCooldown.GetBool()
             && killCooldown > 10f
             && PlayerState.GetByPlayerId(player.PlayerId)?.Is10secKillButton == true)

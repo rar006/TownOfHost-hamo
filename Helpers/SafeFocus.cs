@@ -18,7 +18,9 @@ internal static class SafeFocus
             if (textBox == null || textBox.gameObject == null) return;
             if (!textBox.gameObject.activeInHierarchy || !textBox.isActiveAndEnabled) return;
             if (Screen.fullScreen) return;
+            CrashTrace.Mark("SafeFocus.GiveFocus");
             textBox.GiveFocus();
+            CrashTrace.Mark("SafeFocus.GiveFocus done");
         }
         catch (System.Exception e)
         {

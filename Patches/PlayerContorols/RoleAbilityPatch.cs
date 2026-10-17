@@ -518,7 +518,9 @@ namespace TownOfHost
 
             /* 初手で、キルク修正がオフでキルクが10s以上で、10sのまま*/
 
-            if (MeetingStates.FirstMeeting && !Options.FixFirstKillCooldown.GetBool() && killcool > 10 &&
+            if (MeetingStates.FirstMeeting && InitialKillCooldownOption.TryGet(__instance, out var initialCooldown))
+                killcool = initialCooldown; // 役職ごとの初期キルクール
+            else if (MeetingStates.FirstMeeting && !Options.FixFirstKillCooldown.GetBool() && killcool > 10 &&
 
             (PlayerState.GetByPlayerId(__instance.PlayerId)?.Is10secKillButton == true))
 

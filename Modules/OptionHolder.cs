@@ -1124,6 +1124,7 @@ namespace TownOfHost
         public static OptionItem OptionNameCharLimit;
 
         public static OptionItem OptionUltraLightweightMode;
+        public static OptionItem OptionTitleEnabled;
 
         public static OptionItem OptionAutoFunction;
 
@@ -3152,6 +3153,13 @@ namespace TownOfHost
 
 
 
+            // 二つ名(名前の上の称号)をこの部屋で使うか。OFFにすると表示もコマンドも止まる(部屋ごとの設定)
+            OptionTitleEnabled = BooleanOptionItem.Create(1_400_145, "TitleEnabled", true, TabGroup.Other2, true)
+                .SetHeader(true)
+                .SetColorcode("#ffd36e")
+                .SetOptionName(() => "二つ名を使う")
+                .SetTooltip(() => "OFFにすると、この部屋では二つ名の表示と二つ名のコマンド(nil/nii/nih/nio/nit/code)が使えなくなります。");
+
             OptionUltraLightweightMode = BooleanOptionItem.Create(1_400_140, "UltraLightweightMode", false, TabGroup.Other2, true)
 
                 .SetHeader(true)
@@ -3712,6 +3720,7 @@ namespace TownOfHost
                             SetupRoleOptions(info);
                             info.OptionCreator?.Invoke();
                             MonkeyBehaviorBanOption.Create(info);
+                        InitialKillCooldownOption.Create(info);
                         }
                     }
                     foreach (var info in RoleGojuon.Order(gojuonRoles.Where(r => !RoleGojuon.IsNewRow(r.RoleName))))
@@ -3731,6 +3740,7 @@ namespace TownOfHost
                         SetupRoleOptions(info);
                         info.OptionCreator?.Invoke();
                         MonkeyBehaviorBanOption.Create(info);
+                        InitialKillCooldownOption.Create(info);
                     }
                     return;
                 }
@@ -3783,6 +3793,7 @@ namespace TownOfHost
                         info.OptionCreator?.Invoke();
 
                         MonkeyBehaviorBanOption.Create(info);
+                        InitialKillCooldownOption.Create(info);
 
                     }
 

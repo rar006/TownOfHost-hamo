@@ -920,11 +920,12 @@ namespace TownOfHost
 
             // 二つ名(ロビーのみ)  ※要望により一覧の一番下に置く
             var titleHelp = "";
-            if (TitleSystem.Enabled && (GameStates.IsLobby || includeHostOnlyCommands))
+            if ((includeHostOnlyCommands ? TitleSystem.Enabled : TitleSystem.RoomEnabled) && (GameStates.IsLobby || includeHostOnlyCommands))
             {
                 titleHelp += $"<size=80%></line-height>\n<#ffd36e>【~~~~~~~二つ名(ロビーのみ)~~~~~~~】</color></size><line-height=1.3pic>";
                 // 「コマンド設定」で無効化されたものは載せない(役職ガイドの全コマンド一覧では全部載せる)
                 bool ShowTitle(string sub) => includeHostOnlyCommands || !TitleSystem.IsCommandDisabled(sub);
+                titleHelp += "\n<size=80%>(/cmd を付けずに /nil のようにも使えます)</size>";
                 if (ShowTitle("nil")) titleHelp += "\n/cmd nil - 二つ名の一覧(確率つき・持っているものに✔)";
                 if (ShowTitle("nii")) titleHelp += "\n/cmd nii - インベントリ(★は付けているもの)";
                 if (ShowTitle("nih")) titleHelp += "\n/cmd nih 1.2.3 - インベントリの番号で付ける(複数可) / /cmd nih 0 で外す";

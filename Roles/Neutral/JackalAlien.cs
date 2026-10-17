@@ -1394,6 +1394,10 @@ public sealed class JackalAlien : RoleBase, IMeetingTimeAlterable, ILNKiller, IS
 
                     {
 
+                        // 演出待ちの間に相手・自分が死んだ時や会議が始まった時はキルしない(死んでいる人の二重キル防止)
+                        if (target == null || !target.IsAlive() || target.Data == null || target.Data.IsDead) return;
+                        if (!user.IsAlive() || !GameStates.IsInTask || GameStates.CalledMeeting) return;
+
                         target.SetRealKiller(user);
 
                         user.RpcMurderPlayer(target, true);

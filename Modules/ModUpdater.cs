@@ -76,6 +76,38 @@ namespace TownOfHost
         public static List<Release> releases = new();
 
         public static List<Release> snapshots = new();
+        /// <summary>バージョン切り替え画面に並べる最大数(2列×8段)</summary>
+        public const int MaxSnapshots = 16;
+
+        /// <summary>
+        /// GitHubのリリース説明(Markdown)を、ゲーム内で読める文字にする。
+        /// 見出しの#や太字の**などを消し、ゲームで表示できない絵文字も取り除く。
+        /// </summary>
+        public static string CleanReleaseBody(string body)
+        {
+            if (string.IsNullOrWhiteSpace(body)) return "(説明はありません)";
+            const char LF = (char)10, CR = (char)13, VS16 = (char)0xFE0F, ZWJ = (char)0x200D;
+            var sb = new System.Text.StringBuilder();
+            foreach (var rawLine in body.Replace(CR.ToString(), "").Split(LF))
+            {
+                var line = rawLine.Trim();
+                if (line.Length == 0) { if (sb.Length > 0) sb.Append(LF); continue; }
+                var heading = line.StartsWith("#");
+                line = line.TrimStart('#').Trim().Replace("**", "").Replace("`", "");
+                if (line.StartsWith("- ")) line = "・" + line[2..];
+                // 絵文字(サロゲートペアや異体字セレクタ)は表示できないので消す
+                var clean = new System.Text.StringBuilder();
+                foreach (var c in line)
+                {
+                    if (char.IsSurrogate(c) || c == VS16 || c == ZWJ) continue;
+                    clean.Append(c);
+                }
+                line = clean.ToString().Replace("<", "＜").Replace(">", "＞").Trim();
+                if (line.Length == 0) continue;
+                sb.Append(heading ? $"<b><color=#ffd36e>{line}</color></b>" : line).Append(LF);
+            }
+            return sb.ToString().TrimEnd();
+        }
 
 
 
@@ -310,7 +342,8 @@ namespace TownOfHost
 
                         // 3.x / 1.x
 
-                        if ((!normalizedTag.Contains($"{Main.ModVersion}") && !normalizedTag.StartsWith("3.") && !normalizedTag.StartsWith("1."))
+                        // hamo のバージョン(4.xx.yy)は、今と違う番号のものも選べるように全部出す(以前は今と同じ番号のものだけだった)
+                        if ((!normalizedTag.Contains($"{Main.ModVersion}") && !normalizedTag.StartsWith("4.") && !normalizedTag.StartsWith("3.") && !normalizedTag.StartsWith("1."))
 
                             || normalizedTag.Contains(".30.1")
 
@@ -330,6 +363,8 @@ namespace TownOfHost
 
 
 
+                        if (snapshots.Count >= MaxSnapshots) continue; // 新しい順に、画面に並べられる数まで
+                        release.Info = CleanReleaseBody(release.body);
                         snapshots.Add(release);
 
                     }

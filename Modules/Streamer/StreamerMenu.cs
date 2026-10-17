@@ -11,6 +11,9 @@ namespace TownOfHost
     {
         public static SimpleButton OpenMenu;
         public static SimpleButton SetURL; public static TextMeshPro NowURLText; public static TextMeshPro NowURLTitle;
+        /// <summary>YouTubeのコメント枠の表示ON/OFF</summary>
+        public static SimpleButton CommentFrameToggle;
+        static string CommentFrameLabel() => Main.ShowStreamComments.Value ? "コメント枠: ON" : "コメント枠: OFF";
         public static TextBoxTMP JoinWord; public static TextMeshPro JoinWordTitle;
         public static TextBoxTMP RemoveWord; public static TextMeshPro RemoveWordTitle;
         public static void CreateMenu(MainMenuManager mainmenumanager)
@@ -64,9 +67,8 @@ namespace TownOfHost
                     () =>
                     {
                         var url = GUIUtility.systemCopyBuffer;
-                        if (url.StartsWith("https://youtube") || url.StartsWith("https://www.youtube.com/"))
+                        if (StreamerInfo.TrySetStreamURL(url))
                         {
-                            StreamerInfo.StreamURL = url;
                             NowURLText.text = StreamerInfo.StreamURL;
                         }
                         else
@@ -80,8 +82,30 @@ namespace TownOfHost
                 SetURL.Button.gameObject.SetActive(false);
             }
 
+            if (SimpleButton.IsNullOrDestroyed(CommentFrameToggle))
+            {
+                CommentFrameToggle = MainMenuManagerPatch.CreateButton(
+                    "CommentFrameToggle",
+                    new Vector3(-1.9f, -2.35f, -5),
+                    new(245, 46, 32, byte.MaxValue),
+                    new(212, 113, 106, byte.MaxValue),
+                    () =>
+                    {
+                        Main.ShowStreamComments.Value = !Main.ShowStreamComments.Value;
+                        if (CommentFrameToggle?.Label != null) CommentFrameToggle.Label.text = CommentFrameLabel();
+                    },
+                    CommentFrameLabel(),
+                    transform: mainmenumanager.screenTint.transform
+                    );
+                CommentFrameToggle.Button.gameObject.SetActive(false);
+            }
             void SetOpenMenu()
             {
+                if (!SimpleButton.IsNullOrDestroyed(CommentFrameToggle))
+                {
+                    CommentFrameToggle.Button.gameObject.SetActive(true);
+                    if (CommentFrameToggle.Label != null) CommentFrameToggle.Label.text = CommentFrameLabel();
+                }
                 mainmenumanager.screenTint.enabled = true;
                 if (JoinWord is not null)
                 {
@@ -151,6 +175,7 @@ namespace TownOfHost
                 RemoveWord?.gameObject?.SetActive(false);
                 NowURLText?.gameObject?.SetActive(false);
                 SetURL?.Button?.gameObject?.SetActive(false);
+                if (!SimpleButton.IsNullOrDestroyed(CommentFrameToggle)) CommentFrameToggle.Button.gameObject.SetActive(false);
                 NowURLTitle?.gameObject?.SetActive(false);
                 JoinWordTitle?.gameObject?.SetActive(false);
                 RemoveWordTitle?.gameObject?.SetActive(false);

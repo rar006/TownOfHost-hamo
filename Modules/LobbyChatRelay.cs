@@ -28,6 +28,16 @@ public static class LobbyChatRelay
     private static int _failCount;
     private static DateTime _retryAfter = DateTime.MinValue;
 
+    private class AnnouncementList
+    {
+        public System.Collections.Generic.List<Announcement> Items { get; set; } = new();
+    }
+
+    /// <summary>最後に表示したメッセージの時刻(ミリ秒)。これより新しいものだけ出す</summary>
+    private static long _lastShownAt;
+    /// <summary>Botが古くて /list が無い時は、従来の /current(最新1件だけ)を使う</summary>
+    private static bool _useLegacy;
+
     public static async Task PollAsync()
     {
         if (string.IsNullOrEmpty(LobbyChatRemoteConfig.EndpointUrl)) return;
@@ -38,7 +48,13 @@ public static class LobbyChatRelay
         try
         {
             var roomCode = GetCurrentRoomCode();
-            var url = $"{LobbyChatRemoteConfig.EndpointUrl.TrimEnd('/')}/current?roomCode={Uri.EscapeDataString(roomCode)}";
+            var nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            // ロビーに入った直後に古いメッセージを毎回出さないよう、5分以内のものだけにする
+            var since = Math.Max(_lastShownAt, nowMs - (long)TimeSpan.FromMinutes(5).TotalMilliseconds);
+            var baseUrl = LobbyChatRemoteConfig.EndpointUrl.TrimEnd('/');
+            var url = _useLegacy
+                ? $"{baseUrl}/current?roomCode={Uri.EscapeDataString(roomCode)}"
+                : $"{baseUrl}/list?roomCode={Uri.EscapeDataString(roomCode)}&since={since}";
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             if (!string.IsNullOrEmpty(LobbyChatRemoteConfig.ApiKey))
                 request.Headers.Add("Authorization", $"Bearer {LobbyChatRemoteConfig.ApiKey}");
@@ -46,24 +62,33 @@ public static class LobbyChatRelay
             using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
             _failCount = 0;
             _retryAfter = DateTime.MinValue;
+            if (!_useLegacy && response.StatusCode == System.Net.HttpStatusCode.NotFound) { _useLegacy = true; return; }
             if (!response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.NoContent) return;
 
             var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            var announcement = JsonSerializer.Deserialize<Announcement>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            if (announcement == null || string.IsNullOrEmpty(announcement.Id)) return;
-            if (announcement.Id == _lastShownId) return; // 既に表示済み
-
-            _lastShownId = announcement.Id;
-
-            // ロビーに入った直後、過去のアナウンス(かなり古いもの)を毎回表示しないよう、
-            // 直近5分以内のものだけ表示する。
-            var ageMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - announcement.At;
-            if (ageMs > TimeSpan.FromMinutes(5).TotalMilliseconds) return;
-
-            if (!string.IsNullOrWhiteSpace(announcement.Text))
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var items = new System.Collections.Generic.List<Announcement>();
+            if (_useLegacy)
             {
+                var one = JsonSerializer.Deserialize<Announcement>(json, options);
+                if (one != null) items.Add(one);
+            }
+            else
+            {
+                var list = JsonSerializer.Deserialize<AnnouncementList>(json, options);
+                if (list?.Items != null) items.AddRange(list.Items);
+            }
+
+            foreach (var announcement in items)
+            {
+                if (announcement == null || string.IsNullOrEmpty(announcement.Id)) continue;
+                if (announcement.Id == _lastShownId || announcement.At <= since) continue; // 既に表示済み・古いもの
+                _lastShownId = announcement.Id;
+                _lastShownAt = Math.Max(_lastShownAt, announcement.At);
+                if (string.IsNullOrWhiteSpace(announcement.Text)) continue;
+
                 // 要望により、送信者名ではなく "[タグ] 内容" という表示形式にしている。
-                // タグはDiscord側の /chat コマンドで毎回変更できる(省略時は "hamo")。
+                // タグはDiscord側の /say・/chat コマンドで毎回変更できる(省略時は "hamo")。
                 var tag = string.IsNullOrWhiteSpace(announcement.Tag) ? "hamo" : announcement.Tag;
                 var text = $"<size=90%><color=#ffcc00>[{tag}]</color> {announcement.Text}</size>";
                 // ここは通信後のワーカースレッドなので、チャット送信(ゲームのオブジェクト操作)はメインスレッドで行う

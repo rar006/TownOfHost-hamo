@@ -882,7 +882,7 @@ namespace TownOfHost
 
                             {
 
-                                PlayerCatch.AllPlayerControls.Do(pc => pc.SetKillCooldown((Main.AllPlayerKillCooldown.TryGetValue(pc.PlayerId, out var time) ? time : Main.LastKillCooldown.Value) - 0.7f, force: true, delay: true));
+                                PlayerCatch.AllPlayerControls.Do(pc => pc.SetKillCooldown(InitialKillCooldownOption.Resolve(pc, Main.AllPlayerKillCooldown.TryGetValue(pc.PlayerId, out var time) ? time : Main.LastKillCooldown.Value) - 0.7f, force: true, delay: true));
 
                             }, 0.7f, "FixKillCooldownTask", null);
 
@@ -896,7 +896,7 @@ namespace TownOfHost
 
                             {
 
-                                PlayerCatch.AllPlayerControls.Do(pc => pc.SetKillCooldown(10f, force: true, delay: true));
+                                PlayerCatch.AllPlayerControls.Do(pc => pc.SetKillCooldown(InitialKillCooldownOption.Resolve(pc, 10f), force: true, delay: true));
 
                             }, 0.7f, "FixKillCooldownTask", null);
 

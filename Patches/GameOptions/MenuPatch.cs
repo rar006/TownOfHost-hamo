@@ -1355,17 +1355,25 @@ namespace TownOfHost
                 // 上のアイコン(TOH HAMO/GAME/OTHER/OTHER2)と同じ大きさのボタンを作り、絵の代わりに文字を出す。
                 try
                 {
-                    // アイコンと同じ大きさの単色の絵(TOH HAMO のアイコンの大きさに合わせる)
-                    var refSprite = LoadTopTabIcon(TabGroup.MainSettings, false);
-                    int tw = refSprite != null ? Mathf.Clamp((int)refSprite.rect.width, 8, 1024) : 120;
-                    int th = refSprite != null ? Mathf.Clamp((int)refSprite.rect.height, 8, 1024) : 120;
-                    float ppu = refSprite != null ? refSprite.pixelsPerUnit : 120f;
-                    var tex = new Texture2D(tw, th);
-                    var px = new Color[tw * th];
-                    for (var p = 0; p < px.Length; p++) px[p] = Color.white;
-                    tex.SetPixels(px);
+                    // 単色の正方形(1x1の絵)。大きさは下で「画面上の見た目」で合わせる
+                    var tex = new Texture2D(1, 1);
+                    tex.SetPixel(0, 0, Color.white);
                     tex.Apply();
-                    var tileSprite = Sprite.Create(tex, new Rect(0, 0, tw, th), new Vector2(0.5f, 0.5f), ppu);
+                    var tileSprite = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
+                    // 隣の TOH HAMO アイコンが画面上で何マスの大きさに見えているかを測り、同じ大きさの正方形にする。
+                    // (状態ごとの絵の拡大率がアイコン用に調整されていて、そのまま使うと横長・大きすぎになっていた)
+                    var tileWorldSize = 0.7f;
+                    try
+                    {
+                        var refSr = templateTabButton.inactiveSprites != null ? templateTabButton.inactiveSprites.GetComponent<SpriteRenderer>() : null;
+                        if (refSr != null && refSr.sprite != null)
+                        {
+                            var sz = refSr.bounds.size;
+                            var m = Mathf.Min(sz.x, sz.y);
+                            if (m > 0.2f && m < 3f) tileWorldSize = m;
+                        }
+                    }
+                    catch { }
 
                     void MakeTile(string objName, float offsetX, Color baseColor, Func<string> getText, Action onClick)
                     {
@@ -1382,7 +1390,14 @@ namespace TownOfHost
                             var sr = obj.GetComponent<SpriteRenderer>();
                             if (sr == null) continue;
                             sr.sprite = tileSprite;
+                            sr.drawMode = SpriteDrawMode.Simple;
                             sr.color = color;
+                            // 親の拡大率を打ち消して、画面上で tileWorldSize の正方形になるようにする
+                            var parentScale = obj.transform.parent != null ? obj.transform.parent.lossyScale : Vector3.one;
+                            obj.transform.localScale = new Vector3(
+                                parentScale.x == 0 ? tileWorldSize : tileWorldSize / parentScale.x,
+                                parentScale.y == 0 ? tileWorldSize : tileWorldSize / parentScale.y,
+                                1f);
                         }
                         // 文字(「有効なものだけ表示」ボタンの文字を流用)
                         if (activeonly != null && activeonly.buttonText != null)
@@ -1397,7 +1412,7 @@ namespace TownOfHost
                             label.enableAutoSizing = true;
                             label.fontSizeMin = 0.5f;
                             label.fontSizeMax = 2.4f;
-                            label.rectTransform.sizeDelta = new Vector2(0.66f, 0.56f); // 見た目のタイルの大きさ(ワールド単位)
+                            label.rectTransform.sizeDelta = new Vector2(tileWorldSize * 0.92f, tileWorldSize * 0.8f); // タイルの中に収める(ワールド単位)
                             label.color = Color.white;
                             void Refresh() { if (label != null) label.text = getText(); }
                             Refresh();

@@ -314,7 +314,9 @@ namespace TownOfHost
 
         {
 
-            var SubRoles = PlayerState.GetByPlayerId(player.PlayerId).SubRoles;
+            // ダミー(血痕など)はPlayerStateを持たないので、属性なしとして扱う(ここで落ちると変身そのものが止まっていた)
+            var SubRoles = PlayerState.GetByPlayerId(player.PlayerId)?.SubRoles;
+            if (SubRoles == null) return "";
 
             if (SubRoles.Count == 0) return "";
 

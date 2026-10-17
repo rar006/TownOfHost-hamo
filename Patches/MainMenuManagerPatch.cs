@@ -559,25 +559,33 @@ namespace TownOfHost
                         betaVersionMenu.SetActive(true);
 
                         ModUpdater.CheckRelease(all: true).GetAwaiter().GetResult();
-
                         int i = 0;
-
                         if (ModUpdater.snapshots.Count == 0) return;
-
-
-
+                        // 右側の黒い部分: 選んでいる(マウスを乗せた)バージョンの説明
+                        var infoText = TMPTemplate.Create(
+                            "VersionInfoText",
+                            "",
+                            Color.white,
+                            1.6f,
+                            TMPro.TextAlignmentOptions.TopLeft,
+                            true,
+                            betaVersionMenu.transform);
+                        infoText.rectTransform.pivot = new Vector2(0f, 1f);
+                        infoText.rectTransform.sizeDelta = new Vector2(3.2f, 3.1f);
+                        infoText.transform.localPosition = new Vector3(0.95f, 1.05f, 0f);
+                        infoText.enableWordWrapping = true;
+                        infoText.overflowMode = TMPro.TextOverflowModes.Ellipsis;
+                        infoText.fontSizeMin = 0.8f;
+                        infoText.enableAutoSizing = true;
+                        infoText.fontSizeMax = 1.6f;
+                        void ShowInfo(ModUpdater.Release r) => infoText.text = $"<size=130%><b>v{r.TagName.TrimStart('v', 'V').Trim('S').Trim('s')}</b></size>\n{r.Info}";
+                        ShowInfo(ModUpdater.snapshots[0]); // 最初は一番新しいもの
                         foreach (var release in ModUpdater.snapshots)
-
                         {
-
-                            int column = i % 4;
-
-                            int row = i / 4;
-
-                            // X 座標と Y 座標を計算
-
+                            // 左側に2列で並べる(上から新しい順)。右側は説明を出すので空けておく
+                            int column = i / 8;
+                            int row = i % 8;
                             float x = -1.6891f + (1.6891f * column);
-
                             float y = 0.8709f - (0.3927f * row);
 
                             var button2 = new SimpleButton(
@@ -606,9 +614,8 @@ namespace TownOfHost
 
                             i++;
 
-                            button2.Button.OnMouseOver.AddListener((Action)(() => ToolTip.Show(button2.Button, release.Info, null)));
-
-                            button2.Button.OnMouseOut.AddListener((Action)ToolTip.Hide);
+                            // マウスを乗せると右側に説明を出す(押すとそのバージョンに切り替え)
+                            button2.Button.OnMouseOver.AddListener((Action)(() => ShowInfo(release)));
 
                         }
 
@@ -857,7 +864,7 @@ namespace TownOfHost
         // 戻るボタンはプレイ画面の入れ物の中にあるため、画面を閉じれば一緒に消える。
         private static void HidePlayBackButton() { }
         // バージョン切り替え/統計の「閉じる✘」ボタン位置(右パネルの右上。ずれる場合はここを調整)
-        private static readonly Vector3 CloseSubMenuButtonPosition = new(2.9f, 1.25f, -6f);
+        private static readonly Vector3 CloseSubMenuButtonPosition = new(3.5f, 0.95f, -6f); // 要望で少し右下へ
         private static bool suppressOpenMenuPostfixOnce;
         /// <summary>ホームのUI(hamoロゴ・追加ボタン群)を隠して、サブ画面(統計/バージョン切り替え)用の✘ボタンを表示する。</summary>
         internal static void EnterSubMenu(MainMenuManager mainMenu)

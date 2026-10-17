@@ -373,7 +373,7 @@ namespace TownOfHost.Modules.ChatManager
                                 }, true);
                             }
                             GameDataSerializePatch.SerializeMessageCount--;
-                            Nwriter.StartRpc(senderplayer.Data.NetId, (byte)RpcCalls.SetName)
+                            Nwriter.StartRpc(senderplayer.NetId, (byte)RpcCalls.SetName)
                             .Write(senderplayer.Data.NetId)
                             .Write(name)
                             .EndRpc();
@@ -383,6 +383,16 @@ namespace TownOfHost.Modules.ChatManager
                     }
                     senderplayer.Die(DeathReason.Kill, false);
                     IsForceSend = false;
+                    // 会議中は、送り終わったらホストの名前(色付き)を送り直す(生きている時と同じ)
+                    if (GameStates.CalledMeeting && Main.MessagesToSend.Count < 1)
+                    {
+                        var host = senderplayer;
+                        _ = new LateTask(() =>
+                        {
+                            NameColorManager.RpcMeetingColorName(host);
+                            ChatUpdatePatch.DoBlockChat = false;
+                        }, Main.LagTime, "Setname", true);
+                    }
                     if (chatController is not null)
                         chatController.timeSinceLastMessage = sendTo is byte.MaxValue ? 0 : Main.MessageWait.Value - 0.2f;
                     return;

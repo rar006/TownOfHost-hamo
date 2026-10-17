@@ -39,6 +39,20 @@ public sealed class Judge : RoleBase
     {
     }
 
+    /// <summary>
+    /// ジャッジの「判決(Overrule)」でこの人を追放してよいか。
+    /// マッドメイト・第三陣営・ラバーズは、それぞれの設定がONの時だけ対象にできる。
+    /// </summary>
+    public static bool CanOverrule(PlayerControl target)
+    {
+        if (target == null || !target.IsAlive()) return false;
+        var role = target.GetCustomRole();
+        if (role.IsMadmate() && !CanKillMadmate.GetBool()) return false;
+        if (role.IsNeutral() && !CanKillNeutrals.GetBool()) return false;
+        if (target.IsLovers() && !CanKillLovers.GetBool()) return false;
+        return true;
+    }
+
     public static void SetUpCustomOption()
     {
         // 「必要タスク」を親見出しにし、その直下へ3種類のタスク数を配置する。

@@ -480,41 +480,42 @@ public static class BugReportSystem
         }
     }
 
-    /// <summary>選択した画像・動画ファイルをチケットチャンネルに送信する。成功したかどうかと、
-    /// 失敗時のメッセージを返す。</summary>
-    public static async Task<(bool ok, string message)> UploadAttachmentAsync(string ticketId, string filePath)
+    /// <summary>選択した画像・動画ファイル(最大 Win32FileDialog.MaxAttachments 件)を、1つの投稿にまとめてチケットチャンネルに送信する。
+    /// 成功したかどうかと、失敗時のメッセージを返す。author を渡すと「誰が送ったか」も表示される(専用チャットから送る時)。</summary>
+    public static async Task<(bool ok, string message)> UploadAttachmentsAsync(string ticketId, IReadOnlyList<string> filePaths, string author = null)
     {
         if (string.IsNullOrEmpty(ticketId)) return (false, "送信先のチケットが見つかりません。");
-        if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) return (false, "ファイルが見つかりません。");
+        if (filePaths == null || filePaths.Count == 0) return (false, "ファイルが選ばれていません。");
+        if (filePaths.Count > Win32FileDialog.MaxAttachments) return (false, $"添付は{Win32FileDialog.MaxAttachments}つまでです。");
 
         try
         {
-            // Discordの一般的な添付上限(Nitroなし)に合わせ、25MBまでに制限する。
+            // Discordの一般的な添付上限(Nitroなし)に合わせ、1つ25MBまでに制限する。
             const long maxBytes = 25L * 1024 * 1024;
-            var fileInfo = new FileInfo(filePath);
-            if (fileInfo.Length > maxBytes)
-                return (false, "ファイルサイズが大きすぎます(25MBまで)。");
-
-            var ext = Path.GetExtension(filePath).ToLowerInvariant();
             var allowedExtensions = new[] { ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".mp4", ".webm", ".mov", ".avi" };
-            if (Array.IndexOf(allowedExtensions, ext) < 0)
-                return (false, "画像または動画ファイルを選択してください。");
-
-            byte[] fileBytes;
-            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            using (var ms = new MemoryStream())
+            var files = new List<(byte[] bytes, string name, string ext)>();
+            foreach (var filePath in filePaths)
             {
+                if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) return (false, "ファイルが見つかりません。");
+                var name = Path.GetFileName(filePath);
+                if (new FileInfo(filePath).Length > maxBytes) return (false, $"{name} が大きすぎます(1つ25MBまで)。");
+                var ext = Path.GetExtension(filePath).ToLowerInvariant();
+                if (Array.IndexOf(allowedExtensions, ext) < 0) return (false, $"{name} は画像・動画ではありません。");
+
+                using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var ms = new MemoryStream();
                 await fs.CopyToAsync(ms).ConfigureAwait(false);
-                fileBytes = ms.ToArray();
+                files.Add((ms.ToArray(), name, ext));
             }
 
-            using var fileContent = new ByteArrayContent(fileBytes);
-            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(GetMimeType(ext));
-
-            using var form = new MultipartFormDataContent
+            using var form = new MultipartFormDataContent();
+            foreach (var (bytes, name, ext) in files)
             {
-                { fileContent, "file", Path.GetFileName(filePath) },
-            };
+                var fileContent = new ByteArrayContent(bytes);
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(GetMimeType(ext));
+                form.Add(fileContent, "file", name);
+            }
+            if (!string.IsNullOrEmpty(author)) form.Add(new StringContent(author, Encoding.UTF8), "author");
 
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
@@ -530,6 +531,24 @@ public static class BugReportSystem
             {
                 Logger.Warn($"添付ファイルの送信に失敗しました (HTTP {(int)response.StatusCode})", "BugReportSystem");
                 return (false, "添付ファイルの送信に失敗しました。少し時間をおいて再度お試しください。");
+            }
+
+            // 専用チャットの履歴にも「添付した」ことを残す(ゲーム側から送った分はサーバーから戻ってこないため)
+            if (!string.IsNullOrEmpty(author))
+            {
+                var ticket = GetTicket(ticketId);
+                if (ticket != null)
+                {
+                    ticket.Messages.Add(new TicketMessage
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        From = "game",
+                        Author = author,
+                        Text = $"[添付 {files.Count}件] " + string.Join(", ", files.Select(f => f.name)),
+                        At = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    });
+                    Save();
+                }
             }
             return (true, "");
         }
@@ -579,10 +598,19 @@ public static class BugReportRemoteConfig
     /// <summary>修正完了後も追加のバグ報告ボタンを表示するか。Discord運用に合わせて切り替える。</summary>
     public static bool AllowAdditionalReports = true;
 
-    /// <summary>同時に保持できるバグ報告数。サーバー側の上限3件と一致させる。</summary>
+    /// <summary>同時に保持できる「未対応」のバグ報告数。サーバー側の上限3件と一致させる。</summary>
     public const int MaxTickets = 3;
 
-    public static bool CanSubmitAdditionalReport => AllowAdditionalReports && BugReportSystem.Tickets.Count < MaxTickets;
+    /// <summary>一覧に並べるバグ報告の数(新しい順)。既読・修正中・修正済みの報告も履歴として見られるよう、上限より多めにする。</summary>
+    public const int MaxListedTickets = 5;
+
+    /// <summary>
+    /// 枠を使っている(まだ未対応の)報告の数。既読・修正中・修正済みになった報告は数えない(サーバー側と同じ)。
+    /// (以前は状態に関係なく持っている報告の数で判断していたため、対応済みでも追加の報告ができなかった)
+    /// </summary>
+    public static int ActiveTicketCount => BugReportSystem.Tickets.Count(t => t.Status is not ("in_progress" or "resolved" or "read"));
+
+    public static bool CanSubmitAdditionalReport => AllowAdditionalReports && ActiveTicketCount < MaxTickets;
 
     /// <summary>MOD↔Bot間の認証キー。Bot側の.env(SURVEY_API_SECRET)と必ず同じ値にすること。</summary>
     public static string ApiKey = "e14ow2cvdpx5";

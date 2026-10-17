@@ -98,6 +98,10 @@ namespace TownOfHost.Roles.Neutral
                 {
                     _ = new LateTask(() =>
                     {
+                        // キルの演出を待っている1.2秒の間に、相手が死んだ・自分が死んだ・会議が始まった時はキルしない
+                        // (以前は確認していなかったため、もう死んでいる人がもう一度キルされることがあった)
+                        if (target == null || !target.IsAlive() || target.Data == null || target.Data.IsDead) return;
+                        if (!user.IsAlive() || !GameStates.IsInTask || GameStates.CalledMeeting) return;
                         target.SetRealKiller(user);
                         user.RpcMurderPlayer(target, true);
                     }, 1.2f);

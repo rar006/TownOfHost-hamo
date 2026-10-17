@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using HarmonyLib;
@@ -29,6 +30,9 @@ namespace TownOfHost.Patches
         private static TextMeshPro _typingIndicatorText;
         private static SimpleTextBox _inputBox;
         private static SimpleButton _sendButton;
+        private static SimpleButton _attachButton;
+        private static readonly List<string> _pendingAttachments = new(); // 次の送信で一緒に送る画像・動画(最大3つ)
+        private static bool _sending;
         private static SimpleButton _reloadButton;
         private static SimpleButton _scrollUpButton;
         private static SimpleButton _scrollDownButton;
@@ -136,12 +140,14 @@ namespace TownOfHost.Patches
                 _historyText.text = "<color=#aaaaaa>このチケットは見つかりませんでした。</color>";
                 _inputBox?.SetActive(false);
                 _sendButton?.Button.gameObject.SetActive(false);
+                _attachButton?.Button.gameObject.SetActive(false);
                 UpdateScrollButtonsInteractable(0, 0);
                 return;
             }
 
             _inputBox?.SetActive(true);
             _sendButton?.Button.gameObject.SetActive(true);
+            _attachButton?.Button.gameObject.SetActive(!Main.IsAndroid()); // Androidではファイル選択が使えないので出さない
 
             var all = ticket.Messages;
             var totalCount = all.Count;
@@ -177,6 +183,13 @@ namespace TownOfHost.Patches
                     if (msg.Resolved)
                     {
                         sb.Append("<align=center><color=#4caf50>― 修正完了 ―</color></align>\n");
+                        continue;
+                    }
+
+                    // 送信失敗などのお知らせ(自分の画面だけ): 中央に表示
+                    if (msg.From == "system")
+                    {
+                        sb.Append($"<align=center><size=85%>{msg.Text}</size></align>\n\n");
                         continue;
                     }
 
@@ -375,6 +388,18 @@ namespace TownOfHost.Patches
                 _sendButton.Scale = new Vector2(1.1f, 0.45f);
                 _sendButton.FontSize = 1.3f;
 
+                // 画像・動画の添付ボタン(送信ボタンの上)。Ctrl+クリックで3つまで選べる
+                _attachButton = new SimpleButton(
+                    parent: _panelRoot.transform,
+                    name: "BugChatAttachButton",
+                    localPosition: new Vector3(1.7f, -1.65f, -1f),
+                    normalColor: new Color32(60, 60, 60, 230),
+                    hoverColor: new Color32(90, 90, 90, 230),
+                    action: () => OnAttachClicked(),
+                    label: "添付");
+                _attachButton.Scale = new Vector2(1.1f, 0.38f);
+                _attachButton.FontSize = 1.2f;
+
                 BugUiTheme.Apply(_panelRoot, PanelSize, title);
                 _panelRoot.SetActive(false);
                 return true;
@@ -410,26 +435,82 @@ namespace TownOfHost.Patches
             if (renderer != null) renderer.sortingOrder = order;
         }
 
-        private static void SendCurrentInput()
+        private static void OnAttachClicked()
         {
-            var text = _inputBox?.Text?.Trim();
-            if (string.IsNullOrEmpty(text)) return;
-
-            _inputBox.SetText("");
-            SetTypingIndicator(false);
-            _ = SendAsync(text);
+            if (Main.IsAndroid()) return;
+            // 選び直すと入れ替わる。4つ以上選んだ時は最初の3つだけ(ダイアログ側で切り捨て済み)
+            Win32FileDialog.ShowOpenImageOrVideoDialogAsync((paths, truncated) =>
+            {
+                _pendingAttachments.Clear();
+                _pendingAttachments.AddRange(paths);
+                UpdateAttachLabel();
+            });
         }
 
-        private static async System.Threading.Tasks.Task SendAsync(string text)
+        private static void UpdateAttachLabel()
         {
-            var playerName = PlayerControl.LocalPlayer != null
-                ? PlayerControl.LocalPlayer.GetNameWithRole().RemoveHtmlTags()
-                : "プレイヤー";
+            if (_attachButton?.Label == null) return;
+            _attachButton.Label.text = _pendingAttachments.Count == 0 ? "添付" : $"✓{_pendingAttachments.Count}件";
+        }
 
-            var error = await BugReportSystem.ReplyAsync(_currentTicketId, text, playerName).ConfigureAwait(false);
-            RefreshHistory();
+        private static void SendCurrentInput()
+        {
+            if (_sending) return;
+            var text = _inputBox?.Text?.Trim();
+            var files = new List<string>(_pendingAttachments);
+            // 文字が無くても、画像だけで送れる
+            if (string.IsNullOrEmpty(text) && files.Count == 0) return;
+
+            _inputBox?.SetText("");
+            _pendingAttachments.Clear();
+            UpdateAttachLabel();
+            SetTypingIndicator(false);
+            _ = SendAsync(text, files);
+        }
+
+        private static async System.Threading.Tasks.Task SendAsync(string text, List<string> files)
+        {
+            _sending = true;
+            try
+            {
+                var playerName = PlayerControl.LocalPlayer != null
+                    ? PlayerControl.LocalPlayer.GetNameWithRole().RemoveHtmlTags()
+                    : "プレイヤー";
+                var ticketId = _currentTicketId;
+
+                if (!string.IsNullOrEmpty(text))
+                {
+                    var error = await BugReportSystem.ReplyAsync(ticketId, text, playerName).ConfigureAwait(false);
+                    if (!string.IsNullOrEmpty(error)) AddLocalNotice(ticketId, error);
+                }
+                if (files.Count > 0)
+                {
+                    var (ok, message) = await BugReportSystem.UploadAttachmentsAsync(ticketId, files, playerName).ConfigureAwait(false);
+                    if (!ok) AddLocalNotice(ticketId, message);
+                }
+            }
+            finally
+            {
+                _sending = false;
+            }
+            MainThreadDispatcher.Enqueue(() => RefreshHistory());
             // 要望により、送信結果のシステムメッセージはゲーム内チャットには出さない
-            // (エラー時のみ、専用チャット内の履歴更新で分かるようにする)。
+            // (エラー時のみ、専用チャット内の履歴に表示する)。
+        }
+
+        /// <summary>送信に失敗した時など、自分の画面の履歴にだけ出すお知らせ(サーバーには送らない)</summary>
+        private static void AddLocalNotice(string ticketId, string message)
+        {
+            var ticket = BugReportSystem.GetTicket(ticketId);
+            if (ticket == null || string.IsNullOrEmpty(message)) return;
+            ticket.Messages.Add(new BugReportSystem.TicketMessage
+            {
+                Id = Guid.NewGuid().ToString(),
+                From = "system",
+                Author = "",
+                Text = $"<color=#ff6666>{message}</color>",
+                At = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            });
         }
 
         // メインメニューが開いている間、パネルが開いていれば定期ポーリングする。

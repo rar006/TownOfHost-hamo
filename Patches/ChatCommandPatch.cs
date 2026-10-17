@@ -4819,6 +4819,9 @@ namespace TownOfHost
 
 
 
+            // MOD未導入の人の二つ名コマンドは、ホストが代わりに処理する(/cmd nil でも /nil でも使える)
+            if (TitleSystem.TryHandleRemoteCommand(player, text)) { canceled = true; return; }
+
             if (text.StartsWith("/") && !text.Contains("cmd"))
 
             {
@@ -4828,11 +4831,6 @@ namespace TownOfHost
             }
 
             if (args[0] != "/cmd" || args.Length <= 1) return;//cmdが無い場合は処理をしない
-
-
-
-            // MOD未導入の人の二つ名コマンドは、ホストが代わりに処理する
-            if (TitleSystem.TryHandleRemoteCommand(player, text)) { canceled = true; return; }
 
             if (GuessManager.GuesserMsg(player, text)) { canceled = true; return; }
 

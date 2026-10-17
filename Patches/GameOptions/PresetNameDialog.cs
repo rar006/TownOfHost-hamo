@@ -72,21 +72,29 @@ public static class PresetNameDialog
     {
         try
         {
+            CrashTrace.Mark("PresetNameDialog.Open start");
             var menu = GameSettingMenu.Instance;
             if (menu == null) return;
-            if (root == null || root.transform.parent != menu.transform)
+            // 壊れた(Destroyされた)入力欄を使い回さないよう、Unityのnull判定で入力欄の生死も確認する
+            if (root == null || root.transform.parent != menu.transform || nameBox == null || nameBox.TextBox == null)
             {
+                CrashTrace.Mark("PresetNameDialog.Build");
+                if (root != null) UnityEngine.Object.Destroy(root);
                 Build(menu.transform);
             }
+            CrashTrace.Mark("PresetNameDialog.ApplySorting");
             ApplySorting(menu.transform);
             root.SetActive(true);
+            CrashTrace.Mark("PresetNameDialog.SetText");
             nameBox.SetText(GetCurrentPresetName());
 #if HAMO_ANDROID
             OpenKeyboard();
 #else
+            CrashTrace.Mark("PresetNameDialog.Focus");
             SafeFocus.Give(nameBox.TextBox);
 #endif
             Tick();
+            CrashTrace.Mark("PresetNameDialog.Open done");
         }
         catch (Exception e)
         {
@@ -167,8 +175,9 @@ public static class PresetNameDialog
 
     private static void Apply()
     {
-        var text = nameBox?.Text ?? "";
-        if (!string.IsNullOrWhiteSpace(text)) SetCurrentPresetName(text.Trim());
+        var text = (nameBox?.Text ?? "").Trim();
+        // 「/」で始まる名前(チャットのコマンドが入ってしまったもの)は付けない
+        if (text.Length > 0 && !text.StartsWith("/")) SetCurrentPresetName(text);
         Close();
     }
 

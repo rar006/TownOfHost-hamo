@@ -169,7 +169,9 @@ public class SimpleTextBox
             RefreshDisplay(scrollToEnd: true);
             return;
 #endif
+            CrashTrace.Mark($"SimpleTextBox.Click {TextBox?.name}");
             TextBox.GiveFocus();
+            CrashTrace.Mark("SimpleTextBox.Click focused");
             onFocusGained?.Invoke();
             SetCaretVisible(true);
             RefreshDisplay(scrollToEnd: false);

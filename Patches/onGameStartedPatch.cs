@@ -40,6 +40,14 @@ namespace TownOfHost
 
     {
 
+        /// <summary>
+        /// 入ってきたばかりで色がまだ決まっていない人(-1)などがいても開始処理が止まらないよう、範囲外の色は白にする。
+        /// (以前はここで配列の範囲外エラーになり、開始処理が途中で壊れて未導入の人が落ちていた)
+        /// </summary>
+        static UnityEngine.Color SafePlayerColor(int colorId)
+            => colorId >= 0 && colorId < Palette.PlayerColors.Length ? Palette.PlayerColors[colorId] : UnityEngine.Color.white;
+
+
         public static void Postfix(AmongUsClient __instance)
 
         {
@@ -331,7 +339,7 @@ namespace TownOfHost
 
                     Main.AllPlayerNames[pc.PlayerId] = pl?.Data?.PlayerName;
 
-                    Main.PlayerColors[pc.PlayerId] = Palette.PlayerColors[colorId];
+                    Main.PlayerColors[pc.PlayerId] = SafePlayerColor(colorId);
 
                     pc.cosmetics.nameText.text = pl.name;
 
@@ -379,7 +387,7 @@ namespace TownOfHost
 
 
 
-                    Main.PlayerColors[pc.PlayerId] = Palette.PlayerColors[colorId];
+                    Main.PlayerColors[pc.PlayerId] = SafePlayerColor(colorId);
 
                     pc.cosmetics.nameText.text = pc.name;
 

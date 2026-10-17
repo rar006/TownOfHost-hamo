@@ -57,41 +57,46 @@ public static class Win32FileDialog
     [DllImport("user32.dll")]
     private static extern IntPtr GetActiveWindow();
 
-    /// <summary>
-    /// 画像・動画ファイルを1つ選ぶダイアログを表示する。
-    /// 呼び出しはブロッキング(ダイアログを閉じるまで戻らない)なので、
-    /// フレーム内で完結する短い処理からのみ呼ぶこと。
-    /// </summary>
-    /// <returns>選択されたファイルの絶対パス。キャンセルされた場合はnull。</returns>
+    private const int OFN_ALLOWMULTISELECT = 0x00000200;
+
+    /// <summary>1回に選べる添付ファイルの最大数</summary>
+    public const int MaxAttachments = 3;
+
     static volatile bool dialogOpen;
 
     /// <summary>
-    /// ファイル選択ダイアログを別スレッドで開く(ゲームを止めない)。選んだら onSelected がゲームのスレッドで呼ばれる。
+    /// 画像・動画ファイルを選ぶダイアログを別スレッドで開く(ゲームを止めない)。Ctrl/Shift+クリックで複数選べる。
+    /// 選んだら onSelected がゲームのスレッドで呼ばれる(選んだ順・最大 MaxAttachments 件。多く選んだ分は切り捨てて truncated=true)。
     /// ゲームのスレッドで開くと、閉じるまでゲーム全体が止まり、全画面などではフリーズやクラッシュの原因になる。
     /// </summary>
-    public static void ShowOpenImageOrVideoDialogAsync(Action<string> onSelected)
+    public static void ShowOpenImageOrVideoDialogAsync(Action<string[], bool> onSelected)
     {
         if (!OperatingSystem.IsWindows() || dialogOpen) return;
         dialogOpen = true;
         var thread = new System.Threading.Thread(() =>
         {
-            string path = null;
-            try { path = ShowOpenImageOrVideoDialog(ownerless: true); }
+            string[] paths = null;
+            try { paths = ShowOpenImageOrVideoDialog(ownerless: true); }
             finally { dialogOpen = false; }
-            if (!string.IsNullOrEmpty(path)) MainThreadDispatcher.Enqueue(() => onSelected?.Invoke(path));
+            if (paths == null || paths.Length == 0) return;
+            var truncated = paths.Length > MaxAttachments;
+            if (truncated) paths = paths[..MaxAttachments];
+            MainThreadDispatcher.Enqueue(() => onSelected?.Invoke(paths, truncated));
         })
         { IsBackground = true, Name = "TOH-hamo FileDialog" };
         thread.SetApartmentState(System.Threading.ApartmentState.STA); // コモンダイアログはSTAのスレッドで開く必要がある
         thread.Start();
     }
 
-    public static string ShowOpenImageOrVideoDialog(bool ownerless = false)
+    /// <summary>画像・動画ファイルを選ぶダイアログ(複数選択可)。キャンセルされた場合はnull。</summary>
+    public static string[] ShowOpenImageOrVideoDialog(bool ownerless = false)
     {
         if (!OperatingSystem.IsWindows()) return null;
 
         try
         {
-            var fileBuffer = new StringBuilder(1024);
+            // 複数選択すると「フォルダ\0ファイル1\0ファイル2\0\0」の形で返るので、バッファは大きめにする
+            const int bufferChars = 32 * 1024;
             // フィルタ文字列はヌル文字区切り、末尾は二重ヌルで終端する仕様。
             var filter = "画像・動画ファイル\0*.png;*.jpg;*.jpeg;*.gif;*.webp;*.bmp;*.mp4;*.webm;*.mov;*.avi\0すべてのファイル\0*.*\0\0";
 
@@ -101,19 +106,34 @@ public static class Win32FileDialog
                 hwndOwner = ownerless ? IntPtr.Zero : GetActiveWindow(), // 別スレッドの時はゲームの窓を親にしない(ゲームが止まらないように)
                 lpstrFilter = filter,
                 nFilterIndex = 1,
-                lpstrFile = Marshal.StringToHGlobalUni(new string('\0', fileBuffer.Capacity)),
-                nMaxFile = fileBuffer.Capacity,
-                lpstrTitle = "添付する画像・動画を選択",
-                Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR | OFN_EXPLORER,
+                lpstrFile = Marshal.AllocHGlobal(bufferChars * 2),
+                nMaxFile = bufferChars,
+                lpstrTitle = $"添付する画像・動画を選択(Ctrlを押しながらで{MaxAttachments}つまで選べます)",
+                Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR | OFN_EXPLORER | OFN_ALLOWMULTISELECT,
             };
 
             try
             {
+                Marshal.Copy(new byte[bufferChars * 2], 0, ofn.lpstrFile, bufferChars * 2);
                 var result = GetOpenFileNameW(ref ofn);
                 if (!result) return null;
 
-                var path = Marshal.PtrToStringUni(ofn.lpstrFile);
-                return string.IsNullOrEmpty(path) ? null : path;
+                // ヌル文字区切りの文字列を、空の要素(二重ヌル)が来るまで読む
+                var parts = new System.Collections.Generic.List<string>();
+                var ptr = ofn.lpstrFile;
+                while (true)
+                {
+                    var part = Marshal.PtrToStringUni(ptr);
+                    if (string.IsNullOrEmpty(part)) break;
+                    parts.Add(part);
+                    ptr += (part.Length + 1) * 2;
+                }
+                if (parts.Count == 0) return null;
+                if (parts.Count == 1) return new[] { parts[0] }; // 1つだけ選んだ時はフルパスがそのまま返る
+                var dir = parts[0];
+                var files = new string[parts.Count - 1];
+                for (var i = 1; i < parts.Count; i++) files[i - 1] = System.IO.Path.Combine(dir, parts[i]);
+                return files;
             }
             finally
             {

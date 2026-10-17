@@ -131,6 +131,22 @@ public static class FirstMeetingChatBlock
     {
         public static void Postfix() { active = false; hiding = false; }
     }
+
+    // チャットを止めている間は「〇〇が投票しました」も出さない(投票した順番から推理できてしまうため)。
+    // ホストが全員に送る通知(RpcSendChatNote)と、自分の画面に出す通知(AddChatNote)の両方を止める。
+    [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.RpcSendChatNote))]
+    static class RpcSendChatNotePatch
+    {
+        public static bool Prefix([HarmonyArgument(1)] ChatNoteTypes noteType)
+            => !(noteType == ChatNoteTypes.DidVote && IsBlocking);
+    }
+
+    [HarmonyPatch(typeof(ChatController), nameof(ChatController.AddChatNote))]
+    static class AddChatNotePatch
+    {
+        public static bool Prefix([HarmonyArgument(1)] ChatNoteTypes noteType)
+            => !(noteType == ChatNoteTypes.DidVote && IsBlocking);
+    }
 }
 
 /// <summary>0=OFF / 1〜999秒 / 1000=会議終了時まで の設定</summary>

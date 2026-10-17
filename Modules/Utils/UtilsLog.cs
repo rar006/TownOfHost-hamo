@@ -393,7 +393,9 @@ namespace TownOfHost
 
 
 
-            if ((int)CustomWinnerHolder.WinnerTeam < 1000)
+            // 役職名を出さないのはサドンデスの色チーム(1000〜1004)だけ。
+            // (以前は「1000未満」で判定していたが、NotAssignedを1000へ移したため、ラバーズ系の勝利で名前が空になり「＆キューピッド勝利」のようになっていた)
+            if ((int)CustomWinnerHolder.WinnerTeam is < (int)CustomWinner.SuddenDeathRed or > (int)CustomWinner.SuddenDeathPurple)
 
             {
 

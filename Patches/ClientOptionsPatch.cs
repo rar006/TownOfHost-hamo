@@ -76,6 +76,9 @@ namespace TownOfHost
 
         private static ClientActionItem ShowRoomCode;
         private static ClientActionItem ExpandRoleHeaders;
+        private static ClientActionItem ShowStreamComments;
+        private static ClientActionItem PasteStreamURL;
+        private static ClientActionItem ResetCommentFramePos;
 
         public static OptionsMenuBehaviour Instance;
 
@@ -302,6 +305,25 @@ namespace TownOfHost
             }
             // ロビーでは表示しない
             if (ExpandRoleHeaders?.ToggleButton != null) ExpandRoleHeaders.ToggleButton.gameObject.SetActive(!GameStates.IsLobby);
+            // 2ページ目: YouTubeのコメント枠(ON/OFF・配信URLの貼り付け・枠の位置を戻す)
+            if (!Main.IsAndroid())
+            {
+                if (ShowStreamComments == null || ShowStreamComments.ToggleButton == null)
+                    ShowStreamComments = ClientOptionItem.Create("ShowStreamComments", Main.ShowStreamComments, __instance, page: 1);
+                if (PasteStreamURL == null || PasteStreamURL.ToggleButton == null)
+                {
+                    PasteStreamURL = ClientActionItem.Create("PasteStreamURL", () =>
+                    {
+                        var ok = StreamerInfo.TrySetStreamURL(GUIUtility.systemCopyBuffer);
+                        if (PasteStreamURL?.ToggleButton?.Text != null)
+                            PasteStreamURL.ToggleButton.Text.text = ok ? "配信URLを設定しました" : "URLが正しくありません";
+                    }, __instance, page: 1);
+                }
+                else if (PasteStreamURL.ToggleButton.Text != null)
+                    PasteStreamURL.ToggleButton.Text.text = Translator.GetString("PasteStreamURL");
+                if (ResetCommentFramePos == null || ResetCommentFramePos.ToggleButton == null)
+                    ResetCommentFramePos = ClientActionItem.Create("ResetCommentFramePos", StreamCommentFrame.ResetPosition, __instance, page: 1);
+            }
 
 #if DEBUG
 

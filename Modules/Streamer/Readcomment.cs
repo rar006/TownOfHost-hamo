@@ -22,6 +22,70 @@ class StreamerInfo
     static StreamerInfo streamerInfo;
     public static int number;
 
+    /// <summary>画面のコメント枠に出す、最近のコメント(古い順・最大 MaxRecentComments 件)</summary>
+    public static readonly List<(string Name, string Text)> RecentComments = new();
+    private const int MaxRecentComments = 30;
+    /// <summary>コメント枠の内容が変わった回数(表示側が書き換えるかの判断に使う)</summary>
+    public static int RecentCommentsVersion;
+    /// <summary>配信URLが設定されていて、コメントを取りに行ける状態か</summary>
+    public static bool HasStream => StreamURL != "" && !string.IsNullOrEmpty(streamkey) && streamerInfo != null;
+    private static float commentTimer;
+
+    /// <summary>
+    /// 配信URLを設定する(メニュー・ゲーム内の設定の両方から使う)。YouTubeのURLでなければ false。
+    /// 設定したURLは保存して、次に起動した時も使う。
+    /// </summary>
+    public static bool TrySetStreamURL(string url)
+    {
+        url = (url ?? "").Trim();
+        if (!(url.StartsWith("https://youtube") || url.StartsWith("https://www.youtube.com/") || url.StartsWith("https://youtu.be"))) return false;
+        StreamURL = url;
+        try { SetstreamKey(); }
+        catch (System.Exception e)
+        {
+            Logger.Warn($"配信URLを読み取れませんでした: {e.Message}", "StreamerInfo");
+            StreamURL = "";
+            return false;
+        }
+        Main.StreamURLConfig.Value = url;
+        return true;
+    }
+
+    /// <summary>前回保存した配信URLを読み込む(起動時に1回)</summary>
+    private static bool savedLoaded;
+    public static void LoadSavedURL()
+    {
+        if (savedLoaded) return;
+        savedLoaded = true;
+        var saved = Main.StreamURLConfig?.Value;
+        if (!string.IsNullOrEmpty(saved) && StreamURL == "") TrySetStreamURL(saved);
+    }
+
+    /// <summary>
+    /// ホスト以外(参加者として配信している人)でも、コメント枠のためにコメントを取りに行く。
+    /// (ホストは参加希望の処理 FixUpdate で取りに行っているので、ここでは何もしない)
+    /// </summary>
+    public static void CommentFrameTick(float deltaTime)
+    {
+        if (AmongUsClient.Instance?.AmHost is true) return;
+        if (!Main.ShowStreamComments.Value || !HasStream) return;
+        commentTimer += deltaTime;
+        if (commentTimer < 3f) return;
+        commentTimer = 0f;
+        _ = Task.Run(streamerInfo.FetchAsync);
+    }
+
+    private static void AddRecentComment(string name, string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return;
+        lock (RecentComments)
+        {
+            RecentComments.Add((name, text));
+            while (RecentComments.Count > MaxRecentComments) RecentComments.RemoveAt(0);
+            RecentCommentsVersion++;
+        }
+    }
+
     public static void SetstreamKey()
     {
         var oldkey = streamkey;
@@ -182,6 +246,7 @@ class StreamerInfo
                 if (chat?["text"] == null) continue;
                 message += chat["text"].ToString();
             }
+            AddRecentComment(userName, message); // コメント枠用(参加希望かどうかに関係なく全部)
 
             var hope = HopeInfo.TryCrateHopeInfo(message, userId, userName);
             if (hope is not null)

@@ -49,6 +49,7 @@ namespace TownOfHost.Patches
 
         public static void Open()
         {
+            CrashTrace.Mark("BugReport.Open");
             // ゲーム設定画面では、設定UIとBUG報告UIの入力フォーカスが競合するため開かない。
             if (GameSettingMenu.Instance != null) return;
             // 要望により、専用チャットが開いていたらバグ報告を開いたタイミングで閉じる
@@ -63,7 +64,7 @@ namespace TownOfHost.Patches
             DiscordUserId = "";
             ResultMessage = "";
             ErrorMessage = "";
-            BugReportUIPatch.TakePendingAttachmentPath();
+            BugReportUIPatch.TakePendingAttachmentPaths();
             BugReportUIPatch.ShowPanel();
         }
 
@@ -75,7 +76,7 @@ namespace TownOfHost.Patches
             Preference = BugReportContactPreference.InGame;
             DiscordUserId = "";
             ErrorMessage = "";
-            BugReportUIPatch.TakePendingAttachmentPath();
+            BugReportUIPatch.TakePendingAttachmentPaths();
             Step = BugReportWizardStep.AskDescription;
             BugReportUIPatch.RefreshPanelText();
         }
@@ -167,10 +168,10 @@ namespace TownOfHost.Patches
             var (ok, message, ticketId) = await BugReportSystem.SubmitAsync(DiscordUserId, description, playerName).ConfigureAwait(false);
 
             // 送信に成功し、添付ファイルが選択されていればあわせてアップロードする。
-            var attachmentPath = BugReportUIPatch.TakePendingAttachmentPath();
-            if (ok && !string.IsNullOrEmpty(attachmentPath))
+            var attachmentPaths = BugReportUIPatch.TakePendingAttachmentPaths();
+            if (ok && attachmentPaths.Count > 0)
             {
-                var (attachOk, attachMessage) = await BugReportSystem.UploadAttachmentAsync(ticketId, attachmentPath).ConfigureAwait(false);
+                var (attachOk, attachMessage) = await BugReportSystem.UploadAttachmentsAsync(ticketId, attachmentPaths).ConfigureAwait(false);
                 if (!attachOk)
                 {
                     message += $"\n(添付ファイルの送信に失敗しました: {attachMessage})";
@@ -200,10 +201,10 @@ namespace TownOfHost.Patches
         private static SimpleButton _descriptionBackButton;
         private static SimpleButton _attachButton;
         // 送信予定の添付ファイルの絶対パス(未選択ならnull)。
-        private static string _pendingAttachmentPath;
+        private static readonly System.Collections.Generic.List<string> _pendingAttachmentPaths = new();
         private static SimpleButton _closeButton;
         private static SimpleButton _newReportButton;
-        private const int MaxTicketListButtons = BugReportRemoteConfig.MaxTickets;
+        private const int MaxTicketListButtons = BugReportRemoteConfig.MaxListedTickets;
         private static readonly SimpleButton[] _ticketButtons = new SimpleButton[MaxTicketListButtons];
 
         private static SimpleTextBox _discordIdBox;
@@ -305,7 +306,7 @@ namespace TownOfHost.Patches
                 _newReportButton = new SimpleButton(
                     parent: _panelRoot.transform,
                     name: "BugReportNewButton",
-                    localPosition: new Vector3(0f, -1.1f, -1f),
+                    localPosition: new Vector3(0f, -1.6f, -1f), // 一覧を5件に増やしたので少し下げた
                     normalColor: new Color32(200, 40, 40, 230),
                     hoverColor: new Color32(230, 60, 60, 230),
                     action: () => BugReportWizard.StartNewReport(),
@@ -706,6 +707,7 @@ namespace TownOfHost.Patches
 
         public static void ShowPanel()
         {
+            CrashTrace.Mark("BugReport.ShowPanel");
             if (_currentParent == null)
             {
                 Logger.Warn("バグ報告パネルを表示できませんでした(親オブジェクトが未設定です)。", "BugReportUIPatch");
@@ -748,17 +750,16 @@ namespace TownOfHost.Patches
         // 入力中表示は廃止。互換性のため呼び出し側が残っていても何もしない。
         private static void SetTypingIndicator(bool visible) { }
 
-        /// <summary>「添付」ボタン押下時に呼ぶ。ファイル選択ダイアログを開き、
-        /// 選んだファイルを次の送信時に一緒にアップロードする対象として保持する。</summary>
+        /// <summary>「添付」ボタン押下時に呼ぶ。ファイル選択ダイアログを開き(Ctrl+クリックで3つまで)、
+        /// 選んだファイルを次の送信時に一緒にアップロードする対象として保持する。選び直すと入れ替わる。</summary>
         private static void OnAttachButtonClicked()
         {
-            // GetOpenFileNameWはダイアログを閉じるまで戻らないブロッキング呼び出しのため、
-            // 呼んでいる間はゲーム全体が一時停止して見える(ダイアログ自体は正常に操作できる)。
             if (Main.IsAndroid()) return; // Win32のファイル選択はAndroidでは使えない
             // 別スレッドで開く(ゲームを止めない)。選んだら、ゲームのスレッドで添付に設定する
-            Win32FileDialog.ShowOpenImageOrVideoDialogAsync(path =>
+            Win32FileDialog.ShowOpenImageOrVideoDialogAsync((paths, truncated) =>
             {
-                _pendingAttachmentPath = path;
+                _pendingAttachmentPaths.Clear();
+                _pendingAttachmentPaths.AddRange(paths); // 4つ以上選んだ時は最初の3つだけ(ダイアログ側で切り捨て済み)
                 UpdateAttachButtonLabel();
             });
         }
@@ -766,12 +767,17 @@ namespace TownOfHost.Patches
         private static void UpdateAttachButtonLabel()
         {
             if (_attachButton?.Label == null) return;
-            if (string.IsNullOrEmpty(_pendingAttachmentPath))
+            if (_pendingAttachmentPaths.Count == 0)
             {
                 _attachButton.Label.text = "添付";
                 return;
             }
-            var fileName = System.IO.Path.GetFileName(_pendingAttachmentPath);
+            if (_pendingAttachmentPaths.Count > 1)
+            {
+                _attachButton.Label.text = $"✓{_pendingAttachmentPaths.Count}件";
+                return;
+            }
+            var fileName = System.IO.Path.GetFileName(_pendingAttachmentPaths[0]);
             // ボタン幅に収まるよう、長いファイル名は省略する。
             if (fileName.Length > 12) fileName = fileName[..10] + "…";
             _attachButton.Label.text = $"✓{fileName}";
@@ -779,12 +785,12 @@ namespace TownOfHost.Patches
 
         /// <summary>選択済みの添付ファイルパスを取り出し、保持状態をクリアする。
         /// 送信処理からのみ呼ぶ想定(1回の送信で1回だけ消費する)。</summary>
-        internal static string TakePendingAttachmentPath()
+        internal static System.Collections.Generic.List<string> TakePendingAttachmentPaths()
         {
-            var path = _pendingAttachmentPath;
-            _pendingAttachmentPath = null;
+            var paths = new System.Collections.Generic.List<string>(_pendingAttachmentPaths);
+            _pendingAttachmentPaths.Clear();
             UpdateAttachButtonLabel();
-            return path;
+            return paths;
         }
 
         public static void RefreshPanelText()
@@ -826,7 +832,7 @@ namespace TownOfHost.Patches
                         SetActiveSafe(button, true);
                         button.Label.text = unreadMark + BugReportSystem.StatusTag(t.Status) + t.Summary;
                     }
-                    // Discord側の運用設定と、同時保持数3件の両方を満たす場合だけ表示する。
+                    // Discord側の運用設定と、未対応の報告が3件未満(既読・修正中・修正済みは数えない)の両方を満たす場合だけ表示する。
                     SetActiveSafe(_newReportButton, BugReportRemoteConfig.CanSubmitAdditionalReport);
                     break;
 

@@ -138,13 +138,13 @@ namespace TownOfHost
         public const string BepInExPluginName = "Town Of Host-hamo";
 #endif
 
-        public const string BepInExPluginVersion = "4.00.35.02";
+        public const string BepInExPluginVersion = "4.00.35.04";
 
-        public const string PluginVersion = "4.00.35.02";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
+        public const string PluginVersion = "4.00.35.04";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
 
-        public const string PluginShowVersion = "4.35.02β";
+        public const string PluginShowVersion = "4.35.04β";
 
-        public const string ModVersion = ".35.02";//リリースver用バージョン変更dc9b79
+        public const string ModVersion = ".35.04";//リリースver用バージョン変更dc9b79
 
 
 
@@ -295,6 +295,13 @@ namespace TownOfHost
         public static ConfigEntry<string> JoinWord { get; private set; }
 
         public static ConfigEntry<string> RemoveWord { get; private set; }
+        /// <summary>YouTubeのコメントを画面の枠に表示する</summary>
+        public static ConfigEntry<bool> ShowStreamComments { get; private set; }
+        /// <summary>コメント枠の位置(画面左下からの距離)</summary>
+        public static ConfigEntry<float> StreamCommentPosX { get; private set; }
+        public static ConfigEntry<float> StreamCommentPosY { get; private set; }
+        /// <summary>前回設定した配信URL(起動し直しても残す)</summary>
+        public static ConfigEntry<string> StreamURLConfig { get; private set; }
 
         //Other Configs
 
@@ -514,6 +521,10 @@ namespace TownOfHost
             JoinWord = Config.Bind("StreamMenu", "JoinWord", "");
 
             RemoveWord = Config.Bind("StreamMenu", "RemoveWord", "");
+            ShowStreamComments = Config.Bind("StreamMenu", "ShowComments", true);
+            StreamCommentPosX = Config.Bind("StreamMenu", "CommentPosX", 0.35f);
+            StreamCommentPosY = Config.Bind("StreamMenu", "CommentPosY", 1.25f);
+            StreamURLConfig = Config.Bind("StreamMenu", "StreamURL", "");
 
             DebugKeyInput = Config.Bind("Authentication", "Debug Key", "");
 
@@ -612,6 +623,20 @@ namespace TownOfHost
             Preset15 = Config.Bind("Preset Name Options", "Preset15", "Preset_15");
 
             Preset16 = Config.Bind("Preset Name Options", "Preset16", "Preset_16");
+            // チャットのコマンド(/cmd nio など)がプリセット名に入ってしまったものは、元の名前に戻す
+            // (ランダムプリセットに「/cmd nio を追加する」のような項目が出ていた)
+            {
+                var presetNames = new[] { Preset1, Preset2, Preset3, Preset4, Preset5, Preset6, Preset7, Preset8, Preset9, Preset10, Preset11, Preset12, Preset13, Preset14, Preset15, Preset16 };
+                for (var i = 0; i < presetNames.Length; i++)
+                {
+                    var v = presetNames[i].Value?.Trim() ?? "";
+                    if (v.Length == 0 || v.StartsWith("/"))
+                    {
+                        TownOfHost.Logger.Info($"プリセット{i + 1}の名前「{v}」を元に戻しました", "PresetName");
+                        presetNames[i].Value = (string)presetNames[i].DefaultValue;
+                    }
+                }
+            }
 
             SKey = Config.Bind("Other", "countdata", "141c2e1c");
 

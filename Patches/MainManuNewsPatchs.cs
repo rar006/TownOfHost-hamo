@@ -180,6 +180,32 @@ public class ModNewsHistory
                 };
                 AllModNews.Add(news);
             }
+            {
+                var news = new ModNews
+                {
+                    Number = 100012,
+                    Title = "アップデート！",
+                    SubTitle = "<color=#fb85ff>Town Of Host-hamo v4.35.03β</color>",
+                    ShortTitle = "<color=#fb85ff>●TOH-hamo v4.35.03β</color>",
+                    Text = "【追加】\r\n・バグ報告の専用チャットでも画像・動画を添付できるように\r\n・バグ報告の添付は一度に3つまで送れるように\r\n・二つ名のコマンドを /cmd なしでも使えるように(/nil など)\r\n・部屋ごとに二つ名を使うかどうか決められる設定(OTHER2)\r\n・Discordから全体や特定の部屋にメッセージを送れるように\r\n\r\n【修正】\r\n・キューピッドラバーズなどラバーズの勝利で「＆キューピッド勝利」のように名前が抜ける不具合\r\n・/n r で同じ陣営の見出しが2回出る不具合\r\n・ドッペルゲンガーの変身が止まることがある不具合\r\n・BANした人が入ってきた時にエラーが出る不具合\r\n・全部ひらく・とじるボタンが横長になっていた不具合\r\n・その他、多少のバグ修正"
+                    ,
+                    Date = "2026-10-17"
+                };
+                AllModNews.Add(news);
+            }
+            {
+                var news = new ModNews
+                {
+                    Number = 100013,
+                    Title = "アップデート！",
+                    SubTitle = "<color=#fb85ff>Town Of Host-hamo v4.35.04β</color>",
+                    ShortTitle = "<color=#fb85ff>●TOH-hamo v4.35.04β</color>",
+                    Text = "【追加】\r\n・役職ごとに初期キルクールを設定できるように(キルができる役職すべて)\r\n・YouTubeのコメントを画面の枠に表示できるように(ドラッグで移動・ゲーム内の設定からURLやON/OFF)\r\n・バージョン切り替えで過去のバージョンも選べるように(説明つき)\r\n・バグ報告は「既読」になると追加で報告できるように\r\n\r\n【変更】\r\n・初手会議でチャットを止めている間は「〇〇が投票しました」を出さないように\r\n\r\n【修正】\r\n・部屋を作ると勝手に試合が始まって壊れることがある不具合(自動スタート)\r\n・試合開始時に未導入の人がまとめて落ちることがある不具合\r\n・ホストの回線が一瞬途切れただけで部屋ごと落ちやすかった問題\r\n・ジャッジの判決が効かない不具合\r\n・リモートキラーで死んでいる人がもう一度キルされることがある不具合\r\n・ホストが死んでいる時、秘匿チャットのあとホストの名前が戻らない不具合\r\n・その他、多少のバグ修正"
+                    ,
+                    Date = "2026-10-17"
+                };
+                AllModNews.Add(news);
+            }
             AnnouncementPopUp.UpdateState = AnnouncementPopUp.AnnounceState.NotStarted;
         }
     }

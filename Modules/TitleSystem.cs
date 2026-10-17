@@ -63,6 +63,39 @@ public static partial class TitleSystem
 #endif
     private static bool stateLogged;
 
+    /// <summary>この部屋で二つ名を使うか(設定「二つ名を使う」)。OFFなら表示もコマンドも止める</summary>
+    internal static bool RoomEnabled => Enabled && (Options.OptionTitleEnabled?.GetBool() ?? true);
+
+    private static readonly string[] TitleSubs = { "nil", "nii", "nih", "nio", "nit", "code" };
+
+    /// <summary>
+    /// 二つ名のコマンドを読み取る。「/cmd nil ...」と「/nil ...」のどちらでも使える。
+    /// (/cmd を付けると、MODを入れていない人のチャットも他の人に見えなくなる)
+    /// </summary>
+    private static bool TryParseCommand(string raw, out string sub, out string[] args)
+    {
+        sub = null; args = Array.Empty<string>();
+        if (string.IsNullOrWhiteSpace(raw)) return false;
+        var tokens = raw.Trim().Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length == 0) return false;
+        int start;
+        if (tokens[0].Equals(CmdPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            if (tokens.Length < 2) return false;
+            sub = tokens[1].ToLowerInvariant();
+            start = 2;
+        }
+        else if (tokens[0].Length > 1 && tokens[0][0] == '/')
+        {
+            sub = tokens[0].Substring(1).ToLowerInvariant();
+            start = 1;
+        }
+        else return false;
+        if (Array.IndexOf(TitleSubs, sub) < 0) { sub = null; return false; }
+        args = tokens.Skip(start).ToArray();
+        return true;
+    }
+
     private const string Tag = "TitleSystem";
     private const string CmdPrefix = "/cmd";
     private static readonly HttpClient Client = new() { Timeout = TimeSpan.FromSeconds(8) };
@@ -398,6 +431,7 @@ public static partial class TitleSystem
 
     private static string VanillaNameOf(PlayerControl target, string baseName)
     {
+        if (!RoomEnabled) return baseName; // 部屋の設定でOFF: 二つ名なしの名前に戻す
         var titles = TitlePrefixOf(target);
         if (titles.Length == 0) return baseName;
         return $"{VanillaNameHead}{baseName}\r\n<size=60%>{titles}</size></line-height>";
@@ -629,7 +663,7 @@ public static partial class TitleSystem
 
             var tr = nameText.transform.Find("TitleText");
             string text = null;
-            if (GameStates.IsLobby && Shown.TryGetValue(pc.PlayerId, out var shown) && shown.Fc == CachedFriendCode(pc))
+            if (GameStates.IsLobby && RoomEnabled && Shown.TryGetValue(pc.PlayerId, out var shown) && shown.Fc == CachedFriendCode(pc))
             {
                 var parts = new List<string>();
                 foreach (var id in shown.Ids)
@@ -675,17 +709,13 @@ public static partial class TitleSystem
     /// <summary>二つ名のコマンドなら処理して true。ロビー以外や別のコマンドなら false(元の処理に渡す)。</summary>
     internal static bool TryHandleCommand(string raw)
     {
-        if (!Enabled || string.IsNullOrWhiteSpace(raw)) return false;
-        var tokens = raw.Trim().Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
-        if (tokens.Length < 2 || !tokens[0].Equals(CmdPrefix, StringComparison.OrdinalIgnoreCase)) return false;
-        var sub = tokens[1].ToLowerInvariant();
-        if (sub is not ("nil" or "nii" or "nih" or "nio" or "nit" or "code")) return false;
+        if (!Enabled || !TryParseCommand(raw, out var sub, out var args)) return false;
         // ゲーム中は別のコマンドかもしれないので、二つ名では横取りしない
         if (!GameStates.IsLobby) return false;
 
+        if (!RoomEnabled) { Reply("この部屋では二つ名が使えない設定になっています。"); return true; }
         if (IsCommandDisabled(sub)) { Reply("このコマンドは部屋の設定で無効化されています。"); return true; }
 
-        var args = tokens.Skip(2).ToArray();
         if (sub == "nit")
         {
             if (UseHostTrade(args)) RouteToHostTrade(raw, args);
@@ -756,15 +786,13 @@ public static partial class TitleSystem
     {
         if (!Enabled || player == null || player.AmOwner || string.IsNullOrWhiteSpace(raw)) return false;
         if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return false;
-        var tokens = raw.Trim().Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
-        if (tokens.Length < 2 || !tokens[0].Equals(CmdPrefix, StringComparison.OrdinalIgnoreCase)) return false;
-        var sub = tokens[1].ToLowerInvariant();
-        if (sub is not ("nil" or "nii" or "nih" or "nio" or "nit" or "code")) return false;
+        if (!TryParseCommand(raw, out var sub, out var args)) return false;
         if (!GameStates.IsLobby) return false;
         var id = player.PlayerId;
+        if (!RoomEnabled) { Utils.SendMessage("この部屋では二つ名が使えない設定になっています。", id); return true; }
         if (IsCommandDisabled(sub)) { Utils.SendMessage("このコマンドは部屋の設定で無効化されています。", id); return true; }
-        if (sub == "nit") { HostTradeCommand(player, tokens.Skip(2).ToArray()); return true; } // MOD未導入の人の交換はホストが仲介
-        RunCommandAsync(sub, tokens.Skip(2).ToArray(), player);
+        if (sub == "nit") { HostTradeCommand(player, args); return true; } // MOD未導入の人の交換はホストが仲介
+        RunCommandAsync(sub, args, player);
         return true;
     }
 
