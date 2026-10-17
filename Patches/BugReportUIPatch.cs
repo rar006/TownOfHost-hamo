@@ -824,7 +824,7 @@ namespace TownOfHost.Patches
                         var unreadMark = t.HasUnread ? "[未読] " : "";
                         var button = _ticketButtons[i];
                         SetActiveSafe(button, true);
-                        button.Label.text = unreadMark + t.Summary;
+                        button.Label.text = unreadMark + BugReportSystem.StatusTag(t.Status) + t.Summary;
                     }
                     // Discord側の運用設定と、同時保持数3件の両方を満たす場合だけ表示する。
                     SetActiveSafe(_newReportButton, BugReportRemoteConfig.CanSubmitAdditionalReport);

@@ -1351,59 +1351,65 @@ namespace TownOfHost
 
 
                 }
-                // ===== 横一列の一番右に「全部ひらく / 全部とじる」のタイルを置く =====
+                // ===== 横一列の右端に「全部ひらく/全部とじる」のタイルを置く =====
                 // 上のアイコン(TOH HAMO/GAME/OTHER/OTHER2)と同じ大きさのボタンを作り、絵の代わりに文字を出す。
                 try
                 {
-                    DestroyStaleChildByName(templateTabButton.transform.parent, "ExpandAllTab");
-                    var tile = Object.Instantiate(templateTabButton, templateTabButton.transform.parent);
-                    tile.name = "ExpandAllTab";
-                    tile.gameObject.SetActive(true);
-                    tile.OnClick = new(); // 元のボタン(タブ切り替え)の動きは消す
-                    tile.transform.position = templateTabButton.transform.position + new Vector3(ExpandAllTileOffsetX, 0, -300f); // 列の一番右
-                    // 単色のタイル(アイコンと同じ 120px / 120ppu)
-                    var tex = new Texture2D(120, 120);
-                    var px = new Color[120 * 120];
+                    // アイコンと同じ大きさの単色の絵(TOH HAMO のアイコンの大きさに合わせる)
+                    var refSprite = LoadTopTabIcon(TabGroup.MainSettings, false);
+                    int tw = refSprite != null ? Mathf.Clamp((int)refSprite.rect.width, 8, 1024) : 120;
+                    int th = refSprite != null ? Mathf.Clamp((int)refSprite.rect.height, 8, 1024) : 120;
+                    float ppu = refSprite != null ? refSprite.pixelsPerUnit : 120f;
+                    var tex = new Texture2D(tw, th);
+                    var px = new Color[tw * th];
                     for (var p = 0; p < px.Length; p++) px[p] = Color.white;
                     tex.SetPixels(px);
                     tex.Apply();
-                    var tileSprite = Sprite.Create(tex, new Rect(0, 0, 120, 120), new Vector2(0.5f, 0.5f), 120);
-                    var inactiveColor = new Color(0.10f, 0.42f, 0.48f, 1f);
-                    var activeColor = new Color(0.16f, 0.60f, 0.66f, 1f);
-                    foreach (var (obj, color) in new[] { (tile.inactiveSprites, inactiveColor), (tile.activeSprites, activeColor), (tile.selectedSprites, activeColor) })
+                    var tileSprite = Sprite.Create(tex, new Rect(0, 0, tw, th), new Vector2(0.5f, 0.5f), ppu);
+
+                    void MakeTile(string objName, float offsetX, Color baseColor, Func<string> getText, Action onClick)
                     {
-                        if (obj == null) continue;
-                        var sr = obj.GetComponent<SpriteRenderer>();
-                        if (sr == null) continue;
-                        sr.sprite = tileSprite;
-                        sr.color = color;
-                    }
-                    // 文字(「有効なものだけ表示」ボタンの文字を流用)
-                    if (activeonly != null && activeonly.buttonText != null)
-                    {
-                        var label = Object.Instantiate(activeonly.buttonText, tile.transform);
-                        label.name = "ExpandAllLabel";
-                        label.DestroyTranslator();
-                        var ls = tile.transform.lossyScale;
-                        label.transform.localScale = new Vector3(ls.x == 0 ? 1 : 1f / ls.x, ls.y == 0 ? 1 : 1f / ls.y, 1f);
-                        label.transform.localPosition = new Vector3(0f, 0f, -1f);
-                        label.alignment = TMPro.TextAlignmentOptions.Center;
-                        label.enableAutoSizing = true;
-                        label.fontSizeMin = 0.5f;
-                        label.fontSizeMax = 2.4f;
-                        label.rectTransform.sizeDelta = new Vector2(0.66f, 0.56f); // 見た目のタイルの大きさ(ワールド単位)
-                        label.color = Color.white;
-                        void RefreshTile() { if (label != null) label.text = RoleGojuon.AnyCollapsed ? "<b>全部\nひらく</b>" : "<b>全部\nとじる</b>"; }
-                        RefreshTile();
-                        tile.OnClick = new();
-                        tile.OnClick.AddListener((Action)(() =>
+                        DestroyStaleChildByName(templateTabButton.transform.parent, objName);
+                        var tile = Object.Instantiate(templateTabButton, templateTabButton.transform.parent);
+                        tile.name = objName;
+                        tile.gameObject.SetActive(true);
+                        tile.OnClick = new(); // 元のボタン(タブ切り替え)の動きは消す
+                        tile.transform.position = templateTabButton.transform.position + new Vector3(offsetX, 0, -300f);
+                        var lighter = Color.Lerp(baseColor, Color.white, 0.25f);
+                        foreach (var (obj, color) in new[] { (tile.inactiveSprites, baseColor), (tile.activeSprites, lighter), (tile.selectedSprites, lighter) })
                         {
-                            // 閉じている見出しが1つでもあれば全部ひらく、全部ひらいていれば全部とじる
-                            RoleGojuon.SetAllCollapsed(!RoleGojuon.AnyCollapsed);
-                            RefreshTile();
-                        }));
+                            if (obj == null) continue;
+                            var sr = obj.GetComponent<SpriteRenderer>();
+                            if (sr == null) continue;
+                            sr.sprite = tileSprite;
+                            sr.color = color;
+                        }
+                        // 文字(「有効なものだけ表示」ボタンの文字を流用)
+                        if (activeonly != null && activeonly.buttonText != null)
+                        {
+                            var label = Object.Instantiate(activeonly.buttonText, tile.transform);
+                            label.name = objName + "Label";
+                            label.DestroyTranslator();
+                            var ls = tile.transform.lossyScale;
+                            label.transform.localScale = new Vector3(ls.x == 0 ? 1 : 1f / ls.x, ls.y == 0 ? 1 : 1f / ls.y, 1f);
+                            label.transform.localPosition = new Vector3(0f, 0f, -1f);
+                            label.alignment = TMPro.TextAlignmentOptions.Center;
+                            label.enableAutoSizing = true;
+                            label.fontSizeMin = 0.5f;
+                            label.fontSizeMax = 2.4f;
+                            label.rectTransform.sizeDelta = new Vector2(0.66f, 0.56f); // 見た目のタイルの大きさ(ワールド単位)
+                            label.color = Color.white;
+                            void Refresh() { if (label != null) label.text = getText(); }
+                            Refresh();
+                            tile.OnClick.AddListener((Action)(() => { onClick(); Refresh(); }));
+                        }
+                        ForceRenderInFront(tile.transform);
                     }
-                    ForceRenderInFront(tile.transform);
+
+                    // 全部ひらく ⇔ 全部とじる
+                    MakeTile("ExpandAllTab", ExpandAllTileOffsetX, new Color(0.10f, 0.42f, 0.48f, 1f),
+                        () => RoleGojuon.AnyCollapsed ? "<b>全部\nひらく</b>" : "<b>全部\nとじる</b>",
+                        () => RoleGojuon.SetAllCollapsed(!RoleGojuon.AnyCollapsed));
                     // 前に作った文字ボタンは使わない(この場所に移した)
                     expandAll?.gameObject.SetActive(false);
                 }

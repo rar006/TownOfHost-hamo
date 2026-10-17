@@ -167,6 +167,19 @@ public class ModNewsHistory
                 };
                 AllModNews.Add(news);
             }
+            {
+                var news = new ModNews
+                {
+                    Number = 100011,
+                    Title = "アップデート！",
+                    SubTitle = "<color=#fb85ff>Town Of Host-hamo v4.35.02β</color>",
+                    ShortTitle = "<color=#fb85ff>●TOH-hamo v4.35.02β</color>",
+                    Text = "【追加】\r\n・バグ報告の一覧に、対応状況(未対応・修正中・修正済み・既読)が表示されるように\r\n\r\n【変更・修正】\r\n・役職の見出しを全部ひらく・とじるボタンの大きさを、上のアイコンと揃えました\r\n・その他、多少のバグ修正"
+                    ,
+                    Date = "2026-10-17"
+                };
+                AllModNews.Add(news);
+            }
             AnnouncementPopUp.UpdateState = AnnouncementPopUp.AnnounceState.NotStarted;
         }
     }

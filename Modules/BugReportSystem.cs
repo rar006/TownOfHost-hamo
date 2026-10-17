@@ -55,6 +55,8 @@ public static class BugReportSystem
         public bool HasUnread { get; set; } = false;
         /// <summary>モデレーターが /cmd bug で送ったチケット(返信をロビーのモデレーターにも見せる)</summary>
         public bool ViaModerator { get; set; } = false;
+        /// <summary>Discord側のステータス(open / in_progress / resolved / read)。一覧でタグとして表示する</summary>
+        public string Status { get; set; } = "open";
         public List<TicketMessage> Messages { get; set; } = new();
     }
 
@@ -69,6 +71,15 @@ public static class BugReportSystem
     public const float PollIntervalSeconds = 12f;
 
     public static IReadOnlyList<TicketInfo> Tickets => _data.Tickets;
+
+    /// <summary>一覧に付けるステータスのタグ(Discordのフォーラムのタグと同じ。絵文字はゲームで出ないので文字で)</summary>
+    public static string StatusTag(string status) => status switch
+    {
+        "in_progress" => "<#4f8ff7>【修正中】</color>",
+        "resolved" => "<#3ec46d>【修正済み】</color>",
+        "read" => "<#f5c542>【既読】</color>",
+        _ => "<#9aa0a6>【未対応】</color>",
+    };
     public static bool HasAnyTicket => _data.Tickets.Count > 0;
     public static bool HasAnyUnread => _data.Tickets.Any(t => t.HasUnread);
 
@@ -321,6 +332,7 @@ public static class BugReportSystem
     {
         public bool Ok { get; set; }
         public List<TicketMessage> Messages { get; set; } = new();
+        public string Status { get; set; } = "";
     }
 
     /// <summary>
@@ -364,9 +376,16 @@ public static class BugReportSystem
 
             var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             var parsed = JsonSerializer.Deserialize<MessagesResponse>(json, JsonOptions);
-            if (parsed?.Messages == null || parsed.Messages.Count == 0) return;
+            if (parsed == null) return;
 
             var changed = false;
+            // ステータスが変わっていたら覚える(新しいメッセージが無くても反映する)
+            if (!string.IsNullOrEmpty(parsed.Status) && parsed.Status != ticket.Status)
+            {
+                ticket.Status = parsed.Status;
+                changed = true;
+            }
+            if (parsed.Messages == null || parsed.Messages.Count == 0) { if (changed) Save(); return; }
             foreach (var msg in parsed.Messages)
             {
                 if (msg.At > ticket.LastPolledAtMs) ticket.LastPolledAtMs = msg.At;
