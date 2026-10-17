@@ -27,8 +27,36 @@ public static class UserRoles2026
                 if (player.GetRoleClass() is not Messenger messenger) return false;
                 messenger.HandleCommand(args);
                 return true;
+            case "/sendmsg":
+            {
+                // MOD導入者のセンダーから直送された「次のチャット」
+                var body = string.Join(" ", args.Skip(1));
+                switch (player.GetRoleClass())
+                {
+                    case Sender s: s.TryIntercept(body); return true;
+                    case TownOfHost.Roles.Madmate.MadSender m: m.TryIntercept(body); return true;
+                }
+                return false;
+            }
         }
         return false;
+    }
+
+    /// <summary>
+    /// MOD導入者(ホスト以外)のセンダー: 送信待ちの時、次のチャットを全体に送らず、ホストにだけ直送する。直送したら true
+    /// </summary>
+    public static bool TryRouteSenderChatToHost(string text)
+    {
+        if (AmongUsClient.Instance == null || AmongUsClient.Instance.AmHost || !GameStates.IsMeeting) return false;
+        if (string.IsNullOrWhiteSpace(text) || text.TrimStart().StartsWith("/")) return false;
+        switch (PlayerControl.LocalPlayer?.GetRoleClass())
+        {
+            case Sender s when s.HasPending: s.ClearPendingLocal(); break;
+            case TownOfHost.Roles.Madmate.MadSender m when m.HasPending: m.ClearPendingLocal(); break;
+            default: return false;
+        }
+        ChatCommands.RequestCommandProcessingFromHost("/cmd sendmsg " + text);
+        return true;
     }
 
     /// <summary>

@@ -160,6 +160,7 @@ namespace TownOfHost
             ModSettingsTab = null;
 
             activeonly = null;
+            expandAll = null;
 
             ActiveOnlyMode = false;
 
@@ -392,6 +393,10 @@ namespace TownOfHost
         public static RolesSettingsMenu ModSettingsTab;
 
         public static PassiveButton activeonly;
+        /// <summary>役職の見出しを全部ひらく/全部とじるボタン</summary>
+        public static PassiveButton expandAll;
+        /// <summary>「全部ひらく/とじる」タイルの位置(一番左のアイコンからの距離)。アイコン1個分 = 0.762</summary>
+        public const float ExpandAllTileOffsetX = 5.4f;
 
         public static bool ActiveOnlyMode;
 
@@ -756,6 +761,32 @@ namespace TownOfHost
                 ForceRenderInFront(activeonly?.transform);
 
                 activeonly?.transform?.SetAsFirstSibling();
+                // ===== 役職の見出しを「全部ひらく / 全部とじる」ボタン(「有効なものだけ表示」の右隣) =====
+                DestroyStaleChildByName(__instance.RoleSettingsTab.transform.parent, "ExpandAllRoles");
+                expandAll = Object.Instantiate(GamePresetButton, __instance.RoleSettingsTab.transform.parent);
+                if (expandAll)
+                {
+                    expandAll.gameObject.name = "ExpandAllRoles";
+                    expandAll.buttonText.DestroyTranslator();
+                    expandAll.inactiveSprites.GetComponent<SpriteRenderer>().color =
+                    expandAll.activeSprites.GetComponent<SpriteRenderer>().color =
+                    expandAll.selectedSprites.GetComponent<SpriteRenderer>().color = ModColors.bluegreen;
+                    expandAll.transform.localPosition = new Vector3(1.62f, 3.6f, -400f);
+                    expandAll.transform.localScale = new Vector3(0.36f, 0.46f, 0f);
+                    if (expandAll.buttonText != null) expandAll.buttonText.transform.localScale = new Vector3(1.28f, 1f, 1f); // 横に縮めた分を打ち消す
+                    var expandButton = expandAll;
+                    void RefreshExpandText() { if (expandButton != null && expandButton.buttonText != null) expandButton.buttonText.text = RoleGojuon.AnyCollapsed ? "全部ひらく" : "全部とじる"; }
+                    RefreshExpandText();
+                    expandAll.OnClick = new();
+                    expandAll.OnClick.AddListener((Action)(() =>
+                    {
+                        // 閉じている見出しが1つでもあれば全部ひらく、全部ひらいていれば全部とじる
+                        RoleGojuon.SetAllCollapsed(!RoleGojuon.AnyCollapsed);
+                        RefreshExpandText();
+                    }));
+                    ForceRenderInFront(expandAll.transform);
+                    expandAll.transform.SetAsFirstSibling();
+                }
 
 
 
@@ -1320,6 +1351,63 @@ namespace TownOfHost
 
 
                 }
+                // ===== 横一列の一番右に「全部ひらく / 全部とじる」のタイルを置く =====
+                // 上のアイコン(TOH HAMO/GAME/OTHER/OTHER2)と同じ大きさのボタンを作り、絵の代わりに文字を出す。
+                try
+                {
+                    DestroyStaleChildByName(templateTabButton.transform.parent, "ExpandAllTab");
+                    var tile = Object.Instantiate(templateTabButton, templateTabButton.transform.parent);
+                    tile.name = "ExpandAllTab";
+                    tile.gameObject.SetActive(true);
+                    tile.OnClick = new(); // 元のボタン(タブ切り替え)の動きは消す
+                    tile.transform.position = templateTabButton.transform.position + new Vector3(ExpandAllTileOffsetX, 0, -300f); // 列の一番右
+                    // 単色のタイル(アイコンと同じ 120px / 120ppu)
+                    var tex = new Texture2D(120, 120);
+                    var px = new Color[120 * 120];
+                    for (var p = 0; p < px.Length; p++) px[p] = Color.white;
+                    tex.SetPixels(px);
+                    tex.Apply();
+                    var tileSprite = Sprite.Create(tex, new Rect(0, 0, 120, 120), new Vector2(0.5f, 0.5f), 120);
+                    var inactiveColor = new Color(0.10f, 0.42f, 0.48f, 1f);
+                    var activeColor = new Color(0.16f, 0.60f, 0.66f, 1f);
+                    foreach (var (obj, color) in new[] { (tile.inactiveSprites, inactiveColor), (tile.activeSprites, activeColor), (tile.selectedSprites, activeColor) })
+                    {
+                        if (obj == null) continue;
+                        var sr = obj.GetComponent<SpriteRenderer>();
+                        if (sr == null) continue;
+                        sr.sprite = tileSprite;
+                        sr.color = color;
+                    }
+                    // 文字(「有効なものだけ表示」ボタンの文字を流用)
+                    if (activeonly != null && activeonly.buttonText != null)
+                    {
+                        var label = Object.Instantiate(activeonly.buttonText, tile.transform);
+                        label.name = "ExpandAllLabel";
+                        label.DestroyTranslator();
+                        var ls = tile.transform.lossyScale;
+                        label.transform.localScale = new Vector3(ls.x == 0 ? 1 : 1f / ls.x, ls.y == 0 ? 1 : 1f / ls.y, 1f);
+                        label.transform.localPosition = new Vector3(0f, 0f, -1f);
+                        label.alignment = TMPro.TextAlignmentOptions.Center;
+                        label.enableAutoSizing = true;
+                        label.fontSizeMin = 0.5f;
+                        label.fontSizeMax = 2.4f;
+                        label.rectTransform.sizeDelta = new Vector2(0.66f, 0.56f); // 見た目のタイルの大きさ(ワールド単位)
+                        label.color = Color.white;
+                        void RefreshTile() { if (label != null) label.text = RoleGojuon.AnyCollapsed ? "<b>全部\nひらく</b>" : "<b>全部\nとじる</b>"; }
+                        RefreshTile();
+                        tile.OnClick = new();
+                        tile.OnClick.AddListener((Action)(() =>
+                        {
+                            // 閉じている見出しが1つでもあれば全部ひらく、全部ひらいていれば全部とじる
+                            RoleGojuon.SetAllCollapsed(!RoleGojuon.AnyCollapsed);
+                            RefreshTile();
+                        }));
+                    }
+                    ForceRenderInFront(tile.transform);
+                    // 前に作った文字ボタンは使わない(この場所に移した)
+                    expandAll?.gameObject.SetActive(false);
+                }
+                catch (Exception e) { Logger.Warn($"ExpandAllTab: {e.Message}", "MenuPatch"); }
 
                 ErrorNumber = 8;
 
@@ -3118,11 +3206,9 @@ namespace TownOfHost
                                 forceRoleInfoButton.OnClick.AddListener((System.Action)(() =>
                                 {
                                     if (!RoleRowButtonCooldown.TryClick($"{option.Name}-ForceRoleInfo")) return;
-                                    if (ChatCommands.roleCommands == null) UtilsRoleInfo.GetRolesInfo("", byte.MaxValue);
-                                    var chatCommand = ChatCommands.roleCommands != null && ChatCommands.roleCommands.TryGetValue(option.CustomRole, out var cmd)
-                                        ? cmd
-                                        : option.CustomRole.GetRoleInfo()?.ChatCommand;
-                                    if (!string.IsNullOrEmpty(chatCommand)) UtilsRoleInfo.GetRolesInfo(chatCommand, byte.MaxValue);
+                                    // 短いコマンド(mm など)は役職どうしでかぶっていることがあり、別の役職の説明が出てしまうため、
+                                    // かぶらない役職名そのもので探す。
+                                    UtilsRoleInfo.GetRolesInfo(option.CustomRole.ToString(), byte.MaxValue);
                                 }));
                                 // Hを？のすぐ左へ詰めて配置する。
                                 forceRoleInfoButton.gameObject.transform.SetLocalX(-0.58f);

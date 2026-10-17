@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
 using UnityEngine;
@@ -24,7 +24,7 @@ public sealed class Surmount : RoleBase
             CustomRoleTypes.Crewmate,
             87100,
             null,
-            "sur",
+            "smt",
             "#7fc8d6",
             (3, 5),
             false,

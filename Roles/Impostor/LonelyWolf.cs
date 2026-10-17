@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+﻿using AmongUs.GameOptions;
 using UnityEngine;
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
@@ -22,7 +22,7 @@ public sealed class LonelyWolf : RoleBase, IImpostor
             CustomRoleTypes.Impostor,
             92600,
             SetupOptionItem,
-            "lw",
+            "lwo",
             "#FF1919",
             isCantSeeTeammates: true,
             isNewRole: true

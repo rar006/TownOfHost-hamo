@@ -63,7 +63,29 @@ public static class Win32FileDialog
     /// フレーム内で完結する短い処理からのみ呼ぶこと。
     /// </summary>
     /// <returns>選択されたファイルの絶対パス。キャンセルされた場合はnull。</returns>
-    public static string ShowOpenImageOrVideoDialog()
+    static volatile bool dialogOpen;
+
+    /// <summary>
+    /// ファイル選択ダイアログを別スレッドで開く(ゲームを止めない)。選んだら onSelected がゲームのスレッドで呼ばれる。
+    /// ゲームのスレッドで開くと、閉じるまでゲーム全体が止まり、全画面などではフリーズやクラッシュの原因になる。
+    /// </summary>
+    public static void ShowOpenImageOrVideoDialogAsync(Action<string> onSelected)
+    {
+        if (!OperatingSystem.IsWindows() || dialogOpen) return;
+        dialogOpen = true;
+        var thread = new System.Threading.Thread(() =>
+        {
+            string path = null;
+            try { path = ShowOpenImageOrVideoDialog(ownerless: true); }
+            finally { dialogOpen = false; }
+            if (!string.IsNullOrEmpty(path)) MainThreadDispatcher.Enqueue(() => onSelected?.Invoke(path));
+        })
+        { IsBackground = true, Name = "TOH-hamo FileDialog" };
+        thread.SetApartmentState(System.Threading.ApartmentState.STA); // コモンダイアログはSTAのスレッドで開く必要がある
+        thread.Start();
+    }
+
+    public static string ShowOpenImageOrVideoDialog(bool ownerless = false)
     {
         if (!OperatingSystem.IsWindows()) return null;
 
@@ -76,7 +98,7 @@ public static class Win32FileDialog
             var ofn = new OPENFILENAME
             {
                 lStructSize = Marshal.SizeOf<OPENFILENAME>(),
-                hwndOwner = GetActiveWindow(),
+                hwndOwner = ownerless ? IntPtr.Zero : GetActiveWindow(), // 別スレッドの時はゲームの窓を親にしない(ゲームが止まらないように)
                 lpstrFilter = filter,
                 nFilterIndex = 1,
                 lpstrFile = Marshal.StringToHGlobalUni(new string('\0', fileBuffer.Capacity)),

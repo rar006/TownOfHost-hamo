@@ -314,7 +314,7 @@ namespace TownOfHost.Roles.AddOns.Common
     public static class BetrayGuesser
     {
         private const int Id = 93700;
-        public static string SubRoleMark => Utils.ColorString(UtilsRoleText.GetRoleColor(CustomRoles.BetrayGuesser), "Bg");
+        public static string SubRoleMark => Utils.ColorString(UtilsRoleText.GetRoleColor(CustomRoles.BetrayGuesser), "Btg");
         public static List<byte> playerIdList = new();
         public static OptionItem OptionWinWhenDead;
         public static OptionItem OptionExileCount;

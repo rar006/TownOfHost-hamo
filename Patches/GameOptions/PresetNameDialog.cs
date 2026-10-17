@@ -84,7 +84,7 @@ public static class PresetNameDialog
 #if HAMO_ANDROID
             OpenKeyboard();
 #else
-            nameBox.TextBox.GiveFocus();
+            SafeFocus.Give(nameBox.TextBox);
 #endif
             Tick();
         }

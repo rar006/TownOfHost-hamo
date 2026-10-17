@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+﻿using AmongUs.GameOptions;
 using Hazel;
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
@@ -70,10 +70,13 @@ public sealed class MadSender : RoleBase, IKillFlashSeeable, IDeathReasonSeeable
     public override string GetProgressText(bool comms = false, bool gamelog = false)
         => Utils.ColorString(state.Left(OptionUses.GetInt()) > 0 ? RoleInfo.RoleColor : ModColors.NeutralGray, $"({state.Left(OptionUses.GetInt())})");
 
-    public override void ReceiveRPC(MessageReader reader) => state.Used = reader.ReadInt32();
+    public override void ReceiveRPC(MessageReader reader) { state.Used = reader.ReadInt32(); state.HasPending = reader.ReadBoolean(); }
     public void SendRPC()
     {
         using var sender = CreateSender();
         sender.Writer.Write(state.Used);
+        sender.Writer.Write(state.HasPending);
     }
+    public bool HasPending => state.HasPending;
+    public void ClearPendingLocal() => state.HasPending = false;
 }

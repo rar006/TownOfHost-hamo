@@ -53,6 +53,9 @@ public static class RoleGojuon
         foreach (var id in HeaderRoles.Keys) OnHeaderStateChanged?.Invoke(id);
     }
 
+    /// <summary>閉じている見出しが1つでもあるか(「全部ひらく/全部とじる」ボタン用)</summary>
+    public static bool AnyCollapsed => Collapsed.Count > 0;
+
     /// <summary>見出しをクリックした時: 開いていれば閉じ、閉じていれば開く</summary>
     public static bool ToggleHeader(int optionId)
     {

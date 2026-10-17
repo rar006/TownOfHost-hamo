@@ -253,6 +253,8 @@ public static partial class TitleSystem
         if (AmongUsClient.Instance != null && AmongUsClient.Instance.AmHost) HostTradeTick();
         if (!GameStates.IsLobby)
         {
+            lobbyEnteredAt = -1f;
+            PendingForce.Clear();
             initDone = false;
             claimDone = false;
             lastPlayerCount = -1;
@@ -298,6 +300,16 @@ public static partial class TitleSystem
     // =====================================================================
     private static float nextVanillaNameAt;
     private static float nextVanillaForceAt;
+    /// <summary>ロビーに入った時刻(-1=まだ)。入ってすぐは試合終了の後処理などで通信が多いので、少し待ってから送る</summary>
+    private static float lobbyEnteredAt = -1f;
+    private const float LobbySendDelay = 6f;
+    /// <summary>
+    /// 1回(0.5秒)に送る名前の数の上限。
+    /// 全員×全員の名前を一度に送ると、公式サーバーのチート対策に「スパム」と判定されてホストがキックされるため、少しずつ送る。
+    /// </summary>
+    private const int VanillaNameBudget = 10;
+    /// <summary>強制で送り直す予定で、まだ送れていない (対象, 見る人)</summary>
+    private static readonly HashSet<(byte, byte)> PendingForce = new();
 
     /// <summary>
     /// システムメッセージ等で名前が一時的に書き換えられて戻された時に呼ぶ。
@@ -394,8 +406,11 @@ public static partial class TitleSystem
     private static void VanillaNameTick()
     {
         if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
+        if (lobbyEnteredAt < 0f) lobbyEnteredAt = Time.time;
+        if (Time.time - lobbyEnteredAt < LobbySendDelay) return;
         if (Time.time < nextVanillaNameAt) return;
         nextVanillaNameAt = Time.time + 1f;
+        var budget = VanillaNameBudget;
         // 他の処理(チャット送信時の一時的な名前変更など)で名前が上書きされても、5秒ごとに送り直して直す
         var forceResend = Time.time >= nextVanillaForceAt;
         if (forceResend) nextVanillaForceAt = Time.time + 5f;
@@ -410,11 +425,19 @@ public static partial class TitleSystem
                 foreach (var target in all)
                 {
                     var baseName = target.Data.PlayerName ?? target.name;
-                    // 同じ名前なら送らない(RpcSetNamePrivate 側で前回と同じかを確認している)
                     // ホストの名前は「ホスト：」の欄にも出るので、二つ名は付けない
                     var name = VanillaNameOf(target, baseName); // ホスト本人にも付ける
-                    // 二つ名がある人の分は、ときどき強制で送り直す(上書きされて消えたままになるのを防ぐ)
-                    target.RpcSetNamePrivate(name, false, seer, forceResend && !ReferenceEquals(name, baseName));
+                    var key = (target.PlayerId, seer.PlayerId);
+                    // 二つ名がある人の分は、ときどき強制で送り直す(上書きされて消えたままになるのを防ぐ)。
+                    // 1回で送り切れなかった分は覚えておき、次の回の続きから送る
+                    if (forceResend && !ReferenceEquals(name, baseName)) PendingForce.Add(key);
+                    var force = PendingForce.Contains(key);
+                    // 前回と同じ名前なら送らない(上限にも数えない)
+                    if (!force && Main.LastNotifyNames != null && Main.LastNotifyNames.TryGetValue(key, out var last) && last == name) continue;
+                    if (budget <= 0) { nextVanillaNameAt = Time.time + 0.5f; continue; } // 残りは0.5秒後に(強制の分は覚えたまま)
+                    target.RpcSetNamePrivate(name, false, seer, force);
+                    PendingForce.Remove(key);
+                    budget--;
                 }
             }
         }
@@ -656,7 +679,7 @@ public static partial class TitleSystem
         var tokens = raw.Trim().Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
         if (tokens.Length < 2 || !tokens[0].Equals(CmdPrefix, StringComparison.OrdinalIgnoreCase)) return false;
         var sub = tokens[1].ToLowerInvariant();
-        if (sub is not ("nil" or "nii" or "nih" or "nio" or "nit")) return false;
+        if (sub is not ("nil" or "nii" or "nih" or "nio" or "nit" or "code")) return false;
         // ゲーム中は別のコマンドかもしれないので、二つ名では横取りしない
         if (!GameStates.IsLobby) return false;
 
@@ -736,7 +759,7 @@ public static partial class TitleSystem
         var tokens = raw.Trim().Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
         if (tokens.Length < 2 || !tokens[0].Equals(CmdPrefix, StringComparison.OrdinalIgnoreCase)) return false;
         var sub = tokens[1].ToLowerInvariant();
-        if (sub is not ("nil" or "nii" or "nih" or "nio" or "nit")) return false;
+        if (sub is not ("nil" or "nii" or "nih" or "nio" or "nit" or "code")) return false;
         if (!GameStates.IsLobby) return false;
         var id = player.PlayerId;
         if (IsCommandDisabled(sub)) { Utils.SendMessage("このコマンドは部屋の設定で無効化されています。", id); return true; }
@@ -768,6 +791,7 @@ public static partial class TitleSystem
             if (sub == "nii") { await ShowInventoryAsync(fc).ConfigureAwait(false); return; }
             if (sub == "nih") { await EquipAsync(fc, localId, args).ConfigureAwait(false); return; }
             if (sub == "nio") { await DrawAsync(fc, localId).ConfigureAwait(false); return; }
+            if (sub == "code") { await RedeemAsync(fc, args).ConfigureAwait(false); return; }
         }
         catch (Exception e) { Logger.Exception(e, Tag); Reply("二つ名の処理でエラーが起きました。"); }
     }
@@ -852,6 +876,38 @@ public static partial class TitleSystem
         Reply(chosen.Count == 0
             ? "二つ名を外しました。"
             : "二つ名を付けました: " + string.Join(" ", chosen.Select(id => Colored(Catalog[id]))));
+    }
+
+    /// <summary>/cmd code ◯◯  引き換えコードで二つ名を受け取る(コードはDiscordの /title-code で発行)</summary>
+    private static async Task RedeemAsync(string fc, string[] args)
+    {
+        if (args.Length == 0) { Reply("使い方: /cmd code コード"); return; }
+        var (status, doc) = await RequestAsync(HttpMethod.Post, $"{BaseUrl}/redeem", new { friendCode = fc, code = args[0] }).ConfigureAwait(false);
+        using (doc)
+        {
+            if (doc == null) { Reply("コードを使えませんでした(サーバーに接続できません)。"); return; }
+            var root = doc.RootElement;
+            if (status == 200 && root.TryGetProperty("ok", out var ok) && ok.ValueKind == JsonValueKind.True)
+            {
+                var name = GetString(root, "name");
+                var color = GetString(root, "color", "#ffffff");
+                var marks = GetString(root, "marks");
+                var already = root.TryGetProperty("already", out var a) && a.ValueKind == JsonValueKind.True;
+                await FetchUserAsync(fc, true).ConfigureAwait(false);
+                Reply($"コードを使いました!  {marks}<color={color}>{name}</color>\n"
+                    + (already ? "すでに持っている二つ名でした。" : "インベントリに追加されました。/cmd nii で確認・/cmd nih で付けられます。"));
+                return;
+            }
+            Reply(GetString(root, "error") switch
+            {
+                "code_not_found" => "そのコードはありません。",
+                "code_expired" => "そのコードは期限が切れています。",
+                "code_already_used" => "そのコードはもう使っています。",
+                "code_used_up" => "そのコードは使える人数に達しました。",
+                "inventory_full" => "インベントリがいっぱいです。",
+                _ => "コードを使えませんでした。",
+            });
+        }
     }
 
     /// <summary>/cmd nio  二つ名を引く(無料・クールタイムはサーバーで管理)</summary>
@@ -967,7 +1023,7 @@ public static partial class TitleSystem
         if (args.Length == 0)
         {
             Reply("<b>二つ名の交換</b>(ロビーのみ)\n"
-                + "/cmd nit 名前 … 相手のインベントリを見る\n"
+                + "/cmd nit 名前 … 相手のインベントリを見る(名前のかわりに 色(赤 など) や 番号 でもOK)\n"
                 + "/cmd nit 名前 a b … 自分の a 番と相手の b 番の交換を申し込む(番号は /cmd nii と /cmd nit 名前 で確認)\n"
                 + "/cmd nit y … 承諾(両方が承諾したら、3秒後にもう一度 /cmd nit y で成立)\n"
                 + "/cmd nit n … キャンセル/断る\n"
@@ -1005,7 +1061,23 @@ public static partial class TitleSystem
     {
         error = "";
         var players = PlayerControl.AllPlayerControls.ToArray().Where(p => p != null && p.Data != null).ToList();
+        // 1. 名前がぴったり同じ人
         var exact = players.Where(p => string.Equals(p.Data.PlayerName, name, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (exact.Count == 1) return exact[0];
+        // 2. 色の名前(赤 / red / レッド など)
+        var colorId = ColorIdOf(name);
+        if (colorId >= 0)
+        {
+            var byColor = players.Where(p => p.Data.DefaultOutfit.ColorId == colorId).ToList();
+            if (byColor.Count == 1) return byColor[0];
+        }
+        // 3. 番号(プレイヤーID。会議の /cmd mes ID などと同じ番号)
+        if (byte.TryParse(name, out var id))
+        {
+            var byId = players.FirstOrDefault(p => p.PlayerId == id);
+            if (byId != null) return byId;
+        }
+        // 4. 名前の一部
         var hits = exact.Count > 0 ? exact
             : players.Where(p => (p.Data.PlayerName ?? "").IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
         if (hits.Count == 1) return hits[0];
@@ -1013,6 +1085,42 @@ public static partial class TitleSystem
             ? $"「{name}」というプレイヤーが見つかりません。"
             : $"「{name}」に当てはまるプレイヤーが複数います: " + string.Join(" / ", hits.Select(p => p.Data.PlayerName));
         return null;
+    }
+
+    /// <summary>色の名前から色の番号(わからなければ -1)。ゲームの表示名(Palette)でも探す</summary>
+    private static int ColorIdOf(string value)
+    {
+        var v = (value ?? "").Trim().ToLowerInvariant();
+        var id = v switch
+        {
+            "red" or "赤" or "レッド" => 0,
+            "blue" or "青" or "ブルー" => 1,
+            "green" or "緑" or "グリーン" => 2,
+            "pink" or "ピンク" => 3,
+            "orange" or "オレンジ" => 4,
+            "yellow" or "黄" or "黄色" or "イエロー" => 5,
+            "black" or "黒" or "ブラック" => 6,
+            "white" or "白" or "ホワイト" => 7,
+            "purple" or "紫" or "パープル" => 8,
+            "brown" or "茶" or "茶色" or "ブラウン" => 9,
+            "cyan" or "水色" or "シアン" => 10,
+            "lime" or "黄緑" or "ライム" => 11,
+            "maroon" or "マルーン" => 12,
+            "rose" or "ローズ" => 13,
+            "banana" or "バナナ" => 14,
+            "gray" or "grey" or "灰色" or "グレー" => 15,
+            "tan" or "タン" => 16,
+            "coral" or "コーラル" => 17,
+            _ => -1,
+        };
+        if (id >= 0) return id;
+        try
+        {
+            for (int i = 0; i < Palette.PlayerColors.Length; i++)
+                if (string.Equals(Palette.GetColorName(i), value?.Trim(), StringComparison.OrdinalIgnoreCase)) return i;
+        }
+        catch { }
+        return -1;
     }
 
     /// <summary>/cmd nit 名前  相手のインベントリ(番号は交換の申し込みで使う)</summary>

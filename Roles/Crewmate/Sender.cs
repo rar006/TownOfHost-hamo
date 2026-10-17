@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+﻿using AmongUs.GameOptions;
 using Hazel;
 using TownOfHost.Modules;
 using TownOfHost.Roles.Core;
@@ -50,12 +50,15 @@ public sealed class Sender : RoleBase, ISelfVoter
     public override string GetProgressText(bool comms = false, bool gamelog = false)
         => Utils.ColorString(state.Left(OptionUses.GetInt()) > 0 ? RoleInfo.RoleColor : ModColors.NeutralGray, $"({state.Left(OptionUses.GetInt())})");
 
-    public override void ReceiveRPC(MessageReader reader) => state.Used = reader.ReadInt32();
+    public override void ReceiveRPC(MessageReader reader) { state.Used = reader.ReadInt32(); state.HasPending = reader.ReadBoolean(); }
     public void SendRPC()
     {
         using var sender = CreateSender();
         sender.Writer.Write(state.Used);
+        sender.Writer.Write(state.HasPending);
     }
+    public bool HasPending => state.HasPending;
+    public void ClearPendingLocal() => state.HasPending = false;
 }
 
 /// <summary>センダーとマッドセンダーの共通処理</summary>
@@ -64,15 +67,24 @@ public sealed class SenderState
     public int Used;
     byte pendingTarget = byte.MaxValue;
 
+    /// <summary>次のチャットを相手に送る待ち状態か(本人のMODにも同期する)</summary>
+    public bool HasPending;
+
     public int Left(int max) => System.Math.Max(0, max - Used);
-    public void Reset() => pendingTarget = byte.MaxValue;
+    public void Reset() { pendingTarget = byte.MaxValue; HasPending = false; }
+
+    static void Sync(PlayerControl me)
+    {
+        (me.GetRoleClass() as Sender)?.SendRPC();
+        (me.GetRoleClass() as Madmate.MadSender)?.SendRPC();
+    }
 
     public bool CheckVote(PlayerControl me, byte votedForId, PlayerControl voter, int max)
     {
         if (!Canuseability() || voter.PlayerId != me.PlayerId || !me.IsAlive() || Left(max) <= 0) return true;
         if (!CheckSelfVoteMode(me, votedForId, out var status)) return true;
         if (status is VoteStatus.Self) Utils.SendMessage(GetString("SenderSelectMode"), me.PlayerId);
-        if (status is VoteStatus.Skip) { pendingTarget = byte.MaxValue; Utils.SendMessage(GetString("VoteSkillFin"), me.PlayerId); }
+        if (status is VoteStatus.Skip) { pendingTarget = byte.MaxValue; HasPending = false; Sync(me); Utils.SendMessage(GetString("VoteSkillFin"), me.PlayerId); }
         if (status is VoteStatus.Vote)
         {
             var t = PlayerCatch.GetPlayerById(votedForId);
@@ -80,6 +92,8 @@ public sealed class SenderState
             else
             {
                 pendingTarget = votedForId;
+                HasPending = true;
+                Sync(me);
                 Utils.SendMessage(string.Format(GetString("SenderReady"), t.Data?.PlayerName), me.PlayerId);
             }
         }
@@ -93,10 +107,10 @@ public sealed class SenderState
         if (text.TrimStart().StartsWith("/")) return false; // コマンドはそのまま
         var target = PlayerCatch.GetPlayerById(pendingTarget);
         pendingTarget = byte.MaxValue;
-        if (target == null || !target.IsAlive() || Left(max) <= 0) return false;
+        HasPending = false;
+        if (target == null || !target.IsAlive() || Left(max) <= 0) { Sync(me); return false; }
         Used++;
-        (me.GetRoleClass() as Sender)?.SendRPC();
-        (me.GetRoleClass() as Madmate.MadSender)?.SendRPC();
+        Sync(me);
         Utils.SendMessage(text, target.PlayerId, Utils.ColorString(UnityEngine.Color.cyan, GetString("SenderFrom")));
         Utils.SendMessage(string.Format(GetString("SenderSent"), target.Data?.PlayerName, Left(max)), me.PlayerId);
         Logger.Info($"センダー: {me.Data?.GetLogPlayerName()} → {target.Data?.GetLogPlayerName()} に秘匿を送信", "Sender");

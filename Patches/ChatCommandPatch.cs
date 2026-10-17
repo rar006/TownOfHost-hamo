@@ -1018,7 +1018,20 @@ namespace TownOfHost
 
 
             if (DebugModeManager.AmDebugger) Logger.Info(text, "SendChat");
+            // センダー(MOD導入者・ホスト以外): 次のチャットはホストにだけ直送する(全体には出さない)
+            if (UserRoles2026.TryRouteSenderChatToHost(text))
+            {
+                __instance.freeChatField.textArea.Clear();
+                return false;
+            }
 
+            // 初手会議のチャット無効化: 自分の送信を止める(MOD導入者はホスト以外もここを通る)
+            if (TownOfHost.Modules.FirstMeetingChatBlock.ShouldBlock(text))
+            {
+                __instance.freeChatField.textArea.Clear();
+                TownOfHost.Modules.FirstMeetingChatBlock.ShowLocalNotice();
+                return false;
+            }
             // センダー: 相手を選んだ後の次のチャットは、相手にだけ送って全体には出さない
             if (UserRoles2026.TryInterceptChat(PlayerControl.LocalPlayer, text))
             {
@@ -4788,6 +4801,7 @@ namespace TownOfHost
             // センダー: 相手にだけ送り、全体に出たメッセージは流して隠す
             if (UserRoles2026.TryInterceptChat(player, text))
             {
+                canceled = true; // 処理済み(全体に送り直さない)
                 ChatManager.SendPreviousMessagesToAll();
                 return;
             }
@@ -4986,17 +5000,19 @@ namespace TownOfHost
 
                         case "roles":
 
-                            if (Options.OptionCommandNowRole.GetBool())
+                            // 「/now role を禁止」でも、/cmd n r I のようにカテゴリを指定した表示は使える(禁止するのは全件表示だけ)
+
+                            var catR = ParseRoleCategory(thirdargs);
+
+                            if (catR == null && Options.OptionCommandNowRole.GetBool())
 
                             {
 
-                                SendMessage("<color=#ff0000>現在このコマンドはホストによって無効化されています。</color>", player.PlayerId);
+                                SendMessage("<color=#ff0000>役職の全件表示はホストによって無効化されています。\n/cmd n r I のように陣営を指定すると見られます。\nI=インポスター M=マッドメイト C=クルーメイト N=ニュートラル A=属性 G=ゴースト</color>", player.PlayerId);
 
                                 break;
 
                             }
-
-                            var catR = ParseRoleCategory(thirdargs);
 
                             if (catR != null)
 

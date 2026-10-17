@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
 using TownOfHost.Modules;
@@ -23,7 +23,7 @@ public sealed class MadMagic : RoleBase, IKillFlashSeeable, IDeathReasonSeeable,
             CustomRoleTypes.Madmate,
             93000,
             SetupOptionItem,
-            "mm",
+            "mmg",
             "#ff1919",
             introSound: () => GetIntroSound(RoleTypes.Impostor),
             isNewRole: true

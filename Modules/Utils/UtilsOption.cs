@@ -1636,7 +1636,7 @@ namespace TownOfHost
                 CustomRoles.ToughGuy => AddonInfo(role, "Tg"),
                 CustomRoles.Comorbidity => AddonInfo(role, "Cm"),
                 CustomRoles.Murder => AddonInfo(role, "Md"),
-                CustomRoles.BetrayGuesser => AddonInfo(role, "Bg"),
+                CustomRoles.BetrayGuesser => AddonInfo(role, "Btg"),
 
 
                 CustomRoles.Powerful => AddonInfo(role, "∠"),

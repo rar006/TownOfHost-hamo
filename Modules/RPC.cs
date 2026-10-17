@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Collections;
 
@@ -207,6 +207,10 @@ namespace TownOfHost
 
                         Logger.Info($"{(systemmeg ? "○" : "")}{__instance.GetNameWithRole().RemoveHtmlTags()}:{text.RemoveHtmlTags()}", "ReceiveChat");
 
+                    // 初手会議のチャット無効化: 届いたチャットを表示しない(ホストのお知らせ・システムメッセージ・コマンドは通す)
+                    if (__instance != null && __instance.OwnerId != AmongUsClient.Instance.HostId && __instance.IsAlive()
+                        && !systemmeg && TownOfHost.Modules.FirstMeetingChatBlock.ShouldBlock(text))
+                        return false;
                     ChatCommands.OnReceiveChat(__instance, text, out var canceled);
 
                     if (canceled) return false;

@@ -1228,6 +1228,7 @@ namespace TownOfHost
         public static bool firstturnmeeting;
 
         public static OptionItem FirstTurnMeetingCantability;
+        public static OptionItem FirstTurnMeetingChatBlock;
 
         public static OptionItem FixFirstKillCooldown;
 
@@ -2625,6 +2626,9 @@ namespace TownOfHost
                 .SetParent(ConvenientOptions);
 
             FirstTurnMeetingCantability = BooleanOptionItem.Create(111002, "FirstTurnMeetingCantability", false, TabGroup.Game, false).SetParent(FirstTurnMeeting);
+            // 初手会議でチャットを無効化する: OFF / 1〜999秒 / 会議終了時まで
+            FirstTurnMeetingChatBlock = new TownOfHost.Modules.ChatBlockSecondsOptionItem(111008, "FirstTurnMeetingChatBlock", 0, TabGroup.Game)
+                .SetZeroNotation(OptionZeroNotation.Off).SetValueFormat(OptionFormat.Seconds).SetParent(FirstTurnMeeting);
 
             FixFirstKillCooldown = BooleanOptionItem.Create(111003, "FixFirstKillCooldown", false, TabGroup.Game, false)
 

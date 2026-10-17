@@ -755,11 +755,12 @@ namespace TownOfHost.Patches
             // GetOpenFileNameWはダイアログを閉じるまで戻らないブロッキング呼び出しのため、
             // 呼んでいる間はゲーム全体が一時停止して見える(ダイアログ自体は正常に操作できる)。
             if (Main.IsAndroid()) return; // Win32のファイル選択はAndroidでは使えない
-            var path = Win32FileDialog.ShowOpenImageOrVideoDialog();
-            if (string.IsNullOrEmpty(path)) return;
-
-            _pendingAttachmentPath = path;
-            UpdateAttachButtonLabel();
+            // 別スレッドで開く(ゲームを止めない)。選んだら、ゲームのスレッドで添付に設定する
+            Win32FileDialog.ShowOpenImageOrVideoDialogAsync(path =>
+            {
+                _pendingAttachmentPath = path;
+                UpdateAttachButtonLabel();
+            });
         }
 
         private static void UpdateAttachButtonLabel()
@@ -846,7 +847,7 @@ namespace TownOfHost.Patches
                     SetActiveSafe(_idNextButton, true);
                     SetActiveSafe(_idBackButton, true);
                     // Step切替時に親パネルへフォーカスを奪われても、入力欄を再選択する。
-                    _ = new LateTask(() => _discordIdBox?.TextBox?.GiveFocus(), 0.05f, "BugReportDiscordId.Focus", true);
+                    _ = new LateTask(() => SafeFocus.Give(_discordIdBox?.TextBox), 0.05f, "BugReportDiscordId.Focus", true);
                     break;
 
                 case BugReportWizardStep.AskDescription:
@@ -858,7 +859,7 @@ namespace TownOfHost.Patches
                     SetActiveSafe(_attachButton, !Main.IsAndroid()); // Androidではファイル選択が使えないので出さない
                     UpdateAttachButtonLabel();
                     // 説明欄を表示した直後に確実に入力フォーカスを与える。
-                    _ = new LateTask(() => _descriptionBox?.TextBox?.GiveFocus(), 0.05f, "BugReportDescription.Focus", true);
+                    _ = new LateTask(() => SafeFocus.Give(_descriptionBox?.TextBox), 0.05f, "BugReportDescription.Focus", true);
                     break;
 
                 case BugReportWizardStep.Submitting:

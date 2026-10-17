@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
 using UnityEngine;
@@ -28,7 +28,7 @@ public sealed class Trauma : RoleBase, IImpostor
             CustomRoleTypes.Impostor,
             87000,
             SetupOptionItem,
-            "tra",
+            "trm",
             "#8b4c6a",
             (3, 4),
             tab: TabGroup.Combinations,

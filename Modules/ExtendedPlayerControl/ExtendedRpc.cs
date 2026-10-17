@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 
 using System.Collections.Generic;
 
@@ -1189,6 +1189,9 @@ namespace TownOfHost
             {
 
                 pc.SetColor(Color);
+                // ホスト自身の視点なら、自分の画面だけ変えて終わり。
+                // (以前は return が下のコメントアウトの中にあったため、自分宛てのRPCが送られて全員の色が変わっていた)
+                return;
 
                 /*if (NonSkin)
 
@@ -1206,6 +1209,7 @@ namespace TownOfHost
 
             }
 
+            if (seer.GetClientId() == -1) return; // 宛先が分からない時は送らない(全員に届いてしまうため)
             var sender = CustomRpcSender.Create("DChengeColor", SendOption.Reliable);
 
             sender.StartMessage(seer.GetClientId());
@@ -1300,6 +1304,7 @@ namespace TownOfHost
 
 
 
+            if (seer.GetClientId() == -1) return; // 宛先が分からない時は送らない(全員に届いてしまうため)
             var sender = CustomRpcSender.Create("DHideSkinAndPet", SendOption.Reliable);
 
             sender.StartMessage(seer.GetClientId());
