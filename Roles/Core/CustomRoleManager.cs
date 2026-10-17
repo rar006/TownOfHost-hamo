@@ -2000,7 +2000,11 @@ public enum CustomRoles
     Ruler,
     Abuser,
     Victim,
-    Influencer = 287,
+    // Migrated from old branch; explicit values preserve role IDs.
+    StepBomber = 360,
+    Locksmith = 361,
+    Coroner = 362,
+
     // Sub-role after 1000←今後の拡張のため広げます。
     //NotAssigned = 500,
     NotAssigned = 1000,
@@ -2165,11 +2169,11 @@ public enum CustomRoles
     Greedier,
     Administer,
     // ===== 新規追加役職 (2026-10 ユーザー提案)。値は空いている340番から =====
-    Trauma,
-    Surmount,
-    Messenger,
-    Fugitive,
-    MemoryRestorer,
+    Trauma = 364,
+    Surmount = 365,
+    Messenger = 366,
+    Fugitive = 367,
+    MemoryRestorer = 368,
     ArchVillain,
     LonelyWolf,
     Clockworker,
