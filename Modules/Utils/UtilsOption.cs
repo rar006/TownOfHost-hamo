@@ -1760,6 +1760,7 @@ namespace TownOfHost
                 CustomRoles.DemonicVenter => AddonInfo(role),
 
                 CustomRoles.AsistingAngel => AddonInfo(role),
+                CustomRoles.Inheritance => AddonInfo(role),
 
                 _ => $"{role}-{role.GetRoleInfo()?.ConfigId ?? -100}...?(´・ω・｀)"
 
