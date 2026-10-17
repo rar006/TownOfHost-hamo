@@ -43,7 +43,6 @@
 		<Description>fork by Town Of Host</Description>
 
 		<Authors>tukasa0001(EmptyBottle), integral0131</Authors>
-
 		<langVersion>preview</langVersion>
 		<!-- ItchLogin(Android)/IncrementalGcInvalidator(Windows) がネイティブのメモリ・関数を直接扱うため -->
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -82,6 +81,7 @@
 
 
 	<ItemGroup>
+		<PackageReference Include="Roslynator.Analyzers" Version="4.*" PrivateAssets="all" />
 
 		<Reference Include="$(AmongUs)\BepInEx\core\*.dll" Condition="'$(HamoPlatform)' != 'Android'" />
 		<Reference Include="$(AmongUs)\BepInEx\interop\*.dll" Condition="'$(HamoPlatform)' != 'Android'" />

@@ -1189,6 +1189,7 @@ public abstract class RoleBase : IDisposable
         Other,
 
         Impostor,
+        Jiangshi,
 
     }
 

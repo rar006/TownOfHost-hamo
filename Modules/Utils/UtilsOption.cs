@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using System.Data;
 
@@ -1760,8 +1760,7 @@ namespace TownOfHost
                 CustomRoles.DemonicVenter => AddonInfo(role),
 
                 CustomRoles.AsistingAngel => AddonInfo(role),
-
-
+                CustomRoles.Inheritance => AddonInfo(role),
 
                 _ => $"{role}-{role.GetRoleInfo()?.ConfigId ?? -100}...?(´・ω・｀)"
 
@@ -2015,7 +2014,7 @@ namespace TownOfHost
 
                 case From.TownOfHost_Enhanced: Fromtext += $"<#ffc0cb>TownOfHost Enhanced</color>"; break;
 
-                case From.TownOfHost_Pko: Fromtext += $"<#FF9631>TownOfHost Pko</color>"; break;
+                case From.TownOfHost_Pko: Fromtext += $"<#FF9631>TownOfHost-Pko</color>"; break;
 
                 case From.RevolutionaryHostRoles: Fromtext += $"<#3cb371>RevolutionaryHostRoles</color>"; break;
 

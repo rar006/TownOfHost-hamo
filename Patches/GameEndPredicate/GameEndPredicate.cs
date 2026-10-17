@@ -261,7 +261,7 @@ public abstract class GameEndPredicate
                 CountTypes.StandMaster => CustomWinner.StandMaster,
 
                 CountTypes.Villain => CustomWinner.Villain,
-
+                CountTypes.Daoshi => CustomWinner.Daoshi,
                 _ => (CustomWinner)role,
 
             };

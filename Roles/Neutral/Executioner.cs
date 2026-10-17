@@ -17,7 +17,7 @@ public sealed class Executioner : RoleBase, IAdditionalWinner
             CustomRoles.Executioner,
             () => RoleTypes.Crewmate,
             CustomRoleTypes.Neutral,
-            51400,
+            14300,
             SetupOptionItem,
             "exe",
             "#611c3a",
@@ -63,7 +63,9 @@ public sealed class Executioner : RoleBase, IAdditionalWinner
     bool IsReport;
     public static readonly CustomRoles[] ChangeRoles =
     {
-            CustomRoles.Crewmate, CustomRoles.Jester, CustomRoles.Opportunist,CustomRoles.Monochromer
+                                                                                                                       //は？って思うかもしれないけど 
+                                                                                                                       //ターゲットキルされたら負け。そういう役ちゃうん... 
+        CustomRoles.Crewmate, CustomRoles.Jester, CustomRoles.Opportunist,CustomRoles.Turncoat, CustomRoles.Monochromer, CustomRoles.Emptiness
     };
 
     private static void SetupOptionItem()

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using System.Collections.Generic;
 
@@ -245,7 +245,6 @@ namespace TownOfHost
 
 
         // End-K-Notと同様に、非ホストのコマンド本文は通常のチャットRPCを使わず、
-
         // ホストだけを宛先にした専用RPCで処理を依頼する。
 
         internal static void RequestCommandProcessingFromHost(string text)
@@ -3925,7 +3924,11 @@ namespace TownOfHost
                         break;
 
 
-
+                    case "/en":
+                        canceled = true;
+                        if (args.Length < 2 || !int.TryParse(args[1], out int exp)) break;
+                        Experiencer.Tryentrant(exp, PlayerControl.LocalPlayer);
+                        break;
                     case "/cr":
 
                         if (CanUseChangeRoleCommand(PlayerControl.LocalPlayer))

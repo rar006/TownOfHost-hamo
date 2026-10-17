@@ -154,6 +154,19 @@ public class ModNewsHistory
                 };
                 AllModNews.Add(news);
             }
+            {
+                var news = new ModNews
+                {
+                    Number = 100010,
+                    Title = "アップデート！",
+                    SubTitle = "<color=#fb85ff>Town Of Host-hamo v4.35.01β</color>",
+                    ShortTitle = "<color=#fb85ff>●TOH-hamo v4.35.01β</color>",
+                    Text = "【新役職】\r\n・エクスペリンサー(インポスター)\r\n\r\n【追加】\r\n・初手会議でチャットを無効化する設定\r\n・二つ名の引き換えコード(/cmd code コード)\r\n・二つ名の交換で、相手を色や番号で指定できるように\r\n・役職の見出しを全部ひらく・とじるボタン\r\n\r\n【修正】\r\n・試合後にロビーへ戻るとキックされることがある不具合\r\n・スリーパーが勝利できない不具合\r\n・ブラックビジョナーがマッドを作ると全員の色が変わる不具合\r\n・バグ報告などで落ちることがある不具合\r\n・Hボタンで別の役職の説明が出る不具合\r\n・その他、多少のバグ修正"
+                    ,
+                    Date = "2026-10-17"
+                };
+                AllModNews.Add(news);
+            }
             AnnouncementPopUp.UpdateState = AnnouncementPopUp.AnnounceState.NotStarted;
         }
     }

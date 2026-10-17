@@ -465,6 +465,7 @@ using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Impostor;
 using TownOfHost.Roles.Madmate;
 using TownOfHost.Roles.Neutral;
+using UnityEngine;
 
 // ===== ゲーム終了条件 =====
 
@@ -537,9 +538,16 @@ namespace TownOfHost
             int PavlovOwnerAlive = 0;
 
             int PavlovOwnerRemaining = 0;
+            int Daoshi = 0;
 
-
-
+            foreach (var pc in PlayerCatch.AllPlayerControls)
+            {
+                if (pc.Is(CustomRoles.Jiangshi))
+                {
+                    Daoshi++;
+                    continue;
+                }
+            }
             foreach (var pc in PlayerCatch.AllAlivePlayerControls)
 
             {
@@ -552,7 +560,7 @@ namespace TownOfHost
                     if (pc.GetRoleClass() is PavlovOwner owner && owner.HasRemainingImprintCount())
 
                         PavlovOwnerRemaining++;
-
+                    continue;
                 }
 
                 if (pc.GetCustomRole() is CustomRoles.MadBetrayer)
@@ -613,6 +621,7 @@ namespace TownOfHost
 
                     case CountTypes.Eater: EaterCount++; break;
 
+                    case CountTypes.Daoshi: Daoshi++; break;
                 }
 
             }
@@ -724,7 +733,7 @@ namespace TownOfHost
 
                 && MilkyWay == 0 && MadBetrayer == 0 && Pavlov == 0 && StandMasterCount == 0
 
-                && EaterCount == 0) //全滅
+                && EaterCount == 0 && Daoshi == 0) //全滅
 
             {
 
@@ -742,7 +751,7 @@ namespace TownOfHost
 
             }
 
-            else if (Imp == 1 && Crew == 0 && GrimReaper == 1 && EaterCount == 0)//死神勝利(1)
+            else if (Imp == 1 && Crew == 0 && GrimReaper == 1)//死神勝利(1)
 
             {
 
@@ -760,7 +769,7 @@ namespace TownOfHost
 
             else if (Jackal == 0 && Remotekiller == 0 && MilkyWay == 0 && MadBetrayer == 0
 
-                && Pavlov == 0 && StandMasterCount == 0 && EaterCount == 0 && FoxAndCrew <= Imp) //インポスター勝利
+                && Pavlov == 0 && StandMasterCount == 0 && EaterCount == 0 && Daoshi == 0 && FoxAndCrew <= Imp) //インポスター勝利
 
             {
 
@@ -772,7 +781,7 @@ namespace TownOfHost
 
             else if (Imp == 0 && Remotekiller == 0 && MilkyWay == 0 && MadBetrayer == 0
 
-                && Pavlov == 0 && StandMasterCount == 0 && EaterCount == 0 && FoxAndCrew <= Jackal) //ジャッカル勝利
+                && Pavlov == 0 && StandMasterCount == 0 && EaterCount == 0 && Daoshi == 0 && FoxAndCrew <= Jackal) //ジャッカル勝利
 
             {
 
@@ -798,7 +807,7 @@ namespace TownOfHost
 
             else if (Imp == 0 && Jackal == 0 && MilkyWay == 0 && MadBetrayer == 0
 
-                && Pavlov == 0 && StandMasterCount == 0 && EaterCount == 0 && FoxAndCrew <= Remotekiller)
+                && Pavlov == 0 && StandMasterCount == 0 && EaterCount == 0 && Daoshi == 0 && FoxAndCrew <= Remotekiller)
 
             {
 
@@ -814,11 +823,11 @@ namespace TownOfHost
 
             }
 
-            else if (Jackal == 0 && Imp == 0 && GrimReaper == 1 && Remotekiller == 0
+            else if (Jackal == 0 && Imp == 0 && GrimReaper >= 1 && Remotekiller == 0
 
                 && MilkyWay == 0 && MadBetrayer == 0 && Pavlov == 0 && StandMasterCount == 0
 
-                && EaterCount == 0)//死神勝利(2)
+                && EaterCount == 0 && Daoshi == 0)//死神勝利(2)
 
             {
 
@@ -836,7 +845,7 @@ namespace TownOfHost
 
             else if (Imp == 0 && Jackal == 0 && Remotekiller == 0 && MadBetrayer == 0
 
-                && Pavlov == 0 && StandMasterCount == 0 && EaterCount == 0 && FoxAndCrew <= MilkyWay)
+                && Pavlov == 0 && StandMasterCount == 0 && EaterCount == 0 && Daoshi == 0 && FoxAndCrew <= MilkyWay)
 
             {
 
@@ -852,7 +861,7 @@ namespace TownOfHost
 
             else if (Imp == 0 && Jackal == 0 && Remotekiller == 0 && MilkyWay == 0
 
-                && Pavlov == 0 && StandMasterCount == 0 && EaterCount == 0 && FoxAndCrew <= MadBetrayer)
+                && Pavlov == 0 && StandMasterCount == 0 && EaterCount == 0 && Daoshi == 0 && FoxAndCrew <= MadBetrayer)
 
             {
 
@@ -863,10 +872,18 @@ namespace TownOfHost
                 CustomWinnerHolder.WinnerRoles.Add(CustomRoles.MadBetrayer);
 
             }
+            else if (Imp == 0 && Jackal == 0 && Remotekiller == 0 && MilkyWay == 0
+            && Pavlov == 0 && StandMasterCount == 0 && EaterCount == 0 && MadBetrayer == 0 && FoxAndCrew <= Daoshi)
+            {
+                reason = GameOverReason.ImpostorsByKill;
+                CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Daoshi, byte.MaxValue);
+                CustomWinnerHolder.WinnerRoles.Add(CustomRoles.Daoshi);
+                CustomWinnerHolder.WinnerRoles.Add(CustomRoles.Jiangshi);
 
+            }
             else if (Imp == 0 && Jackal == 0 && Remotekiller == 0 && GrimReaper == 0
 
-                && MilkyWay == 0 && MadBetrayer == 0 && StandMasterCount == 0 && EaterCount == 0
+                && MilkyWay == 0 && MadBetrayer == 0 && StandMasterCount == 0 && Daoshi == 0 && EaterCount == 0
 
                 && FoxAndCrew <= Pavlov && PavlovDog.HasAliveDog())
 
@@ -888,7 +905,7 @@ namespace TownOfHost
 
                 && Imp == 0 && Jackal == 0 && Remotekiller == 0 && GrimReaper == 0
 
-                && MilkyWay == 0 && MadBetrayer == 0 && Pavlov == 0 && EaterCount == 0
+                && MilkyWay == 0 && MadBetrayer == 0 && Daoshi == 0 && Pavlov == 0 && EaterCount == 0
 
                 && FoxAndCrew <= StandMasterCount)
 
@@ -916,7 +933,7 @@ namespace TownOfHost
 
                 && MilkyWay == 0 && Pavlov == 0 && StandMasterCount == 0 && Imp == 0
 
-                && EaterCount == 0) //クルー勝利
+                && Daoshi == 0 && EaterCount == 0) //クルー勝利
 
             {
 

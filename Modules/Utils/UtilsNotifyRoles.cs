@@ -765,7 +765,10 @@ namespace TownOfHost
 
                             if (((IsActive(SystemTypes.Comms) && Options.CommsCamouflage.GetBool())
 
-                            || (role is CustomRoles.Monochromer && seerisAlive)
+                            || (role is CustomRoles.Monochromer && seerisAlive && target != seer)
+                            || (role is CustomRoles.Daoshi && seerisAlive && target != seer)
+                            || (role is CustomRoles.BlackVisioner && seerisAlive && target != seer)
+                            || (role is CustomRoles.BlackMadMate && seerisAlive && target != seer)
 
                             //|| Camouflager.NowUse
 

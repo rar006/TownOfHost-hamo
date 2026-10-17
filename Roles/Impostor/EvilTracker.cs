@@ -1,30 +1,44 @@
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
-using Hazel;
-using UnityEngine;
 using AmongUs.GameOptions;
-
+using Hazel;
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
+using UnityEngine;
+using static TownOfHost.Modules.SelfVoteManager;
 
 namespace TownOfHost.Roles.Impostor;
 
-public sealed class EvilTracker : RoleBase, IImpostor, IKillFlashSeeable, ISidekickable
+public sealed class EvilTracker : RoleBase, IImpostor, IKillFlashSeeable, ISidekickable, IUsePhantomButton, ISelfVoter
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
             typeof(EvilTracker),
             player => new EvilTracker(player),
             CustomRoles.EvilTracker,
-            () => (TargetMode)OptionTargetMode.GetValue() == TargetMode.Never ? RoleTypes.Impostor : RoleTypes.Shapeshifter,
+            () => (TargetMode)OptionTargetMode.GetValue() == TargetMode.Never || SelfVote.GetBool() ? RoleTypes.Impostor : IsOneclick.GetBool() ? RoleTypes.Phantom : RoleTypes.Shapeshifter,
             CustomRoleTypes.Impostor,
-            4600,
+            3200,
             SetupOptionItem,
-            "et",
+            "etk",
             OptionSort: (2, 1),
             canMakeMadmate: () => OptionCanCreateSideKick.GetBool(),
+            Desc: () =>
+            {
+                string desc = GetString("EvilTrackerDesc");
+                if (IsOneclick.GetBool())
+                {
+                    desc = GetString("EvilTrackerDescPhantom");
+                }
+                if (SelfVote.GetBool())
+                {
+                    desc = GetString("EvilTrackerDescOriginal");
+                }
+
+                return desc;
+            },
             from: From.TOR_GM_Haoming_Edition
         );
 
@@ -40,7 +54,7 @@ public sealed class EvilTracker : RoleBase, IImpostor, IKillFlashSeeable, ISidek
         canSeeMurderRoom = OptionCanSeeMurderRoom.GetBool();
         CanSeeKillFlash = OptionCanSeeKillFlash.GetBool();
         CurrentTargetMode = (TargetMode)OptionTargetMode.GetValue();
-        CanSeeLastRoomInMeeting = OptionCanSeeLastRoomInMeeting.GetBool();
+        CanSeeLastRoomInMeeting = true /*OptionCanSeeLastRoomInMeeting.GetBool()*/;
         CanCreateSideKick = OptionCanCreateSideKick.GetBool() && CurrentTargetMode != TargetMode.Never;
         CanSeeDistance = OptionCanSeeDistance.GetBool() && CurrentTargetMode != TargetMode.Never;
 
@@ -62,20 +76,24 @@ public sealed class EvilTracker : RoleBase, IImpostor, IKillFlashSeeable, ISidek
         CustomRoleManager.OnMurderPlayerOthers.Add(HandleMurderRoomNotify);
     }
 
-    private static BooleanOptionItem OptionCanSeeKillFlash;
-    private static BooleanOptionItem OptionCanSeeMurderRoom;
-    private static StringOptionItem OptionTargetMode;
-    private static BooleanOptionItem OptionCanSeeDistance;
-    private static BooleanOptionItem OptionCanSeeLastRoomInMeeting;
-    private static BooleanOptionItem OptionCanCreateSideKick;
-
+    private static OptionItem OptionCanSeeKillFlash;
+    private static OptionItem OptionCanSeeMurderRoom;
+    private static OptionItem OptionTargetMode;
+    private static OptionItem OptionCanSeeDistance;
+    ///private static OptionItem OptionCanSeeLastRoomInMeeting;
+    private static OptionItem OptionCanCreateSideKick;
+    private static OptionItem CoolDown;
+    private static OptionItem IsOneclick;
+    private static OptionItem SelfVote;
     enum OptionName
     {
         EvilTrackerCanSeeKillFlash,
         EvilTrackerTargetMode,
         EvilTrackerCanSeeLastRoomInMeeting,
-        EvilHackerCanSeeMurderRoom,//イビハの設定流用だから...
-        EvilHackerCanSeeDistance
+        EvilHackerCanSeeMurderRoom,
+        EvilHackerCanSeeDistance,
+        EvilTrackerOneClick,
+        EvilTrackerSelfVote
     }
     static bool CanSeeKillFlash;
     static bool canSeeMurderRoom;
@@ -91,6 +109,38 @@ public sealed class EvilTracker : RoleBase, IImpostor, IKillFlashSeeable, ISidek
     HashSet<EvilHacker.MurderNotify> activeNotifies = new(2);
     float timer;
     string disting;
+    public bool CanUseVoted() => CanTarget() && SelfVote.GetBool();
+    public override bool CheckVoteAsVoter(byte votedForId, PlayerControl voter)
+    {
+        if (!SelfVote.GetBool() || !Is(voter)) return true;
+
+        if (CheckSelfVoteMode(Player, votedForId, out var status))
+        {
+            if (!CanTarget())
+            {
+                SetMode(Player, false);
+                Utils.SendMessage(GetString("ET.Error.CantTarget"), Player.PlayerId);
+                return false;
+            }
+            if (status is VoteStatus.Self)
+                Utils.SendMessage(string.Format(GetString("SkillMode"), GetString("Mode.ET"), GetString("Vote.ET")) + GetString("VoteSkillMode"), Player.PlayerId);
+            if (status is VoteStatus.Skip)
+                Utils.SendMessage(GetString("VoteSkillFin"), Player.PlayerId);
+            if (status is VoteStatus.Vote)
+            {
+                var target = PlayerCatch.GetPlayerById(votedForId);
+                SetTarget(target.PlayerId);
+                Logger.Info($"{Player.GetNameWithRole().RemoveHtmlTags()}のターゲットを{target.GetNameWithRole().RemoveHtmlTags()}に設定", "EvilTrackerTarget");
+                Player.MarkDirtySettings();
+
+                var sendtext = string.Format(GetString("Skill.EvilTracker"), UtilsName.GetPlayerColor(PlayerCatch.GetPlayerById(votedForId), true));
+                Utils.SendMessage(sendtext, Player.PlayerId);
+            }
+            SetMode(Player, status is VoteStatus.Self);
+            return false;
+        }
+        return true;
+    }
     private enum TargetMode
     {
         Never,
@@ -131,24 +181,42 @@ public sealed class EvilTracker : RoleBase, IImpostor, IKillFlashSeeable, ISidek
         OptionCanSeeMurderRoom = BooleanOptionItem.Create(RoleInfo, 14, OptionName.EvilHackerCanSeeMurderRoom, false, false, OptionCanSeeKillFlash);
         OptionTargetMode = StringOptionItem.Create(RoleInfo, 11, OptionName.EvilTrackerTargetMode, TargetModeText, 2, false);
         OptionCanSeeDistance = BooleanOptionItem.Create(RoleInfo, 15, OptionName.EvilHackerCanSeeDistance, false, false, OptionTargetMode);
-        OptionCanCreateSideKick = BooleanOptionItem.Create(RoleInfo, 12, GeneralOption.CanCreateSideKick, false, false, OptionTargetMode);
-        OptionCanSeeLastRoomInMeeting = BooleanOptionItem.Create(RoleInfo, 13, OptionName.EvilTrackerCanSeeLastRoomInMeeting, false, false);
+        OptionCanCreateSideKick = BooleanOptionItem.Create(RoleInfo, 12, GeneralOption.CanCreateSideKick, false, false, OptionTargetMode)
+            .SetEnabled(() => !IsOneclick.GetBool() && !SelfVote.GetBool());
+        SelfVote = BooleanOptionItem.Create(RoleInfo, 18, OptionName.EvilTrackerSelfVote, true, false)
+            .SetEnabled(() => (TargetMode)OptionTargetMode.GetValue() != TargetMode.Never && (TargetMode)OptionTargetMode.GetValue() != TargetMode.Always/* && !IsOneclick.GetBool()*/)
+            .SetInfo(Translator.GetString("ETSVInfo"));
+        IsOneclick = BooleanOptionItem.Create(RoleInfo, 17, OptionName.EvilTrackerOneClick, false, false)
+            .SetEnabled(() => (TargetMode)OptionTargetMode.GetValue() != TargetMode.Never/* && !SelfVote.GetBool()*/)
+            .SetInfo(Translator.GetString("ETOCInfo"));
+        CoolDown = FloatOptionItem.Create(RoleInfo, 16, GeneralOption.Cooldown, OptionBaseCoolTime, 15f, false)
+            .SetValueFormat(OptionFormat.Seconds)
+            .SetEnabled(() => (TargetMode)OptionTargetMode.GetValue() != TargetMode.Never);
+        //OptionCanSeeLastRoomInMeeting = BooleanOptionItem.Create(RoleInfo, 13, OptionName.EvilTrackerCanSeeLastRoomInMeeting, false, false);
     }
     public override void Add() => EvilTrackers.Add(this);
     public override void OnDestroy() => EvilTrackers.Remove(this);
 
     public bool? CheckKillFlash(MurderInfo info) // IKillFlashSeeable
-    {
-        if (!CanSeeKillFlash) return false;
-
-        PlayerControl killer = info.AppearanceKiller, target = info.AttemptTarget;
-
-        //インポスターによるキルかどうかの判別
-        var realKiller = target.GetRealKiller() ?? killer;
-        return target.IsTeammate(Player) && realKiller != target;
-    }
+        => CanSeeKillFlash && !info.IsSuicide && !info.IsAccident && info.AttemptKiller.IsTeammate(Player);
     public bool CanMakeSidekick() => CanCreateSideKick; // ISidekickable
+    public bool IsresetAfterKill => false;
+    public bool IsPhantomRole => IsOneclick.GetBool() && CanTarget() && !SelfVote.GetBool();
+    public bool UseOneclickButton => IsOneclick.GetBool() && !SelfVote.GetBool();
+    public void OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
+    {
+        AdjustKillCooldown = true;
+        ResetCooldown = CoolDown.GetFloat() >= 1f;
 
+        var target = Player.GetKillTarget(true);
+        if (target == null) return;
+        if (!CanTarget() || target.IsTeammate(Player) || !IsOneclick.GetBool() || (TargetMode)OptionTargetMode.GetValue() == TargetMode.Never || SelfVote.GetBool()) return;
+
+        SetTarget(target.PlayerId);
+        Logger.Info($"{Player.GetNameWithRole().RemoveHtmlTags()}のターゲットを{target.GetNameWithRole().RemoveHtmlTags()}に設定", "EvilTrackerTarget");
+        Player.MarkDirtySettings();
+        UtilsNotifyRoles.NotifyRoles(SpecifySeer: Player);
+    }
     public override void ReceiveRPC(MessageReader reader)
     {
         var operation = (TargetOperation)reader.ReadByte();
@@ -198,8 +266,9 @@ public sealed class EvilTracker : RoleBase, IImpostor, IKillFlashSeeable, ISidek
 
     public override void ApplyGameOptions(IGameOptions opt)
     {
-        AURoleOptions.ShapeshifterCooldown = CanTarget() ? 1f : 255f;
+        AURoleOptions.ShapeshifterCooldown = CanTarget() ? CoolDown.GetFloat() : 255f;
         AURoleOptions.ShapeshifterDuration = 1f;
+        AURoleOptions.PhantomCooldown = CanTarget() ? CoolDown.GetFloat() : 255f;
     }
     public override string GetAbilityButtonText() => GetString("EvilTrackerChangeButtonText");
     public override bool OverrideAbilityButton(out string text)
@@ -267,6 +336,38 @@ public sealed class EvilTracker : RoleBase, IImpostor, IKillFlashSeeable, ISidek
             var roomNames = activeNotifies.Select(notify => DestroyableSingleton<TranslationController>.Instance.GetString(notify.Room));
             return GetArrows(seen) + "\n" + Utils.ColorString(Color.green, $"{GetString("MurderNotify")}: {string.Join(", ", roomNames)}");
         }
+    }
+    public override string GetLowerText(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
+    {
+        seen ??= seer;
+        string Lower = "";
+        if (GameStates.CalledMeeting || GameStates.IsMeeting || seer != seen || !Is(seer))
+        {
+            return "";
+            /*if (!OptionCanSeeLastRoomInMeeting.GetBool())
+            {
+                return "";
+            }*/
+        }
+        if (ImpostorsId != null)
+        {
+            foreach (var imp in ImpostorsId)
+            {
+                if (imp == Player.PlayerId) continue;
+
+                var player = PlayerCatch.GetPlayerById(imp);
+                var room = player.GetPlainShipRoom().RoomId;
+
+                Lower += $"<#ff1919>{UtilsName.GetPlayerColor(player)}({GetString($"{room}")})</color>\n";
+            }
+        }
+        if (TargetId != byte.MaxValue)
+        {
+            var target = PlayerCatch.GetPlayerById(TargetId);
+            var trgr = target.GetPlainShipRoom().RoomId;
+            Lower += $"<#8cffff>{UtilsName.GetPlayerColor(target)}({GetString($"{trgr}")})";
+        }
+        return Lower;
     }
     private string GetArrows(PlayerControl seen)
     {
