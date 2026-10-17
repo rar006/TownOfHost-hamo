@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using System.Collections.Generic;
 
@@ -1045,9 +1045,6 @@ public static bool IsAndroid()//蜿り・・縲ヾNR
         Flatfish = CustomRoles.Flatfish,
 
         Lupin = CustomRoles.Lupin,
-
-        Daoshi = CustomRoles.Daoshi,
-
         Catalyst = CustomRoles.Catalyst,
 
         Parity = CustomRoles.Parity,

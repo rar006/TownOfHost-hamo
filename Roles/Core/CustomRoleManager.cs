@@ -2155,7 +2155,6 @@ public enum CustomRoles
     Murder,
     BetrayGuesser,
     Daoshi = 336,
-    Jiangshi,
     // ===== N移植役職 =====
     Survivor,
     Mario,
@@ -2166,7 +2165,7 @@ public enum CustomRoles
     Greedier,
     Administer,
     // ===== 新規追加役職 (2026-10 ユーザー提案)。値は空いている340番から =====
-    Trauma = 340,
+    Trauma,
     Surmount,
     Messenger,
     Fugitive,

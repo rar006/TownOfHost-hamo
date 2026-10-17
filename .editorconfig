@@ -67,6 +67,8 @@ dotnet_style_prefer_simplified_boolean_expressions = true:suggestion
 # 補間文字列を簡略化する
 dotnet_style_prefer_simplified_interpolation = true:suggestion
 
+dotnet_diagnostic.RCS1234.severity = error
+
 # 読み取り専用修飾子を追加する
 dotnet_style_readonly_field = true:silent
 
