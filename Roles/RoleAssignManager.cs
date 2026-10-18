@@ -39,6 +39,7 @@ namespace TownOfHost.Roles
 
                 min = () => minOption.GetInt();
                 max = () => maxOption.GetInt();
+                KeepMinMaxOrder(minOption, maxOption);
 
                 RandomAssignOptionsCollection.Add(roleTypes, this);
             }
@@ -112,6 +113,7 @@ namespace TownOfHost.Roles
 
                     minOptions[roleTypes] = minOption;
                     maxOptions[roleTypes] = maxOption;
+                    KeepMinMaxOrder(minOption, maxOption);
                 }
 
                 madFromCrewMaxOption = (IntegerOptionItem)IntegerOptionItem.Create(idBase + offset++, "AssignMadmateFromCrewmateSlotMax", new(0, playerCount, 1), playerCount, TabGroup.MainSettings, false)
@@ -191,10 +193,30 @@ namespace TownOfHost.Roles
             return Math.Max(0, count);
         }
 
-        private static int EffectiveMin(CustomRoleTypes roleTypes)
+        private static int RawMin(CustomRoleTypes roleTypes)
             => TryGetPerCountOverride(out var pc) ? pc.Min(roleTypes) : RandomAssignOptionsCollection[roleTypes].Min;
-        private static int EffectiveMax(CustomRoleTypes roleTypes)
+        private static int RawMax(CustomRoleTypes roleTypes)
             => TryGetPerCountOverride(out var pc) ? pc.Max(roleTypes) : RandomAssignOptionsCollection[roleTypes].Max;
+        // 最少が最大より大きい設定(例: 最少2・最大1)だと、人数を決める乱数でエラーになり配役ごと止まっていた。
+        // 小さい方を最少、大きい方を最大として扱う。
+        private static int EffectiveMin(CustomRoleTypes roleTypes) => Math.Min(RawMin(roleTypes), RawMax(roleTypes));
+        private static int EffectiveMax(CustomRoleTypes roleTypes) => Math.Max(RawMin(roleTypes), RawMax(roleTypes));
+
+        /// <summary>
+        /// 設定画面で最少を最大より大きくしたら最大も上げ、最大を最少より小さくしたら最少も下げる
+        /// (どちらも 0 から 1 刻みなので、値の番号 = 人数)
+        /// </summary>
+        private static void KeepMinMaxOrder(IntegerOptionItem minOption, IntegerOptionItem maxOption)
+        {
+            minOption.RegisterUpdateValueEvent((_, _) =>
+            {
+                if (minOption.GetInt() > maxOption.GetInt()) maxOption.SetValue(minOption.CurrentValue);
+            });
+            maxOption.RegisterUpdateValueEvent((_, _) =>
+            {
+                if (maxOption.GetInt() < minOption.GetInt()) minOption.SetValue(maxOption.CurrentValue);
+            });
+        }
         private static int EffectiveMadFromCrewMax()
             => TryGetPerCountOverride(out var pc) ? pc.MadFromCrewMax : GlobalMaxMadmateFromCrewmateSlotInRandom;
         private static Dictionary<CustomRoleTypes, int> AssignCount = new(CustomRolesHelper.AllRoleTypes.Length);
@@ -321,7 +343,7 @@ namespace TownOfHost.Roles
 
             var min = EffectiveMin(CustomRoleTypes.Impostor);
             var max = EffectiveMax(CustomRoleTypes.Impostor);
-            if (min > max || min > numImpostors || max > numImpostors)
+            if (min > numImpostors) // 最大がインポスター数より多いのは、配役の時にインポスター数までに抑えるので問題なし
             {
                 var msg = GetString("Warning.NotMatchImpostorCount");
                 Logger.seeingame(msg);
@@ -594,9 +616,15 @@ namespace TownOfHost.Roles
             if (numOthers > 0) //マッド、クルー、ニュートラルの人数決定
             {
                 var otherRoleTypes = RandomAssignOptionsCollection.Keys.Where(x => x != CustomRoleTypes.Impostor).ToList();
+                // その陣営に入れられる役職の数(出現率が0%でない役職の人数の合計)を超えて枠を作ると、
+                // 余った枠の人には役職が付かない。最大・最少はこの数までに抑える。
+                var capacity = GetAssignableCapacity();
+                int Limit(CustomRoleTypes t) => Math.Min(EffectiveMax(t), capacity.TryGetValue(t, out var c) ? c : 0);
+                int MinOf(CustomRoleTypes t) => Math.Min(EffectiveMin(t), Limit(t));
+
                 //一旦最少人数を設定
                 foreach (var roleType in otherRoleTypes)
-                    otherRoleTypesList.AddRange(Enumerable.Repeat(roleType, EffectiveMin(roleType)).ToList());
+                    otherRoleTypesList.AddRange(Enumerable.Repeat(roleType, MinOf(roleType)).ToList());
 
                 //超えている場合はランダムに削除
                 while (otherRoleTypesList.Count > numOthers)
@@ -605,14 +633,11 @@ namespace TownOfHost.Roles
                 int numAdditional = numOthers - otherRoleTypesList.Count;
                 if (numAdditional > 0) //最少人数で限界値に満たない場合
                 {
+                    // 以前は陣営ごとに「0〜(最大-最少)人」をランダムに足していたため、合計が人数に届かず
+                    // 役職が付かない人が出ていた。最大までの空き枠を全部候補にして、人数分だけランダムに選ぶ。
                     List<CustomRoleTypes> additionalList = new();
                     foreach (var roleType in otherRoleTypes)
-                    {
-                        //追加人数を取得
-                        int additionalCount = Math.Max(0, rand.Next(EffectiveMax(roleType) - EffectiveMin(roleType) + 1));
-
-                        additionalList.AddRange(Enumerable.Repeat(roleType, additionalCount).ToList());
-                    }
+                        additionalList.AddRange(Enumerable.Repeat(roleType, Math.Max(0, Limit(roleType) - MinOf(roleType))).ToList());
 
                     //超えている場合はランダムに削除
                     while (additionalList.Count > numAdditional)
@@ -633,6 +658,23 @@ namespace TownOfHost.Roles
                 else
                     AssignCount.Add(roleTypes, otherRoleTypesList.Count(x => x == roleTypes));
             }
+        }
+        /// <summary>陣営ごとに、入れられる役職の人数の合計(出現率0%・人数0・イベント外の役職は数えない)</summary>
+        private static Dictionary<CustomRoleTypes, int> GetAssignableCapacity()
+        {
+            var capacity = new Dictionary<CustomRoleTypes, int>();
+            foreach (var role in AllMainRoles)
+            {
+                if (!Event.CheckRole(role) || !role.IsAssignable()) continue;
+                var count = role.GetCount();
+                if (role.GetChance() == 0 || count == 0) continue;
+                foreach (var unitRole in role.GetAssignUnitRolesArray())
+                {
+                    var type = unitRole.GetAssignRoleType();
+                    capacity[type] = (capacity.TryGetValue(type, out var c) ? c : 0) + count;
+                }
+            }
+            return capacity;
         }
         ///<summary>
         ///役職のアサイン抽選

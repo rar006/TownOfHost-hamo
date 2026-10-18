@@ -25,7 +25,10 @@ namespace TownOfHost;
 ///   /cmd nil            二つ名の一覧(確率つき・持っているものに✔)
 ///   /cmd nii            持っている二つ名(インベントリ・★=付けている)
 ///   /cmd nih 1.2.3      インベントリの番号で付ける(複数可・最大数はサーバー設定) / /cmd nih 0 で外す
-///   /cmd nio            二つ名を引く(無料・クールタイム60秒・かぶりあり)
+///   /cmd nio            二つ名を引く(無料・クールタイム60秒・かぶりは個数が増える)
+///   /cmd nis 番号 [個数|all]  二つ名を売って hm にする(売値はサーバー設定)
+///   /cmd nip / nib 番号  SHOPを見る / 買う(商品・値段・何人限定はサーバー設定)
+///   /cmd nim            持っている hm
 ///   /cmd nit 名前        相手のインベントリを見る
 ///   /cmd nit 名前 a b    自分の a 番と相手の b 番の交換を申し込む
 ///   /cmd nit y / n      交換を承諾 / キャンセル
@@ -43,6 +46,8 @@ public static partial class TitleSystem
         public string Color = "#ffffff";
         public double Weight;
         public double Probability;
+        /// <summary>1個売った時にもらえる hm(0 = 売れない)</summary>
+        public long SellPrice;
     }
 
     private sealed class UserRecord
@@ -51,6 +56,14 @@ public static partial class TitleSystem
         public readonly List<string> Equipped = new();
         /// <summary>二つ名ID → 名前の前に付く属性マーク(サーバーが作ったリッチテキスト。レア度順)</summary>
         public readonly Dictionary<string, string> Marks = new(StringComparer.Ordinal);
+        /// <summary>二つ名ID → 持っている個数(かぶりで増える)</summary>
+        public readonly Dictionary<string, long> Counts = new(StringComparer.Ordinal);
+        /// <summary>キー → 1個売った時の hm(出にくいもの・属性付きほど高い。サーバーが計算)</summary>
+        public readonly Dictionary<string, long> Prices = new(StringComparer.Ordinal);
+        /// <summary>キー → 属性による売値の倍率(属性付きのものだけ)</summary>
+        public readonly Dictionary<string, double> SellMults = new(StringComparer.Ordinal);
+        /// <summary>持っている hm(二つ名を売ってもらえる通貨)</summary>
+        public long Wallet;
         public DateTime FetchedAt = DateTime.MinValue;
     }
 
@@ -61,7 +74,8 @@ public static partial class TitleSystem
     /// <summary>この部屋で二つ名を使うか(設定「二つ名を使う」)。OFFなら表示もコマンドも止める</summary>
     internal static bool RoomEnabled => Enabled && (Options.OptionTitleEnabled?.GetBool() ?? true);
 
-    private static readonly string[] TitleSubs = { "nil", "nii", "nih", "nio", "nit", "code" };
+    // nis = 売る / nip = SHOP / nib = 買う / nim = 持っている hm
+    private static readonly string[] TitleSubs = { "nil", "nii", "nih", "nio", "nit", "code", "nis", "nip", "nib", "nim" };
 
     /// <summary>
     /// 二つ名のコマンドを読み取る。「/cmd nil ...」と「/nil ...」のどちらでも使える。
@@ -115,6 +129,10 @@ public static partial class TitleSystem
     private static readonly ConcurrentDictionary<string, TitleDef> Catalog = new();
     private static DateTime catalogFetchedAt = DateTime.MinValue;
     private static volatile int maxEquipped = 3;
+    /// <summary>今の引くクールタイム(秒)。クールタイム短縮イベント中は短い</summary>
+    private static volatile int drawCooldownNow = 60;
+    private static volatile bool cooldownEventActive;
+    private static string CooldownText => cooldownEventActive ? $"<color=#ffd36e>イベント中! 引くクールタイム{drawCooldownNow}秒</color>" : $"引くクールタイム{drawCooldownNow}秒";
     private static readonly ConcurrentDictionary<string, UserRecord> Users = new();
     /// <summary>表示する二つ名 playerId -> (フレンドコード, 二つ名ID)。フレンドコードが変わっていたら表示しない。</summary>
     private static readonly ConcurrentDictionary<byte, (string Fc, string[] Ids)> Shown = new();
@@ -187,6 +205,7 @@ public static partial class TitleSystem
                         Color = GetString(p.Value, "color", "#ffffff"),
                         Weight = GetDouble(p.Value, "weight"),
                         Probability = GetDouble(p.Value, "probability"),
+                        SellPrice = (long)GetDouble(p.Value, "sellPrice"),
                     };
                 }
                 Catalog.Clear();
@@ -195,6 +214,8 @@ public static partial class TitleSystem
                 {
                     var m = (int)GetDouble(st, "maxEquipped", 3);
                     if (m >= 1 && m <= 10) maxEquipped = m;
+                    drawCooldownNow = (int)GetDouble(st, "drawCooldownSecNow", GetDouble(st, "drawCooldownSec", 60));
+                    cooldownEventActive = st.TryGetProperty("cooldownEvent", out var ce) && ce.ValueKind == JsonValueKind.Object;
                 }
                 catalogFetchedAt = DateTime.UtcNow;
             }
@@ -210,7 +231,14 @@ public static partial class TitleSystem
         if (root.TryGetProperty("equipped", out var eq) && eq.ValueKind == JsonValueKind.Array)
             foreach (var e in eq.EnumerateArray()) if (e.ValueKind == JsonValueKind.String) rec.Equipped.Add(e.GetString());
         if (root.TryGetProperty("marks", out var mk) && mk.ValueKind == JsonValueKind.Object)
-            foreach (var p in mk.EnumerateObject()) if (p.Value.ValueKind == JsonValueKind.String) rec.Marks[p.Name] = p.Value.GetString();
+            foreach (var p in mk.EnumerateObject()) if (p.Value.ValueKind == JsonValueKind.String) { rec.Marks[p.Name] = p.Value.GetString(); KeyMarks[p.Name] = p.Value.GetString(); }
+        if (root.TryGetProperty("counts", out var ct) && ct.ValueKind == JsonValueKind.Object)
+            foreach (var p in ct.EnumerateObject()) if (p.Value.ValueKind == JsonValueKind.Number && p.Value.TryGetInt64(out var n)) rec.Counts[p.Name] = n;
+        if (root.TryGetProperty("prices", out var pr) && pr.ValueKind == JsonValueKind.Object)
+            foreach (var p in pr.EnumerateObject()) if (p.Value.ValueKind == JsonValueKind.Number && p.Value.TryGetInt64(out var n)) rec.Prices[p.Name] = n;
+        if (root.TryGetProperty("sellMults", out var sm) && sm.ValueKind == JsonValueKind.Object)
+            foreach (var p in sm.EnumerateObject()) if (p.Value.ValueKind == JsonValueKind.Number) rec.SellMults[p.Name] = p.Value.GetDouble();
+        rec.Wallet = (long)GetDouble(root, "wallet");
         return rec;
     }
 
@@ -218,8 +246,20 @@ public static partial class TitleSystem
     private static string MarkOf(string fc, string id)
     {
         var key = NormalizeFriendCode(fc ?? "");
-        return key.Length > 0 && Users.TryGetValue(key, out var rec) && rec.Marks.TryGetValue(id, out var m) ? m : "";
+        if (key.Length > 0 && Users.TryGetValue(key, out var rec) && rec.Marks.TryGetValue(id, out var m)) return m;
+        return KeyMarks.TryGetValue(id, out var km) ? km : "";
     }
+
+    // ===== 属性ごとに分けて持つ =====
+    // インベントリの1つ1つは「二つ名ID」か「二つ名ID+属性ID+属性ID…」のキー(属性違いは別のもの)
+    private const char KeySep = '+';
+    /// <summary>キー → 二つ名ID</summary>
+    internal static string TitleOf(string key) => string.IsNullOrEmpty(key) ? "" : key.Split(KeySep)[0];
+    /// <summary>キー → マーク(サーバーが作ったもの)。キーが同じならだれのものでも同じマークなので、まとめて覚えておく</summary>
+    private static readonly ConcurrentDictionary<string, string> KeyMarks = new(StringComparer.Ordinal);
+    private static bool HasTitle(string key) => Catalog.ContainsKey(TitleOf(key));
+    /// <summary>キーの表示(マーク+色つきの名前)</summary>
+    private static string KeyLabel(string key) => HasTitle(key) ? (KeyMarks.TryGetValue(key, out var m) ? m : "") + Colored(Catalog[TitleOf(key)]) : key;
 
     /// <summary>フレンドコードの所持・装備(サーバーの記録)。失敗時は前回のキャッシュか空。</summary>
     private static async Task<UserRecord> FetchUserAsync(string friendCode, bool force = false)
@@ -271,7 +311,7 @@ public static partial class TitleSystem
         return fc;
     }
 
-    private static string[] ValidIds(IEnumerable<string> ids) => ids.Where(Catalog.ContainsKey).ToArray();
+    private static string[] ValidIds(IEnumerable<string> ids) => ids.Where(HasTitle).ToArray();
 
     // =====================================================================
     //  ロビー処理(毎フレーム軽量に呼ばれる)
@@ -409,7 +449,7 @@ public static partial class TitleSystem
         var parts = new List<string>();
         foreach (var id in shown.Ids)
         {
-            if (!Catalog.TryGetValue(id, out var def)) continue;
+            if (!Catalog.TryGetValue(TitleOf(id), out var def)) continue;
             var color = (def.Color ?? "#ffffff").Trim();
             if (!color.StartsWith("#")) color = "#" + color;
             parts.Add($"{MarkOf(shown.Fc, id)}<color={color}>{def.Name}</color>");
@@ -689,7 +729,7 @@ public static partial class TitleSystem
                 var parts = new List<string>();
                 foreach (var id in shown.Ids)
                 {
-                    if (!Catalog.TryGetValue(id, out var def)) continue;
+                    if (!Catalog.TryGetValue(TitleOf(id), out var def)) continue;
                     var color = (def.Color ?? "#ffffff").Trim();
                     if (!color.StartsWith("#")) color = "#" + color;
                     parts.Add($"{MarkOf(shown.Fc, id)}<color={color}>{def.Name}</color>");
@@ -844,12 +884,16 @@ public static partial class TitleSystem
             if (sub == "nih") { await EquipAsync(fc, localId, args).ConfigureAwait(false); return; }
             if (sub == "nio") { await DrawAsync(fc, localId).ConfigureAwait(false); return; }
             if (sub == "code") { await RedeemAsync(fc, args).ConfigureAwait(false); return; }
+            if (sub == "nis") { await SellAsync(fc, localId, args).ConfigureAwait(false); return; }
+            if (sub == "nip") { await ShowShopAsync(fc).ConfigureAwait(false); return; }
+            if (sub == "nib") { await BuyAsync(fc, args).ConfigureAwait(false); return; }
+            if (sub == "nim") { await ShowWalletAsync(fc).ConfigureAwait(false); return; }
         }
         catch (Exception e) { Logger.Exception(e, Tag); Reply("二つ名の処理でエラーが起きました。"); }
     }
 
     private static List<string> InventoryOf(UserRecord rec)
-        => rec.Owned.Where(Catalog.ContainsKey).OrderBy(x => x, StringComparer.Ordinal).ToList();
+        => rec.Owned.Where(HasTitle).OrderBy(TitleOf, StringComparer.Ordinal).ThenBy(x => x.Length).ThenBy(x => x, StringComparer.Ordinal).ToList();
 
     /// <summary>/cmd nil  二つ名の一覧(確率つき・持っているものに✔)</summary>
     private static async Task ListAllAsync(string fc)
@@ -860,10 +904,11 @@ public static partial class TitleSystem
         for (int i = 0; i < ids.Count; i++)
         {
             var d = Catalog[ids[i]];
-            sb.Append(rec.Owned.Contains(ids[i]) ? "✔" : "　").Append(i + 1).Append(". ").Append(Colored(d))
+            sb.Append(rec.Owned.Any(k => TitleOf(k) == ids[i]) ? "✔" : "　").Append(i + 1).Append(". ").Append(Colored(d))
               .Append(d.Probability > 0 ? $"  {Pct(d.Probability)}" : "  配布のみ").Append('\n');
         }
-        sb.Append("\n/cmd nio で引く(無料) / /cmd nii で持っているものを見る / /cmd nit で交換");
+        sb.Append($"\n{CooldownText}");
+        sb.Append("\n/cmd nio で引く(無料) / /cmd nii で持っているものを見る / /cmd nit で交換 / /cmd nip でSHOP");
         Reply(sb.ToString());
     }
 
@@ -874,11 +919,14 @@ public static partial class TitleSystem
         var inv = InventoryOf(rec);
         if (inv.Count == 0) { Reply("持っている二つ名はありません。 /cmd nio で引けます(無料)。"); return; }
         // 付けている印は ▶(★は属性マークと紛らわしいので)
-        var sb = new StringBuilder($"<b>インベントリ</b>({inv.Count}個 / ▶=付けている)\n");
+        var sb = new StringBuilder($"<b>インベントリ</b>({inv.Count}種類 / ▶=付けている / 所持 <color=#ffd36e>{Abbrev(rec.Wallet)}hm</color>)\n");
         for (int i = 0; i < inv.Count; i++)
             sb.Append(rec.Equipped.Contains(inv[i]) ? "▶" : "　").Append(i + 1).Append(". ")
-              .Append(rec.Marks.TryGetValue(inv[i], out var mk) ? mk : "").Append(Colored(Catalog[inv[i]])).Append('\n');
-        sb.Append($"\n/cmd nih 1.2.3 のように番号で付けます(最大{maxEquipped}個) / /cmd nih 0 で外す");
+              .Append(rec.Marks.TryGetValue(inv[i], out var mk) ? mk : "").Append(Colored(Catalog[TitleOf(inv[i])]))
+              .Append(CountOf(rec, inv[i]) > 1 ? $" <color=#aaaaaa>×{Abbrev(CountOf(rec, inv[i]))}</color>" : "")
+              .Append(rec.Prices.TryGetValue(inv[i], out var price) && price > 0
+                  ? $" <size=70%><color=#ffd36e>売値{Abbrev(price)}hm</color>{(rec.SellMults.TryGetValue(inv[i], out var mult) && mult > 1 ? $"(属性×{mult.ToString("0.##", CultureInfo.InvariantCulture)})" : "")}</size>" : "").Append('\n');
+        sb.Append($"\n/cmd nih 1.2.3 のように番号で付けます(最大{maxEquipped}個) / /cmd nih 0 で外す\n/cmd nis 番号 個数 で売って hm にする / /cmd nip でSHOP");
         Reply(sb.ToString());
     }
 
@@ -927,7 +975,7 @@ public static partial class TitleSystem
         else RunOnMain(SendNotify);
         Reply(chosen.Count == 0
             ? "二つ名を外しました。"
-            : "二つ名を付けました: " + string.Join(" ", chosen.Select(id => Colored(Catalog[id]))));
+            : "二つ名を付けました: " + string.Join(" ", chosen.Select(KeyLabel)));
     }
 
     /// <summary>/cmd code ◯◯  引き換えコードで二つ名を受け取る(コードはDiscordの /title-code で発行)</summary>
@@ -962,6 +1010,185 @@ public static partial class TitleSystem
         }
     }
 
+    // =====================================================================
+    //  個数・hm・SHOP   (/cmd nis 売る / nip SHOP / nib 買う / nim 所持 hm)
+    //  hm の残高・SHOPの商品(値段・何人限定・期間)はすべてサーバーで決めて保存する
+    // =====================================================================
+
+    /// <summary>持っている個数(サーバーに個数が無ければ1個)</summary>
+    private static long CountOf(UserRecord rec, string id)
+        => !rec.Owned.Contains(id) ? 0 : rec.Counts.TryGetValue(id, out var n) && n > 0 ? n : 1;
+
+    /// <summary>大きい数を短くする(999 / 1.2k / 15k / 3.4M / 1.2B)</summary>
+    internal static string Abbrev(long n)
+    {
+        if (n < 0) return "-" + Abbrev(-n);
+        if (n < 1000) return n.ToString(CultureInfo.InvariantCulture);
+        string[] units = { "k", "M", "B", "T" };
+        double v = n;
+        var u = -1;
+        while (v >= 1000 && u < units.Length - 1) { v /= 1000; u++; }
+        // 10未満は小数1桁(1.2k)、それ以上は整数(15k)。切り捨てて、実際より多く見えないようにする
+        var shown = v < 10 ? Math.Floor(v * 10) / 10 : Math.Floor(v);
+        return shown.ToString(v < 10 ? "0.#" : "0", CultureInfo.InvariantCulture) + units[u];
+    }
+
+    private static async Task ShowWalletAsync(string fc)
+    {
+        var me = await FetchUserAsync(fc, true).ConfigureAwait(false);
+        Reply($"持っている hm: <color=#ffd36e>{Abbrev(me.Wallet)}hm</color>\n/cmd nis 番号 個数 で二つ名を売る / /cmd nip でSHOPを見る / /cmd nib 番号 で買う");
+    }
+
+    /// <summary>/cmd nis 番号 [個数|all]  インベントリの二つ名を売って hm にする</summary>
+    private static async Task SellAsync(string fc, byte localId, string[] args)
+    {
+        var rec = await FetchUserAsync(fc, true).ConfigureAwait(false);
+        var inv = InventoryOf(rec);
+        if (args.Length == 0)
+        {
+            Reply("使い方: /cmd nis 番号 [個数]  (個数を省略すると1個 / all で全部)\n番号は /cmd nii で確認できます。");
+            return;
+        }
+        if (!int.TryParse(args[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var no) || no < 1 || no > inv.Count)
+        {
+            Reply($"番号は /cmd nii の 1〜{inv.Count} で指定してください。");
+            return;
+        }
+        var id = inv[no - 1];
+        object qty = 1;
+        if (args.Length >= 2)
+        {
+            var q = args[1].ToLowerInvariant();
+            if (q is "all" or "全部" or "ぜんぶ") qty = "all";
+            else if (int.TryParse(q, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) && n >= 1) qty = n;
+            else { Reply("個数は1以上の数か all で指定してください。"); return; }
+        }
+        var (status, doc) = await RequestAsync(HttpMethod.Post, $"{BaseUrl}/sell", new { friendCode = fc, id, qty }).ConfigureAwait(false);
+        using (doc)
+        {
+            if (doc == null) { Reply("売れませんでした(サーバーに接続できません)。"); return; }
+            var root = doc.RootElement;
+            if (status == 200 && root.TryGetProperty("ok", out var ok) && ok.ValueKind == JsonValueKind.True)
+            {
+                var sold = (long)GetDouble(root, "sold");
+                var left = (long)GetDouble(root, "left");
+                var after = await FetchUserAsync(fc, true).ConfigureAwait(false);
+                if (left == 0 && rec.Equipped.Contains(id))
+                {
+                    // 付けていた二つ名を全部売ったら、表示も外す
+                    SetShown(localId, fc, after.Equipped);
+                    if (ReplyTo.Value != byte.MaxValue) RunOnMain(() => SendNotifyFor(localId));
+                    else RunOnMain(SendNotify);
+                }
+                Reply($"{GetString(root, "marks")}{(HasTitle(id) ? Colored(Catalog[TitleOf(id)]) : id)} を{Abbrev(sold)}個売りました! <color=#ffd36e>+{Abbrev((long)GetDouble(root, "earned"))}hm</color>"
+                    + $"\n残り {Abbrev(left)}個 / 持っている hm: <color=#ffd36e>{Abbrev((long)GetDouble(root, "wallet"))}hm</color>"
+                    + (left == 0 && rec.Equipped.Contains(id) ? "\n付けていた二つ名だったので、外しました。" : ""));
+                return;
+            }
+            Reply(GetString(root, "error") switch
+            {
+                "not_owned" => "その二つ名は持っていません。",
+                "not_enough" => $"そんなに持っていません(持っているのは{Abbrev((long)GetDouble(root, "have"))}個)。",
+                "not_sellable" => "その二つ名は売れません。",
+                _ => "売れませんでした。",
+            });
+        }
+    }
+
+    private sealed class ShopItem
+    {
+        public string Id = "", Name = "", Color = "#ffffff";
+        public long Price;
+        public int? Remaining;
+        public int PerUser = 1;
+        public bool SoldOut;
+    }
+
+    private static async Task<List<ShopItem>> FetchShopAsync()
+    {
+        var list = new List<ShopItem>();
+        var (status, doc) = await RequestAsync(HttpMethod.Get, $"{BaseUrl}/shop").ConfigureAwait(false);
+        using (doc)
+        {
+            if (status != 200 || doc == null) return null;
+            if (!doc.RootElement.TryGetProperty("items", out var items) || items.ValueKind != JsonValueKind.Array) return list;
+            foreach (var e in items.EnumerateArray())
+            {
+                list.Add(new ShopItem
+                {
+                    Id = GetString(e, "id"),
+                    Name = GetString(e, "name"),
+                    Color = GetString(e, "color", "#ffffff"),
+                    Price = (long)GetDouble(e, "price"),
+                    Remaining = e.TryGetProperty("remaining", out var r) && r.ValueKind == JsonValueKind.Number ? r.GetInt32() : null,
+                    PerUser = (int)GetDouble(e, "perUser", 1),
+                    SoldOut = e.TryGetProperty("soldOut", out var so) && so.ValueKind == JsonValueKind.True,
+                });
+            }
+        }
+        return list;
+    }
+
+    /// <summary>/cmd nip  SHOPの商品一覧</summary>
+    private static async Task ShowShopAsync(string fc)
+    {
+        var items = await FetchShopAsync().ConfigureAwait(false);
+        if (items == null) { Reply("SHOPを開けませんでした(サーバーに接続できません)。"); return; }
+        var me = await FetchUserAsync(fc, true).ConfigureAwait(false);
+        if (items.Count == 0) { Reply($"今SHOPで売っているものはありません。\n持っている hm: <color=#ffd36e>{Abbrev(me.Wallet)}hm</color>"); return; }
+        var sb = new StringBuilder($"<b>SHOP</b>(持っている hm: <color=#ffd36e>{Abbrev(me.Wallet)}hm</color>)\n");
+        for (var i = 0; i < items.Count; i++)
+        {
+            var it = items[i];
+            sb.Append(i + 1).Append(". ").Append($"<color={it.Color}>{it.Name}</color>  <color=#ffd36e>{Abbrev(it.Price)}hm</color>");
+            if (it.SoldOut) sb.Append("  <color=#ff6666>売り切れ</color>");
+            else if (it.Remaining != null) sb.Append($"  残り{it.Remaining}人");
+            if (it.PerUser > 1) sb.Append($"  (1人{it.PerUser}回まで)");
+            sb.Append('\n');
+        }
+        sb.Append("\n/cmd nib 番号 で買えます");
+        Reply(sb.ToString());
+    }
+
+    /// <summary>/cmd nib 番号  SHOPで買う(番号は /cmd nip の番号)</summary>
+    private static async Task BuyAsync(string fc, string[] args)
+    {
+        if (args.Length == 0) { Reply("使い方: /cmd nib 番号  (番号は /cmd nip で確認できます)"); return; }
+        var items = await FetchShopAsync().ConfigureAwait(false);
+        if (items == null) { Reply("買えませんでした(サーバーに接続できません)。"); return; }
+        if (!int.TryParse(args[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var no) || no < 1 || no > items.Count)
+        {
+            Reply(items.Count == 0 ? "今SHOPで売っているものはありません。" : $"番号は /cmd nip の 1〜{items.Count} で指定してください。");
+            return;
+        }
+        var item = items[no - 1];
+        var (status, doc) = await RequestAsync(HttpMethod.Post, $"{BaseUrl}/buy", new { friendCode = fc, itemId = item.Id }).ConfigureAwait(false);
+        using (doc)
+        {
+            if (doc == null) { Reply("買えませんでした(サーバーに接続できません)。"); return; }
+            var root = doc.RootElement;
+            if (status == 200 && root.TryGetProperty("ok", out var ok) && ok.ValueKind == JsonValueKind.True)
+            {
+                await FetchUserAsync(fc, true).ConfigureAwait(false);
+                var count = (long)GetDouble(root, "count", 1);
+                Reply($"買いました!  {GetString(root, "marks")}<color={GetString(root, "color", "#ffffff")}>{GetString(root, "name")}</color>  <color=#ffd36e>-{Abbrev((long)GetDouble(root, "price"))}hm</color>"
+                    + $"\n持っている hm: <color=#ffd36e>{Abbrev((long)GetDouble(root, "wallet"))}hm</color>"
+                    + (count > 1 ? $" / この二つ名は{Abbrev(count)}個になりました" : "\n/cmd nii で確認・/cmd nih で付けられます。"));
+                return;
+            }
+            Reply(GetString(root, "error") switch
+            {
+                "not_enough_hm" => $"hm が足りません(値段 {Abbrev((long)GetDouble(root, "price"))}hm / 持っている {Abbrev((long)GetDouble(root, "wallet"))}hm)。",
+                "sold_out" => "売り切れです。",
+                "limit_reached" => $"これ以上は買えません(1人{(int)GetDouble(root, "perUser", 1)}回まで)。",
+                "not_on_sale" => "今は売っていません。",
+                "item_not_found" => "その商品はもうありません。",
+                "inventory_full" => "インベントリがいっぱいです。",
+                _ => "買えませんでした。",
+            });
+        }
+    }
+
     /// <summary>/cmd nio  二つ名を引く(無料・クールタイムはサーバーで管理)</summary>
     private static async Task DrawAsync(string fc, byte localId)
     {
@@ -984,11 +1211,11 @@ public static partial class TitleSystem
                 await FetchUserAsync(fc, true).ConfigureAwait(false);
                 Reply($"二つ名を引きました!  {marks}<color={color}>{name}</color>  (確率 {Pct(p)})"
                     + traitText
-                    + "\n" + (dup ? "すでに持っているのでかぶりです。" : "インベントリに追加されました。/cmd nii で確認・/cmd nih で付けられます。"));
+                    + "\n" + (dup ? $"かぶり! {Abbrev((long)GetDouble(root, "count", 2))}個になりました(/cmd nis で売って hm にできます)。" : "インベントリに追加されました。/cmd nii で確認・/cmd nih で付けられます。"));
                 return;
             }
             var err = GetString(root, "error");
-            if (err == "cooldown") Reply($"まだ引けません。あと{(int)GetDouble(root, "retryAfterSec")}秒お待ちください。");
+            if (err == "cooldown") Reply($"まだ引けません。あと{(int)GetDouble(root, "retryAfterSec")}秒お待ちください。{(cooldownEventActive ? $"(イベント中はクールタイム{drawCooldownNow}秒)" : "")}");
             else if (err == "no_pool") Reply("引ける二つ名がまだありません。");
             else if (err == "inventory_full") Reply("インベントリがいっぱいです。");
             else Reply("二つ名を引けませんでした。");
@@ -1020,7 +1247,7 @@ public static partial class TitleSystem
     private const float TradeTimeout = 120f;
     private static readonly System.Random TradeRandom = new();
 
-    private static string TitleLabel(string id) => Catalog.TryGetValue(id, out var d) ? Colored(d) : id;
+    private static string TitleLabel(string id) => KeyLabel(id);
     private static string PlayerLabel(byte id)
     {
         var pc = PlayerControl.AllPlayerControls.ToArray().FirstOrDefault(p => p != null && p.PlayerId == id);
@@ -1187,7 +1414,7 @@ public static partial class TitleSystem
             if (inv.Count == 0) { Reply($"{partnerName} は二つ名を持っていません。"); return; }
             var sb = new StringBuilder($"<b>{partnerName} のインベントリ</b>({inv.Count}個)\n");
             for (int i = 0; i < inv.Count; i++)
-                sb.Append(i + 1).Append(". ").Append(Colored(Catalog[inv[i]])).Append('\n');
+                sb.Append(i + 1).Append(". ").Append(KeyLabel(inv[i])).Append(CountOf(rec, inv[i]) > 1 ? $" <color=#aaaaaa>×{Abbrev(CountOf(rec, inv[i]))}</color>" : "").Append('\n');
             sb.Append($"\n/cmd nit {partnerName} (自分の番号) (相手の番号) で交換を申し込めます");
             Reply(sb.ToString());
         }
@@ -1208,8 +1435,7 @@ public static partial class TitleSystem
             var give = myInv[mine - 1];
             var get = partnerInv[theirs - 1];
             if (give == get) { Reply("同じ二つ名どうしは交換できません。"); return; }
-            if (me.Owned.Contains(get)) { Reply($"{TitleLabel(get)} はすでに持っています。"); return; }
-            if (partner.Owned.Contains(give)) { Reply($"相手はすでに {TitleLabel(give)} を持っています。"); return; }
+
 
             RunOnMain(() =>
             {

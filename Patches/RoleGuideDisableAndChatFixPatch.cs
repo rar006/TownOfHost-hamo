@@ -51,11 +51,26 @@ namespace TownOfHost.Patches
             var chatButton = __instance.Chat?.chatButton;
             if (chatButton == null) return;
 
-            var shouldShow = GameStates.IsLobby || GameStates.IsMeeting;
+            // 死んでいる時(ゴースト)はタスク中でも幽霊チャットが使えるので消さない
+            // (以前はロビー・会議以外で必ず消していたため、ゴースト中のホストがチャットを開けなかった)
+            var shouldShow = GameStates.IsLobby || GameStates.IsMeeting || IsLocalGhost();
             if (!shouldShow && chatButton.gameObject.activeSelf)
             {
                 chatButton.gameObject.SetActive(false);
             }
+            else if (shouldShow && IsLocalGhost() && !chatButton.gameObject.activeSelf)
+            {
+                // ゴースト中は、ほかの処理で消されたチャットボタンを出し直す
+                chatButton.gameObject.SetActive(true);
+                __instance.Chat.SetVisible(true);
+            }
+        }
+
+        /// <summary>試合中(タスク中)に自分が死んでいるか</summary>
+        public static bool IsLocalGhost()
+        {
+            var me = PlayerControl.LocalPlayer;
+            return me != null && me.Data != null && me.Data.IsDead && GameStates.IsInGame && !GameStates.IsLobby;
         }
     }
 

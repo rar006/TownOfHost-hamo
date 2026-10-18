@@ -132,13 +132,13 @@ namespace TownOfHost
         public static bool IsNonHostClient =>
             AmongUsClient.Instance != null && !AmongUsClient.Instance.AmHost;
 
-        public const string BepInExPluginVersion = "4.00.35.05";
+        public const string BepInExPluginVersion = "4.00.35.11";
 
-        public const string PluginVersion = "4.00.35.05";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
+        public const string PluginVersion = "4.00.35.11";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
 
-        public const string PluginShowVersion = "4.35.05β";
+        public const string PluginShowVersion = "4.35.11β";
 
-        public const string ModVersion = ".35.05";//リリースver用バージョン変更dc9b79
+        public const string ModVersion = ".35.11";//リリースver用バージョン変更dc9b79
 
 
 
@@ -294,6 +294,9 @@ namespace TownOfHost
         /// <summary>コメント枠の位置(画面左下からの距離)</summary>
         public static ConfigEntry<float> StreamCommentPosX { get; private set; }
         public static ConfigEntry<float> StreamCommentPosY { get; private set; }
+        public static ConfigEntry<float> StreamCommentWidth { get; private set; }
+        public static ConfigEntry<float> StreamCommentHeight { get; private set; }
+        public static ConfigEntry<bool> StreamCommentMinimized { get; private set; }
         /// <summary>前回設定した配信URL(起動し直しても残す)</summary>
         public static ConfigEntry<string> StreamURLConfig { get; private set; }
         /// <summary>OBS用の試合の状況ページ(http://localhost:52525/)を出す</summary>
@@ -510,6 +513,9 @@ namespace TownOfHost
             ShowStreamComments = Config.Bind("StreamMenu", "ShowComments", true);
             StreamCommentPosX = Config.Bind("StreamMenu", "CommentPosX", 0.35f);
             StreamCommentPosY = Config.Bind("StreamMenu", "CommentPosY", 1.25f);
+            StreamCommentWidth = Config.Bind("StreamMenu", "CommentWidth", 3.6f);
+            StreamCommentHeight = Config.Bind("StreamMenu", "CommentHeight", 2.3f);
+            StreamCommentMinimized = Config.Bind("StreamMenu", "CommentMinimized", false);
             StreamURLConfig = Config.Bind("StreamMenu", "StreamURL", "");
             ObsOverlay = Config.Bind("StreamMenu", "ObsOverlay", false);
             ObsShowRoles = Config.Bind("StreamMenu", "ObsShowRoles", 1);

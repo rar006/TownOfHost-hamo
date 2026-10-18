@@ -3180,7 +3180,7 @@ namespace TownOfHost
             ((ObjectOptionitem)OptionItem.AllOptions.Last()).SetValueOverride(() => StreamerInfo.HasStream ? "設定済み" : "未設定");
             ObjectOptionitem.Create(1_400_163, "StreamCommentResetPos", false, "StreamCommentResetPos", TabGroup.Other2)
                 .SetParent(youtubeHeader).SetColorcode("#ff8080")
-                .SetOptionName(() => "コメント枠の位置を戻す");
+                .SetOptionName(() => "コメント枠の位置と大きさを戻す");
             ((ObjectOptionitem)OptionItem.AllOptions.Last()).SetValueOverride(() => "押すと戻る");
             Modules.ExtraFeatureOptions.JoinByCommentOnly = BooleanOptionItem.Create(1_400_164, "JoinByCommentOnly", false, TabGroup.Other2, true)
                 .SetParent(youtubeHeader).SetColorcode("#ff8080")
@@ -3235,6 +3235,48 @@ namespace TownOfHost
             Modules.MvpAnnouncer.Enabled = BooleanOptionItem.Create(1_400_183, "MvpAnnounce", false, TabGroup.Other2, true)
                 .SetParent(extraHeader).SetColorcode("#7fd8ff")
                 .SetOptionName(() => "試合が終わったらMVPを知らせる");
+            Modules.WinStreak.Enabled = BooleanOptionItem.Create(1_400_187, "WinStreak", false, TabGroup.Other2, true)
+                .SetParent(extraHeader).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "連勝を知らせる")
+                .SetTooltip(() => "同じ陣営が続けて勝つと知らせます。2連勝以上を止めた試合の勝者は、MVPの点数が+3されます。");
+            Modules.SharedBanList.Enabled = BooleanOptionItem.Create(1_400_184, "SharedBanList", false, TabGroup.Other2, true)
+                .SetParent(extraHeader).SetColorcode("#ff8080")
+                .SetOptionName(() => "Discordの共有ブラックリストを使う")
+                .SetTooltip(() => "Discordの /ban-share add で登録された人が入ってきたら、自動でキックします。");
+            Modules.OptionBackup.Enabled = BooleanOptionItem.Create(1_400_185, "OptionBackup", false, TabGroup.Other2, true)
+                .SetParent(extraHeader).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "設定を自動でバックアップする(3つまで)");
+            ObjectOptionitem.Create(1_400_186, "OptionBackupRestore", false, "OptionBackupRestore", TabGroup.Other2)
+                .SetParent(Modules.OptionBackup.Enabled).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "1つ前の設定に戻す");
+            ((ObjectOptionitem)OptionItem.AllOptions.Last()).SetValueOverride(() => $"{Modules.OptionBackup.Count}件");
+            Modules.LobbyChatRelay.ReceiveEnabled = BooleanOptionItem.Create(1_400_195, "LobbyChatReceive", true, TabGroup.Other2, true)
+                .SetParent(extraHeader).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "Discordからのメッセージ(/say)を受け取る")
+                .SetTooltip(() => "OFFにすると、Discordの /say・/chat で送られたメッセージをこの部屋に出しません。運営が「強制」で送ったものだけは出ます。");
+            Modules.LobbyVote.Enabled = BooleanOptionItem.Create(1_400_188, "LobbyVote", false, TabGroup.Other2, true)
+                .SetParent(extraHeader).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "ロビー投票(/vote プリセット・/poll 自由な質問)")
+                .SetTooltip(() => "ホストが /vote(全部) か /vote 1 3 5(番号を指定) と送ると30秒の投票が始まり、みんなは番号をチャットで送って投票します。一番多いプリセットに切り替わります。/poll 質問 選択肢1 選択肢2 … で自由な質問の投票もできます(結果を知らせるだけ)。/vote stop でやめます。");
+            Modules.AutoPresetByCount.Enabled = BooleanOptionItem.Create(1_400_189, "AutoPresetByCount", false, TabGroup.Other2, true)
+                .SetParent(extraHeader).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "人数でプリセットを自動で切り替える")
+                .SetTooltip(() => "ロビーの人数が変わって、下の段階(少ない・中くらい・多い)が変わった時に、決めておいたプリセットに切り替えます。0は「変えない」です。");
+            Modules.AutoPresetByCount.SmallMax = IntegerOptionItem.Create(1_400_190, "AutoPresetSmallMax", new(1, 15, 1), 8, TabGroup.Other2, true)
+                .SetParent(Modules.AutoPresetByCount.Enabled).SetColorcode("#7fd8ff").SetValueFormat(OptionFormat.Players)
+                .SetOptionName(() => "少ない: この人数まで");
+            Modules.AutoPresetByCount.SmallPreset = IntegerOptionItem.Create(1_400_191, "AutoPresetSmall", new(0, OptionItem.NumPresets, 1), 0, TabGroup.Other2, true)
+                .SetParent(Modules.AutoPresetByCount.Enabled).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "少ない時のプリセット(番号)");
+            Modules.AutoPresetByCount.MiddleMax = IntegerOptionItem.Create(1_400_192, "AutoPresetMiddleMax", new(1, 15, 1), 11, TabGroup.Other2, true)
+                .SetParent(Modules.AutoPresetByCount.Enabled).SetColorcode("#7fd8ff").SetValueFormat(OptionFormat.Players)
+                .SetOptionName(() => "中くらい: この人数まで");
+            Modules.AutoPresetByCount.MiddlePreset = IntegerOptionItem.Create(1_400_193, "AutoPresetMiddle", new(0, OptionItem.NumPresets, 1), 0, TabGroup.Other2, true)
+                .SetParent(Modules.AutoPresetByCount.Enabled).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "中くらいの時のプリセット(番号)");
+            Modules.AutoPresetByCount.LargePreset = IntegerOptionItem.Create(1_400_194, "AutoPresetLarge", new(0, OptionItem.NumPresets, 1), 0, TabGroup.Other2, true)
+                .SetParent(Modules.AutoPresetByCount.Enabled).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "それより多い時のプリセット(番号)");
 
             OptionAutoFunction = BooleanOptionItem.Create(1_400_150, "AutoFunction", false, TabGroup.Other2, true)
 
@@ -3746,16 +3788,12 @@ namespace TownOfHost
 
 
 
-            var missioneerMaxOptions = OptionItem.AllOptions.Where(o => o.Name == "Maximum" && o.ParentRole == CustomRoles.Missioneer).ToList();
-
-            Logger.Info($"[DEBUG] Missioneer用Maximumオプション数: {missioneerMaxOptions.Count}", "DebugMissioneer");
-
-            foreach (var o in missioneerMaxOptions)
-
+            // 同じ役職に「最大数」の設定が2つ以上できていたら、ログに残して2つ目以降を隠す(設定画面で「最大数」が2つ出る不具合の対策)
+            foreach (var g in OptionItem.AllOptions.Where(o => o.Name == "Maximum" && o.ParentRole is not CustomRoles.NotAssigned).GroupBy(o => o.ParentRole))
             {
-
-                Logger.Info($"[DEBUG]   Id={o.Id}, Tab={o.Tab}, ParentRole={o.ParentRole}", "DebugMissioneer");
-
+                if (g.Count() < 2) continue;
+                Logger.Warn($"{g.Key}の「最大数」が{g.Count()}個あります: {string.Join(", ", g.Select(o => $"Id={o.Id}/Tab={o.Tab}/Parent={o.Parent?.Id}"))}", "DuplicateMaximum");
+                foreach (var extra in g.Skip(1)) extra.SetHidden(true);
             }
 
 

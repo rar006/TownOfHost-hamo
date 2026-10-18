@@ -147,7 +147,7 @@ namespace TownOfHost
                     new(245, 46, 32, byte.MaxValue),
                     new(212, 113, 106, byte.MaxValue),
                     () => StreamCommentFrame.ResetPosition(),
-                    "枠の位置を戻す",
+                    "枠の位置・大きさを戻す",
                     transform: mainmenumanager.screenTint.transform
                     );
                 CommentFrameReset.Button.gameObject.SetActive(false);
