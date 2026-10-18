@@ -250,13 +250,14 @@ namespace TownOfHost
                 // 通信はバックグラウンド(StartupPrefetch)で行い、ここでは結果を受け取るだけ。
                 // JSONの解析はこのまま呼び出し元(メイン)スレッドで行う(以前、解析をワーカースレッドで行ってクラッシュしたため)
                 string result = TownOfHost.Modules.StartupPrefetch.Get(url);
+                string releaseBody = "";
                 if (result == null)
                 {
                     Logger.Error($"リリース情報を取得できませんでした: {url}", "CheckRelease");
                     return false;
                 }
 
-                JObject data = all ? null : JObject.Parse(result);
+                JObject data = beta ? JObject.Parse(result) : null;
 
                 if (beta)
 
@@ -373,53 +374,27 @@ namespace TownOfHost
 
                 {
 
-                    latestVersion = ParseTagVersion(data["tag_name"]?.ToString());
-
-                    latestTitle = $"Ver. {data["tag_name"]?.ToString().TrimStart('v', 'V', 'S', 's')}";
-
-                    // (JArray)data["assets"] は Newtonsoft のバージョン違いで InvalidCastException になっていたので、一覧として読む
-                    var assets = (data.GetJ("assets") as System.Collections.Generic.IEnumerable<JToken>)?.ToList() ?? new System.Collections.Generic.List<JToken>();
-
-                    for (int i = 0; i < assets.Count; i++)
-
+                    // リリース情報は System.Text.Json で読む(バージョン一覧と同じ読み方)。
+                    // 以前は Newtonsoft の JToken で assets を読んでいたが、この環境では一覧として読めず
+                    // 毎回「ダウンロードURLを取得できませんでした」になり、新しいバージョンが出ても自動アップデートが出なかった。
+                    var latest = JsonSerializer.Deserialize<Release>(result);
+                    var tagName = latest?.TagName ?? "";
+                    latestVersion = ParseTagVersion(tagName);
+                    latestTitle = $"Ver. {tagName.TrimStart('v', 'V', 'S', 's')}";
+                    releaseBody = latest?.body ?? "";
+                    foreach (var asset in latest?.Assets ?? new List<Release.Asset>())
                     {
-
-                        if (assets[i].GetJ("name").ToString() == "TownOfHost-hamo_Steam.dll" && Constants.GetPlatformType() == Platforms.StandaloneSteamPC)
-
-                        {
-
-                            downloadUrl = assets[i].GetJ("browser_download_url").ToString();
-
-                            break;
-
-                        }
-
-                        if (assets[i].GetJ("name").ToString() == "TownOfHost-hamo_Epic.dll" && Constants.GetPlatformType() == Platforms.StandaloneEpicPC)
-
-                        {
-
-                            downloadUrl = assets[i].GetJ("browser_download_url").ToString();
-
-                            break;
-
-                        }
-
-                        if (assets[i].GetJ("name").ToString() == "TownOfHost-hamo.dll")
-
-                            downloadUrl = assets[i].GetJ("browser_download_url").ToString();
-
+                        if (asset?.Name == null) continue;
+                        if (asset.Name == "TownOfHost-hamo_Steam.dll" && Constants.GetPlatformType() == Platforms.StandaloneSteamPC) { downloadUrl = asset.DownloadUrl; break; }
+                        if (asset.Name == "TownOfHost-hamo_Epic.dll" && Constants.GetPlatformType() == Platforms.StandaloneEpicPC) { downloadUrl = asset.DownloadUrl; break; }
+                        if (asset.Name == "TownOfHost-hamo.dll") downloadUrl = asset.DownloadUrl;
                     }
-
-                    var body = data["body"].ToString();
-
-                    bool? check = body?.Contains("IsforceUpdate") ?? null;
-
+                    bool? check = releaseBody.Contains("IsforceUpdate");
                     // タグからバージョンを読めなかった場合は「更新なし」扱い(破損扱いにはしない)
                     hasUpdate = latestVersion != null && (latestVersion.CompareTo(Main.version) > 0 ||
-
                     //最後のアプデのcheckが有効で～最終バージョンと現バージョンが一緒じゃない
-
                     (check is true && latestVersion.CompareTo(Main.version) is not 0));
+                    Logger.Info($"最新: {tagName} ({latestVersion}) / 今: {Main.version} / 更新あり: {hasUpdate} / DL: {(downloadUrl != null ? "あり" : "なし")}", "CheckRelease");
 
                 }
 
@@ -439,7 +414,7 @@ namespace TownOfHost
 
                 isBroken = false;
 
-                var ages = data["body"].ToString().Split("## ");
+                var ages = (beta ? data["body"]?.ToString() ?? "" : releaseBody).Split("## ");
 
                 for (var i = 0; i < ages.Length - 1; i++)
 

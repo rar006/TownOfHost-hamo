@@ -949,6 +949,31 @@ namespace TownOfHost
             if (CredentialsPatch.TOHhmLogo != null) CredentialsPatch.TOHhmLogo.gameObject.SetActive(visible);
         }
 
+        /// <summary>
+        /// バージョン切り替え・統計などの画面を開いている間は、hamoロゴと追加ボタンを毎フレーム隠したままにする。
+        /// (開いた後に別の処理(ResetScreen など)でロゴやボタンが戻ってしまい、画面の上に重なることがあった)
+        /// </summary>
+        [HarmonyPatch(nameof(MainMenuManager.LateUpdate))]
+        [HarmonyPostfix]
+        private static void KeepHomeUiHiddenWhileSubMenuOpen()
+        {
+            try
+            {
+                var subMenuOpen = (VersionMenu != null && VersionMenu.activeSelf)
+                    || (betaVersionMenu != null && betaVersionMenu.activeSelf)
+                    || (Statistics_ScrollStuff != null && Statistics_ScrollStuff.activeSelf);
+                if (!subMenuOpen) return;
+                var logoShown = CredentialsPatch.TOHhmLogo != null && CredentialsPatch.TOHhmLogo.gameObject.activeSelf;
+                var buttonsShown = MenuButtonAnchor != null && MenuButtonAnchor.activeSelf;
+                if (!logoShown && !buttonsShown) return;
+                if (MenuButtonAnchor != null) MenuButtonAnchor.SetActive(false);
+                if (CredentialsPatch.TOHhmLogo != null) CredentialsPatch.TOHhmLogo.gameObject.SetActive(false);
+                // ✘ボタン(サブ画面を閉じる)は出したままにする
+                if (!SimpleButton.IsNullOrDestroyed(closeSubMenuButton)) closeSubMenuButton.Button.gameObject.SetActive(true);
+            }
+            catch { }
+        }
+
         [HarmonyPatch(nameof(MainMenuManager.ResetScreen))]
         [HarmonyPostfix]
         private static void ResetScreenInitialMenuUiPostfix()

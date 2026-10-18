@@ -279,6 +279,14 @@ namespace TownOfHost
 
                                 .Do(pc => CustomWinnerHolder.WinnerIds.Add(pc.PlayerId));
 
+                            // サボタージュ(リアクター等)で勝った時は勝者が固定されて追加勝利の判定を通らないので、
+                            // インポスター側(マッド)になったシュレ猫・化け猫をここで勝者に入れる
+                            if (lockWinner)
+                                foreach (var pc in PlayerCatch.AllPlayerControls)
+                                {
+                                    SchrodingerCat.CheckSaboWin(pc);
+                                    BakeCat.CheckSaboWin(pc);
+                                }
                             if (!lockWinner && Egoist.CheckWin()) break;
 
                             if (!lockWinner)

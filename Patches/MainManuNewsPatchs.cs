@@ -297,6 +297,19 @@ public class ModNewsHistory
                 };
                 AllModNews.Add(news);
             }
+            {
+                var news = new ModNews
+                {
+                    Number = 100021,
+                    Title = "アップデート！",
+                    SubTitle = "<color=#fb85ff>Town Of Host-hamo v4.35.12β</color>",
+                    ShortTitle = "<color=#fb85ff>●TOH-hamo v4.35.12β</color>",
+                    Text = "【追加】\r\n・チャットで記号(★♦♥!?#% など)を打てるように(自分の入力欄だけ)\r\n\r\n【変更】\r\n・インポスターのヴィランを「ヴィラン(インポスター)」に名前を変更\r\n\r\n【修正】\r\n・シュレ猫(マッド陣営)がリアクターなどのサボタージュで勝てない不具合\r\n・/h r で一途な狼を見ると孤独な狼が出る不具合\r\n・/h r でアルセーヌ・キョンシーを見ると顔文字が出る不具合\r\n・バージョン切り替え画面にロゴやボタンが重なることがある不具合\r\n・その他、多少のバグ修正"
+                    ,
+                    Date = "2026-10-18"
+                };
+                AllModNews.Add(news);
+            }
             AnnouncementPopUp.UpdateState = AnnouncementPopUp.AnnounceState.NotStarted;
         }
     }
