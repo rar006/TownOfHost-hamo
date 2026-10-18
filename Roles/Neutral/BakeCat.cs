@@ -447,7 +447,8 @@ namespace TownOfHost.Roles.Neutral
         public static void CheckSaboWin(PlayerControl player)
         {
             //サボ時でも勝てるようにする
-            if (MadCats.ContainsKey(player.PlayerId))
+            // MadCats は試合をまたいで残るので、今もマッド陣営の化け猫かを確かめる
+            if (MadCats.ContainsKey(player.PlayerId) && player.GetRoleClass() is BakeCat { Team: TeamType.Mad })
             {
                 CustomWinnerHolder.CantWinPlayerIds.Remove(player.PlayerId);
                 CustomWinnerHolder.WinnerIds.Add(player.PlayerId);

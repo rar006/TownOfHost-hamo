@@ -1772,8 +1772,12 @@ namespace TownOfHost
 
                 CustomRoles.AsistingAngel => AddonInfo(role),
                 CustomRoles.Inheritance => AddonInfo(role),
+                // ルパン・ダオシーが作る幽霊役職(以前は下の「?」の文字と顔文字が出ていた)
+                CustomRoles.Arsene => AddonInfo(role),
+                CustomRoles.Jiangshi => AddonInfo(role),
 
-                _ => $"{role}-{role.GetRoleInfo()?.ConfigId ?? -100}...?(´・ω・｀)"
+                // 個別の書き方が無いものも、名前と説明を出す
+                _ => AddonInfo(role)
 
             });
 

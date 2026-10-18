@@ -319,7 +319,8 @@ public sealed class SchrodingerCat : RoleBase, IAdditionalWinner, IDeathReasonSe
     public static void CheckSaboWin(PlayerControl player)
     {
         //サボ時でも勝てるようにする
-        if (MadCats.ContainsKey(player.PlayerId))
+        // MadCats は試合をまたいで残るので、今もマッド陣営のシュレ猫かを確かめる
+        if (MadCats.ContainsKey(player.PlayerId) && player.GetRoleClass() is SchrodingerCat { Team: TeamType.Mad })
         {
             CustomWinnerHolder.CantWinPlayerIds.Remove(player.PlayerId);
             CustomWinnerHolder.WinnerIds.Add(player.PlayerId);

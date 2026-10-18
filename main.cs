@@ -132,13 +132,13 @@ namespace TownOfHost
         public static bool IsNonHostClient =>
             AmongUsClient.Instance != null && !AmongUsClient.Instance.AmHost;
 
-        public const string BepInExPluginVersion = "4.00.35.11";
+        public const string BepInExPluginVersion = "4.00.35.12";
 
-        public const string PluginVersion = "4.00.35.11";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
+        public const string PluginVersion = "4.00.35.12";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
 
-        public const string PluginShowVersion = "4.35.11β";
+        public const string PluginShowVersion = "4.35.12β";
 
-        public const string ModVersion = ".35.11";//リリースver用バージョン変更dc9b79
+        public const string ModVersion = ".35.12";//リリースver用バージョン変更dc9b79
 
 
 

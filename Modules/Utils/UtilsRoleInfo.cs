@@ -1541,9 +1541,23 @@ namespace TownOfHost
 
             if (input == "" || input == string.Empty) return false;
 
-            var romajiInput = NormalizeRomajiInput(input);
+            // 漢字はローマ字にできない(消える)ので、漢字を含む名前をローマ字で比べると
+            // 「一途な狼」と「孤独な狼」がどちらも "na" になって、違う役職が出ていた。漢字を含む時はローマ字で比べない
+            var hasKanji = input.Any(ch => ch >= '一' && ch <= '鿿');
+            var romajiInput = hasKanji ? "" : NormalizeRomajiInput(input);
 
             input = FixRoleNameInput(input).ToLower();
+
+            // まず名前がぴったり同じ役職を探す(ローマ字の一致より優先)
+            foreach (CustomRoles role in Enum.GetValues(typeof(CustomRoles)))
+            {
+                if (!includeVanilla && role.IsVanilla() && role != CustomRoles.GuardianAngel) continue;
+                if (input == GuessManager.ChangeNormal2Vanilla(role))
+                {
+                    output = role;
+                    return true;
+                }
+            }
 
             foreach (CustomRoles role in Enum.GetValues(typeof(CustomRoles)))
 
