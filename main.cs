@@ -124,17 +124,13 @@ namespace TownOfHost
 
 
 
-#if NON_HOST_CLIENT
-        // Non-host visual client. It shares the hamo identity but has its own BepInEx GUID.
-        public const bool IsNonHostClient = true;
-        public const string PluginGuid = "com.rar006.TownOfHost-hamo.client";
-        public const string BepInExPluginName = "Town Of Host-hamo Client";
-#else
-        // Host build. Keep the hamo plugin GUID unchanged.
-        public const bool IsNonHostClient = false;
+        // ホストと参加者は同じDLLを使い、ゲーム接続後の実行時状態で判定する。
         public const string PluginGuid = "com.rar006.TownOfHost-hamo";
         public const string BepInExPluginName = "Town Of Host-hamo";
-#endif
+
+        // 参加者側では表示・受信同期だけを有効にし、ゲーム進行はホストに任せる。
+        public static bool IsNonHostClient =>
+            AmongUsClient.Instance != null && !AmongUsClient.Instance.AmHost;
 
         public const string BepInExPluginVersion = "4.00.35.05";
 
@@ -478,11 +474,10 @@ namespace TownOfHost
 
             AutoRestartOnCrash = Config.Bind("Client Options", "Auto Restart On Crash", false);
 
-#if NON_HOST_CLIENT
             // 表示専用版では外部監視の自動再ホストを絶対に動かさない。
             // イントロ、役職ガイド、カスタムボタン、受信RPCによる表示同期はそのまま有効。
-            AutoRestartOnCrash.Value = false;
-#endif
+            if (IsNonHostClient)
+                AutoRestartOnCrash.Value = false;
 
             EnableDiscordRichPresence = Config.Bind("Client Options", "Enable Discord Rich Presence", false);
 
