@@ -103,18 +103,12 @@ namespace TownOfHost
 
             SimpleButton.SetBase(__instance.quitButton);
 
-            // オンラインを押した時の遷移先をモードごとに固定する。
-            // ホスト版はゲーム作成画面、参加者専用版は部屋コード入力画面を直接開く。
+            // 同じDLLをホストと参加者の両方が使うため、オンライン画面を開いて
+            // 「部屋を作成」「コードを入力」のどちらかを選べるようにする。
             if (__instance.PlayOnlineButton != null)
             {
                 __instance.PlayOnlineButton.OnClick = new();
-                __instance.PlayOnlineButton.OnClick.AddListener((Action)(() =>
-                {
-                    if (Main.IsNonHostClient)
-                        __instance.OpenEnterCodeMenu(false);
-                    else
-                        __instance.OpenCreateGame();
-                }));
+                __instance.PlayOnlineButton.OnClick.AddListener((Action)(() => __instance.OpenOnlineMenu()));
             }
 
             // 左上はAMONG USロゴのまま維持する。追加ボタンだけは初期hamo版の
@@ -1064,13 +1058,9 @@ namespace TownOfHost
                     return false;
                 }
             }
-            // バニラのオンライン中間画面（ゲーム作成／コード入力カード）は使用しない。
-            // どのボタン経路でも、起動モードに必要な最終画面へ直接遷移する。
-            if (Main.IsNonHostClient)
-                __instance.OpenEnterCodeMenu(false);
-            else
-                __instance.OpenCreateGame();
-            return false;
+            // 同じDLLをホストと参加者の両方が使うため、バニラのオンライン画面を開き、
+            // 作成／コード入力を選ばせる。
+            return true;
         }
 
         [HarmonyPatch(nameof(MainMenuManager.OpenGameModeMenu))]
@@ -1122,13 +1112,12 @@ namespace TownOfHost
 
 
 
-            // 「ゲームを探す」はホスト・参加者専用版のどちらでも使用しない。
+            // 「ゲームを探す」は使用しない。作成とコード入力は同じDLLで両方使う。
             scaler.Find("Find Game Button")?.gameObject.SetActive(false);
             scaler.Find("Line")?.gameObject.SetActive(false);
 
-            // ホスト専用MODは部屋作成だけ、参加者専用MODはコード入力だけを表示する。
-            scaler.Find("Enter Code Button")?.gameObject.SetActive(Main.IsNonHostClient);
-            scaler.Find("Create Lobby Button")?.gameObject.SetActive(!Main.IsNonHostClient);
+            scaler.Find("Enter Code Button")?.gameObject.SetActive(true);
+            scaler.Find("Create Lobby Button")?.gameObject.SetActive(true);
 
             ApplyOnlineButtonsLayout(scaler);
 
@@ -1213,22 +1202,15 @@ namespace TownOfHost
 
 
 
-                // ホスト専用MODは「ゲームを作成」だけ、参加者専用MODは「コードを入力」だけを中央に置く。
-                const float scaleMultiplier = 1.35f;
-                if (Main.IsNonHostClient)
-                {
-                    createLobbyButton.gameObject.SetActive(false);
-                    enterCodeButton.gameObject.SetActive(true);
-                    enterCodeButton.localPosition = new Vector3(centerX, centerY, codePos.z);
-                    enterCodeButton.localScale = _originalEnterCodeScale.Value * scaleMultiplier;
-                }
-                else
-                {
-                    createLobbyButton.gameObject.SetActive(true);
-                    enterCodeButton.gameObject.SetActive(false);
-                    createLobbyButton.localPosition = new Vector3(centerX, centerY, createPos.z);
-                    createLobbyButton.localScale = _originalCreateLobbyScale.Value * scaleMultiplier;
-                }
+                // 同じDLLをホストと参加者の両方が使うため、両方の入口を表示する。
+                const float scaleMultiplier = 1.15f;
+                const float buttonSpacing = 1.55f;
+                createLobbyButton.gameObject.SetActive(true);
+                enterCodeButton.gameObject.SetActive(true);
+                createLobbyButton.localPosition = new Vector3(centerX - buttonSpacing, centerY, createPos.z);
+                enterCodeButton.localPosition = new Vector3(centerX + buttonSpacing, centerY, codePos.z);
+                createLobbyButton.localScale = _originalCreateLobbyScale.Value * scaleMultiplier;
+                enterCodeButton.localScale = _originalEnterCodeScale.Value * scaleMultiplier;
 
             }
 
