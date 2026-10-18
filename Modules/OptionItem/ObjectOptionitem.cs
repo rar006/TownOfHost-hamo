@@ -8,6 +8,9 @@ namespace TownOfHost
     {
         public bool IsHedderObject;
         public string ClickActionkey;
+        /// <summary>右の値の欄に出す文字を自分で決める(押すと切り替わる行で、今の状態を出すため)</summary>
+        public Func<string> ValueOverride;
+        public ObjectOptionitem SetValueOverride(Func<string> value) { ValueOverride = value; return this; }
         // コンストラクタ
         public ObjectOptionitem(int id, string name, bool IsHeader, string ClickAction, TabGroup tab)
         : base(id, name, 0, tab, false)
@@ -50,6 +53,7 @@ namespace TownOfHost
         }
         public override string GetString()
         {
+            if (ValueOverride != null) return ValueOverride();
             if (ClickActionkey != "")
             {
                 return Translator.GetString(CurrentValue is 0 ? BooleanOptionItem.TEXT_false : BooleanOptionItem.TEXT_true);

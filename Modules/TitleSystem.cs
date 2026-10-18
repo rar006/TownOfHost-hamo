@@ -55,12 +55,7 @@ public static partial class TitleSystem
     }
 
     /// <summary>false にすると二つ名の機能をすべて止める(通信も表示もコマンドも何もしない)。切り分け用。</summary>
-#if HAMO_ANDROID
-    // Android: ロビーに入った直後のネイティブクラッシュの切り分けのため、いったん止めている
-    public static readonly bool Enabled = false;
-#else
     public static readonly bool Enabled = true;
-#endif
     private static bool stateLogged;
 
     /// <summary>この部屋で二つ名を使うか(設定「二つ名を使う」)。OFFなら表示もコマンドも止める</summary>
@@ -408,7 +403,9 @@ public static partial class TitleSystem
 
     private static string TitlePrefixOf(PlayerControl pc)
     {
-        if (pc == null || !Shown.TryGetValue(pc.PlayerId, out var shown) || shown.Fc != CachedFriendCode(pc)) return "";
+        // 初めての人のマーク(便利機能)は、二つ名を使わない部屋でも出す
+        var mark = pc != null && TownOfHost.Modules.PlayerStatsSync.FirstTimers.Contains(pc.PlayerId) ? TownOfHost.Modules.PlayerStatsSync.FirstTimerMark : "";
+        if (pc == null || !RoomEnabled || !Shown.TryGetValue(pc.PlayerId, out var shown) || shown.Fc != CachedFriendCode(pc)) return mark;
         var parts = new List<string>();
         foreach (var id in shown.Ids)
         {
@@ -417,6 +414,7 @@ public static partial class TitleSystem
             if (!color.StartsWith("#")) color = "#" + color;
             parts.Add($"{MarkOf(shown.Fc, id)}<color={color}>{def.Name}</color>");
         }
+        if (mark.Length > 0) parts.Insert(0, mark);
         return parts.Count == 0 ? "" : string.Join(" ", parts);
     }
 
@@ -431,7 +429,7 @@ public static partial class TitleSystem
 
     private static string VanillaNameOf(PlayerControl target, string baseName)
     {
-        if (!RoomEnabled) return baseName; // 部屋の設定でOFF: 二つ名なしの名前に戻す
+        // 部屋の設定で二つ名がOFFの時は、TitlePrefixOf が二つ名を返さない(初めての人のマークだけ)
         var titles = TitlePrefixOf(target);
         if (titles.Length == 0) return baseName;
         return $"{VanillaNameHead}{baseName}\r\n<size=60%>{titles}</size></line-height>";
@@ -560,7 +558,23 @@ public static partial class TitleSystem
     }
 
     // RPCの種類(1バイト目)。1 = 二つ名を変えた / 2〜5 = 交換 / 6 = ホストが「この人(MOD未導入)の二つ名が変わった」と知らせる
-    private const byte RpcNotify = 1, RpcTradePropose = 2, RpcTradeAccept = 3, RpcTradeCancel = 4, RpcTradeDone = 5, RpcNotifyFor = 6;
+    private const byte RpcNotify = 1, RpcTradePropose = 2, RpcTradeAccept = 3, RpcTradeCancel = 4, RpcTradeDone = 5, RpcNotifyFor = 6, RpcFirstTimer = 7;
+
+    /// <summary>ホスト用: 「初めての人」をMOD導入者に知らせ、未導入の人には名前を送り直してマークを付ける</summary>
+    internal static void BroadcastFirstTimer(byte playerId)
+    {
+        try
+        {
+            if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost || PlayerControl.LocalPlayer == null) return;
+            var writer = AmongUsClient.Instance.StartRpcImmediately(
+                PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.SyncTitle, SendOption.Reliable, -1);
+            writer.Write(RpcFirstTimer);
+            writer.Write(playerId);
+            AmongUsClient.Instance.FinishRpcImmediately(writer);
+            InvalidateVanillaNames();
+        }
+        catch (Exception e) { Logger.Exception(e, Tag); }
+    }
 
     /// <summary>ホスト用: MOD未導入の人の二つ名が変わったことを、MOD導入者に知らせる</summary>
     private static void SendNotifyFor(byte playerId)
@@ -610,6 +624,13 @@ public static partial class TitleSystem
         try { kind = reader.ReadByte(); } catch { }
         if (!Enabled) return;
         if (sender == null || sender.AmOwner) return;
+        if (kind == RpcFirstTimer)
+        {
+            // ホストからの「この人は初めての参加」(ホストからのものだけ信じる)
+            if (AmongUsClient.Instance == null || sender.OwnerId != AmongUsClient.Instance.HostId) return;
+            try { TownOfHost.Modules.PlayerStatsSync.FirstTimers.Add(reader.ReadByte()); } catch { }
+            return;
+        }
         if (kind == RpcNotifyFor)
         {
             // ホストからの「この人の二つ名が変わった」(ホストからのものだけ信じる。中身はサーバーから読み直す)
@@ -675,6 +696,9 @@ public static partial class TitleSystem
                 }
                 if (parts.Count > 0) text = "<size=65%>" + string.Join(" ", parts) + "</size>"; // 名前より小さく表示
             }
+            // 初めての人のマーク(便利機能)
+            if (GameStates.IsLobby && TownOfHost.Modules.PlayerStatsSync.FirstTimers.Contains(pc.PlayerId))
+                text = text == null ? "<size=65%>" + TownOfHost.Modules.PlayerStatsSync.FirstTimerMark + "</size>" : text.Replace("<size=65%>", "<size=65%>" + TownOfHost.Modules.PlayerStatsSync.FirstTimerMark + " ");
             if (text == null)
             {
                 if (tr != null && tr.gameObject.activeSelf) tr.gameObject.SetActive(false);

@@ -266,7 +266,7 @@ public sealed class Shyboy : RoleBase
             {
                 int colorId = pc.Data.DefaultOutfit.ColorId;
                 if (colorId >= 0 && colorId < Palette.PlayerColors.Length)
-                    colorCode = "#" + ColorCompat.ToHtmlStringRGB(Palette.PlayerColors[colorId]);
+                    colorCode = "#" + ColorUtility.ToHtmlStringRGB(Palette.PlayerColors[colorId]);
             }
             arrows += $"<color={colorCode}>{arr}</color>";
         }
@@ -297,7 +297,7 @@ public sealed class Shyboy : RoleBase
                 int colorId = pc.Data.DefaultOutfit.ColorId;
                 string colorCode = "#ffffff";
                 if (colorId >= 0 && colorId < Palette.PlayerColors.Length)
-                    colorCode = "#" + ColorCompat.ToHtmlStringRGB(Palette.PlayerColors[colorId]);
+                    colorCode = "#" + ColorUtility.ToHtmlStringRGB(Palette.PlayerColors[colorId]);
                 shapes += $"<size=110%><color={colorCode}>■</color></size>";
             }
         }

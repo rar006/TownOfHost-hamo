@@ -252,7 +252,7 @@ public sealed class NiceTrapper : RoleBase
         int colorId = target.Data.DefaultOutfit.ColorId;
         string colorCode = "#ffffff";
         if (colorId >= 0 && colorId < Palette.PlayerColors.Length)
-            colorCode = "#" + ColorCompat.ToHtmlStringRGB(Palette.PlayerColors[colorId]);
+            colorCode = "#" + ColorUtility.ToHtmlStringRGB(Palette.PlayerColors[colorId]);
 
         GetArrow.Add(Player.PlayerId, targetPos);
         var arrowData = (targetPos, colorCode);

@@ -512,7 +512,7 @@ namespace TownOfHost
             // 対象外のFixedUpdateではTransform.FindとGetComponentの呼び出しも省略する。
             if (GameStates.IsInGame)
             {
-                int roleTextRefreshInterval = Options.OptionUltraLightweightMode?.GetBool() == true ? 60 : 15;
+                int roleTextRefreshInterval = 15;
                 bool shouldRefreshRoleText = !lastRoleTextUpdateTick.TryGetValue(__instance.PlayerId, out var lastTick)
                     || roleTextUpdateTick - lastTick >= roleTextRefreshInterval;
 
@@ -601,7 +601,7 @@ namespace TownOfHost
                     // 頻繁に再描画する必要は薄い。従来は「通常15tick/超軽量化ON時60tick」
                     // だったが、通常時も30tick(約0.5秒間隔)に統一することで、
                     // モードを意識せず常に負荷を抑えられるようにした。
-                    int roleTextRefreshInterval = Options.OptionUltraLightweightMode?.GetBool() == true ? 60 : 30;
+                    int roleTextRefreshInterval = 30;
 
                     bool shouldRefreshRoleText = !lastRoleTextUpdateTick.TryGetValue(__instance.PlayerId, out var lastTick)
 

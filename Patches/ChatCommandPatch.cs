@@ -4821,6 +4821,10 @@ namespace TownOfHost
 
             // MOD未導入の人の二つ名コマンドは、ホストが代わりに処理する(/cmd nil でも /nil でも使える)
             if (TitleSystem.TryHandleRemoteCommand(player, text)) { canceled = true; return; }
+            // 役職の勝率(便利機能): /stats
+            if (TownOfHost.Modules.RoleWinStats.TryHandle(text, player.PlayerId)) { canceled = true; return; }
+            // 自分の戦績(便利機能): /me
+            if (TownOfHost.Modules.PlayerStatsSync.TryHandle(text, player)) { canceled = true; return; }
 
             if (text.StartsWith("/") && !text.Contains("cmd"))
 
@@ -5005,11 +5009,17 @@ namespace TownOfHost
 
                             var catR = ParseRoleCategory(thirdargs);
 
+                            // 「陣営を指定すれば使える」をOFFにしている時は、陣営を指定しても使えない
+                            if (catR != null && Options.OptionCommandNowRole.GetBool() && Options.OptionCommandNowRoleAllowCategory?.GetBool() == false)
+                            {
+                                SendMessage("<color=#ff0000>役職一覧の表示はホストによって無効化されています。</color>", player.PlayerId);
+                                break;
+                            }
                             if (catR == null && Options.OptionCommandNowRole.GetBool())
 
                             {
 
-                                SendMessage("<color=#ff0000>役職の全件表示はホストによって無効化されています。\n/cmd n r I のように陣営を指定すると見られます。\nI=インポスター M=マッドメイト C=クルーメイト N=ニュートラル A=属性 G=ゴースト</color>", player.PlayerId);
+                                SendMessage(Options.OptionCommandNowRoleAllowCategory?.GetBool() == false ? "<color=#ff0000>役職一覧の表示はホストによって無効化されています。</color>" : "<color=#ff0000>役職の全件表示はホストによって無効化されています。\n/cmd n r I のように陣営を指定すると見られます。\nI=インポスター M=マッドメイト C=クルーメイト N=ニュートラル A=属性 G=ゴースト</color>", player.PlayerId);
 
                                 break;
 
@@ -6756,6 +6766,8 @@ namespace TownOfHost
         public static bool DoBlockChat = false;
 
         public static bool BlockSendName = false;
+        /// <summary>前回システムメッセージを送ってからの時間</summary>
+        private static float systemTimer = 99f;
 
         public static void Postfix(ChatController __instance)
 
@@ -6771,19 +6783,26 @@ namespace TownOfHost
 
             // 短時間に大きなパケットが多数飛んでサーバーの「Hacking」切断を誘発していた。
 
-            if (!AmongUsClient.Instance.AmHost || Main.MessagesToSend.Count < 1 || (timer > __instance.timeSinceLastMessage)) return;
-
+            // システムメッセージの間隔は、ホストのチャットの待ち時間(timeSinceLastMessage)とは別に数える。
+            // 以前はシステムメッセージを送るたびにホストのチャットの待ち時間をリセットしていたため、
+            // ようこそメッセージなどを送っている間、ホストがチャットできなかった。
+            systemTimer += Time.deltaTime;
+            if (!AmongUsClient.Instance.AmHost || Main.MessagesToSend.Count < 1 || (timer > systemTimer)) return;
             if (DoBlockChat) return;
-
-
-
             if (50 <= Main.MegCount) return;
-
-
-
-            if (GameStates.IsLobby) ChatManager.SendmessageInLobby(__instance);
-
-            else ChatManager.SendMessageInGame(__instance);
+            var hostChatTimer = __instance.timeSinceLastMessage;
+            __instance.timeSinceLastMessage = systemTimer;
+            try
+            {
+                if (GameStates.IsLobby) ChatManager.SendmessageInLobby(__instance);
+                else ChatManager.SendMessageInGame(__instance);
+            }
+            finally
+            {
+                // 送る処理が決めた「次に送れるまでの時間」はシステムメッセージ用に覚えて、ホストのチャットの待ち時間は元に戻す
+                systemTimer = __instance.timeSinceLastMessage;
+                __instance.timeSinceLastMessage = hostChatTimer;
+            }
 
         }
 

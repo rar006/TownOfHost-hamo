@@ -80,62 +80,11 @@ public static class NewsTabPatch
         }
         Logger.Info($"tab={CurrentTab} panels={total} shown={slot} slots={panelSlots.Count}", "NewsTab");
 
-#if HAMO_ANDROID
-        // Androidではお知らせデータを差し込むとクラッシュするため、MODタブでは本文欄に文字だけで表示する
-        if (CurrentTab == NewsTab.Mod && first == null)
-        {
-            ShowModNewsAsText(instance);
-            return;
-        }
-#endif
         // 右側の本文も、今のタブの先頭のニュースに合わせる
         if (first != null && first.PassiveButton != null)
             first.PassiveButton.OnClick.Invoke();
     }
 
-#if HAMO_ANDROID
-    private static void ShowModNewsAsText(AnnouncementPopUp instance)
-    {
-        try
-        {
-            if (ModNewsHistory.AllModNews.Count == 0) ModNewsHistory.Init();
-            var list = new List<ModNews>(ModNewsHistory.AllModNews);
-            list.Sort((a, b) => System.DateTime.Compare(ParseDate(b?.Date), ParseDate(a?.Date)));
-
-            var sb = new System.Text.StringBuilder();
-            foreach (var n in list)
-            {
-                if (n == null) continue;
-                sb.Append("<size=120%><b>").Append(n.Title ?? "").Append("</b></size>\n");
-                if (!string.IsNullOrEmpty(n.SubTitle)) sb.Append(n.SubTitle).Append('\n');
-                sb.Append("<size=80%><color=#aaaaaa>").Append(ParseDate(n.Date).ToString("yyyy/MM/dd")).Append("</color></size>\n");
-                sb.Append(n.Text ?? "").Append("\n\n――――――――――\n\n");
-            }
-
-            if (instance.Title != null) instance.Title.text = "TOH-hamo";
-            if (instance.SubTitle != null) instance.SubTitle.text = TabLabel("NewsTabMod", "MODニュース", "MOD News");
-            if (instance.DateString != null) instance.DateString.text = "";
-            if (instance.AnnouncementBodyText != null)
-            {
-                instance.AnnouncementBodyText.text = sb.Length == 0 ? "No news" : sb.ToString();
-                instance.AnnouncementBodyText.ForceMeshUpdate();
-                if (instance.TextScroller != null)
-                {
-                    var h = instance.AnnouncementBodyText.preferredHeight;
-                    instance.TextScroller.SetYBoundsMax(Mathf.Max(0f, h - 3f));
-                    instance.TextScroller.ScrollToTop();
-                }
-            }
-        }
-        catch (System.Exception e)
-        {
-            Logger.Error($"ShowModNewsAsText: {e}", "NewsTab");
-        }
-    }
-
-    private static System.DateTime ParseDate(string s)
-        => System.DateTime.TryParse(s, out var d) ? d : System.DateTime.MinValue;
-#endif
 
     /// <summary>翻訳が見つからず「&lt;INVALID:…&gt;」になる場合に備え、直接の文字列へ切り替える</summary>
     private static string TabLabel(string key, string ja, string en)

@@ -31,7 +31,8 @@ public enum From
     Speyrp,
     RevolutionaryHostRoles,
     Love_Couple_Mod,
-    TownOfHost_hamo
+    TownOfHost_hamo,
+    TownOfHost_Temp
 }
 public class SimpleRoleInfo
 {
@@ -124,7 +125,7 @@ public class SimpleRoleInfo
             };
         RoleColorCode = colorCode;
 
-        _ = ColorCompat.TryParseHtmlString(colorCode, out RoleColor);
+        _ = ColorUtility.TryParseHtmlString(colorCode, out RoleColor);
 
         if (tab == TabGroup.MainSettings)
             tab = CustomRoleType switch

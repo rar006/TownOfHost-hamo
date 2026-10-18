@@ -125,7 +125,6 @@ namespace TownOfHost
             }
         }
     }
-#if !HAMO_ANDROID
     [HarmonyPatch(typeof(EOSManager), nameof(EOSManager.IsAllowedOnline))]
     class RunLoginPatch
     {
@@ -136,7 +135,6 @@ namespace TownOfHost
 #endif
         }
     }
-#endif
     [HarmonyPatch(typeof(BanMenu), nameof(BanMenu.SetVisible))]
     class BanMenuSetVisiblePatch
     {

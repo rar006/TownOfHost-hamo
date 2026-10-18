@@ -2001,6 +2001,10 @@ public enum CustomRoles
     Abuser,
     Victim,
     Influencer = 287,
+    // PR #1 で追加した役職(旧ブランチから移植)。既存の役職の番号を変えないよう、空いている番号を明示する
+    StepBomber = 580,
+    Locksmith = 581,
+    Coroner = 582,
     // Sub-role after 1000←今後の拡張のため広げます。
     //NotAssigned = 500,
     NotAssigned = 1000,

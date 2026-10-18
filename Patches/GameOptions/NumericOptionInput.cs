@@ -136,7 +136,7 @@ namespace TownOfHost
 
             initializing = true;
             activeInput.SetText("");
-            activeInput.SetCaret(0);
+            activeInput.caretPos = 0;
             initializing = false;
             dirty = false;
 
@@ -173,7 +173,7 @@ namespace TownOfHost
 
             initializing = true;
             activeInput.SetText("");
-            activeInput.SetCaret(0);
+            activeInput.caretPos = 0;
             initializing = false;
             dirty = false;
 
@@ -257,7 +257,7 @@ namespace TownOfHost
 
             var committedText = activeInput.text ?? "";
             var compositionText = activeInput.compoText ?? "";
-            var caretPosition = Math.Clamp(activeInput.GetCaret(), 0, committedText.Length);
+            var caretPosition = Math.Clamp(activeInput.caretPos, 0, committedText.Length);
             var displayedText = committedText.Insert(caretPosition, compositionText);
 
             if (activeInput.hasFocus)
@@ -291,7 +291,7 @@ namespace TownOfHost
             if (sanitizing || activeInput == null) return;
 
             var before = activeInput.text ?? "";
-            var caret = Math.Clamp(activeInput.GetCaret(), 0, before.Length);
+            var caret = Math.Clamp(activeInput.caretPos, 0, before.Length);
             var allowDecimal = CanUseDecimal();
             var normalized = NormalizeNumber(before, allowDecimal);
             var limit = Math.Max(1, activeInput.characterLimit);
@@ -303,7 +303,7 @@ namespace TownOfHost
             var normalizedCaret = NormalizeNumber(before[..caret], allowDecimal).Length;
             if (normalizedCaret > normalized.Length) normalizedCaret = normalized.Length;
             activeInput.SetText(normalized);
-            activeInput.SetCaret(normalizedCaret);
+            activeInput.caretPos = normalizedCaret;
             sanitizing = false;
         }
 

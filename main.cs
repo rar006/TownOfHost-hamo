@@ -50,9 +50,7 @@ namespace TownOfHost
 
     [BepInIncompatibility("jp.dreamingpig.amongus.nebula")]
 
-    #if !HAMO_ANDROID
-    [BepInProcess("Among Us.exe")] // Androidではプロセス名が異なるため、この制限を付けない
-#endif
+    [BepInProcess("Among Us.exe")]
 
     public class Main : BasePlugin
 
@@ -138,13 +136,13 @@ namespace TownOfHost
         public const string BepInExPluginName = "Town Of Host-hamo";
 #endif
 
-        public const string BepInExPluginVersion = "4.00.35.04";
+        public const string BepInExPluginVersion = "4.00.35.05";
 
-        public const string PluginVersion = "4.00.35.04";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
+        public const string PluginVersion = "4.00.35.05";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
 
-        public const string PluginShowVersion = "4.35.04β";
+        public const string PluginShowVersion = "4.35.05β";
 
-        public const string ModVersion = ".35.04";//リリースver用バージョン変更dc9b79
+        public const string ModVersion = ".35.05";//リリースver用バージョン変更dc9b79
 
 
 
@@ -302,6 +300,10 @@ namespace TownOfHost
         public static ConfigEntry<float> StreamCommentPosY { get; private set; }
         /// <summary>前回設定した配信URL(起動し直しても残す)</summary>
         public static ConfigEntry<string> StreamURLConfig { get; private set; }
+        /// <summary>OBS用の試合の状況ページ(http://localhost:52525/)を出す</summary>
+        public static ConfigEntry<bool> ObsOverlay { get; private set; }
+        /// <summary>OBSのページに役職を出すか(0=出さない/1=自分が死んだら/2=いつも)</summary>
+        public static ConfigEntry<int> ObsShowRoles { get; private set; }
 
         //Other Configs
 
@@ -437,17 +439,6 @@ namespace TownOfHost
 
             GameCount = 0;
             Instance = this;
-#if HAMO_ANDROID
-            // Androidでは作業ディレクトリがゲームのフォルダとは限らないため、BepInExの親フォルダに揃える
-            // (設定・ログ・テンプレートなどを "./xxx" で読み書きする処理が正しい場所を指すようにする)
-            try
-            {
-                var androidRoot = System.IO.Directory.GetParent(BepInEx.Paths.BepInExRootPath)?.FullName;
-                if (!string.IsNullOrEmpty(androidRoot) && System.IO.Directory.Exists(androidRoot))
-                    System.IO.Directory.SetCurrentDirectory(androidRoot);
-            }
-            catch (System.Exception e) { UnityEngine.Debug.LogWarning("Android cwd: " + e.Message); }
-#endif
 
 
 
@@ -525,6 +516,8 @@ namespace TownOfHost
             StreamCommentPosX = Config.Bind("StreamMenu", "CommentPosX", 0.35f);
             StreamCommentPosY = Config.Bind("StreamMenu", "CommentPosY", 1.25f);
             StreamURLConfig = Config.Bind("StreamMenu", "StreamURL", "");
+            ObsOverlay = Config.Bind("StreamMenu", "ObsOverlay", false);
+            ObsShowRoles = Config.Bind("StreamMenu", "ObsShowRoles", 1);
 
             DebugKeyInput = Config.Bind("Authentication", "Debug Key", "");
 
@@ -644,9 +637,7 @@ namespace TownOfHost
 
             DisableIncrementalGc = Config.Bind("Client Options", "DisableIncrementalGc", true,
                 "インクリメンタルGCを切って、部屋から退出するときなどのクラッシュ(0xC0000005)を防ぐ(Windowsのみ)");
-#if !HAMO_ANDROID
             TownOfHost.Modules.IncrementalGcInvalidator.ApplyIfConfigured();
-#endif
 
             // 起動を早くする: メインメニューで使う通信(バージョン情報・リリース情報)を、ゲームの読み込みと並行して先に始めておく
             try
@@ -824,38 +815,6 @@ namespace TownOfHost
 
         }
 
-        #if HAMO_ANDROID
-        // Android用ビルド(TownOfHost-hamo_Android.dll)は常にAndroid
-        public static bool IsAndroid() => true;
-#else
-public static bool IsAndroid()//蜿り・・縲ヾNR
-
-        {
-
-            //Android対応の参加者限定で一旦構築しただけなので思ってます。
-
-            //
-
-            try
-
-            {
-
-                return Constants.GetPlatformType() == Platforms.Android;
-
-            }
-
-            catch (Exception e)
-
-            {
-
-                TownOfHost.Logger.Error(e.Message, "IsAndroidError");
-
-                return false;
-
-            }
-
-        }
-#endif
 
         public static bool IsPublicRoomAllowed(bool AllowCS = true)
 

@@ -200,6 +200,8 @@ public class MeetingVoteManager
         {
             Main.LastMeetingVotedFor[vote.Voter] = vote.VotedFor;
         }
+        // MVP(便利機能): 正しい投票を数える
+        Modules.MvpAnnouncer.OnMeetingEnd(AllVotes.Values.Select(v => (v.Voter, v.VotedFor)));
         var logName = result.Exiled == null ? (result.IsTie ? "同数" : "スキップ") : result.Exiled.Object.GetNameWithRole().RemoveHtmlTags();
         logger.Info($"追放者: {logName} で会議を終了します");
         AntiBlackout.voteresult = result;

@@ -2032,6 +2032,7 @@ namespace TownOfHost
                 case From.Love_Couple_Mod: Fromtext += "<#ff6be4>Love Couple Mod</color>"; break;
 
                 case From.TownOfHost_hamo: Fromtext = ""; break;
+                case From.TownOfHost_Temp: Fromtext += "<#b4b4b4>TownOfHost_Temp</color>"; break;
 
                 //case From.TownOfHost_hamo: Fromtext += $"<#fb85ff>TownOfHost_hamo</color>"; break;
 

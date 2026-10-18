@@ -75,6 +75,7 @@ namespace TownOfHost.Patches
                 var gsm = DestroyableSingleton<GameStartManager>.Instance;
                 if (gsm == null || !GameStates.IsLobby) return;
                 if (!IsReadyToStart(PlayerControl.AllPlayerControls.Count)) return;
+                Modules.YouTubeMapVote.ApplyAtGameStart(); // 自動スタートでもマップ投票を反映する
                 gsm.countDownTimer = 0.1f;
                 gsm.startState = GameStartManager.StartingStates.Countdown;
             }, 0.15f, "AutoStart.DelayedStart", true);

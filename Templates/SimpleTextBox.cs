@@ -49,45 +49,6 @@ public class SimpleTextBox
     private int _cursorIndex;
     private readonly int _characterLimit;
     private Action _onEnter;
-#if HAMO_ANDROID
-    private TouchScreenKeyboard _androidKeyboard;
-
-    /// <summary>Android: スマホ標準のキーボードを今の内容で開く</summary>
-    public void OpenAndroidKeyboard()
-    {
-        try
-        {
-            _androidKeyboard = TouchScreenKeyboard.Open(_fullText ?? "", TouchScreenKeyboardType.Default, false, IsMultiline, false, false, "", _characterLimit);
-        }
-        catch (Exception e)
-        {
-            _androidKeyboard = null;
-            Logger.Warn($"SimpleTextBox.OpenAndroidKeyboard: {e.Message}", "SimpleTextBox");
-        }
-    }
-
-    /// <summary>毎フレーム: キーボードの内容を取り込み、決定されたら onEnter を呼ぶ</summary>
-    internal void PollAndroidKeyboard()
-    {
-        var kb = _androidKeyboard;
-        if (kb == null) return;
-        try
-        {
-            SyncFromKeyboard(kb.text);
-            var st = kb.status;
-            if (st == TouchScreenKeyboard.Status.Done)
-            {
-                _androidKeyboard = null;
-                _onEnter?.Invoke();
-            }
-            else if (st == TouchScreenKeyboard.Status.Canceled || st == TouchScreenKeyboard.Status.LostFocus)
-            {
-                _androidKeyboard = null;
-            }
-        }
-        catch { _androidKeyboard = null; }
-    }
-#endif
 
     private readonly TextMeshPro _placeholderText;
     private readonly TextMeshPro _displayText;
@@ -162,13 +123,6 @@ public class SimpleTextBox
         button.OnClick = new();
         button.OnClick.AddListener((Action)(() =>
         {
-#if HAMO_ANDROID
-            // Android: ゲーム側の入力欄(TextBoxTMP)には任せず、スマホ標準のキーボード(決定/戻る付き)を直接開く
-            OpenAndroidKeyboard();
-            onFocusGained?.Invoke();
-            RefreshDisplay(scrollToEnd: true);
-            return;
-#endif
             CrashTrace.Mark($"SimpleTextBox.Click {TextBox?.name}");
             TextBox.GiveFocus();
             CrashTrace.Mark("SimpleTextBox.Click focused");
@@ -514,20 +468,6 @@ public class SimpleTextBox
         RefreshDisplay(scrollToEnd: false);
     }
 
-    /// <summary>
-    /// Android用: スマホのキーボード(TextBoxTMPが開いて TextBox.text に書き込む)の内容を取り込む。
-    /// Androidには物理キーボードの Input.inputString が来ないため、これが無いと何も入力できなかった。
-    /// </summary>
-    internal void SyncFromKeyboard(string value)
-    {
-        value ??= "";
-        if (value.Length > _characterLimit) value = value.Substring(0, _characterLimit);
-        if (value == _fullText) return;
-        _fullText = value;
-        _cursorIndex = _fullText.Length;
-        RefreshDisplay(scrollToEnd: true);
-    }
-
     /// <summary>Shift+Enterでの改行挿入など、末尾への追記であることが分かっている場合に使う。
     /// 通常のSetTextと違い、末尾までスクロールする。</summary>
     internal void AppendText(string suffix)
@@ -625,9 +565,6 @@ internal class TextBoxCaretBlinker : MonoBehaviour
     private void Update()
     {
         if (Owner == null) return;
-#if HAMO_ANDROID
-        Owner.PollAndroidKeyboard();
-#endif
 
         var textBox = GetComponent<TextBoxTMP>();
         if (textBox == null || !textBox.hasFocus)
@@ -641,11 +578,6 @@ internal class TextBoxCaretBlinker : MonoBehaviour
             return;
         }
 
-#if HAMO_ANDROID
-        // Android: 物理キーボードの入力は来ないので、スマホのキーボードが書き込んだ内容を取り込むだけにする
-        Owner.SyncFromKeyboard(textBox.text);
-        return;
-#endif
 
         var shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
         var ctrl = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)

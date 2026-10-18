@@ -147,7 +147,7 @@ namespace TownOfHost.Patches
 
             _inputBox?.SetActive(true);
             _sendButton?.Button.gameObject.SetActive(true);
-            _attachButton?.Button.gameObject.SetActive(!Main.IsAndroid()); // Androidではファイル選択が使えないので出さない
+            _attachButton?.Button.gameObject.SetActive(true);
 
             var all = ticket.Messages;
             var totalCount = all.Count;
@@ -437,7 +437,6 @@ namespace TownOfHost.Patches
 
         private static void OnAttachClicked()
         {
-            if (Main.IsAndroid()) return;
             // 選び直すと入れ替わる。4つ以上選んだ時は最初の3つだけ(ダイアログ側で切り捨て済み)
             Win32FileDialog.ShowOpenImageOrVideoDialogAsync((paths, truncated) =>
             {

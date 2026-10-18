@@ -1,4 +1,3 @@
-#if !HAMO_ANDROID
 using System;
 using System.Runtime.InteropServices;
 
@@ -148,4 +147,3 @@ public static class IncrementalGcInvalidator
         return IntPtr.Zero;
     }
 }
-#endif

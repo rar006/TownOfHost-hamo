@@ -206,6 +206,19 @@ public class ModNewsHistory
                 };
                 AllModNews.Add(news);
             }
+            {
+                var news = new ModNews
+                {
+                    Number = 100014,
+                    Title = "大型アップデート！便利機能たくさん！",
+                    SubTitle = "<color=#fb85ff>Town Of Host-hamo v4.35.05β</color>",
+                    ShortTitle = "<color=#fb85ff>●TOH-hamo v4.35.05β</color>",
+                    Text = "【新役職】\r\n・歩爆魔(インポスター)\r\n・鍵師(クルーメイト)\r\n・検死官(クルーメイト)\r\n\r\n【便利機能】(OTHER2の「便利機能」でON/OFF)\r\n・同じ役職が続かないようにする\r\n・投票の残り時間を知らせる\r\n・入ってきた人に部屋のルールを送る\r\n・放置している人を知らせる\r\n・設定を変えたらチャットで知らせる\r\n・試合が終わったらMVPを知らせる\r\n・役職の勝率(/stats)・自分の戦績(/me)\r\n・初めての人にマーク\r\n・YouTubeのコメントでマップ投票\r\n\r\n【配信向け】\r\n・OBSに試合の状況を出せるように(Streamメニュー)\r\n・YouTubeコメント枠の設定をOTHER2とStreamメニューに移動\r\n\r\n【設定画面】\r\n・全役職の出現率をまとめて変える・おまかせ・人数に合ったおすすめ設定のタイル\r\n\r\n【修正】\r\n・YouTubeのコメントが表示されない不具合\r\n・ヴィランが試合前に死ぬ不具合\r\n・システムメッセージを送っている間、ホストがチャットできない不具合\r\n・その他、多少のバグ修正"
+                    ,
+                    Date = "2026-10-18"
+                };
+                AllModNews.Add(news);
+            }
             AnnouncementPopUp.UpdateState = AnnouncementPopUp.AnnounceState.NotStarted;
         }
     }
@@ -272,10 +285,6 @@ public class ModNewsHistory
     [HarmonyPatch(typeof(PlayerAnnouncementData), nameof(PlayerAnnouncementData.SetAnnouncements)), HarmonyPrefix]
     public static bool SetModAnnouncements(PlayerAnnouncementData __instance, [HarmonyArgument(0)] ref Il2CppReferenceArray<Announcement> aRange)
     {
-#if HAMO_ANDROID
-        // Android では ref の配列を差し替える方法が不安定なので、下の Postfix(SetModAnnouncementsAndroid)で追加する
-        if (true) return true;
-#endif
         if (AllModNews.Count < 1)
         {
             Init();
@@ -299,37 +308,4 @@ public class ModNewsHistory
         return true;
     }
 
-#if HAMO_ANDROID && HAMO_ANDROID_MODNEWS
-    // 実機(Pixel 10 / Android 17)で、この方法で追加した後にニュース画面を開くとネイティブクラッシュしたため無効化中。
-    /// <summary>
-    /// Android用: ゲームがニュースを読み込んだ後に、MODニュースを allAnnouncements へ追加して日付順に並べ直す。
-    /// (配列を ref で差し替えないので、IL2CPPの相互運用で落ちにくい。失敗しても公式ニュースはそのまま)
-    /// </summary>
-    [HarmonyPatch(typeof(PlayerAnnouncementData), nameof(PlayerAnnouncementData.SetAnnouncements)), HarmonyPostfix]
-    public static void SetModAnnouncementsAndroid(PlayerAnnouncementData __instance)
-    {
-        try
-        {
-            if (AllModNews.Count < 1)
-            {
-                Init();
-                AllModNews.Do(n => JsonAndAllModNews.Add(n));
-            }
-            var list = __instance.allAnnouncements;
-            if (list == null) return;
-            var merged = new List<Announcement>();
-            foreach (var a in list)
-                if (a != null && !JsonAndAllModNews.Any(x => x.Number == a.Number)) merged.Add(a);
-            JsonAndAllModNews.Do(n => merged.Add(n.ToAnnouncement()));
-            merged.Sort((a1, a2) => DateTime.Compare(ParseDateSafe(a2.Date), ParseDateSafe(a1.Date)));
-            list.Clear();
-            foreach (var a in merged) list.Add(a);
-            TownOfHost.Logger.Info($"ModNews(Android): {JsonAndAllModNews.Count}件を追加 (合計{list.Count}件)", "ModNews");
-        }
-        catch (Exception e)
-        {
-            TownOfHost.Logger.Error($"ModNews(Android)の追加に失敗: {e}", "ModNews");
-        }
-    }
-#endif
 }

@@ -754,7 +754,6 @@ namespace TownOfHost.Patches
         /// 選んだファイルを次の送信時に一緒にアップロードする対象として保持する。選び直すと入れ替わる。</summary>
         private static void OnAttachButtonClicked()
         {
-            if (Main.IsAndroid()) return; // Win32のファイル選択はAndroidでは使えない
             // 別スレッドで開く(ゲームを止めない)。選んだら、ゲームのスレッドで添付に設定する
             Win32FileDialog.ShowOpenImageOrVideoDialogAsync((paths, truncated) =>
             {
@@ -862,7 +861,7 @@ namespace TownOfHost.Patches
                     _descriptionBoxFrame?.SetActive(true);
                     SetActiveSafe(_submitButton, true);
                     SetActiveSafe(_descriptionBackButton, true);
-                    SetActiveSafe(_attachButton, !Main.IsAndroid()); // Androidではファイル選択が使えないので出さない
+                    SetActiveSafe(_attachButton, true);
                     UpdateAttachButtonLabel();
                     // 説明欄を表示した直後に確実に入力フォーカスを与える。
                     _ = new LateTask(() => SafeFocus.Give(_descriptionBox?.TextBox), 0.05f, "BugReportDescription.Focus", true);

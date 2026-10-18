@@ -313,7 +313,6 @@ namespace TownOfHost
             modtext.gameObject.SetActive(true);
 
             //if (Main.UseWebHook.Value) UtilsWebHook.WH_ShowLastResult();
-            if (Main.IsAndroid()) return;
             if (Main.AutoSaveScreenShot.Value || Main.UseWebHook.Value)
             {
                 var endGameNavigation = GameObject.Find("EndGameNavigation");

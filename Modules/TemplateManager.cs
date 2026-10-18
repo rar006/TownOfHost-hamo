@@ -203,6 +203,10 @@ namespace TownOfHost
 
                 Utils.SendMessage(WelcomeForkText, playerId, WelcomeForkTitle);
 
+                // 便利機能: /set rule で決めた部屋のルールも、入ってきた人に送る
+                if (TownOfHost.Modules.ExtraFeatureOptions.SendRuleOnJoin?.GetBool() == true && !string.IsNullOrWhiteSpace(ChatCommands.RuleText))
+                    Utils.SendMessage(ChatCommands.RuleText, playerId, "<#ff0000>【この部屋のルール】</color>");
+
                 return;
 
             }

@@ -2546,9 +2546,7 @@ namespace TownOfHost
 
 
 
-        #if !HAMO_ANDROID
 [HarmonyPatch(typeof(IntroCutscene), nameof(IntroCutscene.OnDestroy))]
-#endif
 
         public static class IntroCutsceneOnDestroyPatchForChat
 

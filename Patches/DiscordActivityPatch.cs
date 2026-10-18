@@ -20,7 +20,7 @@ public static class DiscordActivityPatch
     [HarmonyPrefix]
     public static void Prefix([HarmonyArgument(0)] Activity activity)
     {
-        if (activity == null || Main.IsAndroid() || Main.EnableDiscordRichPresence?.Value is not true) return;
+        if (activity == null || Main.EnableDiscordRichPresence?.Value is not true) return;
 
         try
         {

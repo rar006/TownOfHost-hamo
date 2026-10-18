@@ -254,7 +254,7 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
 
         roleText = UtilsRoleText.GetRoleName(role);
 
-        if (ColorCompat.TryParseHtmlString(UtilsRoleText.GetRoleColorCode(role), out var color))
+        if (ColorUtility.TryParseHtmlString(UtilsRoleText.GetRoleColorCode(role), out var color))
 
             roleColor = color;
 
@@ -288,7 +288,7 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
 
         roleText = UtilsRoleText.GetRoleName(CustomRoles.Freeter);
 
-        if (ColorCompat.TryParseHtmlString(RoleInfo.RoleColorCode, out var c))
+        if (ColorUtility.TryParseHtmlString(RoleInfo.RoleColorCode, out var c))
 
             roleColor = c;
 

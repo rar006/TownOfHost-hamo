@@ -1136,7 +1136,7 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter
 
         var progress = ColorString(
 
-            ShikigamiIds.Count < 1 ? ColorCompat.TryParseHtmlString(ready, out var c) ? c : Color.white : Color.gray,
+            ShikigamiIds.Count < 1 ? ColorUtility.TryParseHtmlString(ready, out var c) ? c : Color.white : Color.gray,
 
             $"式:{ShikigamiIds.Count}/1");
 

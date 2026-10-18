@@ -19,7 +19,6 @@ namespace TownOfHost
 
         public static bool SendToUrl(string text, string webhookUrl)
         {
-            if (Main.IsAndroid()) return false;
             if (string.IsNullOrWhiteSpace(webhookUrl) || webhookUrl == "none") return false;
             HttpClient httpClient = new();
             Dictionary<string, string> strs = new()
@@ -42,7 +41,6 @@ namespace TownOfHost
 
         public static void Send(string text)
         {
-            if (Main.IsAndroid()) return;
             ClientOptionsManager.CheckOptions();
             if (ClientOptionsManager.WebhookUrl == "none" || !Main.UseWebHook.Value) return;
             _ = SendToUrl(text, ClientOptionsManager.WebhookUrl);
@@ -50,7 +48,6 @@ namespace TownOfHost
         //参考元→https://github.com/Dolly1016/Nebula-Public/
         public static void SendResult(byte[] pngImage)
         {
-            if (Main.IsAndroid()) return;
             ClientOptionsManager.CheckOptions();
             if (ClientOptionsManager.WebhookUrl == "none" || !Main.UseWebHook.Value) return;
 

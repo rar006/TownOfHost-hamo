@@ -397,6 +397,12 @@ namespace TownOfHost
         public static PassiveButton expandAll;
         /// <summary>「全部ひらく/とじる」タイルの位置(一番左のアイコンからの距離)。アイコン1個分 = 0.762</summary>
         public const float ExpandAllTileOffsetX = 5.4f;
+        /// <summary>
+        /// 右側の文字タイル(おすすめ・おまかせ・全役職・まとめて適用・全部とじる)の間隔と最大の大きさ。
+        /// 上のアイコンと同じ間隔(0.762)だと、タイルが5つになった時に左端のタイルがOTHER2のアイコンに重なったので、少し詰める。
+        /// </summary>
+        public const float TileSpacing = 0.6f;
+        public const float TileMaxSize = 0.56f;
 
         public static bool ActiveOnlyMode;
 
@@ -1362,7 +1368,7 @@ namespace TownOfHost
                     var tileSprite = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
                     // 隣の TOH HAMO アイコンが画面上で何マスの大きさに見えているかを測り、同じ大きさの正方形にする。
                     // (状態ごとの絵の拡大率がアイコン用に調整されていて、そのまま使うと横長・大きすぎになっていた)
-                    var tileWorldSize = 0.7f;
+                    var tileWorldSize = TileMaxSize;
                     try
                     {
                         var refSr = templateTabButton.inactiveSprites != null ? templateTabButton.inactiveSprites.GetComponent<SpriteRenderer>() : null;
@@ -1370,7 +1376,7 @@ namespace TownOfHost
                         {
                             var sz = refSr.bounds.size;
                             var m = Mathf.Min(sz.x, sz.y);
-                            if (m > 0.2f && m < 3f) tileWorldSize = m;
+                            if (m > 0.2f && m < 3f) tileWorldSize = Mathf.Min(m, TileMaxSize);
                         }
                     }
                     catch { }
@@ -1425,6 +1431,19 @@ namespace TownOfHost
                     MakeTile("ExpandAllTab", ExpandAllTileOffsetX, new Color(0.10f, 0.42f, 0.48f, 1f),
                         () => RoleGojuon.AnyCollapsed ? "<b>全部\nひらく</b>" : "<b>全部\nとじる</b>",
                         () => RoleGojuon.SetAllCollapsed(!RoleGojuon.AnyCollapsed));
+                    // すべての役職の出現率をまとめて変える: 左のタイルで%を選び(押すたびに0→10→…→100→0)、右のタイルで適用
+                    MakeTile("RecommendedTab", ExpandAllTileOffsetX - TileSpacing * 4f, new Color(0.15f, 0.45f, 0.25f, 1f),
+                        () => $"<b>人数に{(char)10}おすすめ</b>", // 人数は押した時に数える(タイルの文字は作った時しか書き直されないため)
+                        () => RecommendedSettings.Apply());
+                    MakeTile("AllRolesRandomTab", ExpandAllTileOffsetX - TileSpacing * 3f, new Color(0.30f, 0.20f, 0.50f, 1f),
+                        () => "<b>出現率\nおまかせ</b>",
+                        () => AllRolesChance.Randomize());
+                    MakeTile("AllRolesPercentTab", ExpandAllTileOffsetX - TileSpacing * 2f, new Color(0.45f, 0.30f, 0.10f, 1f),
+                        () => $"<b>全役職\n{AllRolesChance.Percent}%</b>",
+                        () => AllRolesChance.Next());
+                    MakeTile("AllRolesApplyTab", ExpandAllTileOffsetX - TileSpacing, new Color(0.55f, 0.15f, 0.15f, 1f),
+                        () => "<b>まとめて\n適用</b>",
+                        () => AllRolesChance.Apply());
                     // 前に作った文字ボタンは使わない(この場所に移した)
                     expandAll?.gameObject.SetActive(false);
                 }
@@ -3540,6 +3559,17 @@ namespace TownOfHost
 
         }
 
+        /// <summary>YouTubeコメント枠の行の名前(ON/OFF・設定済みかどうか)を書き直す</summary>
+        static void RefreshStreamCommentRows()
+        {
+            foreach (var opt in OptionItem.AllOptions)
+            {
+                if (opt.Name is not ("StreamCommentToggle" or "StreamCommentPasteURL")) continue;
+                var so = opt.OptionBehaviour?.TryCast<StringOption>();
+                if (so != null && so.TitleText != null) so.TitleText.text = $"<b>{opt.GetName()}</b>";
+                if (so != null && so.ValueText != null) so.ValueText.text = opt.GetString(); // 右の値の欄(オン/オフ・設定済み)も書き直す
+            }
+        }
         static void SetAction(string actionkey, Transform parent)
 
         {
@@ -3558,6 +3588,10 @@ namespace TownOfHost
 
                 case "ShowFungle": ShowRandomSpawnOption.CreateSpawanOptionMenu(parent, MapNames.Fungle); break;
 
+                // YouTubeのコメント枠(OTHER2)
+                case "StreamCommentToggle": Main.ShowStreamComments.Value = !Main.ShowStreamComments.Value; RefreshStreamCommentRows(); break;
+                case "StreamCommentPasteURL": StreamerInfo.TrySetStreamURL(GUIUtility.systemCopyBuffer); RefreshStreamCommentRows(); break;
+                case "StreamCommentResetPos": StreamCommentFrame.ResetPosition(); break;
                 default:
                     // ケイどろの牢屋の位置 ("KedoroJailSkeld" など)
                     if (actionkey.StartsWith("KedoroJail")) Kedoro.OpenJailMenu(parent, actionkey);

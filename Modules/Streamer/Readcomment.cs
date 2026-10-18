@@ -29,7 +29,6 @@ class StreamerInfo
     public static int RecentCommentsVersion;
     /// <summary>配信URLが設定されていて、コメントを取りに行ける状態か</summary>
     public static bool HasStream => StreamURL != "" && !string.IsNullOrEmpty(streamkey) && streamerInfo != null;
-    private static float commentTimer;
 
     /// <summary>
     /// 配信URLを設定する(メニュー・ゲーム内の設定の両方から使う)。YouTubeのURLでなければ false。
@@ -38,7 +37,7 @@ class StreamerInfo
     public static bool TrySetStreamURL(string url)
     {
         url = (url ?? "").Trim();
-        if (!(url.StartsWith("https://youtube") || url.StartsWith("https://www.youtube.com/") || url.StartsWith("https://youtu.be"))) return false;
+        if (ExtractVideoId(url).Length == 0) return false; // YouTubeの動画のURLでない
         StreamURL = url;
         try { SetstreamKey(); }
         catch (System.Exception e)
@@ -67,12 +66,38 @@ class StreamerInfo
     /// </summary>
     public static void CommentFrameTick(float deltaTime)
     {
-        if (AmongUsClient.Instance?.AmHost is true) return;
+        // ホストも参加者も、コメント枠を出している時はここから取りに行く
+        // (以前ホストは試合中の処理からしか取りに行っておらず、ロビーではコメントが出なかった)
         if (!Main.ShowStreamComments.Value || !HasStream) return;
-        commentTimer += deltaTime;
-        if (commentTimer < 3f) return;
-        commentTimer = 0f;
-        _ = Task.Run(streamerInfo.FetchAsync);
+        TryStartFetch();
+    }
+
+    private static float lastFetchAt = -999f;
+    private static volatile bool fetching;
+    private static System.DateTime lastErrorLogAt = System.DateTime.MinValue;
+
+    /// <summary>前回から3秒以上たっていて、取得中でなければコメントを取りに行く(参加希望の処理と共通)</summary>
+    private static void TryStartFetch()
+    {
+        if (streamerInfo == null || fetching) return;
+        if (Time.time - lastFetchAt < 3f) return;
+        lastFetchAt = Time.time;
+        fetching = true;
+        var info = streamerInfo;
+        _ = Task.Run(async () =>
+        {
+            try { await info.FetchAsync(); }
+            catch (System.Exception e)
+            {
+                // 失敗はTaskの中で消えてしまうので、ログに残す(出しすぎないよう30秒に1回)
+                if (System.DateTime.Now - lastErrorLogAt > System.TimeSpan.FromSeconds(30))
+                {
+                    lastErrorLogAt = System.DateTime.Now;
+                    Logger.Warn($"YouTubeのコメント取得に失敗: {e.Message}", "StreamerInfo");
+                }
+            }
+            finally { fetching = false; }
+        });
     }
 
     private static void AddRecentComment(string name, string text)
@@ -91,40 +116,39 @@ class StreamerInfo
         var oldkey = streamkey;
         if (StreamURL is not "")
         {
-            if (StreamURL.StartsWith("https://youtu.be"))
-            {
-                var nonq = StreamURL.RemoveDeltext("https://youtu.be/");
-                if (nonq.Contains("?"))
-                {
-                    streamkey = nonq.Split("?")[0];
-                }
-                else streamkey = nonq;
-            }
-            else if (StreamURL.StartsWith("https://youtube.com/live/"))
-            {
-
-                var nonq = StreamURL.RemoveDeltext("https://youtube.com/live/").Split("?")[0];
-                if (nonq.Contains("?"))
-                {
-                    streamkey = nonq.Split("?")[0];
-                }
-                else streamkey = nonq;
-            }
-            else
-            {
-                streamkey = StreamURL.Split("=")[1];
-            }
-            if (streamkey.Contains("&t"))
-            {
-                streamkey = streamkey.Split("&")[0];
-            }
-
+            streamkey = ExtractVideoId(StreamURL);
             if (oldkey != streamkey)
             {
                 streamerInfo = new StreamerInfo();
+                lock (RecentComments) { RecentComments.Clear(); RecentCommentsVersion++; }
+                Logger.Info($"配信の動画ID: {streamkey}", "StreamerInfo");
             }
         }
     }
+
+    /// <summary>
+    /// YouTubeのURLから動画IDを取り出す。次の形に対応する:
+    /// youtube.com/watch?v=ID / youtube.com/live/ID / youtube.com/shorts/ID / youtube.com/embed/ID / youtu.be/ID
+    /// (www. や m. 付き、?si= などの付け足しがあってもよい)
+    /// 以前は「https://www.youtube.com/live/ID?si=…」の形を読めず、si の値を動画IDとして使っていたため、コメントが一切取れなかった。
+    /// </summary>
+    public static string ExtractVideoId(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return "";
+        if (!System.Uri.TryCreate(url.Trim(), System.UriKind.Absolute, out var uri)) return "";
+        var host = uri.Host.ToLowerInvariant();
+        var segments = uri.AbsolutePath.Trim('/').Split('/');
+        if (host.EndsWith("youtu.be")) return segments.Length > 0 ? segments[0] : "";
+        if (!host.EndsWith("youtube.com")) return "";
+        if (segments.Length >= 2 && segments[0] is "live" or "shorts" or "embed") return segments[1];
+        foreach (var part in uri.Query.TrimStart('?').Split('&'))
+        {
+            var kv = part.Split('=');
+            if (kv.Length == 2 && kv[0] == "v") return kv[1];
+        }
+        return "";
+    }
+
     public static void JoinGame()//ホスト入室時に参加済みリストを削除
     {
         if (AmongUsClient.Instance?.AmHost is false or null) return;
@@ -137,6 +161,9 @@ class StreamerInfo
     public static bool JoinPlayer(InnerNet.ClientData player)//参加可能かのチェック
     {
         if (AmongUsClient.Instance?.AmHost is false or null) return true;
+        // 参加希望制は設定(OTHER2のYouTubeコメント枠)でONにした時だけ。
+        // (以前は配信URLを入れるだけで有効になり、コメント枠のためにURLを入れると、参加希望を書いていない人が入れなかった)
+        if (TownOfHost.Modules.ExtraFeatureOptions.JoinByCommentOnly?.GetBool() != true) return true;
         if (StreamURL == "" || streamkey == "") return true;
 
         foreach (var info in Hopeplayers.Values)
@@ -178,13 +205,7 @@ class StreamerInfo
         if (AmongUsClient.Instance?.AmHost is false or null) return;
         if (StreamURL == "" || streamkey == "" || streamerInfo == null) return;
 
-        timer += Time.fixedDeltaTime;
-
-        if (timer > 3)//3秒に1度の処理にする
-        {
-            _ = Task.Run(streamerInfo.FetchAsync);
-            timer = 0;
-        }
+        TryStartFetch(); //3秒に1度の処理にする(コメント枠と共通)
     }
 
     public async Task<HopeInfo[]> FetchAsync()
@@ -247,6 +268,7 @@ class StreamerInfo
                 message += chat["text"].ToString();
             }
             AddRecentComment(userName, message); // コメント枠用(参加希望かどうかに関係なく全部)
+            TownOfHost.Modules.YouTubeMapVote.OnComment(userId, message); // マップ投票(便利機能)
 
             var hope = HopeInfo.TryCrateHopeInfo(message, userId, userName);
             if (hope is not null)
@@ -257,9 +279,41 @@ class StreamerInfo
 
         return comments;
     }
+    /// <summary>ライブチャットのページに入っている最近のコメント(ytInitialData)を枠に追加する</summary>
+    private static void AddInitialComments(string html)
+    {
+        try
+        {
+            var start = html.IndexOf("ytInitialData");
+            if (start < 0) return;
+            start = html.IndexOf('{', start);
+            var end = html.IndexOf("</script>", start);
+            if (start < 0 || end < 0) return;
+            var json = html.Substring(start, end - start);
+            json = json.Substring(0, json.LastIndexOf('}') + 1);
+            var actions = JsonNode.Parse(json)?["contents"]?["liveChatRenderer"]?["actions"];
+            if (actions == null) return;
+            foreach (var item in actions.AsArray())
+            {
+                var chat = item?["addChatItemAction"]?["item"]?["liveChatTextMessageRenderer"];
+                if (chat == null) continue;
+                var name = chat["authorName"]?["simpleText"]?.ToString() ?? "";
+                var message = "";
+                var runs = chat["message"]?["runs"];
+                if (runs != null)
+                    foreach (var run in runs.AsArray())
+                        if (run?["text"] != null) message += run["text"].ToString();
+                AddRecentComment(name, message);
+            }
+        }
+        catch (System.Exception e)
+        {
+            Logger.Warn($"最近のコメントを読み取れませんでした: {e.Message}", "StreamerInfo");
+        }
+    }
+
     private async Task<HttpResponseMessage> FetchChat()
     {
-        if (Main.IsAndroid()) return null;
         var param = new Dictionary<string, string>()
         {
             ["key"] = chatData.key
@@ -291,6 +345,9 @@ class StreamerInfo
         Match matchedContinuation = Regex.Match(resultContent, "\"continuation\":\"(.+?)\"");
         Match matchedVisitor = Regex.Match(resultContent, "\"visitorData\":\"(.+?)\"");
         Match matchedClient = Regex.Match(resultContent, "\"clientVersion\":\"(.+?)\"");
+        // 取りに行く前に書かれていた最近のコメントも、ページに入っているので枠に出す
+        // (続きの取得では「新しく書かれたコメント」しか返ってこないため、最初は枠が空のままになっていた)
+        AddInitialComments(resultContent);
 
         chatData = new ChatData(
             matchedKey.Groups[1].Value,

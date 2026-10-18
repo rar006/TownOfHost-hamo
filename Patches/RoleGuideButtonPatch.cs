@@ -2407,7 +2407,7 @@ public static class RoleGuideButtonPatch
 
         textBox.text = roleSearchText ?? "";
 
-        textBox.SetCaret(textBox.text.Length);
+        textBox.caretPos = textBox.text.Length;
 
         textBox.characterLimit = 32;
 
@@ -2467,7 +2467,7 @@ public static class RoleGuideButtonPatch
 
             textBox.GiveFocus();
 
-            textBox.SetCaret((textBox.text ?? "").Length);
+            textBox.caretPos = (textBox.text ?? "").Length;
 
             roleSearchCaretTimer = 0f;
 
@@ -2547,7 +2547,7 @@ public static class RoleGuideButtonPatch
 
         string compositionText = roleSearchBox.compoText ?? "";
 
-        int caretPosition = Mathf.Clamp(roleSearchBox.GetCaret(), 0, committedText.Length);
+        int caretPosition = Mathf.Clamp(roleSearchBox.caretPos, 0, committedText.Length);
 
         string displayedText = committedText.Insert(caretPosition, compositionText);
 

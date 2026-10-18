@@ -23,6 +23,8 @@ public static class StreamCommentFrame
     private static SpriteRenderer background;
     private static AspectPosition aspect;
     private static int shownVersion = -1;
+    private static int shownVoteVersion = -1;
+    private static bool shownVoteOn;
     private static bool dragging;
     private static Vector3 lastMouse;
     private const float DefaultX = 0.35f, DefaultY = 1.25f;
@@ -43,9 +45,13 @@ public static class StreamCommentFrame
             if (text == null) return;
             if (!text.gameObject.activeSelf) { text.gameObject.SetActive(true); shownVersion = -1; }
             HandleDrag();
-            if (shownVersion == StreamerInfo.RecentCommentsVersion) return;
+            var voteOn = Modules.YouTubeMapVote.IsOn;
+            if (shownVersion == StreamerInfo.RecentCommentsVersion && shownVoteVersion == Modules.YouTubeMapVote.Version && shownVoteOn == voteOn) return;
             shownVersion = StreamerInfo.RecentCommentsVersion;
-            text.text = BuildText();
+            shownVoteVersion = Modules.YouTubeMapVote.Version;
+            shownVoteOn = voteOn;
+            // マップ投票(便利機能)がONなら、一番上に集計を出す
+            text.text = voteOn ? Modules.YouTubeMapVote.Summary() + ((char)10).ToString() + BuildText() : BuildText();
         }
         catch (System.Exception e)
         {

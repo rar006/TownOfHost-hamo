@@ -76,9 +76,6 @@ namespace TownOfHost
 
         private static ClientActionItem ShowRoomCode;
         private static ClientActionItem ExpandRoleHeaders;
-        private static ClientActionItem ShowStreamComments;
-        private static ClientActionItem PasteStreamURL;
-        private static ClientActionItem ResetCommentFramePos;
 
         public static OptionsMenuBehaviour Instance;
 
@@ -134,7 +131,6 @@ namespace TownOfHost
 
             {
 
-                if (Main.IsAndroid() is false)
 
                     DumpLog = ClientActionItem.Create("DumpLog", UtilsOutputLog.DumpLog, __instance, page: 0);
 
@@ -144,7 +140,6 @@ namespace TownOfHost
 
             {
 
-                if (Main.IsAndroid() is false)
 
                     OpenLogFolder = ClientActionItem.Create("OpenLogFolder", UtilsOutputLog.OpenLogFolder, __instance, page: 0);
 
@@ -156,7 +151,6 @@ namespace TownOfHost
 
             {
 
-                if (Main.IsAndroid() is false)
 
                     UnloadMod = ClientActionItem.Create("UnloadMod", ModUnloaderScreen.Show, __instance, page: 0);
 
@@ -176,7 +170,6 @@ namespace TownOfHost
 
             {
 
-                if (Main.IsAndroid() is false)
 
                     UseWebHook = ClientOptionItem.Create("UseWebHook", Main.UseWebHook, __instance, page: 0);
 
@@ -186,7 +179,6 @@ namespace TownOfHost
 
             {
 
-                if (Main.IsAndroid() is false)
 
                     ShowPresetInWebhook = ClientOptionItem.Create("ShowPresetInWebhook", Main.ShowPresetInWebhook, __instance, showTooltip: true, page: 0);
 
@@ -198,7 +190,6 @@ namespace TownOfHost
 
             {
 
-                if (Main.IsAndroid() is false)
 
                     Yomiage = ClientOptionItem.Create("UseYomiage", Main.UseYomiage, __instance, page: 0);
 
@@ -234,7 +225,6 @@ namespace TownOfHost
 
             {
 
-                if (Main.IsAndroid() is false)
 
                     AutoSaveScreenShot = ClientOptionItem.Create("AutoSaveScreenShot", Main.AutoSaveScreenShot, __instance, page: 0);
 
@@ -242,7 +232,7 @@ namespace TownOfHost
 
             // 事前にマップアセットを読み込む/部屋の自動立て直し
 
-            if ((PreloadMapAssets == null || PreloadMapAssets.ToggleButton == null) && !Main.IsAndroid())
+            if ((PreloadMapAssets == null || PreloadMapAssets.ToggleButton == null))
 
             {
 
@@ -263,7 +253,7 @@ namespace TownOfHost
 
             // Discordのプレイ中ステータスに"TownOfHost-hamo"と表示するか
 
-            if ((EnableDiscordRichPresence == null || EnableDiscordRichPresence.ToggleButton == null) && !Main.IsAndroid())
+            if ((EnableDiscordRichPresence == null || EnableDiscordRichPresence.ToggleButton == null))
 
             {
 
@@ -305,25 +295,7 @@ namespace TownOfHost
             }
             // ロビーでは表示しない
             if (ExpandRoleHeaders?.ToggleButton != null) ExpandRoleHeaders.ToggleButton.gameObject.SetActive(!GameStates.IsLobby);
-            // 2ページ目: YouTubeのコメント枠(ON/OFF・配信URLの貼り付け・枠の位置を戻す)
-            if (!Main.IsAndroid())
-            {
-                if (ShowStreamComments == null || ShowStreamComments.ToggleButton == null)
-                    ShowStreamComments = ClientOptionItem.Create("ShowStreamComments", Main.ShowStreamComments, __instance, page: 1);
-                if (PasteStreamURL == null || PasteStreamURL.ToggleButton == null)
-                {
-                    PasteStreamURL = ClientActionItem.Create("PasteStreamURL", () =>
-                    {
-                        var ok = StreamerInfo.TrySetStreamURL(GUIUtility.systemCopyBuffer);
-                        if (PasteStreamURL?.ToggleButton?.Text != null)
-                            PasteStreamURL.ToggleButton.Text.text = ok ? "配信URLを設定しました" : "URLが正しくありません";
-                    }, __instance, page: 1);
-                }
-                else if (PasteStreamURL.ToggleButton.Text != null)
-                    PasteStreamURL.ToggleButton.Text.text = Translator.GetString("PasteStreamURL");
-                if (ResetCommentFramePos == null || ResetCommentFramePos.ToggleButton == null)
-                    ResetCommentFramePos = ClientActionItem.Create("ResetCommentFramePos", StreamCommentFrame.ResetPosition, __instance, page: 1);
-            }
+            // YouTubeのコメント枠の設定は、メインメニューの「Stream」と、ゲーム設定のOTHER2に移した
 
 #if DEBUG
 

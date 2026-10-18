@@ -716,7 +716,7 @@ namespace TownOfHost
 
             if (role is CustomRoles.Amnesiac && Amnesiac.IsWolf) hexColor = CustomRoles.WolfBoy.GetRoleInfo()?.RoleColorCode ?? "#727171";
 
-            _ = ColorCompat.TryParseHtmlString(hexColor, out Color c);
+            _ = ColorUtility.TryParseHtmlString(hexColor, out Color c);
 
             return c;
 

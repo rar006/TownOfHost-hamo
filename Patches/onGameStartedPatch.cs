@@ -1291,7 +1291,7 @@ namespace TownOfHost
 
                 }
 
-                var player = candidatePlayers[rand.Next(0, candidatePlayers.Count)];
+                var player = Modules.RoleRepeatAvoid.Pick(candidatePlayers, role, rand); // 同じ役職が続かないように(便利機能)
 
                 AllPlayers.Remove(player);
 
@@ -1445,7 +1445,7 @@ namespace TownOfHost
 
             {
 
-                var player = players[rand.Next(0, players.Count)];
+                var player = Modules.RoleRepeatAvoid.Pick(players, role, rand); // 同じ役職が続かないように(便利機能)
 
                 AssignedPlayers.Add(player);
 

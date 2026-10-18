@@ -66,7 +66,6 @@ class Yomiage
 
     public static async Task Send(int color, string text = "")
     {
-        if (Main.IsAndroid()) return;
         var te = text;
         text = text.RemoveHtmlTags();//Html消す
         if (ChatManager.CommandCheck(text)) return;// /から始まってるならスルー
@@ -102,7 +101,6 @@ class Yomiage
     public static Dictionary<int, string> VoiceList;
     public static async Task<Dictionary<int, string>> GetvoiceListAsync(bool forced = false)
     {
-        if (Main.IsAndroid()) return null;
         if (VoiceList is null || VoiceList.Count is 0 || forced)
         {
             try

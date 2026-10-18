@@ -744,9 +744,7 @@ namespace TownOfHost
 
                 __instance.BeginCrewmate(yourTeam);
 
-                #if !HAMO_ANDROID
                 __instance.overlayHandle.color = Palette.CrewmateBlue; // Android版のIntroCutsceneには overlayHandle が無い
-#endif
 
                 return false;
 
@@ -812,9 +810,7 @@ namespace TownOfHost
 
     }
 
-    #if !HAMO_ANDROID
 [HarmonyPatch(typeof(IntroCutscene), nameof(IntroCutscene.OnDestroy))]
-#endif//android、このPatch適応されないっぽい。
 
     class IntroCutsceneDestroyPatch
 

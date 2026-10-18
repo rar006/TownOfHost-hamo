@@ -205,9 +205,7 @@ public static class PetActionManager
     }
 }
 
-#if !HAMO_ANDROID
 [HarmonyPatch(typeof(IntroCutscene), nameof(IntroCutscene.OnDestroy))]
-#endif
 internal static class AutoPetAssignPatch
 {
     public static void Postfix()

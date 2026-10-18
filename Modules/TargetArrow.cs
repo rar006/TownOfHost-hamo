@@ -220,7 +220,7 @@ namespace TownOfHost
             // 従来は「通常0.1秒 / 超軽量化ON時のみ0.2秒」だったが、矢印の追従間隔としては
             // 0.2秒でも体感の差はほぼ無く、常時この間隔にすることで軽量化モードを
             // 意識させずに常に負荷を抑えられるようにした(超軽量化ON時はさらに0.3秒に)。
-            float updateInterval = Options.OptionUltraLightweightMode?.GetBool() == true ? 0.3f : 0.2f;
+            float updateInterval = 0.2f;
             if (true
 
                 && LastUpdateTime.TryGetValue(seer.PlayerId, out var lastUpdate)
@@ -538,7 +538,7 @@ namespace TownOfHost
             // 従来は「通常0.1秒 / 超軽量化ON時のみ0.2秒」だったが、矢印の追従間隔としては
             // 0.2秒でも体感の差はほぼ無く、常時この間隔にすることで軽量化モードを
             // 意識させずに常に負荷を抑えられるようにした(超軽量化ON時はさらに0.3秒に)。
-            float updateInterval = Options.OptionUltraLightweightMode?.GetBool() == true ? 0.3f : 0.2f;
+            float updateInterval = 0.2f;
             if (true
 
                 && LastUpdateTime.TryGetValue(seer.PlayerId, out var lastUpdate)

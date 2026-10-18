@@ -3,26 +3,9 @@
 	<!-- 任意: 同じフォルダに AmongUsPath.props を置くと、そこで指定した <AmongUs> が使われる(AmongUsPath.props.example 参照) -->
 	<Import Project="AmongUsPath.props" Condition="Exists('AmongUsPath.props')" />
 
-	<!-- ビルド対象: Windows(既定) / Android。 例) dotnet build -c Release -p:HamoPlatform=Android
-	     Android用は HAMO_ANDROID を定義し、Among Usのフォルダではなく AndroidRefs のDLLを参照する -->
-	<PropertyGroup>
-		<HamoPlatform Condition="'$(HamoPlatform)' == ''">Windows</HamoPlatform>
-		<!-- AndroidRefs には、EndKnot等のAndroid用ローダーに含まれる次の2つを展開して置く:
-		       AndroidRefs\core\*.dll    (BepInEx-arm64.zip の core)
-		       AndroidRefs\interop\*.dll (interop-arm64.zip の中身)
-		     (既定: このcsprojの隣の AndroidRefs フォルダ) -->
-		<AndroidRefs Condition="'$(AndroidRefs)' == ''">$(MSBuildProjectDirectory)\AndroidRefs</AndroidRefs>
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(HamoPlatform)' == 'Android'">
-		<DefineConstants>$(DefineConstants);HAMO_ANDROID</DefineConstants>
-		<CopyToAmongUs>false</CopyToAmongUs>
-	</PropertyGroup>
 	<PropertyGroup>
 
-		<!-- Windows版のゲームは .NET 6、Android版のBepInEx/interopは .NET 10 向けにビルドされている。
-		     Android用を net6.0 でビルドすると CS1705(System.Runtime 10.0.0.0 が新しい)になるため、Androidだけ net10.0 にする -->
-		<TargetFramework Condition="'$(HamoPlatform)' != 'Android'">net6.0</TargetFramework>
-		<TargetFramework Condition="'$(HamoPlatform)' == 'Android'">net10.0</TargetFramework>
+		<TargetFramework>net6.0</TargetFramework>
 
 		<GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
 
@@ -44,7 +27,7 @@
 
 		<Authors>tukasa0001(EmptyBottle), integral0131</Authors>
 		<langVersion>preview</langVersion>
-		<!-- ItchLogin(Android)/IncrementalGcInvalidator(Windows) がネイティブのメモリ・関数を直接扱うため -->
+		<!-- IncrementalGcInvalidator がネイティブのメモリ・関数を直接扱うため -->
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
 		<AssemblyName>TownOfHost-hamo</AssemblyName>
@@ -83,10 +66,8 @@
 	<ItemGroup>
 		<PackageReference Include="Roslynator.Analyzers" Version="4.*" PrivateAssets="all" />
 
-		<Reference Include="$(AmongUs)\BepInEx\core\*.dll" Condition="'$(HamoPlatform)' != 'Android'" />
-		<Reference Include="$(AmongUs)\BepInEx\interop\*.dll" Condition="'$(HamoPlatform)' != 'Android'" />
-		<Reference Include="$(AndroidRefs)\core\*.dll" Condition="'$(HamoPlatform)' == 'Android'" />
-		<Reference Include="$(AndroidRefs)\interop\*.dll" Condition="'$(HamoPlatform)' == 'Android'" />
+		<Reference Include="$(AmongUs)\BepInEx\core\*.dll" />
+		<Reference Include="$(AmongUs)\BepInEx\interop\*.dll" />
 
 		<EmbeddedResource Include=".\Resources\**" />
 
@@ -173,14 +154,9 @@
 	</Target>
 
 	<!-- Among UsのBepInEx interopが見つからないとき、数千件の型エラーではなく原因を1件だけ表示して止める -->
-	<Target Name="CheckAmongUsPath" BeforeTargets="ResolveAssemblyReferences;CoreCompile" Condition="'$(HamoPlatform)' != 'Android'">
+	<Target Name="CheckAmongUsPath" BeforeTargets="ResolveAssemblyReferences;CoreCompile">
 		<Error Condition="!Exists('$(AmongUs)\BepInEx\interop\Assembly-CSharp.dll')"
 		       Text="Among Usの場所が正しくありません: '$(AmongUs)'。BepInEx\interop\Assembly-CSharp.dll が見つかりません。 対処: (1) AmongUsPath.props.example を AmongUsPath.props にコピーして自分のAmong Usフォルダに書き換える / または dotnet build -p:AmongUs=&quot;自分のパス&quot; を使う。 (2) そのフォルダにBepInEx(IL2CPP版)を入れて、Among Usを一度起動し BepInEx\interop を生成する。" />
 	</Target>
 
-	<!-- Android用: 参照DLLが無いとき、数千件の型エラーではなく原因を1件だけ表示して止める -->
-	<Target Name="CheckAndroidRefs" BeforeTargets="ResolveAssemblyReferences;CoreCompile" Condition="'$(HamoPlatform)' == 'Android'">
-		<Error Condition="!Exists('$(AndroidRefs)\interop\Assembly-CSharp.dll')"
-		       Text="Android用の参照DLLが見つかりません: '$(AndroidRefs)\interop\Assembly-CSharp.dll'。 対処: EndKnot等のAndroid用ローダーのAPKを開き、assets\interop-arm64.zip を AndroidRefs\interop に、assets\BepInEx-arm64.zip の core フォルダを AndroidRefs\core に展開してください(-p:AndroidRefs=&quot;パス&quot; で場所を変更できます)。" />
-	</Target>
 </Project>

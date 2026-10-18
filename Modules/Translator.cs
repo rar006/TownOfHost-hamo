@@ -80,7 +80,6 @@ namespace TownOfHost
                 }
             }
 
-            if (Main.IsAndroid()) return;
             // カスタム翻訳ファイルの読み込み
             if (!Directory.Exists(LANGUAGE_FOLDER_NAME)) Directory.CreateDirectory(LANGUAGE_FOLDER_NAME);
 
@@ -385,7 +384,6 @@ namespace TownOfHost
         }
         public static void LoadCustomTranslation(string filename, SupportedLangs lang)
         {
-            if (Main.IsAndroid()) return;
             string path = @$"./{LANGUAGE_FOLDER_NAME}/{filename}";
             if (File.Exists(path))
             {

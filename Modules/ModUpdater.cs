@@ -47,7 +47,6 @@ namespace TownOfHost
         /// <summary>起動を早くするため、MOD読み込み直後にリリース情報の取得を始めておく</summary>
         public static void StartPrefetch()
         {
-            if (Main.IsAndroid()) return;
             TownOfHost.Modules.StartupPrefetch.Start(ReleaseUrl(Main.BetaBuildURL.Value != "", false));
         }
         private static string ReleaseUrl(bool beta, bool all)
@@ -241,7 +240,6 @@ namespace TownOfHost
 
             if (!forced && all && releases.Any()) return true;
 
-            if (Main.IsAndroid()) return true;
 
 
 

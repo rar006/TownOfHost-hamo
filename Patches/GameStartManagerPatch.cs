@@ -85,8 +85,8 @@ namespace TownOfHost
                 HideName.gameObject.SetActive(true);
                 HideName.name = "HideName";
                 HideName.color =
-                    ColorCompat.TryParseHtmlString(Main.HideColor.Value, out var color) ? color :
-                    ColorCompat.TryParseHtmlString(Main.ModColor, out var modColor) ? modColor : HideName.color;
+                    ColorUtility.TryParseHtmlString(Main.HideColor.Value, out var color) ? color :
+                    ColorUtility.TryParseHtmlString(Main.ModColor, out var modColor) ? modColor : HideName.color;
                 HideName.text = Main.HideName.Value;
 
                 warningText = Object.Instantiate(__instance.GameStartText, __instance.transform);
@@ -330,6 +330,7 @@ namespace TownOfHost
                         SelectRandomPreset();
 
                         SelectRandomMap();
+                        Modules.YouTubeMapVote.ApplyAtGameStart(); // YouTubeのマップ投票(便利機能)
                     }
                 }
                 else

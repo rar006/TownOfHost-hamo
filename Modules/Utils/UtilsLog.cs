@@ -68,7 +68,6 @@ namespace TownOfHost
 
         {
 
-            if (Main.IsAndroid()) return;
 
             // 詳細設定の全件ダンプは通常試合のログを数千行単位で増やすため、
 
@@ -112,7 +111,6 @@ namespace TownOfHost
 
         {
 
-            if (Main.IsAndroid()) return Array.Empty<byte>();
 
 
 
@@ -132,7 +130,6 @@ namespace TownOfHost
 
         {
 
-            if (Main.IsAndroid()) return;
 
             var logs = GetLogFolder(true);
 
@@ -148,7 +145,6 @@ namespace TownOfHost
 
         {
 
-            if (Main.IsAndroid()) return "";
 
             string t = DateTime.Now.ToString("yyyy-MM-dd_HH.mm.ss");
 
@@ -170,7 +166,6 @@ namespace TownOfHost
 
         {
 
-            if (Main.IsAndroid()) return;
 
             var logs = GetLogFolder(true);
 

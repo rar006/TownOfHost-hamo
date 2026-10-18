@@ -1077,6 +1077,7 @@ namespace TownOfHost
         public static OptionItem OptionCommandNow;
 
         public static OptionItem OptionCommandNowRole;
+        public static OptionItem OptionCommandNowRoleAllowCategory;
 
         public static OptionItem OptionCommandNowSet;
 
@@ -1123,7 +1124,6 @@ namespace TownOfHost
 
         public static OptionItem OptionNameCharLimit;
 
-        public static OptionItem OptionUltraLightweightMode;
         public static OptionItem OptionTitleEnabled;
 
         public static OptionItem OptionAutoFunction;
@@ -2906,6 +2906,11 @@ namespace TownOfHost
                 .SetColorcode("#00c1ff")
 
                 .SetOptionName(() => "/now role - 役職一覧を表示 ");
+            // 「/now role」を禁止にした時、陣営を指定した表示(/n r I など)は使えるようにするか
+            OptionCommandNowRoleAllowCategory = BooleanOptionItem.Create(1_601_101, "AllowCommandNowRoleCategory", true, TabGroup.Other2, true)
+                .SetParent(OptionCommandNowRole)
+                .SetColorcode("#00c1ff")
+                .SetOptionName(() => "陣営を指定すれば使える(/n r I など)");
 
 
 
@@ -3160,17 +3165,76 @@ namespace TownOfHost
                 .SetOptionName(() => "二つ名を使う")
                 .SetTooltip(() => "OFFにすると、この部屋では二つ名の表示と二つ名のコマンド(nil/nii/nih/nio/nit/code)が使えなくなります。");
 
-            OptionUltraLightweightMode = BooleanOptionItem.Create(1_400_140, "UltraLightweightMode", false, TabGroup.Other2, true)
+            // YouTubeのコメント枠(自分の画面だけの設定。押すとその場で切り替わる)
+            var youtubeHeader = ObjectOptionitem.Create(1_400_160, "StreamCommentHeader", true, null, TabGroup.Other2)
+                .SetColorcode("#ff4040")
+                .SetOptionName(() => "YouTubeコメント枠");
+            ObjectOptionitem.Create(1_400_161, "StreamCommentToggle", false, "StreamCommentToggle", TabGroup.Other2)
+                .SetParent(youtubeHeader).SetColorcode("#ff8080")
+                .SetOptionName(() => "コメント枠を表示する");
+            ((ObjectOptionitem)OptionItem.AllOptions.Last()).SetValueOverride(() => Translator.GetString(Main.ShowStreamComments.Value ? BooleanOptionItem.TEXT_true : BooleanOptionItem.TEXT_false));
+            ObjectOptionitem.Create(1_400_162, "StreamCommentPasteURL", false, "StreamCommentPasteURL", TabGroup.Other2)
+                .SetParent(youtubeHeader).SetColorcode("#ff8080")
+                .SetOptionName(() => "配信URLを貼り付け")
+                .SetTooltip(() => "YouTubeの配信のURLをコピーしてから押してください。");
+            ((ObjectOptionitem)OptionItem.AllOptions.Last()).SetValueOverride(() => StreamerInfo.HasStream ? "設定済み" : "未設定");
+            ObjectOptionitem.Create(1_400_163, "StreamCommentResetPos", false, "StreamCommentResetPos", TabGroup.Other2)
+                .SetParent(youtubeHeader).SetColorcode("#ff8080")
+                .SetOptionName(() => "コメント枠の位置を戻す");
+            ((ObjectOptionitem)OptionItem.AllOptions.Last()).SetValueOverride(() => "押すと戻る");
+            Modules.ExtraFeatureOptions.JoinByCommentOnly = BooleanOptionItem.Create(1_400_164, "JoinByCommentOnly", false, TabGroup.Other2, true)
+                .SetParent(youtubeHeader).SetColorcode("#ff8080")
+                .SetOptionName(() => "コメントで参加希望した人だけ入れる")
+                .SetTooltip(() => "ONにすると、配信のコメントで参加希望を書いた人(メインメニューのStreamで決めた言葉)だけが部屋に入れます。");
 
-                .SetHeader(true)
-
-                .SetColorcode("#00c1ff")
-
-                .SetOptionName(() => "超軽量化モード")
-
-                .SetTooltip(() => "役職名・マーク・外見などの表示更新をさらに間引き、負荷を下げます。");
-
-
+            // ===== 便利機能(ホスト用・どれも最初はOFF) =====
+            var extraHeader = ObjectOptionitem.Create(1_400_170, "ExtraFeatures", true, null, TabGroup.Other2)
+                .SetColorcode("#7fd8ff")
+                .SetOptionName(() => "便利機能");
+            Modules.YouTubeMapVote.Enabled = BooleanOptionItem.Create(1_400_171, "YouTubeMapVote", false, TabGroup.Other2, true)
+                .SetParent(extraHeader).SetColorcode("#ff8080")
+                .SetOptionName(() => "YouTubeのコメントでマップ投票")
+                .SetTooltip(() => "配信のコメントで「!skeld」「!mira」「!polus」「!airship」「!fungle」と書くと投票できます(1人1票・書き直すと変わる)。\n試合開始時に一番多いマップになります。投票はコメント枠の上に表示されます。");
+            Modules.AfkDetector.Enabled = BooleanOptionItem.Create(1_400_172, "AfkDetect", false, TabGroup.Other2, true)
+                .SetParent(extraHeader).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "放置している人を知らせる");
+            Modules.AfkDetector.Seconds = IntegerOptionItem.Create(1_400_173, "AfkDetectSeconds", new(30, 600, 30), 120, TabGroup.Other2, true)
+                .SetParent(Modules.AfkDetector.Enabled).SetColorcode("#7fd8ff")
+                .SetValueFormat(OptionFormat.Seconds)
+                .SetOptionName(() => "動いていない時間");
+            Modules.AfkDetector.KickInLobby = BooleanOptionItem.Create(1_400_174, "AfkKickInLobby", false, TabGroup.Other2, true)
+                .SetParent(Modules.AfkDetector.Enabled).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "ロビーではキックする");
+            Modules.SettingChangeNotice.Enabled = BooleanOptionItem.Create(1_400_175, "SettingChangeNotice", false, TabGroup.Other2, true)
+                .SetParent(extraHeader).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "設定を変えたらロビーのチャットで知らせる");
+            Modules.MeetingSendTrace.Enabled = BooleanOptionItem.Create(1_400_176, "MeetingSendTrace", false, TabGroup.Other2, true)
+                .SetParent(extraHeader).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "会議中の送信を記録する(暗転の調査用)")
+                .SetTooltip(() => "会議中にホストが送ったデータの種類と宛先を BepInEx/TOHhamo_Logs/MeetingSend.log に記録します。");
+            Modules.RoleWinStats.Enabled = BooleanOptionItem.Create(1_400_177, "RoleWinStats", false, TabGroup.Other2, true)
+                .SetParent(extraHeader).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "役職の勝率を記録する(/stats で表示)");
+            Modules.RoleRepeatAvoid.Enabled = BooleanOptionItem.Create(1_400_178, "RoleRepeatAvoid", false, TabGroup.Other2, true)
+                .SetParent(extraHeader).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "同じ役職が続かないようにする")
+                .SetTooltip(() => "直前の2試合で引いた役職は、ほかに引ける人がいればその人に回します。");
+            Modules.MeetingTimeAnnounce.Enabled = BooleanOptionItem.Create(1_400_179, "MeetingTimeAnnounce", false, TabGroup.Other2, true)
+                .SetParent(extraHeader).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "投票の残り時間を知らせる(30秒・10秒)");
+            Modules.ExtraFeatureOptions.SendRuleOnJoin = BooleanOptionItem.Create(1_400_180, "SendRuleOnJoin", false, TabGroup.Other2, true)
+                .SetParent(extraHeader).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "入ってきた人に部屋のルールを送る(/set rule)");
+            Modules.PlayerStatsSync.RecordEnabled = BooleanOptionItem.Create(1_400_181, "PlayerStatsRecord", false, TabGroup.Other2, true)
+                .SetParent(extraHeader).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "自分の戦績をサーバーに記録する(/me で表示)");
+            Modules.PlayerStatsSync.FirstTimerEnabled = BooleanOptionItem.Create(1_400_182, "FirstTimerMark", false, TabGroup.Other2, true)
+                .SetParent(extraHeader).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "初めての人にマークを付ける")
+                .SetTooltip(() => "サーバーに戦績の記録が無い人が入ってきたら、全員に知らせて名前の上に[初]を付けます(1試合遊ぶと外れます)。");
+            Modules.MvpAnnouncer.Enabled = BooleanOptionItem.Create(1_400_183, "MvpAnnounce", false, TabGroup.Other2, true)
+                .SetParent(extraHeader).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "試合が終わったらMVPを知らせる");
 
             OptionAutoFunction = BooleanOptionItem.Create(1_400_150, "AutoFunction", false, TabGroup.Other2, true)
 

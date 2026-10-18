@@ -351,7 +351,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
     {
         seen ??= seer;
         if (!Player.IsAlive() || isForMeeting) return false;
-        string myColor = "#" + ColorCompat.ToHtmlStringRGB(Palette.PlayerColors[Player.Data.DefaultOutfit.ColorId]);
+        string myColor = "#" + ColorUtility.ToHtmlStringRGB(Palette.PlayerColors[Player.Data.DefaultOutfit.ColorId]);
 
         if (IsCharging && seen.PlayerId == Player.PlayerId)
         {

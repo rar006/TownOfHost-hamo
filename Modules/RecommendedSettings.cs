@@ -1,0 +1,36 @@
+using AmongUs.GameOptions;
+
+namespace TownOfHost.Modules;
+
+/// <summary>
+/// 今の人数に合った「おすすめ設定」(設定画面の上の列のタイル・ホストのみ)。
+/// Among Us側のインポスター数とキルクールを、人数に合わせて変える。変えた内容はホストのチャットに出す。
+///   〜6人: インポスター1人・キルクール25秒
+///   7〜9人: インポスター2人・キルクール25秒
+///   10〜12人: インポスター2人・キルクール22.5秒
+///   13人〜: インポスター3人・キルクール20秒
+/// </summary>
+public static class RecommendedSettings
+{
+    public static int PlayerCount => PlayerControl.AllPlayerControls?.Count ?? 0;
+
+    public static (int impostors, float killCooldown) For(int players) => players switch
+    {
+        <= 6 => (1, 25f),
+        <= 9 => (2, 25f),
+        <= 12 => (2, 22.5f),
+        _ => (3, 20f),
+    };
+
+    public static void Apply()
+    {
+        if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost || !GameStates.IsLobby) return;
+        var players = PlayerCount;
+        var (imp, kcd) = For(players);
+        Main.NormalOptions.SetInt(Int32OptionNames.NumImpostors, imp);
+        Main.NormalOptions.SetFloat(FloatOptionNames.KillCooldown, kcd);
+        GameManager.Instance?.LogicOptions?.SyncOptions();
+        Utils.SendMessage($"{players}人向けのおすすめ設定にしました。\nインポスター: {imp}人 / キルクール: {kcd}秒", PlayerControl.LocalPlayer.PlayerId, "<#7fd8ff>【おすすめ設定】</color>");
+        Logger.Info($"おすすめ設定: {players}人 → インポスター{imp}人・キルクール{kcd}秒", "RecommendedSettings");
+    }
+}

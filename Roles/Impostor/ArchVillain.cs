@@ -54,6 +54,8 @@ public sealed class ArchVillain : RoleBase, IImpostor
     int cantKillDay;
     /// <summary>このターン中に死亡を無効化した → 次のターンはキル不可</summary>
     bool nullifiedThisTurn;
+    /// <summary>試合中に仲間のインポスターがいたか(いなかった時は後追いしない)</summary>
+    bool hadPartner;
 
     public float CalculateKillCooldown() => OptionKillCooldown.GetFloat();
     public bool CanUseKillButton() => Player.IsAlive() && cantKillDay != UtilsGameLog.day;
@@ -108,7 +110,15 @@ public sealed class ArchVillain : RoleBase, IImpostor
     public void CheckFollow()
     {
         if (!Player.IsAlive()) return;
-        if (PlayerCatch.AllAlivePlayerControls.Any(p => p.PlayerId != Player.PlayerId && p.GetCustomRole().IsImpostor())) return;
+        // 役職を配った直後(他の人の役職がまだ決まる前)や、試合が始まる前・会議中は判定しない。
+        // (以前はここで「仲間がいない」と判定され、試合が始まる前に死んでいた)
+        if (!GameStates.IsInTask || GameStates.Intro || GameStates.CalledMeeting) return;
+        if (PlayerCatch.AllAlivePlayerControls.Any(p => p.PlayerId != Player.PlayerId && p.GetCustomRole().IsImpostor()))
+        {
+            hadPartner = true; // 仲間がいたことを覚えておく(仲間が全滅した時だけ後追いする)
+            return;
+        }
+        if (!hadPartner) return;
         var state = PlayerState.GetByPlayerId(Player.PlayerId);
         if (state != null) state.DeathReason = CustomDeathReason.FollowingSuicide;
         Player.RpcMurderPlayerV2(Player);
