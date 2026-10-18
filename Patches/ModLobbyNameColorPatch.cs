@@ -1,36 +1,38 @@
 using System;
-using System.Collections.Generic;
 using HarmonyLib;
-using UnityEngine;
 
 namespace TownOfHost.Patches;
 
-/// <summary>ロビー内に限り、このMODを導入しているプレイヤーの名前を識別色で表示する。</summary>
+/// <summary>ホスト・参加者の両モードで、ロビー中のMOD導入者名を指定色にする。</summary>
 [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.FixedUpdate))]
+[HarmonyPriority(Priority.Last)]
 public static class ModLobbyNameColorPatch
 {
-    private static readonly Color ModPlayerNameColor = new(1f, 0.7176471f, 0.8352941f, 1f);
-    private static readonly HashSet<byte> ColoredPlayers = new();
+    private const string ColorOpen = "<#FFB7D5>";
+    private const string ColorClose = "</color>";
 
+    [HarmonyPostfix]
     public static void Postfix(PlayerControl __instance)
     {
-        if (__instance == null || __instance.cosmetics == null || __instance.cosmetics.nameText == null)
+        if (__instance == null || __instance.Data == null || __instance.cosmetics == null || __instance.cosmetics.nameText == null)
             return;
 
         try
         {
-            if (__instance.Data == null)
-                return;
+            var text = __instance.cosmetics.nameText.text ?? string.Empty;
+            bool isModdedPlayer = Main.playerVersion.ContainsKey(__instance.PlayerId);
 
-            if (GameStates.IsLobby && Main.playerVersion.ContainsKey(__instance.PlayerId))
+            if (GameStates.IsLobby && isModdedPlayer)
             {
-                __instance.cosmetics.nameText.color = ModPlayerNameColor;
-                ColoredPlayers.Add(__instance.PlayerId);
+                // 参加者専用モードではFixedUpdatePatchが早期returnするため、独立した最終Postfixで表示文字列を着色する。
+                if (!text.StartsWith(ColorOpen, StringComparison.OrdinalIgnoreCase))
+                    __instance.cosmetics.nameText.text = $"{ColorOpen}{text}{ColorClose}";
             }
-            else if (ColoredPlayers.Remove(__instance.PlayerId))
+            else if (text.StartsWith(ColorOpen, StringComparison.OrdinalIgnoreCase)
+                && text.EndsWith(ColorClose, StringComparison.OrdinalIgnoreCase))
             {
-                // ロビーを出た後に色が残らないよう、元の標準色へ戻す。
-                __instance.cosmetics.nameText.color = Color.white;
+                // ロビー外、またはMOD判定が外れたときは、このパッチ自身が付けた外側タグだけを取り除く。
+                __instance.cosmetics.nameText.text = text.Substring(ColorOpen.Length, text.Length - ColorOpen.Length - ColorClose.Length);
             }
         }
         catch (Exception ex)
