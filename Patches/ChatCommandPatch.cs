@@ -4822,6 +4822,8 @@ namespace TownOfHost
             // MOD未導入の人の二つ名コマンドは、ホストが代わりに処理する(/cmd nil でも /nil でも使える)
             if (TitleSystem.TryHandleRemoteCommand(player, text)) { canceled = true; return; }
             // 役職の勝率(便利機能): /stats
+            // プリセット投票(便利機能): /vote・投票の数字
+            if (TownOfHost.Modules.LobbyVote.TryHandle(text, player, out var hideVote)) { if (hideVote) { canceled = true; } return; }
             if (TownOfHost.Modules.RoleWinStats.TryHandle(text, player.PlayerId)) { canceled = true; return; }
             // 自分の戦績(便利機能): /me
             if (TownOfHost.Modules.PlayerStatsSync.TryHandle(text, player)) { canceled = true; return; }

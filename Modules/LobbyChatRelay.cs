@@ -22,7 +22,12 @@ public static class LobbyChatRelay
         public string Target { get; set; } = "";
         public string Tag { get; set; } = "hamo";
         public long At { get; set; } = 0;
+        /// <summary>Discordの /say で force を付けた時: 受け取りをOFFにしていても表示する</summary>
+        public bool Force { get; set; }
     }
+    /// <summary>Discordからの /say・/chat を受け取るか(便利機能。OFFでも force 付きのものは表示する)</summary>
+    public static OptionItem ReceiveEnabled;
+    private static bool Receive => ReceiveEnabled?.GetBool() ?? true;
 
     // サーバーに繋がらない間は、間隔を空けて(最大5分)問い合わせる。繋がったら元の間隔に戻す(軽量化)
     private static int _failCount;
@@ -86,6 +91,8 @@ public static class LobbyChatRelay
                 _lastShownId = announcement.Id;
                 _lastShownAt = Math.Max(_lastShownAt, announcement.At);
                 if (string.IsNullOrWhiteSpace(announcement.Text)) continue;
+                // 受け取りOFFの部屋には出さない(強制のものだけ出す)
+                if (!Receive && !announcement.Force) continue;
 
                 // 要望により、送信者名ではなく "[タグ] 内容" という表示形式にしている。
                 // タグはDiscord側の /say・/chat コマンドで毎回変更できる(省略時は "hamo")。

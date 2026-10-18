@@ -37,7 +37,7 @@ class StreamerInfo
     public static bool TrySetStreamURL(string url)
     {
         url = (url ?? "").Trim();
-        if (ExtractVideoId(url).Length == 0) return false; // YouTubeの動画のURLでない
+        if (ExtractVideoId(url).Length == 0 && !TryGetChannelUrl(url, out _)) return false; // YouTubeの動画・チャンネルのURLでない
         StreamURL = url;
         try { SetstreamKey(); }
         catch (System.Exception e)
@@ -117,8 +117,12 @@ class StreamerInfo
         if (StreamURL is not "")
         {
             streamkey = ExtractVideoId(StreamURL);
+            // チャンネルのURLなら、配信中の動画をあとで探す(配信のたびにURLを貼り直さなくてよい)
+            if (streamkey.Length == 0 && TryGetChannelUrl(StreamURL, out var channelUrl)) streamkey = ChannelPrefix + channelUrl;
             if (oldkey != streamkey)
             {
+                StatusText = "";
+                retryAt = System.DateTime.MinValue;
                 streamerInfo = new StreamerInfo();
                 lock (RecentComments) { RecentComments.Clear(); RecentCommentsVersion++; }
                 Logger.Info($"配信の動画ID: {streamkey}", "StreamerInfo");
@@ -132,6 +136,21 @@ class StreamerInfo
     /// (www. や m. 付き、?si= などの付け足しがあってもよい)
     /// 以前は「https://www.youtube.com/live/ID?si=…」の形を読めず、si の値を動画IDとして使っていたため、コメントが一切取れなかった。
     /// </summary>
+    /// <summary>streamkey がチャンネルを表す時の印(この後ろにチャンネルのURL)</summary>
+    private const string ChannelPrefix = "channel:";
+
+    /// <summary>YouTubeのチャンネルのURL(@名前・/channel/ID・/c/名前・/user/名前)なら、その形に整えて返す</summary>
+    public static bool TryGetChannelUrl(string url, out string channelUrl)
+    {
+        channelUrl = "";
+        if (string.IsNullOrWhiteSpace(url) || !System.Uri.TryCreate(url.Trim(), System.UriKind.Absolute, out var uri)) return false;
+        if (!uri.Host.ToLowerInvariant().EndsWith("youtube.com")) return false;
+        var seg = uri.AbsolutePath.Trim('/').Split('/');
+        if (seg.Length >= 1 && seg[0].StartsWith("@") && seg[0].Length > 1) channelUrl = $"https://www.youtube.com/{seg[0]}";
+        else if (seg.Length >= 2 && seg[0] is "channel" or "c" or "user") channelUrl = $"https://www.youtube.com/{seg[0]}/{seg[1]}";
+        return channelUrl.Length > 0;
+    }
+
     public static string ExtractVideoId(string url)
     {
         if (string.IsNullOrWhiteSpace(url)) return "";
@@ -210,7 +229,12 @@ class StreamerInfo
 
     public async Task<HopeInfo[]> FetchAsync()
     {
-        if (chatData == null) await FirstFetch();
+        if (chatData == null)
+        {
+            if (System.DateTime.Now < retryAt) return null; // 見つからなかった直後は、少し待ってから探し直す
+            await FirstFetch();
+            if (chatData == null) return null;
+        }
 
         HttpResponseMessage chat = await FetchChat();
         if (chat == null) return null;
@@ -323,19 +347,48 @@ class StreamerInfo
             "https://www.youtube.com/youtubei/v1/live_chat/get_live_chat?" + "key=" + param["key"],
             new StringContent(chatData.Build()));
 
-        // OKじゃない場合はnullを返す
-        if (response.StatusCode != System.Net.HttpStatusCode.OK) return null;
+        // OKじゃない場合はnullを返す(配信が終わった時など。次は最初から探し直す)
+        if (response.StatusCode != System.Net.HttpStatusCode.OK)
+        {
+            StatusText = "コメントを取得できませんでした(配信が終わったかもしれません)";
+            chatData = null;
+            retryAt = System.DateTime.Now.AddSeconds(30);
+            return null;
+        }
         return response;
     }
+    /// <summary>コメント枠に出す状態(取れない時の理由など)。空なら問題なし</summary>
+    public static string StatusText = "";
+    /// <summary>チャットが見つからなかった時、次に探し直す時刻(何度も取りに行かないように)</summary>
+    private static System.DateTime retryAt = System.DateTime.MinValue;
+    private const string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
+
+    /// <summary>
+    /// チャンネルのURL(@名前・/channel/…・/c/…)なら、今そのチャンネルで配信中の動画IDを探す。
+    /// 「チャンネルURL/live」を開くと、配信中ならその動画のページになるので、ページの canonical から動画IDを取る。
+    /// </summary>
+    private async Task<string> ResolveVideoIdAsync()
+    {
+        if (!streamkey.StartsWith(ChannelPrefix)) return streamkey;
+        var channelUrl = streamkey.Substring(ChannelPrefix.Length).TrimEnd('/');
+        var html = await client.GetStringAsync(channelUrl + "/live");
+        var m = Regex.Match(html, "<link rel=\"canonical\" href=\"https://www\\.youtube\\.com/watch\\?v=([\\w-]{11})\"");
+        return m.Success ? m.Groups[1].Value : "";
+    }
+
     private async Task FirstFetch()
     {
-        client.DefaultRequestHeaders.Add(
-    "User-Agent",
-    "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36");
+        var videoId = await ResolveVideoIdAsync();
+        if (videoId.Length == 0)
+        {
+            StatusText = "このチャンネルは今配信していないようです(配信が始まると自動でコメントを読みます)";
+            retryAt = System.DateTime.Now.AddSeconds(30);
+            return;
+        }
 
         var param = new Dictionary<string, string>()
         {
-            ["v"] = streamkey
+            ["v"] = videoId
         };
         var content = await new FormUrlEncodedContent(param).ReadAsStringAsync();
         var result = await client.GetAsync("https://www.youtube.com/live_chat?" + content);
@@ -349,6 +402,17 @@ class StreamerInfo
         // (続きの取得では「新しく書かれたコメント」しか返ってこないため、最初は枠が空のままになっていた)
         AddInitialComments(resultContent);
 
+        // 続きを取るための情報が無い = 配信が終わっている・まだ始まっていない・URLが違う
+        // (以前はここで何も出さずに失敗し続けていたため、コメント枠が「待っています」のままになっていた)
+        if (!matchedKey.Success || !matchedContinuation.Success)
+        {
+            StatusText = "この配信のチャットが見つかりません(配信が終わっているか、URLが違います。チャンネルのURLにすると、配信中の動画を自動で探します)";
+            retryAt = System.DateTime.Now.AddSeconds(30);
+            Logger.Warn($"YouTubeのチャットが見つかりません(動画ID: {videoId})", "StreamerInfo");
+            return;
+        }
+
+        StatusText = "";
         chatData = new ChatData(
             matchedKey.Groups[1].Value,
             matchedContinuation.Groups[1].Value,
@@ -358,5 +422,7 @@ class StreamerInfo
     public StreamerInfo()
     {
         client = new HttpClient();
+        client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", UserAgent);
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "ja");
     }
 }

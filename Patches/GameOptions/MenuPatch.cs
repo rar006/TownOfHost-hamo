@@ -3592,6 +3592,16 @@ namespace TownOfHost
                 case "StreamCommentToggle": Main.ShowStreamComments.Value = !Main.ShowStreamComments.Value; RefreshStreamCommentRows(); break;
                 case "StreamCommentPasteURL": StreamerInfo.TrySetStreamURL(GUIUtility.systemCopyBuffer); RefreshStreamCommentRows(); break;
                 case "StreamCommentResetPos": StreamCommentFrame.ResetPosition(); break;
+                // 設定の自動バックアップ(便利機能)
+                case "OptionBackupRestore":
+                    Modules.OptionBackup.RestoreLatest();
+                    foreach (var opt in OptionItem.AllOptions)
+                    {
+                        if (opt.Name != "OptionBackupRestore") continue;
+                        var so = opt.OptionBehaviour?.TryCast<StringOption>();
+                        if (so != null && so.ValueText != null) so.ValueText.text = opt.GetString();
+                    }
+                    break;
                 default:
                     // ケイどろの牢屋の位置 ("KedoroJailSkeld" など)
                     if (actionkey.StartsWith("KedoroJail")) Kedoro.OpenJailMenu(parent, actionkey);

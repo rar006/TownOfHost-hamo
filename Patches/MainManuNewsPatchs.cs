@@ -219,6 +219,84 @@ public class ModNewsHistory
                 };
                 AllModNews.Add(news);
             }
+            {
+                var news = new ModNews
+                {
+                    Number = 100015,
+                    Title = "アップデート！",
+                    SubTitle = "<color=#fb85ff>Town Of Host-hamo v4.35.06β</color>",
+                    ShortTitle = "<color=#fb85ff>●TOH-hamo v4.35.06β</color>",
+                    Text = "【便利機能】(OTHER2の「便利機能」でON/OFF)\r\n・連勝を知らせる(連勝を止めた人はMVPの点数アップ)\r\n・Discordの共有ブラックリストを使う(登録された人を自動でキック)\r\n・設定を自動でバックアップする(「1つ前の設定に戻す」で戻せる)\r\n\r\n【配信向け】\r\n・YouTubeのURLにチャンネルのURLを入れられるように(配信中の動画を自動で探す)\r\n・コメントが取れない時は理由を枠に表示するように\r\n\r\n【修正】\r\n・YouTubeのコメントが表示されない不具合(配信が終わったURLのまま止まっていた)\r\n・ランチャーをインストールしても、インストール画面しか開かない不具合\r\n・回線が少し不安定なだけで「サーバー接続が切れました」になりやすかった問題を軽減\r\n・その他、多少のバグ修正"
+                    ,
+                    Date = "2026-10-18"
+                };
+                AllModNews.Add(news);
+            }
+            {
+                var news = new ModNews
+                {
+                    Number = 100016,
+                    Title = "接続の安定化アップデート",
+                    SubTitle = "<color=#fb85ff>Town Of Host-hamo v4.35.07β</color>",
+                    ShortTitle = "<color=#fb85ff>●TOH-hamo v4.35.07β</color>",
+                    Text = "【修正】\r\n・回線が少し不安定なだけで「サーバー接続が切れました」になりやすかった問題を軽減\r\n(返事を待つ時間を延ばし、部屋に入る前や接続が作り直された時にも効くように)\r\n・その他、多少のバグ修正"
+                    ,
+                    Date = "2026-10-18"
+                };
+                AllModNews.Add(news);
+            }
+            {
+                var news = new ModNews
+                {
+                    Number = 100017,
+                    Title = "アップデート！",
+                    SubTitle = "<color=#fb85ff>Town Of Host-hamo v4.35.08β</color>",
+                    ShortTitle = "<color=#fb85ff>●TOH-hamo v4.35.08β</color>",
+                    Text = "【配信向け】\r\n・YouTubeのコメント枠の大きさを変えられるように(右下の◢をドラッグ)\r\n・YouTubeのコメント枠を最小化できるように(右上の－/＋)\r\n\r\n【修正】\r\n・アサインモードがランダムの時、役職が付かない人が出ることがある不具合\r\n・最少を最大より大きくすると配役されない不具合\r\n・役職の設定に「最大数」が2つ出ることがある不具合\r\n・その他、多少のバグ修正"
+                    ,
+                    Date = "2026-10-18"
+                };
+                AllModNews.Add(news);
+            }
+            {
+                var news = new ModNews
+                {
+                    Number = 100018,
+                    Title = "二つ名のSHOPが登場！",
+                    SubTitle = "<color=#fb85ff>Town Of Host-hamo v4.35.09β</color>",
+                    ShortTitle = "<color=#fb85ff>●TOH-hamo v4.35.09β</color>",
+                    Text = "【二つ名】\r\n・かぶった二つ名は個数が増えるように(1000個=1kのように省略して表示)\r\n・二つ名を売って hm(通貨)にできるように(/cmd nis)\r\n・hm でSHOPの二つ名を買えるように(/cmd nip で見る・/cmd nib で買う)\r\n・もう持っている二つ名とも交換できるように\r\n・イベント中は引くクールタイムが短くなることがあります\r\n\r\n【便利機能】(OTHER2の「便利機能」でON/OFF)\r\n・ロビー投票(/vote でプリセット・/poll で自由な質問)\r\n・人数でプリセットを自動で切り替える\r\n\r\n【変更】\r\n・ジャッカルウルフの付与する役職を2つ設定できるように(試合ごとにランダムでどちらか)\r\n・/h に二つ名の売る・SHOPのコマンドを追加\r\n\r\n【修正】\r\n・その他、多少のバグ修正"
+                    ,
+                    Date = "2026-10-18"
+                };
+                AllModNews.Add(news);
+            }
+            {
+                var news = new ModNews
+                {
+                    Number = 100019,
+                    Title = "アップデート！",
+                    SubTitle = "<color=#fb85ff>Town Of Host-hamo v4.35.10β</color>",
+                    ShortTitle = "<color=#fb85ff>●TOH-hamo v4.35.10β</color>",
+                    Text = "【便利機能】(OTHER2の「便利機能」)\r\n・Discordからのメッセージ(/say)を受け取るかをON/OFFできるように(最初はON)\r\n　OFFでも、運営が「強制」で送ったメッセージは表示されます\r\n\r\n【修正】\r\n・配布版がデバッグ版の扱いになっていた問題\r\n・その他、多少のバグ修正"
+                    ,
+                    Date = "2026-10-18"
+                };
+                AllModNews.Add(news);
+            }
+            {
+                var news = new ModNews
+                {
+                    Number = 100020,
+                    Title = "アップデート！",
+                    SubTitle = "<color=#fb85ff>Town Of Host-hamo v4.35.11β</color>",
+                    ShortTitle = "<color=#fb85ff>●TOH-hamo v4.35.11β</color>",
+                    Text = "【二つ名】\r\n・属性ごとに分けて持つように(★付き・属性なしなどは別々に数える)\r\n・出にくい二つ名ほど高く売れるように(配布のみは10000hm・属性付きは×〇倍)\r\n・/cmd nii に売値を表示\r\n\r\n【修正】\r\n・死んでいる時(ゴースト中)にホストがチャットを開けない不具合\r\n・その他、多少のバグ修正"
+                    ,
+                    Date = "2026-10-18"
+                };
+                AllModNews.Add(news);
+            }
             AnnouncementPopUp.UpdateState = AnnouncementPopUp.AnnounceState.NotStarted;
         }
     }

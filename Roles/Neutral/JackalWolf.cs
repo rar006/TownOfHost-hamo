@@ -34,7 +34,7 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
 
             CustomRoles.JackalWolf,
 
-            () => OptionHaveRole.GetRole().GetRoleInfo()?.BaseRoleType?.Invoke() ?? RoleTypes.Impostor,
+            () => CurrentHaveRole().GetRoleInfo()?.BaseRoleType?.Invoke() ?? RoleTypes.Impostor,
 
             CustomRoleTypes.Neutral,
 
@@ -107,6 +107,40 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
     public static bool CanUseSabotage;
 
     public static FilterOptionItem OptionHaveRole; static CustomRoles haverole;
+    /// <summary>付与する役職の2つ目。2つとも設定されていたら、試合ごとにどちらかをランダムで選ぶ</summary>
+    public static FilterOptionItem OptionHaveRole2;
+    /// <summary>この試合で選ばれた付与役職(ホストが試合開始時に決める)</summary>
+    static CustomRoles pickedRole = CustomRoles.NotAssigned;
+    static List<CustomRoles> HaveRoleCandidates()
+    {
+        var list = new List<CustomRoles>();
+        if (OptionHaveRole?.GetBool() == true) list.Add(OptionHaveRole.GetRole());
+        if (OptionHaveRole2?.GetBool() == true && !list.Contains(OptionHaveRole2.GetRole())) list.Add(OptionHaveRole2.GetRole());
+        return list;
+    }
+    /// <summary>今の試合の付与役職(決まっていなければ1つ目の設定。どちらも無ければインポスター)</summary>
+    static CustomRoles CurrentHaveRole()
+    {
+        if (pickedRole is not CustomRoles.NotAssigned) return pickedRole;
+        var list = HaveRoleCandidates();
+        return list.Count > 0 ? list[0] : CustomRoles.Impostor;
+    }
+    [HarmonyLib.HarmonyPatch(typeof(AmongUsClient), nameof(AmongUsClient.CoStartGame))]
+    static class PickHaveRolePatch
+    {
+        public static void Prefix()
+        {
+            try
+            {
+                pickedRole = CustomRoles.NotAssigned;
+                if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
+                var list = HaveRoleCandidates();
+                pickedRole = list.Count > 0 ? list[IRandom.Instance.Next(list.Count)] : CustomRoles.Impostor;
+                if (list.Count > 1) Logger.Info($"付与役職を {string.Join(" / ", list)} から {pickedRole} に決定", "JackalWolf");
+            }
+            catch (Exception e) { Logger.Warn($"付与役職の抽選に失敗: {e.Message}", "JackalWolf"); }
+        }
+    }
 
     RoleBase AddRole;
 
@@ -159,6 +193,8 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
     {
 
         OptionHaveRole = FilterOptionItem.Create(RoleInfo, 17, OptionName.AssassinHaveRole, 0, false, null, true, false, false, false, false, () => InvalidRoles());
+        OptionHaveRole2 = FilterOptionItem.Create(RoleInfo, 18, OptionName.AssassinHaveRole, 0, false, null, true, false, false, false, false, () => InvalidRoles());
+        OptionHaveRole2.SetOptionName(() => "付与する役職(2つ目・ランダムでどちらか)");
 
 
 
@@ -182,7 +218,7 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
 
     {
 
-        haverole = OptionHaveRole.GetBool() ? OptionHaveRole.GetRole() : CustomRoles.Impostor;
+        haverole = CurrentHaveRole();
 
         if (CustomRoleManager.AllRolesInfo.TryGetValue(haverole, out var roleinfo))
 

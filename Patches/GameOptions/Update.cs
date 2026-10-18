@@ -839,6 +839,12 @@ namespace TownOfHost
 
                         }
 
+                        // 「最大数」の行は CustomRole を持たないので、役職の行(親)が隠れていても残って見えていた
+                        // (リストラした役職・イベント限定の役職の「最大数」だけが、前の役職の下に出ていた)
+                        if (option.Name == "Maximum" && (!Event.CheckRole(option.ParentRole) || option.Parent?.IsHiddenOn(Options.CurrentGameMode) == true))
+                        {
+                            enabled = false;
+                        }
                         if (!Event.CheckRole(option.CustomRole))
 
                         {

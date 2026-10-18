@@ -45,6 +45,8 @@ public static class MvpAnnouncer
         {
             if (Enabled?.GetBool() != true || AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
             if (!GameModeManager.IsStandardClass() || CustomWinnerHolder.WinnerTeam is CustomWinner.Draw) return;
+            WinStreak.EnsureUpdated(); // 連勝を止めたかどうかを先に数える
+            var stopper = WinStreak.IsOn && WinStreak.StoppedThisGame;
             var winners = CustomWinnerHolder.WinnerIds ?? new HashSet<byte>();
             var best = PlayerState.AllPlayerStates
                 .Where(kv => kv.Value != null && kv.Value.MainRole is not (CustomRoles.NotAssigned or CustomRoles.GM))
@@ -57,7 +59,7 @@ public static class MvpAnnouncer
                     var task = state.taskState;
                     var taskRate = task != null && task.hasTasks && task.AllTasksCount > 0 ? (float)task.CompletedTasksCount / task.AllTasksCount : 0f;
                     var win = winners.Contains(id);
-                    var score = kills * 3 + votes * 2 + taskRate * 3 + (win ? 2 : 0) + (state.IsDead ? 0 : 1);
+                    var score = kills * 3 + votes * 2 + taskRate * 3 + (win ? 2 : 0) + (state.IsDead ? 0 : 1) + (stopper && win ? WinStreak.StopperBonus : 0);
                     return (id, state, kills, votes, taskRate, win, score);
                 })
                 .OrderByDescending(x => x.score).ThenByDescending(x => x.kills).ThenByDescending(x => x.votes)
@@ -70,6 +72,7 @@ public static class MvpAnnouncer
             if (best.votes > 0) reasons.Add($"正しい投票{best.votes}");
             if (best.taskRate > 0) reasons.Add($"タスク{(int)(best.taskRate * 100)}%");
             if (best.win) reasons.Add("勝利");
+            if (best.win && WinStreak.IsOn && WinStreak.StoppedThisGame) reasons.Add("連勝ストップ");
             if (!best.state.IsDead) reasons.Add("生存");
             // 試合後ロビーに戻ってから送られる
             Utils.SendMessage($"{name} さん({role})\n{string.Join(" / ", reasons)}", byte.MaxValue, "<#ffd36e>【今回のMVP】</color>");
