@@ -297,7 +297,6 @@ namespace TownOfHost
 
         }
 
-        /// <summary>死亡した日(サバイビング用。-1=生存)</summary>
         public int DeadDay = -1;
         public void SetDead()
         {

@@ -7,10 +7,6 @@ using static TownOfHost.Modules.SelfVoteManager;
 
 namespace TownOfHost.Roles.Crewmate;
 
-/// <summary>
-/// センダー(クルーメイト)
-/// 会議で自投票 → 相手に投票すると、次に打ったチャットが相手にだけ表示される(誰から届いたかは分からない)。
-/// </summary>
 public sealed class Sender : RoleBase, ISelfVoter
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -42,7 +38,6 @@ public sealed class Sender : RoleBase, ISelfVoter
     public override bool CheckVoteAsVoter(byte votedForId, PlayerControl voter)
         => state.CheckVote(Player, votedForId, voter, OptionUses.GetInt());
 
-    /// <summary>チャットを横取りして相手にだけ送る(ホスト)。送ったら true</summary>
     public bool TryIntercept(string text) => state.TryIntercept(Player, text, OptionUses.GetInt());
 
     public override void OnStartMeeting() => state.Reset();
@@ -61,13 +56,11 @@ public sealed class Sender : RoleBase, ISelfVoter
     public void ClearPendingLocal() => state.HasPending = false;
 }
 
-/// <summary>センダーとマッドセンダーの共通処理</summary>
 public sealed class SenderState
 {
     public int Used;
     byte pendingTarget = byte.MaxValue;
 
-    /// <summary>次のチャットを相手に送る待ち状態か(本人のMODにも同期する)</summary>
     public bool HasPending;
 
     public int Left(int max) => System.Math.Max(0, max - Used);

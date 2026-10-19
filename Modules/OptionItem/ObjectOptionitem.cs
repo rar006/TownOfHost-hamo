@@ -8,7 +8,6 @@ namespace TownOfHost
     {
         public bool IsHedderObject;
         public string ClickActionkey;
-        /// <summary>右の値の欄に出す文字を自分で決める(押すと切り替わる行で、今の状態を出すため)</summary>
         public Func<string> ValueOverride;
         public ObjectOptionitem SetValueOverride(Func<string> value) { ValueOverride = value; return this; }
         // コンストラクタ

@@ -9,11 +9,6 @@ using TownOfHost.Roles.Core;
 
 namespace TownOfHost.Modules;
 
-/// <summary>
-/// 役職ごとの勝率を記録する(便利機能・ホストのみ)。
-/// 試合が終わるたびに、全員の役職と勝ち負けを TOHhm_DATA/RoleWinStats.json に足していく(廃村は数えない)。
-/// 「/stats」(または「/cmd stats」)で勝率の高い順・低い順を表示、「/stats 役職名」でその役職だけ表示。
-/// </summary>
 [HarmonyPatch]
 public static class RoleWinStats
 {
@@ -86,7 +81,6 @@ public static class RoleWinStats
         }
     }
 
-    /// <summary>「/stats」「/cmd stats」なら表示して true(sendTo: 結果を送る相手)</summary>
     public static bool TryHandle(string text, byte sendTo)
     {
         if (!IsOn || string.IsNullOrWhiteSpace(text)) return false;
@@ -134,7 +128,6 @@ public static class RoleWinStats
     }
 }
 
-/// <summary>ホストが自分で「/stats」を打った時</summary>
 [HarmonyPatch(typeof(ChatController), nameof(ChatController.SendChat))]
 [HarmonyPriority(Priority.First)]
 class RoleWinStatsChatPatch

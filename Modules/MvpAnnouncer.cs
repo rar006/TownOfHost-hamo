@@ -6,20 +6,13 @@ using TownOfHost.Roles.Core;
 
 namespace TownOfHost.Modules;
 
-/// <summary>
-/// 試合が終わったら MVP を1人決めて、ロビーのチャットで知らせる(便利機能・ホストのみ)。
-/// 点数 = キル×3 + 正しい投票×2 + タスク達成率×3 + 勝った+2 + 生き残った+1
-/// 「正しい投票」= クルー陣営の人が、インポスター陣営(マッドメイト含む)か第三陣営の人に投票したこと。
-/// </summary>
 [HarmonyPatch]
 public static class MvpAnnouncer
 {
     public static OptionItem Enabled;
 
-    /// <summary>プレイヤーID → 正しい投票の数(この試合)</summary>
     private static readonly Dictionary<byte, int> correctVotes = new();
 
-    /// <summary>会議が終わる時に MeetingVoteManager から呼ぶ(投票者ID → 投票先ID)</summary>
     public static void OnMeetingEnd(IEnumerable<(byte voter, byte votedFor)> votes)
     {
         if (Enabled?.GetBool() != true) return;

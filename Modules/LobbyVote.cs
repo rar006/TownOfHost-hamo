@@ -6,14 +6,6 @@ using UnityEngine;
 
 namespace TownOfHost.Modules;
 
-/// <summary>
-/// ロビー投票(便利機能・ホストのみ)。
-/// ・プリセット投票: ホストが /vote(全部のプリセット) か /vote 1 3 5(番号を指定) と送ると30秒の投票が始まり、
-///   時間になったら一番多いプリセットに切り替える(同じ数ならランダム・誰も投票しなければ変えない)。
-/// ・自由な質問の投票: ホストが /poll 質問 選択肢1 選択肢2 … と送ると30秒の投票が始まり、結果を知らせるだけ(設定は変えない)。
-/// みんなはチャットに数字(1・2…)か /v 数字 を送って投票する(何回でも送り直せる・最後の1票が有効)。
-/// /vote stop か /poll stop で途中でやめる。同時に1つだけ。
-/// </summary>
 [HarmonyPatch]
 public static class LobbyVote
 {
@@ -24,9 +16,7 @@ public static class LobbyVote
     private const string PollTitle = "<#7fd8ff>【投票】</color>";
     private const int MaxPollChoices = 9;
 
-    /// <summary>選択肢の表示名。空なら投票していない</summary>
     private static readonly List<string> labels = new();
-    /// <summary>プリセット投票なら、選択肢ごとのプリセット番号(0〜)。自由な質問なら空</summary>
     private static readonly List<int> presets = new();
     private static string question = "";
     private static readonly Dictionary<byte, int> votes = new();
@@ -45,10 +35,8 @@ public static class LobbyVote
         return e.Value == (string)e.DefaultValue ? Translator.GetString($"Preset_{preset + 1}") : e.Value;
     }
 
-    /// <summary>タグとして読まれないように &lt; &gt; を全角にする</summary>
     private static string Safe(string s) => (s ?? "").Replace('<', '＜').Replace('>', '＞');
 
-    /// <summary>チャットを処理する。投票のコマンド・投票の数字なら true(hide=true ならチャットに出さない)</summary>
     public static bool TryHandle(string text, PlayerControl player, out bool hide)
     {
         hide = false;
@@ -200,12 +188,6 @@ public static class LobbyVote
     }
 }
 
-/// <summary>
-/// 人数でプリセットを自動で切り替える(便利機能・ホストのみ)。
-/// 「〜〇人」「〜△人」「それより多い」の3段階ごとにプリセットを決めておくと、
-/// ロビーの人数が変わって、その段階に入った時に切り替える(0 = 変えない)。
-/// 人数が変わった時だけ切り替えるので、ホストが手で変えたプリセットは、次に人数が変わるまでそのまま。
-/// </summary>
 [HarmonyPatch]
 public static class AutoPresetByCount
 {
@@ -222,10 +204,8 @@ public static class AutoPresetByCount
     private static bool pending;
     private static bool suppress;
     private static float nextCheck;
-    /// <summary>人が続けて出入りしている間は待つ秒数</summary>
     private const float SettleSeconds = 3f;
 
-    /// <summary>投票などで手で切り替えた直後は、今の人数を基準にし直す(すぐ戻さない)</summary>
     public static void SuppressOnce() => suppress = true;
 
     private static int CountPlayers()
@@ -291,7 +271,6 @@ public static class AutoPresetByCount
     }
 }
 
-/// <summary>ホストが自分で /vote や投票の数字を打った時(ホストのチャットは OnReceiveChat を通らないため)</summary>
 [HarmonyPatch(typeof(ChatController), nameof(ChatController.SendChat))]
 [HarmonyPriority(Priority.First)]
 class LobbyVoteChatPatch

@@ -5,18 +5,11 @@ using System.Threading.Tasks;
 
 namespace TownOfHost.Modules;
 
-/// <summary>
-/// サーバー(Bot)へのリンクを自動で更新する仕組み。
-/// Discord で /link URL を実行すると、Bot が GitHub の relay.json を書き換える。
-/// MOD は起動時にそれを読んで、マッチメイキング・バグ報告・ロビーチャット・アンケート(二つ名)の接続先を切り替える。
-/// 読めなかった時は、DLL に書いてある今までのリンクをそのまま使う。
-/// </summary>
 public static class RelayLink
 {
     public const string Url = "https://raw.githubusercontent.com/rar006/TownOfHost-hamo/main/relay.json";
     private static readonly HttpClient Client = new() { Timeout = TimeSpan.FromSeconds(8) };
 
-    /// <summary>起動時に1回だけ呼ぶ(裏で取得して、取れたら切り替える)</summary>
     public static void Start()
     {
         _ = Task.Run(async () =>

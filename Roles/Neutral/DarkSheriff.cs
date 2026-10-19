@@ -31,7 +31,6 @@ public sealed class DarkSheriff : RoleBase, IKiller
         CurrentKillCooldown = OptionKillCooldownBefore.GetFloat();
         mode = new PetModeSwitch(player);
     }
-    /// <summary>シェリフと同じ、ペットでキルモード ⇔ タスクモードの切り替え(シェリフの「タスクモードで開始」がONの時)</summary>
     readonly PetModeSwitch mode;
     public override void Add()
     {

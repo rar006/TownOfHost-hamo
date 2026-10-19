@@ -7,12 +7,6 @@ using UnityEngine;
 
 namespace TownOfHost.Modules;
 
-/// <summary>
-/// 設定の自動バックアップ(便利機能・ホストのみ)。
-/// 設定を変え始める直前の状態(今のプリセットの全設定)を保存しておき、OTHER2の「1つ前の設定に戻す」で戻せる。
-/// 続けて変えている間(最後に変えてから10秒以内)は1つにまとめる。最大3つまで、新しいものから戻す。
-/// 保存先: TOHhm_DATA/OptionBackups.json
-/// </summary>
 public static class OptionBackup
 {
     public static OptionItem Enabled;
@@ -50,10 +44,6 @@ public static class OptionBackup
         catch (Exception e) { Logger.Warn($"設定のバックアップを保存できませんでした: {e.Message}", "OptionBackup"); }
     }
 
-    /// <summary>
-    /// 設定が変わる直前に呼ぶ(OptionItem.SetValue・まとめて変えるタイルから)。
-    /// 前回の変更から10秒以上たっていたら、今の状態を1つ保存する。
-    /// </summary>
     public static void BeforeChange()
     {
         try
@@ -77,7 +67,6 @@ public static class OptionBackup
         catch (Exception e) { Logger.Warn($"設定のバックアップに失敗: {e.Message}", "OptionBackup"); }
     }
 
-    /// <summary>一番新しいバックアップに戻す(戻したものは消す)。戻せたら true</summary>
     public static bool RestoreLatest()
     {
         if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return false;

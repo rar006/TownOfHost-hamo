@@ -11,11 +11,8 @@ namespace TownOfHost
     {
         public static SimpleButton OpenMenu;
         public static SimpleButton SetURL; public static TextMeshPro NowURLText; public static TextMeshPro NowURLTitle;
-        /// <summary>YouTubeのコメント枠の表示ON/OFF</summary>
         public static SimpleButton CommentFrameToggle;
-        /// <summary>YouTubeのコメント枠の位置を最初の場所に戻す</summary>
         public static SimpleButton CommentFrameReset;
-        /// <summary>OBS用の試合の状況ページ(ON/OFF)と、役職の出し方</summary>
         public static SimpleButton ObsToggle;
         public static SimpleButton ObsRoleMode;
         static string ObsLabel() => Main.ObsOverlay.Value ? $"OBS表示: ON\n{ObsOverlay.Url}" : "OBS表示: OFF";

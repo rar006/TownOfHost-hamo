@@ -5,14 +5,8 @@ using TownOfHost.Roles.Crewmate;
 
 namespace TownOfHost.Roles.Core;
 
-/// <summary>
-/// 2026-10 ユーザー提案の役職で共通に使う処理(チャットコマンド・毎フレームの確認)
-/// </summary>
 public static class UserRoles2026
 {
-    /// <summary>
-    /// /cmd のコマンド(args[0] は "/mes" のように / 付き)。処理したら true(ホストのみ)
-    /// </summary>
     public static bool TryHandleCommand(PlayerControl player, string[] args)
     {
         if (player == null || args == null || args.Length == 0) return false;
@@ -42,9 +36,6 @@ public static class UserRoles2026
         return false;
     }
 
-    /// <summary>
-    /// MOD導入者(ホスト以外)のセンダー: 送信待ちの時、次のチャットを全体に送らず、ホストにだけ直送する。直送したら true
-    /// </summary>
     public static bool TryRouteSenderChatToHost(string text)
     {
         if (AmongUsClient.Instance == null || AmongUsClient.Instance.AmHost || !GameStates.IsMeeting) return false;
@@ -59,9 +50,6 @@ public static class UserRoles2026
         return true;
     }
 
-    /// <summary>
-    /// センダー/マッドセンダー: 相手を選んだ後の次のチャットを横取りして、相手にだけ送る(ホスト)。横取りしたら true
-    /// </summary>
     public static bool TryInterceptChat(PlayerControl player, string text)
     {
         if (player == null || AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return false;
@@ -73,10 +61,6 @@ public static class UserRoles2026
         };
     }
 
-    /// <summary>
-    /// 死亡したプレイヤーを、守護天使ボタンを使う独自のゴースト役職(アルセーヌ・キョンシー)にする(ホスト)
-    /// 仕組みは GhostRoleAssingData の配布と同じ
-    /// </summary>
     public static void MakeGhost(PlayerControl pc, CustomRoles role)
     {
         if (pc == null || !AmongUsClient.Instance.AmHost) return;
@@ -101,7 +85,6 @@ public static class UserRoles2026
         Logger.Info($"ゴースト役職を設定: {pc.Data?.GetLogPlayerName()} = {role}", "UserRoles2026");
     }
 
-    /// <summary>試合開始時に呼ぶ(前の試合の生存者リストなどを持ち越さない)</summary>
     public static void Reset() => TickPatch.Reset();
 
     [HarmonyPatch(typeof(HudManager), nameof(HudManager.Update))]

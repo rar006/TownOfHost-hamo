@@ -4,12 +4,6 @@ using UnityEngine;
 
 namespace TownOfHost.Modules;
 
-/// <summary>
-/// 放置している人を知らせる(便利機能・ホストのみ)。
-/// ロビーと試合中のタスクの間、設定した秒数ずっと動いていない人がいたら、ホストにだけ知らせる。
-/// 「ロビーではキックする」がONなら、ロビーではキックする(試合中は知らせるだけ)。
-/// 会議中・イントロ中・死んでいる人・ホスト自身は数えない。
-/// </summary>
 [HarmonyPatch(typeof(HudManager), nameof(HudManager.Update))]
 public static class AfkDetector
 {

@@ -147,7 +147,6 @@ public static class Moderator
     private static bool IsManagedCommand(string command)
         => command is "/kick" or "/ban" or "/say" or "/fe" or "/forceend" or "/sw" or "/start" or "/kf" or "/mf" or "/ms" or "/cs" or "/fm" or "/ma" or "/mn" or "/bug";
 
-    /// <summary>/cmd bug 内容 : モデレーターのみ。ホストの端末から、モデレーターと部屋主のフレンドコード付きでバグ報告を送る</summary>
     private static void HandleBugReport(PlayerControl player, string[] args)
     {
         if (Options.OptionCommandBugReport?.GetBool() == true)

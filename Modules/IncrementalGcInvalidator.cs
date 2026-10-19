@@ -3,19 +3,6 @@ using System.Runtime.InteropServices;
 
 namespace TownOfHost.Modules;
 
-/// <summary>
-/// Unity(il2cpp)の「インクリメンタルGC」を起動時に無効化する(Windowsのみ)。
-///
-/// インクリメンタルGCが有効だと、MOD(Il2CppInterop)からゲーム側のオブジェクトの参照を書き換えたとき
-/// 書き込みバリアが無い場合があり、まだ使っているオブジェクトがGCに回収されてしまう。
-/// その結果、部屋から退出するとき(シーン切替でGCが走るとき)などに
-/// 0xC0000005 で即落ちする(try/catch では止められない)。
-/// インクリメンタルを切ると、この種類のクラッシュがまとめて起きなくなる。性能への影響はほぼ無い。
-///
-/// EndKnot(EndKnot.Modules.IncrementalGcInvalidator)の方法を参考にしている:
-/// il2cpp_gc_is_incremental() が読んでいるグローバル変数の場所を機械語から探し、0 を書き込む。
-/// 見つからない・書き込めない・書いても変わらない場合は何もしない(元に戻す)。
-/// </summary>
 public static class IncrementalGcInvalidator
 {
     private struct MemoryBasicInformation
@@ -107,7 +94,6 @@ public static class IncrementalGcInvalidator
         return call == IntPtr.Zero ? IntPtr.Zero : FindGlobalReadTarget(ResolveJmpThunk(call));
     }
 
-    /// <summary>jmp rel32 (E9) の中継を最大5回たどる</summary>
     private static unsafe IntPtr ResolveJmpThunk(IntPtr addr)
     {
         for (int i = 0; i < 5; i++)
@@ -120,7 +106,6 @@ public static class IncrementalGcInvalidator
         return addr;
     }
 
-    /// <summary>先頭付近の最初の call rel32 (E8) の行き先</summary>
     private static unsafe IntPtr FindFirstCallTarget(IntPtr func)
     {
         if (!CanRead(func, 24)) return IntPtr.Zero;
@@ -130,7 +115,6 @@ public static class IncrementalGcInvalidator
         return IntPtr.Zero;
     }
 
-    /// <summary>mov eax,[rip+disp32] (8B 05) が読んでいるグローバル変数のアドレス</summary>
     private static unsafe IntPtr FindGlobalReadTarget(IntPtr func)
     {
         if (!CanRead(func, 24)) return IntPtr.Zero;

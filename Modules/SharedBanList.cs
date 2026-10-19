@@ -9,11 +9,6 @@ using UnityEngine;
 
 namespace TownOfHost.Modules;
 
-/// <summary>
-/// Discordの共有ブラックリスト(便利機能・ホストのみ)。
-/// Botの /ban-share add で登録されたフレンドコードの人が入ってきたら、自動でキックしてホストに知らせる。
-/// 一覧はロビーにいる間、2分ごとに読み直す(読めなかった時は前回の一覧を使う)。
-/// </summary>
 [HarmonyPatch]
 public static class SharedBanList
 {
@@ -23,7 +18,6 @@ public static class SharedBanList
     private static readonly HttpClient http = new() { Timeout = TimeSpan.FromSeconds(10) };
     private static string Url => LobbyChatRemoteConfig.EndpointUrl.Replace("/lobbychat", "/bans").TrimEnd('/');
 
-    /// <summary>フレンドコード(小文字) → 理由</summary>
     private static Dictionary<string, string> bans = new();
     private static float nextFetchAt;
     private static volatile bool fetching;
@@ -62,7 +56,6 @@ public static class SharedBanList
         });
     }
 
-    /// <summary>ロビーにいる間、ときどき一覧を読み直す</summary>
     [HarmonyPatch(typeof(LobbyBehaviour), nameof(LobbyBehaviour.Update)), HarmonyPostfix]
     public static void LobbyTick()
     {

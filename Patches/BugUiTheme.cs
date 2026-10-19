@@ -4,10 +4,6 @@ using UnityEngine;
 
 namespace TownOfHost.Patches
 {
-    /// <summary>
-    /// バグ報告パネル・BUG専用チャットの見た目をまとめて整える(角丸・ヘッダー・配色)。
-    /// 各パネルを組み立てた後に Apply を呼ぶだけで、配置や動作には手を加えない。
-    /// </summary>
     public static class BugUiTheme
     {
         public static readonly Color Background = new Color32(21, 18, 28, 248);
@@ -17,7 +13,6 @@ namespace TownOfHost.Patches
 
         private static Sprite _rounded;
 
-        /// <summary>角丸の白い板(9スライス)。色はSpriteRenderer側で付ける</summary>
         public static Sprite Rounded()
         {
             if (_rounded != null) return _rounded;
@@ -128,7 +123,6 @@ namespace TownOfHost.Patches
             if (sr.sortingOrder <= bgOrder + 1) sr.sortingOrder = bgOrder + 3;
         }
 
-        /// <summary>元の色の系統から、テーマの色に置き換える(ボタンの役割は色で判断する)</summary>
         private static Color Remap(Color c, bool hover)
         {
             Color32 n, h;

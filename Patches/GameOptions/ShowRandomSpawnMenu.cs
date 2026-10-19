@@ -17,10 +17,6 @@ class ShowRandomSpawnOption
     public static void CreateSpawanOptionMenu(Transform tabtransform, MapNames map)
         => CreateSpawanOptionMenu(tabtransform, map, null, null);
 
-    /// <summary>
-    /// items/header を渡すと、ランダムスポーン以外の設定(ケイどろの牢屋など)を同じ地図画面で切り替えられる。
-    /// items: (切り替えるオプション, 地図上の位置に使うランダムスポーンのオプションID)
-    /// </summary>
     public static void CreateSpawanOptionMenu(Transform tabtransform, MapNames map, List<(OptionItem opt, int posId)> items, OptionItem header)
     {
         if (CustomBackground is null)

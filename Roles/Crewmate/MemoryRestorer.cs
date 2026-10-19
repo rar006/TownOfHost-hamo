@@ -8,11 +8,6 @@ using static TownOfHost.Modules.SelfVoteManager;
 
 namespace TownOfHost.Roles.Crewmate;
 
-/// <summary>
-/// 記憶復元者: 記憶喪失者・ぽんこつ占い師などの「錯覚系」、シュレディンガーの猫・バケネコなどの「キルで陣営が変わる役」、
-/// アムネシア・一匹狼の属性を持つ人にマークが見える。
-/// 会議で自投票 → マークの付いた人に投票すると、その人の役職が分かり、相手は自分の役職を自覚する。
-/// </summary>
 public sealed class MemoryRestorer : RoleBase, ISelfVoter
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -52,7 +47,6 @@ public sealed class MemoryRestorer : RoleBase, ISelfVoter
     int used;
     int usedThisMeeting;
 
-    /// <summary>マークが付く人(錯覚系・陣営が変わる役・アムネシア/一匹狼)</summary>
     public static bool IsTarget(PlayerControl pc)
     {
         if (pc == null || !pc.IsAlive()) return false;

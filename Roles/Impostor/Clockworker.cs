@@ -7,12 +7,6 @@ using TownOfHost.Roles.Core.Interfaces;
 
 namespace TownOfHost.Roles.Impostor;
 
-/// <summary>
-/// クロックワーカー(インポスター)
-/// ・名前の横にタイマーがあり、キルクールが明けた状態でキルをしないと減っていく(キルするとリセット)
-/// ・タイマーが0になるとキル能力を失い、クルーメイトになってタスクを課される
-/// ・課されたタスクを全部終えるとキル能力が戻る。そのたびにタイマーの初期値が増え、キルクールが減る(下限あり)
-/// </summary>
 public sealed class Clockworker : RoleBase, IImpostor
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -87,7 +81,6 @@ public sealed class Clockworker : RoleBase, IImpostor
         SendRPC();
     }
 
-    /// <summary>毎フレーム(ホスト・タスク中): キルクールが明けているのにキルしていなければタイマーを減らす</summary>
     public void Tick(float dt)
     {
         if (!Player.IsAlive() || inTaskMode) return;

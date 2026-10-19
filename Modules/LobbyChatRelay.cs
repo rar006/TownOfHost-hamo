@@ -22,10 +22,8 @@ public static class LobbyChatRelay
         public string Target { get; set; } = "";
         public string Tag { get; set; } = "hamo";
         public long At { get; set; } = 0;
-        /// <summary>Discordの /say で force を付けた時: 受け取りをOFFにしていても表示する</summary>
         public bool Force { get; set; }
     }
-    /// <summary>Discordからの /say・/chat を受け取るか(便利機能。OFFでも force 付きのものは表示する)</summary>
     public static OptionItem ReceiveEnabled;
     private static bool Receive => ReceiveEnabled?.GetBool() ?? true;
 
@@ -38,9 +36,7 @@ public static class LobbyChatRelay
         public System.Collections.Generic.List<Announcement> Items { get; set; } = new();
     }
 
-    /// <summary>最後に表示したメッセージの時刻(ミリ秒)。これより新しいものだけ出す</summary>
     private static long _lastShownAt;
-    /// <summary>Botが古くて /list が無い時は、従来の /current(最新1件だけ)を使う</summary>
     private static bool _useLegacy;
 
     public static async Task PollAsync()

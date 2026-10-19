@@ -44,7 +44,6 @@ namespace TownOfHost
         // リリース情報はAPIのURLから取る(github.com の /releases/latest はWebページ(HTML)を返すので、
         // JSONとして読めずに毎回「MODを構成するファイルが破損しています」扱いになっていた)
         private static readonly string ApiURL = "https://api.github.com/repos/rar006/TownOfHost-hamo";
-        /// <summary>起動を早くするため、MOD読み込み直後にリリース情報の取得を始めておく</summary>
         public static void StartPrefetch()
         {
             TownOfHost.Modules.StartupPrefetch.Start(ReleaseUrl(Main.BetaBuildURL.Value != "", false));
@@ -75,13 +74,8 @@ namespace TownOfHost
         public static List<Release> releases = new();
 
         public static List<Release> snapshots = new();
-        /// <summary>バージョン切り替え画面に並べる最大数(2列×8段)</summary>
         public const int MaxSnapshots = 16;
 
-        /// <summary>
-        /// GitHubのリリース説明(Markdown)を、ゲーム内で読める文字にする。
-        /// 見出しの#や太字の**などを消し、ゲームで表示できない絵文字も取り除く。
-        /// </summary>
         public static string CleanReleaseBody(string body)
         {
             if (string.IsNullOrWhiteSpace(body)) return "(説明はありません)";
@@ -192,15 +186,6 @@ namespace TownOfHost
 
 
 
-        /// <summary>
-        /// リリースのタグ(例: "v4.32.00α", "v4.31.01β", "S4.00.00.10")からバージョンを取り出す。
-        /// 以前は new Version(...) に α/β 付きの文字列をそのまま渡していたため例外になり、
-        /// 「MODを構成するファイルが破損しています」と誤判定されて公開(マッチメイキング)できなかった。
-        /// 数字と '.' 以外は無視し、読めなければ例外ではなく null を返す。
-        /// また、タグは「4.32.00」(3つ区切り)、MOD本体は「4.00.32.00」(PluginVersion)と書き方が違うので、
-        /// 3つ区切りのタグは PluginVersion と同じ4つ区切りにそろえて比較する。
-        ///   4.32.00 → 4.0.32.0 / 4.31.01 → 4.0.31.1 / 4.00.31 → 4.0.31.0 / 4.00.00.10 → そのまま
-        /// </summary>
         public static Version ParseTagVersion(string tag)
         {
             if (string.IsNullOrWhiteSpace(tag)) return null;

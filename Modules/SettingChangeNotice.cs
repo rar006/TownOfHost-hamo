@@ -6,11 +6,6 @@ using UnityEngine;
 
 namespace TownOfHost.Modules;
 
-/// <summary>
-/// 設定を変えたら、ロビーのチャットで全員に知らせる(便利機能・ホストのみ)。
-/// 続けて変えている間はまとめておき、最後に変えてから5秒たったら1回だけ送る。
-/// 同じ設定を何回も変えた時は「最初の値 → 最後の値」だけ出し、元に戻した時は出さない。
-/// </summary>
 [HarmonyPatch(typeof(HudManager), nameof(HudManager.Update))]
 public static class SettingChangeNotice
 {
@@ -28,7 +23,6 @@ public static class SettingChangeNotice
     private static readonly Dictionary<int, Change> pending = new();
     private static float lastChangeAt = -1f;
 
-    /// <summary>OptionItem.SetValue から呼ぶ。値が変わる前と後の表示を受け取る</summary>
     public static void OnChanged(OptionItem option, string before, string after)
     {
         try

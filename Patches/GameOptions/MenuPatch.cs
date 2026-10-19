@@ -393,18 +393,10 @@ namespace TownOfHost
         public static RolesSettingsMenu ModSettingsTab;
 
         public static PassiveButton activeonly;
-        /// <summary>役職の見出しを全部ひらく/全部とじるボタン</summary>
         public static PassiveButton expandAll;
-        /// <summary>上の列に並べたタイル(人数におすすめ・全部ひらく など)。設定画面の上に重なる時は隠す</summary>
         public static readonly System.Collections.Generic.List<PassiveButton> ModTiles = new();
-        /// <summary>役職の行の「New!」。ポーズメニューを開いている間は隠す</summary>
         public static readonly System.Collections.Generic.List<GameObject> NewBadges = new();
-        /// <summary>「全部ひらく/とじる」タイルの位置(一番左のアイコンからの距離)。アイコン1個分 = 0.762</summary>
         public const float ExpandAllTileOffsetX = 5.4f;
-        /// <summary>
-        /// 右側の文字タイル(おすすめ・おまかせ・全役職・まとめて適用・全部とじる)の間隔と最大の大きさ。
-        /// 上のアイコンと同じ間隔(0.762)だと、タイルが5つになった時に左端のタイルがOTHER2のアイコンに重なったので、少し詰める。
-        /// </summary>
         public const float TileSpacing = 0.6f;
         public const float TileMaxSize = 0.56f;
 
@@ -466,7 +458,6 @@ namespace TownOfHost
         public static TMPro.TextMeshPro InfoCount;
 
         public static StringOption BaseOption;
-        /// <summary>五十音の見出しID → (見出しの文字, 見出し名)。検索で見出しを開いた時に [+]/[-] を更新するため</summary>
         static readonly System.Collections.Generic.Dictionary<int, (TMPro.TextMeshPro, string)> GojuonHeaderTitles = new();
 
         public static float roletaby;
@@ -3569,7 +3560,6 @@ namespace TownOfHost
 
         }
 
-        /// <summary>YouTubeコメント枠の行の名前(ON/OFF・設定済みかどうか)を書き直す</summary>
         static void RefreshStreamCommentRows()
         {
             foreach (var opt in OptionItem.AllOptions)

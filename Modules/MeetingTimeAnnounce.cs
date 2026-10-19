@@ -2,21 +2,13 @@ using HarmonyLib;
 
 namespace TownOfHost.Modules;
 
-/// <summary>便利機能のうち、他のモジュールから参照するだけの設定</summary>
 public static class ExtraFeatureOptions
 {
-    /// <summary>/set rule で決めたルールを、入ってきた人に「ようこそ」と一緒に送る</summary>
     public static OptionItem SendRuleOnJoin;
-    /// <summary>YouTubeのコメントで参加希望した人だけ部屋に入れる(参加希望制)</summary>
     public static OptionItem JoinByCommentOnly;
-    /// <summary>YouTubeのコメント枠を表示する(Main.ShowStreamComments と同じ値)</summary>
     public static OptionItem ShowStreamComments;
 }
 
-/// <summary>
-/// 会議の投票の残り時間を知らせる(便利機能・ホストのみ)。
-/// 投票時間の残りが30秒・10秒になった時に、全員のチャットに1回ずつ出す。投票時間が無制限の時は何もしない。
-/// </summary>
 [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.Update))]
 public static class MeetingTimeAnnounce
 {

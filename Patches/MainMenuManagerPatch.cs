@@ -867,7 +867,6 @@ namespace TownOfHost
             EnsureCloseButton(mainMenu);
         }
 
-        /// <summary>✘ボタン(閉じる)を作って表示する。要望でホーム画面でも常に表示する(押すとホーム画面に戻る)</summary>
         internal static void EnsureCloseButton(MainMenuManager mainMenu)
         {
             try

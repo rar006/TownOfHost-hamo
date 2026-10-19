@@ -140,9 +140,7 @@ namespace TownOfHost
         {
             private static float exitTimer = 0f;
             //private static float ext = 0f;
-            /// <summary>このMODが非表示にした開始ボタン(バニラが隠したものは触らない)</summary>
             private static GameObject startHiddenByMod;
-            /// <summary>バージョン不一致のプレイヤーがいて開始できない(Postfixで更新)</summary>
             private static bool versionMismatchHide;
             public static void Prefix(GameStartManager __instance)
             {

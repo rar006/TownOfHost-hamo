@@ -229,7 +229,6 @@ namespace TownOfHost
         public static ConfigEntry<bool> ShowPlayerCount { get; private set; }
 
         public static ConfigEntry<bool> ShowRoomCode { get; private set; }
-        /// <summary>設定画面の役職の見出し(あ行など)を、最初から開いておくか</summary>
         public static ConfigEntry<bool> ExpandRoleHeaders { get; private set; }
 
         public static ConfigEntry<float> MapTheme { get; private set; }
@@ -289,25 +288,19 @@ namespace TownOfHost
         public static ConfigEntry<string> JoinWord { get; private set; }
 
         public static ConfigEntry<string> RemoveWord { get; private set; }
-        /// <summary>YouTubeのコメントを画面の枠に表示する</summary>
         public static ConfigEntry<bool> ShowStreamComments { get; private set; }
-        /// <summary>コメント枠の位置(画面左下からの距離)</summary>
         public static ConfigEntry<float> StreamCommentPosX { get; private set; }
         public static ConfigEntry<float> StreamCommentPosY { get; private set; }
         public static ConfigEntry<float> StreamCommentWidth { get; private set; }
         public static ConfigEntry<float> StreamCommentHeight { get; private set; }
         public static ConfigEntry<bool> StreamCommentMinimized { get; private set; }
-        /// <summary>前回設定した配信URL(起動し直しても残す)</summary>
         public static ConfigEntry<string> StreamURLConfig { get; private set; }
-        /// <summary>OBS用の試合の状況ページ(http://localhost:52525/)を出す</summary>
         public static ConfigEntry<bool> ObsOverlay { get; private set; }
-        /// <summary>OBSのページに役職を出すか(0=出さない/1=自分が死んだら/2=いつも)</summary>
         public static ConfigEntry<int> ObsShowRoles { get; private set; }
 
         //Other Configs
 
         public static ConfigEntry<string> BetaBuildURL { get; private set; }
-        /// <summary>インクリメンタルGCを切る(部屋退出時などのクラッシュ対策・Windowsのみ)。Modules/IncrementalGcInvalidator.cs</summary>
         public static ConfigEntry<bool> DisableIncrementalGc { get; private set; }
 
         public static ConfigEntry<float> LastKillCooldown { get; private set; }

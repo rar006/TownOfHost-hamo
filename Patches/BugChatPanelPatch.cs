@@ -81,7 +81,6 @@ namespace TownOfHost.Patches
             _pollTimer = PollIntervalSeconds; // 開いた瞬間にも1回取得する
         }
 
-        /// <summary>専用チャットを表示中か(ロビーの「ホスト：」「開始」を隠すのに使う)</summary>
         public static bool IsShowing => _isOpen && _panelRoot != null && !_panelRoot.IsDestroyedOrNull() && _panelRoot.activeSelf;
 
         public static void Close()
@@ -497,7 +496,6 @@ namespace TownOfHost.Patches
             // (エラー時のみ、専用チャット内の履歴に表示する)。
         }
 
-        /// <summary>送信に失敗した時など、自分の画面の履歴にだけ出すお知らせ(サーバーには送らない)</summary>
         private static void AddLocalNotice(string ticketId, string message)
         {
             var ticket = BugReportSystem.GetTicket(ticketId);
@@ -536,7 +534,6 @@ namespace TownOfHost.Patches
 
 namespace TownOfHost
 {
-    /// <summary>BUG専用チャットを開いている間は、ロビーの「ホスト：」「開始」等が重なって見えるので隠す</summary>
     [HarmonyLib.HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.Update))]
     public static class BugChatHideLobbyUiPatch
     {

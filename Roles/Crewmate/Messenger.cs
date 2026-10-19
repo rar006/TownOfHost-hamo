@@ -4,10 +4,6 @@ using TownOfHost.Roles.Core;
 
 namespace TownOfHost.Roles.Crewmate;
 
-/// <summary>
-/// メッセンジャー: 会議中に /cmd mes ID 内容 で、好きなプレイヤーに一方的な秘匿チャットを送れる。
-/// 受け取った側には、誰から届いたかが分かる。返信はできない。
-/// </summary>
 public sealed class Messenger : RoleBase
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -44,7 +40,6 @@ public sealed class Messenger : RoleBase
 
     public override void OnStartMeeting() => usedThisMeeting = 0;
 
-    /// <summary>/cmd mes ID 内容(ホストが処理)</summary>
     public void HandleCommand(string[] args)
     {
         var me = Player.PlayerId;

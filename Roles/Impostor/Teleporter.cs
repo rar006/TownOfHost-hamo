@@ -107,10 +107,6 @@ public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
 
 
     float pendingTimer;
-    /// <summary>
-    /// ペットで使える次の時刻。ペットからの使用はゲームの能力ボタンのクールタイムを通らないので、
-    /// ここで同じ秒数のクールタイムをかける(以前はペットを撫でると何度でも使えた)
-    /// </summary>
     float petReadyAt;
 
     byte destPlayerId;

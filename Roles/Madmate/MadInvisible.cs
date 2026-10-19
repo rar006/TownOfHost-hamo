@@ -4,11 +4,6 @@ using TownOfHost.Roles.Core.Interfaces;
 
 namespace TownOfHost.Roles.Madmate;
 
-/// <summary>
-/// マッドインビジブル: 存在が希薄なマッドメイト。
-/// ベントが使える。会議で投票しても票が入らない。生存人数にカウントされず、(設定で)キルの対象にもならない。
-/// 追放されれば死亡する。設定でゲッサーにも撃たれない。
-/// </summary>
 public sealed class MadInvisible : RoleBase, IKillFlashSeeable, IDeathReasonSeeable
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -49,16 +44,13 @@ public sealed class MadInvisible : RoleBase, IKillFlashSeeable, IDeathReasonSeea
     public bool? CheckKillFlash(MurderInfo info) => canSeeKillFlash;
     public bool? CheckSeeDeathReason(PlayerControl seen) => canSeeDeathReason;
 
-    /// <summary>投票しても票が入らない</summary>
     public override (byte? votedForId, int? numVotes, bool doVote) ModifyVote(byte voterId, byte sourceVotedForId, bool isIntentional)
     {
         if (voterId != Player.PlayerId) return (null, null, true);
         return (null, null, false);
     }
 
-    /// <summary>キルの対象にならない</summary>
     public override bool OnCheckMurderAsTarget(MurderInfo info) => !OptionCantBeKilled.GetBool() || info.IsSuicide;
 
-    /// <summary>ゲッサーに撃たれない(null で無効)</summary>
     public override bool? CheckGuess(PlayerControl killer) => OptionCantBeGuessed.GetBool() ? null : true;
 }

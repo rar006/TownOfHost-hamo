@@ -123,7 +123,6 @@ namespace TownOfHost.Roles
             }
 
             public int Min(CustomRoleTypes roleTypes) => minOptions.TryGetValue(roleTypes, out var opt) ? opt.GetInt() : 0;
-            /// <summary>最大・最少を変える(設定できる範囲に収める。値の番号 = 人数)</summary>
             public void SetMax(CustomRoleTypes roleTypes, int value)
             {
                 if (maxOptions.TryGetValue(roleTypes, out var opt)) opt.SetValue(Math.Clamp(value, 0, opt.Rule.MaxValue));
@@ -154,7 +153,6 @@ namespace TownOfHost.Roles
         public static OptionItem OptionAssignPerPlayerCount;
         // 参加/退出のたびに人数別設定を自動で反映するか
         public static OptionItem OptionAssignPerPlayerCountAuto;
-        /// <summary>人数ごとの設定で、今どの人数を編集するか(表示の切り替え用)</summary>
         public static OptionItem OptionAssignPerPlayerCountEdit;
         private static Dictionary<CustomRoleTypes, RandomAssignOptions> RandomAssignOptionsCollection = new(CustomRolesHelper.AllRoleTypes.Length);
         // 要望により追加: 3人〜15人それぞれに個別の配役数設定を持たせるための辞書。
@@ -211,10 +209,6 @@ namespace TownOfHost.Roles
         private static int EffectiveMin(CustomRoleTypes roleTypes) => Math.Min(RawMin(roleTypes), RawMax(roleTypes));
         private static int EffectiveMax(CustomRoleTypes roleTypes) => Math.Max(RawMin(roleTypes), RawMax(roleTypes));
 
-        /// <summary>
-        /// 設定画面で最少を最大より大きくしたら最大も上げ、最大を最少より小さくしたら最少も下げる
-        /// (どちらも 0 から 1 刻みなので、値の番号 = 人数)
-        /// </summary>
         private static void KeepMinMaxOrder(IntegerOptionItem minOption, IntegerOptionItem maxOption)
         {
             minOption.RegisterUpdateValueEvent((_, _) =>
@@ -411,7 +405,6 @@ namespace TownOfHost.Roles
                 Logger.Warn($"ApplyPerCountSettings: {e.Message}", "RoleAssignManager");
             }
         }
-        /// <summary>Among Us 側のインポスター数を、人数別設定のインポスター最大数(0〜15)にする。変えたら true</summary>
         private static bool SyncImpostorCount(PerCountAssignOptions pc)
         {
             var imp = Math.Clamp(pc.Max(CustomRoleTypes.Impostor), 0, 15);
@@ -420,7 +413,6 @@ namespace TownOfHost.Roles
             GameOptionsSender.RpcSendOptions();
             return true;
         }
-        /// <summary>試合開始の一番最初(オプションの控えを取る前)に呼ぶ</summary>
         public static void SyncImpostorCountBeforeStart()
         {
             try
@@ -437,12 +429,6 @@ namespace TownOfHost.Roles
         private static int lastPcMax = -1;
         private static int lastPcVanilla = -1;
         private static float nextImpSyncCheck;
-        /// <summary>
-        /// どちらかを変えたら、もう片方を合わせる。
-        /// ・アサインモードの「インポスター 最大」を変えた → ゲーム設定のインポスター数を同じにする
-        /// ・ゲーム設定のインポスター数を変えた → アサインモードの最大を同じにする(最小が上回る時は最小も下げる)
-        /// 人数別設定が効いている時は、そちら(ApplyPerCountSettings)に任せる。
-        /// </summary>
         public static void TickImpostorSync()
         {
             try
@@ -692,7 +678,6 @@ namespace TownOfHost.Roles
                     AssignCount.Add(roleTypes, otherRoleTypesList.Count(x => x == roleTypes));
             }
         }
-        /// <summary>陣営ごとに、入れられる役職の人数の合計(出現率0%・人数0・イベント外の役職は数えない)</summary>
         private static Dictionary<CustomRoleTypes, int> GetAssignableCapacity()
         {
             var capacity = new Dictionary<CustomRoleTypes, int>();

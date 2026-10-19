@@ -5,11 +5,6 @@ using TownOfHost.Roles.Core.Interfaces;
 
 namespace TownOfHost;
 
-/// <summary>
-/// 役職ごとの「初期キルクール」(試合開始直後・最初の会議までのキルクール)。
-/// キルボタンを持つ役職(IKiller)すべてに付ける。0 = OFF(今までどおり、共通の設定に従う)。
-/// ID は 8_000_000 + 役職のConfigId(他の設定と重ならない範囲)。
-/// </summary>
 public static class InitialKillCooldownOption
 {
     private const int IdBase = 8_000_000;
@@ -46,7 +41,6 @@ public static class InitialKillCooldownOption
         }
     }
 
-    /// <summary>この人の役職に初期キルクールが設定されていれば、その秒数を返す</summary>
     public static bool TryGet(PlayerControl pc, out float seconds)
     {
         seconds = 0f;
@@ -56,6 +50,5 @@ public static class InitialKillCooldownOption
         return seconds > 0f;
     }
 
-    /// <summary>試合開始直後のキルクール: 役職の初期キルクールがあればそれ、なければ fallback(共通の設定)</summary>
     public static float Resolve(PlayerControl pc, float fallback) => TryGet(pc, out var s) ? s : fallback;
 }

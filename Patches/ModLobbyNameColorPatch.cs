@@ -3,7 +3,6 @@ using HarmonyLib;
 
 namespace TownOfHost.Patches;
 
-/// <summary>ホスト・参加者の両モードで、ロビー中のMOD導入者名を指定色にする。</summary>
 [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.FixedUpdate))]
 [HarmonyPriority(Priority.Last)]
 public static class ModLobbyNameColorPatch

@@ -8,10 +8,6 @@ using static TownOfHost.Modules.SelfVoteManager;
 
 namespace TownOfHost.Roles.Madmate;
 
-/// <summary>
-/// マッドマジック: 自投票すると変身モードになり、チャット(/cmd mm 番号)で選んだマッドメイト役職に一定ターン変身する。
-/// 変身はターン経過で元に戻る。タスク数は変わらない。マッドワーカーにはならない。
-/// </summary>
 public sealed class MadMagic : RoleBase, IKillFlashSeeable, IDeathReasonSeeable, ISelfVoter
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -33,7 +29,6 @@ public sealed class MadMagic : RoleBase, IKillFlashSeeable, IDeathReasonSeeable,
     static OptionItem[] OptionChoices;
     enum OptionName { MadMagicTurns, MadMagicChoice1, MadMagicChoice2, MadMagicChoice3 }
 
-    /// <summary>変身先の候補(マッドワーカーとマッドマジック自身は除く)</summary>
     static CustomRoles[] Candidates => CustomRolesHelper.AllRoles
         .Where(r => r.GetRoleInfo()?.CustomRoleType == CustomRoleTypes.Madmate && r is not (CustomRoles.MadWorker or CustomRoles.MadMagic or CustomRoles.SKMadmate))
         .ToArray();
@@ -61,12 +56,10 @@ public sealed class MadMagic : RoleBase, IKillFlashSeeable, IDeathReasonSeeable,
     public bool? CheckKillFlash(MurderInfo info) => canSeeKillFlash;
     public bool? CheckSeeDeathReason(PlayerControl seen) => canSeeDeathReason;
 
-    /// <summary>この試合で選べる3つの役職(ランダム指定はここで決まる)</summary>
     readonly List<CustomRoles> choices = new();
     bool choosing;
 
     // ===== 変身中の人(役職が変わるとこのクラスは消えるので static で覚える) =====
-    /// <summary>変身中: プレイヤー → 元に戻る日</summary>
     static readonly Dictionary<byte, int> transformed = new();
 
     public override void Add()
@@ -105,7 +98,6 @@ public sealed class MadMagic : RoleBase, IKillFlashSeeable, IDeathReasonSeeable,
         return true;
     }
 
-    /// <summary>/cmd mm 番号</summary>
     public void HandleCommand(string[] args)
     {
         var me = Player.PlayerId;
@@ -132,7 +124,6 @@ public sealed class MadMagic : RoleBase, IKillFlashSeeable, IDeathReasonSeeable,
         UtilsNotifyRoles.NotifyRoles();
     }
 
-    /// <summary>会議が終わるたびに(ホスト): 変身の期限が来た人を元に戻す</summary>
     public static void AfterMeeting()
     {
         if (transformed.Count == 0) return;
@@ -150,6 +141,5 @@ public sealed class MadMagic : RoleBase, IKillFlashSeeable, IDeathReasonSeeable,
     [Attributes.GameModuleInitializer]
     public static void Clear() => transformed.Clear();
 
-    /// <summary>変身中かどうか(ゲッサーは変身先でもマッドマジックでも撃てる)</summary>
     public static bool IsTransformed(byte id) => transformed.ContainsKey(id);
 }

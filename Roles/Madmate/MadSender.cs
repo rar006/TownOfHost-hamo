@@ -6,11 +6,6 @@ using TownOfHost.Roles.Crewmate;
 
 namespace TownOfHost.Roles.Madmate;
 
-/// <summary>
-/// マッドセンダー(マッドメイト)
-/// 会議で自投票 → 相手に投票すると、次に打ったチャットが相手にだけ表示される(誰から届いたかは分からない)。
-/// 設定でインポスターが分かる。
-/// </summary>
 public sealed class MadSender : RoleBase, IKillFlashSeeable, IDeathReasonSeeable, ISelfVoter
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -58,7 +53,6 @@ public sealed class MadSender : RoleBase, IKillFlashSeeable, IDeathReasonSeeable
 
     public override void OnStartMeeting() => state.Reset();
 
-    /// <summary>設定でインポスターが分かる</summary>
     public override string GetMark(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)
     {
         seen ??= seer;

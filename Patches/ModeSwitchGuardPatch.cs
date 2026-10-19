@@ -4,7 +4,6 @@ using TownOfHost.Modules;
 namespace TownOfHost;
 
 /// <summary>
-    /// 同じDLLでホスト・参加者の両方を扱うため、作成と参加をどちらも許可する。
 /// </summary>
 [HarmonyPatch]
 public static class ModeSwitchGuardPatch

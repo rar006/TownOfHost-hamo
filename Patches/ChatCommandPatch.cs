@@ -6768,7 +6768,6 @@ namespace TownOfHost
         public static bool DoBlockChat = false;
 
         public static bool BlockSendName = false;
-        /// <summary>前回システムメッセージを送ってからの時間</summary>
         private static float systemTimer = 99f;
 
         public static void Postfix(ChatController __instance)

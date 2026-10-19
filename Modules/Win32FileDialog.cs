@@ -59,16 +59,10 @@ public static class Win32FileDialog
 
     private const int OFN_ALLOWMULTISELECT = 0x00000200;
 
-    /// <summary>1回に選べる添付ファイルの最大数</summary>
     public const int MaxAttachments = 3;
 
     static volatile bool dialogOpen;
 
-    /// <summary>
-    /// 画像・動画ファイルを選ぶダイアログを別スレッドで開く(ゲームを止めない)。Ctrl/Shift+クリックで複数選べる。
-    /// 選んだら onSelected がゲームのスレッドで呼ばれる(選んだ順・最大 MaxAttachments 件。多く選んだ分は切り捨てて truncated=true)。
-    /// ゲームのスレッドで開くと、閉じるまでゲーム全体が止まり、全画面などではフリーズやクラッシュの原因になる。
-    /// </summary>
     public static void ShowOpenImageOrVideoDialogAsync(Action<string[], bool> onSelected)
     {
         if (!OperatingSystem.IsWindows() || dialogOpen) return;
@@ -88,7 +82,6 @@ public static class Win32FileDialog
         thread.Start();
     }
 
-    /// <summary>画像・動画ファイルを選ぶダイアログ(複数選択可)。キャンセルされた場合はnull。</summary>
     public static string[] ShowOpenImageOrVideoDialog(bool ownerless = false)
     {
         if (!OperatingSystem.IsWindows()) return null;

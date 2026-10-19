@@ -107,9 +107,7 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
     public static bool CanUseSabotage;
 
     public static FilterOptionItem OptionHaveRole; static CustomRoles haverole;
-    /// <summary>付与する役職の2つ目。2つとも設定されていたら、試合ごとにどちらかをランダムで選ぶ</summary>
     public static FilterOptionItem OptionHaveRole2;
-    /// <summary>この試合で選ばれた付与役職(ホストが試合開始時に決める)</summary>
     static CustomRoles pickedRole = CustomRoles.NotAssigned;
     static List<CustomRoles> HaveRoleCandidates()
     {
@@ -118,7 +116,6 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
         if (OptionHaveRole2?.GetBool() == true && !list.Contains(OptionHaveRole2.GetRole())) list.Add(OptionHaveRole2.GetRole());
         return list;
     }
-    /// <summary>今の試合の付与役職(決まっていなければ1つ目の設定。どちらも無ければインポスター)</summary>
     static CustomRoles CurrentHaveRole()
     {
         if (pickedRole is not CustomRoles.NotAssigned) return pickedRole;

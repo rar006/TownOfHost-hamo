@@ -14,18 +14,12 @@ namespace TownOfHost.Roles.AddOns.Common
     //  サバイビング / バーサーカー / タフガイ / 共存症 / マーダー
     // =====================================================================
 
-    /// <summary>今が何日目か(ゲーム開始時は1。会議が終わるたびに+1)</summary>
     internal static class AddonDay
     {
         public static int Now => UtilsGameLog.day;
     }
 
     // ---------------------------------------------------------------------
-    /// <summary>
-    /// サバイビング: 設定日数生きていなければ、試合結果に関わらず敗北する。
-    /// 設定日数より前に試合が終わった場合は、その時点で生きていれば勝利できる。
-    /// 死亡勝利系(ジェスター等)は、設定日数を過ぎてから死亡している必要がある。
-    /// </summary>
     public static class Surviving
     {
         private const int Id = 92000;
@@ -43,7 +37,6 @@ namespace TownOfHost.Roles.AddOns.Common
         public static void Init() => playerIdList = new();
         public static void Add(byte playerId) { if (!playerIdList.Contains(playerId)) playerIdList.Add(playerId); }
 
-        /// <summary>試合終了時: 条件を満たしていない人を勝者から外す</summary>
         public static void CheckWin()
         {
             var need = OptionDays?.GetInt() ?? 3;
@@ -61,11 +54,6 @@ namespace TownOfHost.Roles.AddOns.Common
     }
 
     // ---------------------------------------------------------------------
-    /// <summary>
-    /// バーサーカー(キル役に付く): キルクールが短い。
-    /// ただし、キルできる状態で同じ相手と設定秒数キルをせず一緒にいると、勝手にキルしてしまう。
-    /// 蓄積OFFなら、離れると時間がリセットされる。
-    /// </summary>
     public static class Berserker
     {
         private const int Id = 92100;
@@ -96,7 +84,6 @@ namespace TownOfHost.Roles.AddOns.Common
         static bool IsTeammate(PlayerControl a, PlayerControl b)
             => (a.GetCustomRole().IsImpostor() || a.GetCustomRole().IsMadmate()) && b.GetCustomRole().IsImpostor();
 
-        /// <summary>毎フレーム(ホスト・試合中のみ)</summary>
         public static void Tick(float dt)
         {
             if (playerIdList.Count == 0) return;
@@ -136,10 +123,6 @@ namespace TownOfHost.Roles.AddOns.Common
     }
 
     // ---------------------------------------------------------------------
-    /// <summary>
-    /// タフガイ: 1回だけキルを防ぐ。防いでから設定ターン数が経過すると、会議終了時に死亡する(死因: 自殺)。
-    /// 他のキルガード属性がある場合は、そちらを使い切ってから発動する。もう一度キルされたら死亡する。
-    /// </summary>
     public static class ToughGuy
     {
         private const int Id = 92200;
@@ -147,7 +130,6 @@ namespace TownOfHost.Roles.AddOns.Common
         public static List<byte> playerIdList = new();
         public static OptionItem OptionTurns;
         public static OptionItem OptionNotify;
-        /// <summary>キルを防いだ日</summary>
         static readonly Dictionary<byte, int> guardedDay = new();
         static readonly HashSet<byte> notifyPending = new();
 
@@ -162,7 +144,6 @@ namespace TownOfHost.Roles.AddOns.Common
         public static void Init() { playerIdList = new(); guardedDay.Clear(); notifyPending.Clear(); }
         public static void Add(byte playerId) { if (!playerIdList.Contains(playerId)) playerIdList.Add(playerId); }
 
-        /// <summary>キル判定(他のガードを使い切った後に呼ばれる)。防いだら true</summary>
         public static bool TryGuard(PlayerControl target)
         {
             if (target == null || !target.Is(CustomRoles.ToughGuy) || guardedDay.ContainsKey(target.PlayerId)) return false;
@@ -172,7 +153,6 @@ namespace TownOfHost.Roles.AddOns.Common
             return true;
         }
 
-        /// <summary>会議開始時(ホスト): 通知と、死亡の予約</summary>
         public static string OnMeetingStart()
         {
             foreach (var id in notifyPending)
@@ -194,10 +174,6 @@ namespace TownOfHost.Roles.AddOns.Common
     }
 
     // ---------------------------------------------------------------------
-    /// <summary>
-    /// 共存症: オポチュニストの属性版。設定したターン以降、試合終了時に生きていれば追加勝利する。
-    /// (付与される役職は、属性の割り当て設定で決める)
-    /// </summary>
     public static class Comorbidity
     {
         private const int Id = 92300;
@@ -215,7 +191,6 @@ namespace TownOfHost.Roles.AddOns.Common
         public static void Init() => playerIdList = new();
         public static void Add(byte playerId) { if (!playerIdList.Contains(playerId)) playerIdList.Add(playerId); }
 
-        /// <summary>設定したターンになって効果が出ているか</summary>
         public static bool IsActive => AddonDay.Now >= (OptionStartTurn?.GetInt() ?? 4);
 
         public static void CheckWin()
@@ -234,10 +209,6 @@ namespace TownOfHost.Roles.AddOns.Common
     }
 
     // ---------------------------------------------------------------------
-    /// <summary>
-    /// マーダー(クルーメイトにのみ付く・君臨者とワルキューレには付かない):
-    /// 勝利条件が「自身を除くクルーメイトの全滅で追加勝利」に変わる。タスクは全体の進捗に含まれない。
-    /// </summary>
     public static class Murder
     {
         private const int Id = 92400;
@@ -259,12 +230,10 @@ namespace TownOfHost.Roles.AddOns.Common
         public static void Init() => playerIdList = new();
         public static void Add(byte playerId) { if (!playerIdList.Contains(playerId)) playerIdList.Add(playerId); }
 
-        /// <summary>この役職には付けない</summary>
         public static bool CanBeGiven(CustomRoles role) => role.IsCrewmate() && role is not (CustomRoles.King or CustomRoles.Walkure);
 
         static bool IsSheriffLike(CustomRoles role) => role.ToString().Contains("Sheriff");
 
-        /// <summary>シェリフ系にキルされそうな時: 反射するなら true(キルした側が死ぬ)</summary>
         public static bool TryReflect(PlayerControl killer, PlayerControl target)
         {
             if (killer == null || target == null || !target.Is(CustomRoles.Murder)) return false;
@@ -306,11 +275,6 @@ namespace TownOfHost.Roles.AddOns.Common
     }
 
     // ---------------------------------------------------------------------
-    /// <summary>
-    /// ベトレイゲッサー(クルーにのみ付く・君臨者とワルキューレには付かない):
-    /// 試合中、クルーメイトが設定人数追放される、または設定人数死亡すると、設定確率でクルー1人に付く。
-    /// 会議中に /cmd bt ID でゲッサーができる。設定人数的中した状態でクルーが負けると追加勝利(元の勝利条件は消える)。
-    /// </summary>
     public static class BetrayGuesser
     {
         private const int Id = 93700;
@@ -339,7 +303,6 @@ namespace TownOfHost.Roles.AddOns.Common
         public static void Init() { playerIdList = new(); success.Clear(); given = false; }
         public static void Add(byte playerId) { if (!playerIdList.Contains(playerId)) playerIdList.Add(playerId); }
 
-        /// <summary>ゲッサーの回数(全体・1会議とも)</summary>
         public static int GuessLimit => OptionGuessCount?.GetInt() ?? 2;
         public static void OnGuessSuccess(byte id)
         {
@@ -352,7 +315,6 @@ namespace TownOfHost.Roles.AddOns.Common
                && pc.GetCustomRole() is not (CustomRoles.King or CustomRoles.Walkure)
                && !pc.Is(CustomRoles.BetrayGuesser) && !pc.Is(CustomRoles.Guesser);
 
-        /// <summary>会議が終わるたびに(ホスト): 条件を満たしたら、設定確率でクルー1人に付ける(1試合1回)</summary>
         public static void CheckGive()
         {
             if (given || !CustomRoles.BetrayGuesser.IsEnable()) return;
@@ -379,7 +341,6 @@ namespace TownOfHost.Roles.AddOns.Common
             Logger.Info($"ベトレイゲッサー: {pc.Data?.GetLogPlayerName()} に付与 (追放{exiled} / 死亡{died})", "BetrayGuesser");
         }
 
-        /// <summary>試合終了時: 元の勝利条件は消え、条件を満たした時だけ追加勝利</summary>
         public static void CheckWin()
         {
             var crewWon = CustomWinnerHolder.WinnerTeam == CustomWinner.Crewmate;
@@ -408,7 +369,6 @@ namespace TownOfHost.Roles.AddOns.Common
     }
 
     // ---------------------------------------------------------------------
-    /// <summary>まとめて呼ぶための入口</summary>
     public static class UserAddons2026
     {
         public static void SetupCustomOption()
@@ -429,7 +389,6 @@ namespace TownOfHost.Roles.AddOns.Common
             Murder.Init();
             BetrayGuesser.Init();
         }
-        /// <summary>試合終了時の勝者調整(他の追加勝利の判定が終わった後)</summary>
         public static void CheckWin(GameOverReason reason)
         {
             Murder.CheckWin(reason);

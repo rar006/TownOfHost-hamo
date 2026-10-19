@@ -5,31 +5,19 @@ using TownOfHost.Patches;
 
 namespace TownOfHost.Modules;
 
-/// <summary>
-/// 「開始後、緊急会議を発動させる」の初手会議で、チャットを一定時間(または会議終了まで)使えなくする。
-/// ・MOD導入者(ホスト含む): 自分のMODが送信を止める。届いたMOD未導入者のチャットも表示しない
-/// ・MOD未導入者: 「試合中チャットコマンドを非表示にする」と同じ仕組みで、その人の画面でだけ
-///   他の全員を死亡扱いにする。バニラは死者のチャットを生存者に見せないので、お互いのチャットが届かなくなる。
-///   (チャットを連投して流す方法と違い、公式サーバーでも使える)
-/// 「/」から始まるコマンドは止めない。
-/// </summary>
 public static class FirstMeetingChatBlock
 {
-    /// <summary>設定の一番上の値。これを選ぶと「会議終了時まで」</summary>
     public const int UntilEnd = 1000;
 
     static bool active;
     static float startedAt;
-    /// <summary>MOD未導入者の画面を「他の全員が死亡」にしているか</summary>
     static bool hiding;
 
     static int Seconds => Options.FirstTurnMeetingChatBlock?.GetInt() ?? 0;
 
-    /// <summary>今チャットを止めているか</summary>
     public static bool IsBlocking
         => active && GameStates.IsMeeting && (Seconds >= UntilEnd || Time.time - startedAt < Seconds);
 
-    /// <summary>止める対象のメッセージか(コマンドは通す)</summary>
     public static bool ShouldBlock(string text)
         => IsBlocking && !string.IsNullOrWhiteSpace(text) && !text.TrimStart().StartsWith("/");
 
@@ -37,7 +25,6 @@ public static class FirstMeetingChatBlock
         ? Translator.GetString("FirstMeetingChatBlockedUntilEnd")
         : string.Format(Translator.GetString("FirstMeetingChatBlockedSeconds"), Seconds);
 
-    /// <summary>自分(MOD導入者)が送ろうとして止めた時に、自分にだけ出す</summary>
     public static void ShowLocalNotice()
     {
         try { HudManager.Instance?.Chat?.AddChat(PlayerControl.LocalPlayer, Notice); } catch { }
@@ -46,7 +33,6 @@ public static class FirstMeetingChatBlock
     static bool CanUseDeadTrick => AmongUsClient.Instance != null && AmongUsClient.Instance.AmHost
         && !AntiBlackout.IsSet && !AntiBlackout.IsCached && !Roles.Impostor.Assassin.NowUse;
 
-    /// <summary>MOD未導入者それぞれの画面で、ホスト以外の全員を死亡扱いにする(ホストのみ)</summary>
     public static void HideOthersForVanilla()
     {
         if (!CanUseDeadTrick) return;
@@ -78,7 +64,6 @@ public static class FirstMeetingChatBlock
         Logger.Info("初手会議のチャット無効化: MOD未導入者の画面で他の全員を死亡扱いにしました", "FirstMeetingChatBlock");
     }
 
-    /// <summary>秒数指定で時間が来た時: 本当の生死に戻す(ホストのみ)</summary>
     static void RestoreForVanilla()
     {
         if (!hiding) return;
@@ -97,11 +82,6 @@ public static class FirstMeetingChatBlock
         Logger.Info("初手会議のチャット無効化: 時間が来たので元に戻しました", "FirstMeetingChatBlock");
     }
 
-    /// <summary>
-    /// 生死を送り直すと、名前も一緒に送られて「会議中の見え方(役職の色を隠した名前)」が上書きされ、
-    /// 他の人の役職の色が見えてしまう。送り直した後に、会議中の名前をもう一度送る。
-    /// (会議開始直後は、もともと7秒後に名前を送るので、その前なら何もしない)
-    /// </summary>
     public static void ResendMeetingNames(float delay)
         => _ = new LateTask(() =>
         {
@@ -149,7 +129,6 @@ public static class FirstMeetingChatBlock
     }
 }
 
-/// <summary>0=OFF / 1〜999秒 / 1000=会議終了時まで の設定</summary>
 public sealed class ChatBlockSecondsOptionItem : IntegerOptionItem
 {
     public ChatBlockSecondsOptionItem(int id, string name, int defaultValue, TabGroup tab)

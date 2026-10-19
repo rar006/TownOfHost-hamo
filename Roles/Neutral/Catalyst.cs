@@ -7,14 +7,6 @@ using TownOfHost.Roles.Core.Interfaces;
 
 namespace TownOfHost.Roles.Neutral;
 
-/// <summary>
-/// カタリスト(第三陣営・ファントム) ※必ずコンダクターと一緒に配役される
-/// ・共鳴: ファントムボタンで、コンダクターのキル範囲内にいる一番近いプレイヤーをキルし、その場所へワープする。
-///   コンダクターが自分の視界に入っていない時だけ使える。コンダクターの不協和音で一時的に使えなくなる。
-/// ・キルボタンは通常使えない(設定で使える)
-/// ・相方が死ぬと後追い(設定でオポチュニストになる)
-/// 勝利条件: 他のキル役がおらず、クルーの人数が自陣営の人数以下になること。
-/// </summary>
 public sealed class Catalyst : RoleBase, IKiller, IUsePhantomButton
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -77,7 +69,6 @@ public sealed class Catalyst : RoleBase, IKiller, IUsePhantomButton
 
     public static Catalyst Instance => CustomRoleManager.AllActiveRoles.Values.OfType<Catalyst>().FirstOrDefault();
 
-    /// <summary>不協和音で共鳴が使えない期限</summary>
     float disabledUntil = -1f;
     public bool IsDisabled => Time.time < disabledUntil;
 
@@ -87,7 +78,6 @@ public sealed class Catalyst : RoleBase, IKiller, IUsePhantomButton
     public bool CanUseSabotageButton() => false;
     public bool CanUseImpostorVentButton() => false;
 
-    /// <summary>コンダクターの不協和音(ホスト)</summary>
     public void Disable(float seconds)
     {
         disabledUntil = Time.time + seconds;
@@ -96,7 +86,6 @@ public sealed class Catalyst : RoleBase, IKiller, IUsePhantomButton
         UtilsNotifyRoles.NotifyRoles(SpecifySeer: Player);
     }
 
-    /// <summary>相手が自分の視界に入っているか(距離と壁)</summary>
     bool CanSee(PlayerControl other)
     {
         var a = Player.GetTruePosition();
@@ -165,12 +154,6 @@ public sealed class Catalyst : RoleBase, IKiller, IUsePhantomButton
     }
 }
 
-/// <summary>
-/// コンダクター(第三陣営・ファントム) ※必ずカタリストと一緒に配役される
-/// ・不協和音: ファントムボタンで、一時的にカタリストの共鳴を無効化する
-/// ・キルボタンは通常使えない(設定で使える)
-/// ・相方が死ぬと後追い(設定でオポチュニストになる)
-/// </summary>
 public sealed class Conductor : RoleBase, IKiller, IUsePhantomButton
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -220,12 +203,10 @@ public sealed class Conductor : RoleBase, IKiller, IUsePhantomButton
     public override void OnFixedUpdate(PlayerControl player) => CatalystPair.CheckPartnerDead(Player, Catalyst.Instance?.Player, Catalyst.OptionConductorToOpportunist.GetBool());
 }
 
-/// <summary>カタリストとコンダクターの共通処理</summary>
 public static class CatalystPair
 {
     static bool IsMember(PlayerControl p) => p != null && (p.Is(CustomRoles.Catalyst) || p.Is(CustomRoles.Conductor));
 
-    /// <summary>相方が死んだら後追い(設定でオポチュニストになる)。ホスト・タスク中</summary>
     public static void CheckPartnerDead(PlayerControl me, PlayerControl partner, bool toOpportunist)
     {
         if (!AmongUsClient.Instance.AmHost || !GameStates.IsInTask || me == null || !me.IsAlive()) return;
@@ -242,10 +223,6 @@ public static class CatalystPair
         me.RpcMurderPlayerV2(me);
     }
 
-    /// <summary>
-    /// 単独勝利: 他のキル役がおらず、クルーの人数が自陣営の生存数以下。
-    /// カウントはクルーなので、クルー勝利の判定より前に呼ぶ。
-    /// </summary>
     public static bool CheckInstantWin(out GameOverReason reason)
     {
         reason = GameOverReason.ImpostorsByKill;

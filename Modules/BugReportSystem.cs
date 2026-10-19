@@ -53,16 +53,12 @@ public static class BugReportSystem
         public long CreatedAtMs { get; set; } = 0;
         public long LastPolledAtMs { get; set; } = 0;
         public bool HasUnread { get; set; } = false;
-        /// <summary>モデレーターが /cmd bug で送ったチケット(返信をロビーのモデレーターにも見せる)</summary>
         public bool ViaModerator { get; set; } = false;
-        /// <summary>Discord側のステータス(open / in_progress / resolved / read)。一覧でタグとして表示する</summary>
         public string Status { get; set; } = "open";
         public List<TicketMessage> Messages { get; set; } = new();
-        /// <summary>「みんなの報告」から開いた、他の人の報告(自分の報告の数には数えない)</summary>
         public bool Followed { get; set; } = false;
     }
 
-    /// <summary>「みんなの報告」の一覧の1件(サーバーの /public から)</summary>
     public class PublicTicket
     {
         public string TicketId { get; set; } = "";
@@ -77,7 +73,6 @@ public static class BugReportSystem
         public List<PublicTicket> Items { get; set; } = new();
     }
 
-    /// <summary>今出ている報告の一覧(みんなの報告)。取れなければ null</summary>
     public static async Task<List<PublicTicket>> FetchPublicAsync()
     {
         if (string.IsNullOrEmpty(BugReportRemoteConfig.EndpointUrl)) return null;
@@ -98,10 +93,6 @@ public static class BugReportSystem
         }
     }
 
-    /// <summary>
-    /// 他の人の報告を「見ている報告」として自分の一覧に入れる(チャット・画像の添付・返信の受け取りが自分の報告と同じようにできる)。
-    /// すでに入っていれば何もしない。入れたら、すぐに今までのやり取りを読みに行く。
-    /// </summary>
     public static void FollowTicket(PublicTicket p)
     {
         if (p == null || string.IsNullOrEmpty(p.TicketId)) return;
@@ -132,7 +123,6 @@ public static class BugReportSystem
 
     public static IReadOnlyList<TicketInfo> Tickets => _data.Tickets;
 
-    /// <summary>一覧に付けるステータスのタグ(Discordのフォーラムのタグと同じ。絵文字はゲームで出ないので文字で)</summary>
     public static string StatusTag(string status) => status switch
     {
         "in_progress" => "<#4f8ff7>【修正中】</color>",
@@ -540,8 +530,6 @@ public static class BugReportSystem
         }
     }
 
-    /// <summary>選択した画像・動画ファイル(最大 Win32FileDialog.MaxAttachments 件)を、1つの投稿にまとめてチケットチャンネルに送信する。
-    /// 成功したかどうかと、失敗時のメッセージを返す。author を渡すと「誰が送ったか」も表示される(専用チャットから送る時)。</summary>
     public static async Task<(bool ok, string message)> UploadAttachmentsAsync(string ticketId, IReadOnlyList<string> filePaths, string author = null)
     {
         if (string.IsNullOrEmpty(ticketId)) return (false, "送信先のチケットが見つかりません。");
@@ -658,16 +646,10 @@ public static class BugReportRemoteConfig
     /// <summary>修正完了後も追加のバグ報告ボタンを表示するか。Discord運用に合わせて切り替える。</summary>
     public static bool AllowAdditionalReports = true;
 
-    /// <summary>同時に保持できる「未対応」のバグ報告数。サーバー側の上限3件と一致させる。</summary>
     public const int MaxTickets = 3;
 
-    /// <summary>一覧に並べるバグ報告の数(新しい順)。既読・修正中・修正済みの報告も履歴として見られるよう、上限より多めにする。</summary>
     public const int MaxListedTickets = 5;
 
-    /// <summary>
-    /// 枠を使っている(まだ未対応の)報告の数。既読・修正中・修正済みになった報告は数えない(サーバー側と同じ)。
-    /// (以前は状態に関係なく持っている報告の数で判断していたため、対応済みでも追加の報告ができなかった)
-    /// </summary>
     public static int ActiveTicketCount => BugReportSystem.Tickets.Count(t => !t.Followed && t.Status is not ("in_progress" or "resolved" or "read"));
 
     public static bool CanSubmitAdditionalReport => AllowAdditionalReports && ActiveTicketCount < MaxTickets;
@@ -706,10 +688,6 @@ public static class BugReportPollLobbyStartPatch
 }
 
 
-/// <summary>
-/// モデレーター経由(/cmd bug)のバグ報告に付いたDiscordからの返信を、ロビーにいるモデレーターだけに個別チャットで見せる。
-/// 試合中は溜めておき、次のロビーで送る。アンチチート対策として、まとめて送り・送信間隔を空け・1回の量を制限する。
-/// </summary>
 public static class ModeratorBugRelay
 {
     private static readonly System.Collections.Concurrent.ConcurrentQueue<string> Pending = new();

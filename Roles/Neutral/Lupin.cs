@@ -9,13 +9,6 @@ using static TownOfHost.Modules.SelfVoteManager;
 
 namespace TownOfHost.Roles.Neutral;
 
-/// <summary>
-/// ルパン(第三陣営・シェイプシフター)
-/// ・会議で自投票 → 対象に投票すると、その対象が死亡した時に対象をアルセーヌ(守護天使)にする(1人だけ)
-/// ・アルセーヌに守護天使を押された時だけ、設定秒数キルが可能になる(覚醒中に1回だけ)。覚醒中は他からのキルを無効化
-/// ・シェイプシフターの能力が使える
-/// 勝利条件: 自身以外のキラーが全滅で単独勝利(アルセーヌも追加勝利)
-/// </summary>
 public sealed class Lupin : RoleBase, IKiller, ISelfVoter
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -74,7 +67,6 @@ public sealed class Lupin : RoleBase, IKiller, ISelfVoter
         AURoleOptions.ShapeshifterDuration = OptionShapeDuration.GetFloat();
     }
 
-    /// <summary>アルセーヌにできない役職(ジェスターなど死亡で勝つ役職)</summary>
     static bool CanBecomeArsene(CustomRoles role) => role is not (CustomRoles.Jester or CustomRoles.Terrorist or CustomRoles.Lupin);
 
     public override bool CheckVoteAsVoter(byte votedForId, PlayerControl voter)
@@ -100,7 +92,6 @@ public sealed class Lupin : RoleBase, IKiller, ISelfVoter
         return true;
     }
 
-    /// <summary>毎フレーム(ホスト): 印を付けた相手が死んだらアルセーヌにする / 覚醒の終了</summary>
     public void Tick()
     {
         if (markedTarget != byte.MaxValue && arseneId == byte.MaxValue)
@@ -124,7 +115,6 @@ public sealed class Lupin : RoleBase, IKiller, ISelfVoter
         }
     }
 
-    /// <summary>アルセーヌが守護天使ボタンを押した(ホスト)</summary>
     public void Awaken()
     {
         if (!Player.IsAlive()) return;
@@ -142,7 +132,6 @@ public sealed class Lupin : RoleBase, IKiller, ISelfVoter
         SendRPC();
     }
 
-    /// <summary>覚醒中は他のプレイヤーからのキルを無効化</summary>
     public override bool OnCheckMurderAsTarget(MurderInfo info) => !IsAwakened || info.IsSuicide;
 
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
@@ -154,7 +143,6 @@ public sealed class Lupin : RoleBase, IKiller, ISelfVoter
 
     public bool IsArsene(byte id) => arseneId == id;
 
-    /// <summary>勝利判定: 生きていて、クルーの勝利(=自分以外のキラーが全滅)なら単独勝利。アルセーヌも追加勝利</summary>
     public static bool CheckWin(ref GameOverReason reason)
     {
         var lupin = Instance;
@@ -188,11 +176,6 @@ public sealed class Lupin : RoleBase, IKiller, ISelfVoter
     }
 }
 
-/// <summary>
-/// アルセーヌ(ルパンが作るゴースト役職・守護天使ボタン)
-/// ルパンに守護天使ボタンを押すと、設定秒数ルパンにキル能力を与える(覚醒中はルパンへのキルを無効化)。
-/// ルパンの勝利で追加勝利。ルパンが死亡するとアルセーヌもルパンも勝利できない。
-/// </summary>
 public static class Arsene
 {
     public static void UseAbility(PlayerControl pc, PlayerControl target)

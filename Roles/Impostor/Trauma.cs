@@ -8,15 +8,6 @@ using TownOfHost.Roles.Crewmate;
 
 namespace TownOfHost.Roles.Impostor;
 
-/// <summary>
-/// トラウマ(インポスター)
-/// 最初はキルクールが少し短いインポスター。サーマウントがタスクをするたびに
-/// キルクール増加・視界低下のデバフが付いていく(デクレッシェンドのように不利になっていく)。
-/// ・サーマウントを自分でキル → デバフを全部乗り越える(キルクールは「乗り越えた後のキルクール」、視界は元通り)
-/// ・サーマウントが吊られる   → キルクールだけ戻る(「吊り時の乗り越え後キルクール」)。視界はそのまま
-/// ・サーマウントが他の人にキルされる → 乗り越えられず、試合終了までそのまま
-/// ・会議のたびに、サーマウントが最後にいた場所が分かる
-/// </summary>
 public sealed class Trauma : RoleBase, IImpostor
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -96,12 +87,10 @@ public sealed class Trauma : RoleBase, IImpostor
     int killCooldownSteps;
     int visionSteps;
     OvercomeState state;
-    /// <summary>会議で教える、サーマウントが最後にいた場所</summary>
     string surmountLastRoom = "";
 
     public bool CanBeLastImpostor { get; } = false;
 
-    /// <summary>このタスクで与えるデバフの種類(前半は1番目、後半は2番目)</summary>
     public static DebuffType DebuffForTask(int completed, int all)
     {
         var first = (DebuffType)OptionFirstDebuff.GetValue();
@@ -110,7 +99,6 @@ public sealed class Trauma : RoleBase, IImpostor
         return completed * 2 <= all ? first : second;
     }
 
-    /// <summary>サーマウントがタスクをしてデバフを与えた(ホスト)</summary>
     public void ReceiveDebuff(DebuffType type)
     {
         if (!Player.IsAlive()) return;
@@ -120,7 +108,6 @@ public sealed class Trauma : RoleBase, IImpostor
         SyncAll();
     }
 
-    /// <summary>サーマウントが死亡した(ホスト)</summary>
     public void OnSurmountDead(bool killedByMe, bool exiled)
     {
         if (state is OvercomeState.Overcome or OvercomeState.Locked) return;

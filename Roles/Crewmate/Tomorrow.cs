@@ -124,7 +124,6 @@ public sealed class Tomorrow : RoleBase
 
     // 直前に開いた特殊会議で、まだ死体情報の公開を行っていない場合はtrue
     private bool revealPending;
-    /// <summary>このターンが始まった時点で、もう死んでいた人。特殊会議では、このターン中に死んだ人だけを公開する</summary>
     private readonly System.Collections.Generic.HashSet<byte> deadAtTurnStart = new();
     private void RememberDeadAtTurnStart()
     {

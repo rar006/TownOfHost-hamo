@@ -47,7 +47,6 @@ public sealed class Pharaoh : RoleBase, IKiller, ISystemTypeUpdateHook, IAdditio
     static OptionItem OptionKillCooldown;
     static OptionItem OptionInitialCount;
     static OptionItem OptionMarkExpireMeetings;
-    /// <summary>マーク(☥)をファラオ本人と死んだ人にだけ見せる</summary>
     static OptionItem OptionMarkOnlyPharaoh;
 
     enum OptionName

@@ -7,13 +7,6 @@ using TownOfHost.Roles.Core.Interfaces;
 
 namespace TownOfHost.Roles.Neutral;
 
-/// <summary>
-/// パリティ(第三陣営)
-/// その会議で自分に入った合計票数で能力が変わる(0票は偶数)。
-/// ・奇数: キルできるが勝利できない
-/// ・偶数: キルできないが、生存して試合が終わると単独勝利(設定で追加勝利)
-/// 設定で自投票を数えるか、リアクターを直せるかを選べる。
-/// </summary>
 public sealed class Parity : RoleBase, IKiller, ISystemTypeUpdateHook
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -49,7 +42,6 @@ public sealed class Parity : RoleBase, IKiller, ISystemTypeUpdateHook
 
     public Parity(PlayerControl player) : base(RoleInfo, player, () => HasTask.False) { }
 
-    /// <summary>最後の会議で入った票数(0は偶数)</summary>
     int votes;
     public bool IsOdd => votes % 2 == 1;
 
@@ -60,7 +52,6 @@ public sealed class Parity : RoleBase, IKiller, ISystemTypeUpdateHook
 
     public bool UpdateReactorSystem(ReactorSystemType reactorSystem, byte amount) => OptionCanFixReactor.GetBool() || !Player.IsAlive();
 
-    /// <summary>投票の集計時に、自分に入った票数を覚える(何度か呼ばれても同じ結果になる)</summary>
     public override bool VotingResults(ref NetworkedPlayerInfo Exiled, ref bool IsTie, Dictionary<byte, int> vote, byte[] mostVotedPlayers, bool ClearAndExile)
     {
         var n = vote != null && vote.TryGetValue(Player.PlayerId, out var c) ? c : 0;
@@ -85,7 +76,6 @@ public sealed class Parity : RoleBase, IKiller, ISystemTypeUpdateHook
     public override string GetProgressText(bool comms = false, bool gamelog = false)
         => Utils.ColorString(IsOdd ? Palette.ImpostorRed : RoleInfo.RoleColor, $"({GetString(IsOdd ? "ParityOdd" : "ParityEven")}{votes})");
 
-    /// <summary>勝利判定: 生存していて偶数なら単独勝利(設定で追加勝利)</summary>
     public static void CheckWin()
     {
         foreach (var pc in PlayerCatch.AllPlayerControls)

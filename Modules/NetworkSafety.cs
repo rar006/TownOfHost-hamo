@@ -8,32 +8,14 @@ using UnityEngine;
 
 namespace TownOfHost.Modules;
 
-/// <summary>
-/// 公式サーバーで切断されにくくするための送信の安全装置(ホスト・参加者どちらでも動く)。
-/// 参考: EndKnot の OFFICIAL-SERVER-NOTES(公式サーバーの観測メモ)
-///  1. 1回の送信(パケット)が約1200バイトを超えると、サーバーが受け取らずに捨てる。
-///     確実に届ける送信だと、送り直しを続けた末に「サーバー接続が切れました」になる。2000バイトを超えると Hacking で即切断。
-///     → まとめて送るデータ(GameData)が大きすぎる時は、中身を分けて複数のパケットで送る。
-///  2. 名前1つだけで大きすぎる時は分けられないので、名前をバイト数で切り詰める(日本語は1文字3バイト)。
-///  3. テレポート(位置の強制移動)は、直近約6秒に約330本を超えると切断される → 数えて、超えそうなら送らない。
-///  4. 参加して十数秒以内に Hacking で切られることがある(バニラのホストでも起きる・サーバー側の原因)
-///     → 参加者は同じ部屋へ1回だけ自動で入り直す。
-/// </summary>
 public static class NetworkSafety
 {
-    /// <summary>1パケットの目安の上限(サーバーの上限1200バイトより余裕を持たせる)</summary>
     public const int PacketLimit = 1000;
-    /// <summary>
-    /// これより大きいパケットだけ分ける。確実に届ける送信は順番どおりに届くとは限らないので、
-    /// そのままでも届く大きさのパケットまで分けると、中身の順番が入れ替わるおそれがある
-    /// </summary>
     public const int SplitThreshold = 1150;
-    /// <summary>名前1つの上限(UTF-8のバイト数)</summary>
     public const int NameByteLimit = 800;
 
     // ===================== 2. 名前の切り詰め =====================
 
-    /// <summary>名前が大きすぎる時は、文字の区切りで切り詰め、閉じていないタグ(&lt;...)を消す</summary>
     public static string ClampName(string name)
     {
         if (string.IsNullOrEmpty(name) || Encoding.UTF8.GetByteCount(name) <= NameByteLimit) return name;
@@ -65,7 +47,6 @@ public static class NetworkSafety
     private const int TeleportMax = 260; // サーバーの境目(約330本/6秒)より余裕を持たせる
     private static float lastTeleportWarnAt = -99f;
 
-    /// <summary>テレポートを送ってよいか(直近6秒の本数を数える)。送る時は数に入れる</summary>
     public static bool AllowTeleport()
     {
         var now = Time.realtimeSinceStartup;
@@ -123,13 +104,6 @@ public static class NetworkSafety
         }
     }
 
-    /// <summary>
-    /// パケットの中身(メッセージの並び)を読み、GameData(5)・GameDataTo(6) の中の小さなメッセージを、
-    /// PacketLimit に収まるように何個かのパケットに分け直す。分けられなければ null。
-    /// パケットの形: [ヘッダー(確実=3バイト/そうでない=1バイト)] + { [長さ2バイト][種類1バイト][中身] } の繰り返し
-    /// GameData の中身: [部屋番号4バイト] + { [長さ2バイト][種類1バイト][中身] } の繰り返し
-    /// GameDataTo の中身: [部屋番号4バイト][宛先(可変長の数)] + 同上
-    /// </summary>
     private static List<MessageWriter> Split(MessageWriter msg)
     {
         var buf = (byte[])msg.ToByteArray(true);
@@ -283,7 +257,6 @@ public static class NetworkSafety
     private static float cleanSince;
     private static bool rejoinRequested;
 
-    /// <summary>メインメニューに完全に戻って3秒たってから入り直す(後片付け中に入ると、また切られるため)</summary>
     [HarmonyPatch(typeof(MainMenuManager), nameof(MainMenuManager.LateUpdate))]
     private static class RejoinTickPatch
     {

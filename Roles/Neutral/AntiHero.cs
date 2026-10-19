@@ -119,7 +119,6 @@ public sealed class AntiHero : RoleBase, IAdditionalWinner, IKiller
     static OptionItem OptionMarkVisible;
 
     static OptionItem OptionMarkClearOnDeath;
-    /// <summary>一度もキルしなかった時、クルーメイトの勝利に追加勝利する</summary>
     static OptionItem OptionNoKillCrewWin;
 
 

@@ -9,12 +9,6 @@ using UnityEngine;
 
 namespace TownOfHost.Modules;
 
-/// <summary>
-/// 会議中にホストが送ったデータを記録する(便利機能・暗転/キックの調査用)。
-/// 送ったパケットを読み、「誰あて・どのオブジェクトに・何のRPC」かを1行ずつ
-/// BepInEx/TOHhamo_Logs/MeetingSend.log に書く(起動ごとに前回分を MeetingSend.prev.log へ)。
-/// 中身(名前やチャットの文字)は書かない。
-/// </summary>
 [HarmonyPatch]
 public static class MeetingSendTrace
 {
@@ -164,7 +158,6 @@ public static class MeetingSendTrace
         return call.ToString();
     }
 
-    /// <summary>enumの元の型(byteなど)に合わせて確認する(intのまま渡すと例外になるため)</summary>
     private static bool IsDefined(Type enumType, int value)
     {
         try { return Enum.IsDefined(enumType, Convert.ChangeType(value, Enum.GetUnderlyingType(enumType))); }

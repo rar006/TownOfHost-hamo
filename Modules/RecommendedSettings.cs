@@ -2,14 +2,6 @@ using AmongUs.GameOptions;
 
 namespace TownOfHost.Modules;
 
-/// <summary>
-/// 今の人数に合った「おすすめ設定」(設定画面の上の列のタイル・ホストのみ)。
-/// Among Us側のインポスター数とキルクールを、人数に合わせて変える。変えた内容はホストのチャットに出す。
-///   〜6人: インポスター1人・キルクール25秒
-///   7〜9人: インポスター2人・キルクール25秒
-///   10〜12人: インポスター2人・キルクール22.5秒
-///   13人〜: インポスター3人・キルクール20秒
-/// </summary>
 public static class RecommendedSettings
 {
     public static int PlayerCount => PlayerControl.AllPlayerControls?.Count ?? 0;

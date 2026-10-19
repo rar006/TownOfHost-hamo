@@ -14,30 +14,6 @@ using UnityEngine;
 
 namespace TownOfHost;
 
-/// <summary>
-/// 二つ名(ロビー専用・名前の上に表示)。
-/// ・所持・装備・抽選はすべてサーバー(Discord Bot)側に、フレンドコードで保存される。MOD側には何も保存しない。
-/// ・二つ名は「引く」(無料・クールタイム付き・確率はサーバー側で設定)か、管理者の付与で手に入る。
-/// ・付けている二つ名は、他のプレイヤーにも(サーバーの記録をもとに)表示される。
-/// ・コマンドはすべてロビーのみ(ゲーム中は何もせず、元の /cmd の処理にそのまま渡す)。
-///
-/// チャットコマンド:
-///   /cmd nil            二つ名の一覧(確率つき・持っているものに✔)
-///   /cmd nii            持っている二つ名(インベントリ・★=付けている)
-///   /cmd nih 1.2.3      インベントリの番号で付ける(複数可・最大数はサーバー設定) / /cmd nih 0 で外す
-///   /cmd nio            二つ名を引く(無料・クールタイム60秒・かぶりは個数が増える)
-///   /cmd nis 番号 [個数|all]  二つ名を売って hm にする(売値はサーバー設定)
-///   /cmd nip / nib 番号  SHOPを見る / 買う(商品・値段・何人限定はサーバー設定)
-///   /cmd nim            持っている hm
-///   /cmd nit 名前        相手のインベントリを見る
-///   /cmd nit 名前 a b    自分の a 番と相手の b 番の交換を申し込む
-///   /cmd nit y / n      交換を承諾 / キャンセル
-///
-/// 交換の流れ(ロビーのみ・試合が始まったら強制キャンセル):
-///   1. 申し込む → 2. 両方が /cmd nit y で承諾 → 3. 3秒たってから両方がもう一度 /cmd nit y
-///   → 4. 申し込んだ側がサーバーの POST {BaseUrl}/trade を呼んで交換が成立する。
-///   (サーバー側で所持を確認して入れ替える。MOD側には何も保存しない)
-/// </summary>
 public static partial class TitleSystem
 {
     public sealed class TitleDef
@@ -46,7 +22,6 @@ public static partial class TitleSystem
         public string Color = "#ffffff";
         public double Weight;
         public double Probability;
-        /// <summary>1個売った時にもらえる hm(0 = 売れない)</summary>
         public long SellPrice;
     }
 
@@ -54,34 +29,23 @@ public static partial class TitleSystem
     {
         public readonly HashSet<string> Owned = new(StringComparer.Ordinal);
         public readonly List<string> Equipped = new();
-        /// <summary>二つ名ID → 名前の前に付く属性マーク(サーバーが作ったリッチテキスト。レア度順)</summary>
         public readonly Dictionary<string, string> Marks = new(StringComparer.Ordinal);
-        /// <summary>二つ名ID → 持っている個数(かぶりで増える)</summary>
         public readonly Dictionary<string, long> Counts = new(StringComparer.Ordinal);
-        /// <summary>キー → 1個売った時の hm(出にくいもの・属性付きほど高い。サーバーが計算)</summary>
         public readonly Dictionary<string, long> Prices = new(StringComparer.Ordinal);
-        /// <summary>キー → 属性による売値の倍率(属性付きのものだけ)</summary>
         public readonly Dictionary<string, double> SellMults = new(StringComparer.Ordinal);
-        /// <summary>持っている hm(二つ名を売ってもらえる通貨)</summary>
         public long Wallet;
         public DateTime FetchedAt = DateTime.MinValue;
     }
 
-    /// <summary>false にすると二つ名の機能をすべて止める(通信も表示もコマンドも何もしない)。切り分け用。</summary>
     public static readonly bool Enabled = true;
     private static bool stateLogged;
 
-    /// <summary>この部屋で二つ名を使うか(設定「二つ名を使う」)。OFFなら表示もコマンドも止める</summary>
     internal static bool RoomEnabled => Enabled && (Options.OptionTitleEnabled?.GetBool() ?? true);
 
     // nis = 売る / nip = SHOP / nib = 買う / nim = 持っている hm
     // nic = カジノ
     private static readonly string[] TitleSubs = { "nil", "nii", "nih", "nio", "nit", "code", "nis", "nip", "nib", "nim", "nic" };
 
-    /// <summary>
-    /// 二つ名のコマンドを読み取る。「/cmd nil ...」と「/nil ...」のどちらでも使える。
-    /// (/cmd を付けると、MODを入れていない人のチャットも他の人に見えなくなる)
-    /// </summary>
     private static bool TryParseCommand(string raw, out string sub, out string[] args)
     {
         sub = null; args = Array.Empty<string>();
@@ -130,12 +94,10 @@ public static partial class TitleSystem
     private static readonly ConcurrentDictionary<string, TitleDef> Catalog = new();
     private static DateTime catalogFetchedAt = DateTime.MinValue;
     private static volatile int maxEquipped = 3;
-    /// <summary>今の引くクールタイム(秒)。クールタイム短縮イベント中は短い</summary>
     private static volatile int drawCooldownNow = 60;
     private static volatile bool cooldownEventActive;
     private static string CooldownText => cooldownEventActive ? $"<color=#ffd36e>イベント中! 引くクールタイム{drawCooldownNow}秒</color>" : $"引くクールタイム{drawCooldownNow}秒";
     private static readonly ConcurrentDictionary<string, UserRecord> Users = new();
-    /// <summary>表示する二つ名 playerId -> (フレンドコード, 二つ名ID)。フレンドコードが変わっていたら表示しない。</summary>
     private static readonly ConcurrentDictionary<byte, (string Fc, string[] Ids)> Shown = new();
     private static readonly Dictionary<byte, (string Fc, float At)> FcCache = new();
 
@@ -243,7 +205,6 @@ public static partial class TitleSystem
         return rec;
     }
 
-    /// <summary>その人のその二つ名に付いている属性マーク(無ければ "")</summary>
     private static string MarkOf(string fc, string id)
     {
         var key = NormalizeFriendCode(fc ?? "");
@@ -254,15 +215,11 @@ public static partial class TitleSystem
     // ===== 属性ごとに分けて持つ =====
     // インベントリの1つ1つは「二つ名ID」か「二つ名ID+属性ID+属性ID…」のキー(属性違いは別のもの)
     private const char KeySep = '+';
-    /// <summary>キー → 二つ名ID</summary>
     internal static string TitleOf(string key) => string.IsNullOrEmpty(key) ? "" : key.Split(KeySep)[0];
-    /// <summary>キー → マーク(サーバーが作ったもの)。キーが同じならだれのものでも同じマークなので、まとめて覚えておく</summary>
     private static readonly ConcurrentDictionary<string, string> KeyMarks = new(StringComparer.Ordinal);
     private static bool HasTitle(string key) => Catalog.ContainsKey(TitleOf(key));
-    /// <summary>キーの表示(マーク+色つきの名前)</summary>
     private static string KeyLabel(string key) => HasTitle(key) ? (KeyMarks.TryGetValue(key, out var m) ? m : "") + Colored(Catalog[TitleOf(key)]) : key;
 
-    /// <summary>フレンドコードの所持・装備(サーバーの記録)。失敗時は前回のキャッシュか空。</summary>
     private static async Task<UserRecord> FetchUserAsync(string friendCode, bool force = false)
     {
         var fc = NormalizeFriendCode(friendCode);
@@ -370,21 +327,11 @@ public static partial class TitleSystem
     // =====================================================================
     private static float nextVanillaNameAt;
     private static float nextVanillaForceAt;
-    /// <summary>ロビーに入った時刻(-1=まだ)。入ってすぐは試合終了の後処理などで通信が多いので、少し待ってから送る</summary>
     private static float lobbyEnteredAt = -1f;
     private const float LobbySendDelay = 6f;
-    /// <summary>
-    /// 1回(0.5秒)に送る名前の数の上限。
-    /// 全員×全員の名前を一度に送ると、公式サーバーのチート対策に「スパム」と判定されてホストがキックされるため、少しずつ送る。
-    /// </summary>
     private const int VanillaNameBudget = 10;
-    /// <summary>強制で送り直す予定で、まだ送れていない (対象, 見る人)</summary>
     private static readonly HashSet<(byte, byte)> PendingForce = new();
 
-    /// <summary>
-    /// システムメッセージ等で名前が一時的に書き換えられて戻された時に呼ぶ。
-    /// 二つ名付きの名前を送っていた分だけ「前回送った名前」の記録を消し、次のチェック(すぐ)で送り直させる。
-    /// </summary>
     public static void InvalidateVanillaNames()
     {
         try
@@ -404,11 +351,6 @@ public static partial class TitleSystem
     }
     private static float nextHostRefreshAt;
 
-    /// <summary>
-    /// 全員向けに名前が変わった(RpcSetName)ときは、未導入の人それぞれに送った「二つ名付きの名前」も上書きされている。
-    /// 前回送った名前の記録を消して、次のチェックで送り直されるようにする。
-    /// </summary>
-    /// <summary>ホストに届いた SetName(他の人が自分の名前を変えた等)でも、送った名前は上書きされているので送り直す</summary>
     [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.HandleRpc))]
     private static class IncomingSetNameInvalidatePatch
     {
@@ -461,7 +403,6 @@ public static partial class TitleSystem
     }
 
     private const string VanillaNameHead = "<line-height=-72%>"; // -100%だと二つ名が上に行きすぎてチャット欄からはみ出るので少し下げる
-    /// <summary>チャット用: 二つ名があれば「二つ名付きの名前」、なければ null(ホストのみ・ロビーのみ)</summary>
     internal static string VanillaChatName(PlayerControl target, string baseName)
     {
         if (!Enabled || !GameStates.IsLobby || AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return null;
@@ -477,10 +418,6 @@ public static partial class TitleSystem
         return $"{VanillaNameHead}{baseName}\r\n<size=60%>{titles}</size></line-height>";
     }
 
-    /// <summary>
-    /// 試合の開始ボタンが押されてから、実際にロビーを出るまで(数秒)は true。
-    /// この間に二つ名付きの名前を送り直すと、試合中も二つ名が出たままになることがあったので送らない。
-    /// </summary>
     private static bool gameStarting;
     private static float gameStartingAt;
 
@@ -528,7 +465,6 @@ public static partial class TitleSystem
         catch (Exception e) { Logger.Warn($"VanillaNameTick: {e.Message}", Tag); }
     }
 
-    /// <summary>試合開始時: 未導入の人に送っていた「二つ名付きの名前」を、元の名前に戻す</summary>
     public static void StripVanillaNamesForGame()
     {
         if (!Enabled || AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
@@ -572,7 +508,6 @@ public static partial class TitleSystem
         catch (Exception e) { Logger.Exception(e, Tag); }
     }
 
-    /// <summary>ロビーに入った時:カタログと自分の装備をサーバーから読んで、表示し、他の人に知らせる</summary>
     private static async void InitLocalAsync()
     {
         try
@@ -619,7 +554,6 @@ public static partial class TitleSystem
     // RPCの種類(1バイト目)。1 = 二つ名を変えた / 2〜5 = 交換 / 6 = ホストが「この人(MOD未導入)の二つ名が変わった」と知らせる
     private const byte RpcNotify = 1, RpcTradePropose = 2, RpcTradeAccept = 3, RpcTradeCancel = 4, RpcTradeDone = 5, RpcNotifyFor = 6, RpcFirstTimer = 7;
 
-    /// <summary>ホスト用: 「初めての人」をMOD導入者に知らせ、未導入の人には名前を送り直してマークを付ける</summary>
     internal static void BroadcastFirstTimer(byte playerId)
     {
         try
@@ -635,7 +569,6 @@ public static partial class TitleSystem
         catch (Exception e) { Logger.Exception(e, Tag); }
     }
 
-    /// <summary>ホスト用: MOD未導入の人の二つ名が変わったことを、MOD導入者に知らせる</summary>
     private static void SendNotifyFor(byte playerId)
     {
         try
@@ -650,7 +583,6 @@ public static partial class TitleSystem
         catch (Exception e) { Logger.Exception(e, Tag); }
     }
 
-    /// <summary>ホスト用: ロビーにいるMOD未導入の人の二つ名を読み込んで、表示とみんなへの通知をする</summary>
     private static void RefreshVanillaPlayers()
     {
         if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
@@ -789,7 +721,6 @@ public static partial class TitleSystem
     // =====================================================================
     //  チャットコマンド  /cmd nil | nii | nih | nio | nit   (ロビーのみ)
     // =====================================================================
-    /// <summary>二つ名のコマンドなら処理して true。ロビー以外や別のコマンドなら false(元の処理に渡す)。</summary>
     internal static bool TryHandleCommand(string raw)
     {
         if (!Enabled || !TryParseCommand(raw, out var sub, out var args)) return false;
@@ -808,10 +739,6 @@ public static partial class TitleSystem
         return true;
     }
 
-    /// <summary>
-    /// この /cmd nit をホスト仲介で行うか。
-    /// 相手がMOD未導入の時、または y/n でホスト仲介の交換に入っている(端末どうしの交換をしていない)時。
-    /// </summary>
     private static bool UseHostTrade(string[] args)
     {
         if (args.Length == 0) return false;
@@ -834,7 +761,6 @@ public static partial class TitleSystem
         else ChatCommands.RequestCommandProcessingFromHost(raw.Trim()); // ホストに処理してもらう
     }
 
-    /// <summary>設定画面の「コマンド設定」で、そのコマンドが無効化されているか(ON=無効)</summary>
     internal static bool IsCommandDisabled(string sub)
     {
         if (!(Options.OptionCommandSetting?.GetBool() ?? false)) return false;
@@ -852,7 +778,6 @@ public static partial class TitleSystem
         return opt?.GetBool() ?? false;
     }
 
-    /// <summary>自分だけに見えるメッセージ(必ずメインスレッドで送る)</summary>
     private static void Reply(string msg)
     {
         // ホストが他のプレイヤー(MOD未導入)のコマンドを代わりに処理している時は、その人に返す
@@ -860,13 +785,8 @@ public static partial class TitleSystem
         RunOnMain(() => Utils.SendMessage(msg, to != byte.MaxValue ? to : PlayerControl.LocalPlayer.PlayerId));
     }
 
-    /// <summary>返信先(byte.MaxValue = 自分)。await をまたいでも引き継がれる</summary>
     private static readonly System.Threading.AsyncLocal<byte> ReplyTo = new();
 
-    /// <summary>
-    /// ホスト用: MODを入れていないプレイヤーが打った二つ名コマンドを、ホストが代わりに処理する。
-    /// (MOD導入者は自分の端末で処理してチャットを送らないので、ここに来るのは未導入者だけ)
-    /// </summary>
     internal static bool TryHandleRemoteCommand(PlayerControl player, string raw)
     {
         if (!Enabled || player == null || player.AmOwner || string.IsNullOrWhiteSpace(raw)) return false;
@@ -917,7 +837,6 @@ public static partial class TitleSystem
     private static List<string> InventoryOf(UserRecord rec)
         => rec.Owned.Where(HasTitle).OrderBy(TitleOf, StringComparer.Ordinal).ThenBy(x => x.Length).ThenBy(x => x, StringComparer.Ordinal).ToList();
 
-    /// <summary>/cmd nil  二つ名の一覧(確率つき・持っているものに✔)</summary>
     private static async Task ListAllAsync(string fc)
     {
         var rec = await FetchUserAsync(fc, true).ConfigureAwait(false);
@@ -934,7 +853,6 @@ public static partial class TitleSystem
         Reply(sb.ToString());
     }
 
-    /// <summary>/cmd nii  インベントリ(持っている二つ名)</summary>
     private static async Task ShowInventoryAsync(string fc)
     {
         var rec = await FetchUserAsync(fc, true).ConfigureAwait(false);
@@ -952,7 +870,6 @@ public static partial class TitleSystem
         Reply(sb.ToString());
     }
 
-    /// <summary>/cmd nih 1.2.3  インベントリの番号で付ける。0 で外す。</summary>
     private static async Task EquipAsync(string fc, byte localId, string[] args)
     {
         var rec = await FetchUserAsync(fc, true).ConfigureAwait(false);
@@ -1000,7 +917,6 @@ public static partial class TitleSystem
             : "二つ名を付けました: " + string.Join(" ", chosen.Select(KeyLabel)));
     }
 
-    /// <summary>/cmd code ◯◯  引き換えコードで二つ名を受け取る(コードはDiscordの /title-code で発行)</summary>
     private static async Task RedeemAsync(string fc, string[] args)
     {
         if (args.Length == 0) { Reply("使い方: /cmd code コード"); return; }
@@ -1037,11 +953,9 @@ public static partial class TitleSystem
     //  hm の残高・SHOPの商品(値段・何人限定・期間)はすべてサーバーで決めて保存する
     // =====================================================================
 
-    /// <summary>持っている個数(サーバーに個数が無ければ1個)</summary>
     private static long CountOf(UserRecord rec, string id)
         => !rec.Owned.Contains(id) ? 0 : rec.Counts.TryGetValue(id, out var n) && n > 0 ? n : 1;
 
-    /// <summary>大きい数を短くする(999 / 1.2k / 15k / 3.4M / 1.2B)</summary>
     internal static string Abbrev(long n)
     {
         if (n < 0) return "-" + Abbrev(-n);
@@ -1061,7 +975,6 @@ public static partial class TitleSystem
         Reply($"持っている hm: <color=#ffd36e>{Abbrev(me.Wallet)}hm</color>\n/cmd nis 番号 個数 で二つ名を売る / /cmd nip でSHOPを見る / /cmd nib 番号 で買う");
     }
 
-    /// <summary>/cmd nis 番号 [個数|all]  インベントリの二つ名を売って hm にする</summary>
     private static async Task SellAsync(string fc, byte localId, string[] args)
     {
         var rec = await FetchUserAsync(fc, true).ConfigureAwait(false);
@@ -1151,7 +1064,6 @@ public static partial class TitleSystem
         return list;
     }
 
-    /// <summary>/cmd nip  SHOPの商品一覧</summary>
     private static async Task ShowShopAsync(string fc)
     {
         var items = await FetchShopAsync().ConfigureAwait(false);
@@ -1172,7 +1084,6 @@ public static partial class TitleSystem
         Reply(sb.ToString());
     }
 
-    /// <summary>/cmd nib 番号  SHOPで買う(番号は /cmd nip の番号)</summary>
     private static async Task BuyAsync(string fc, string[] args)
     {
         if (args.Length == 0) { Reply("使い方: /cmd nib 番号  (番号は /cmd nip で確認できます)"); return; }
@@ -1294,7 +1205,6 @@ public static partial class TitleSystem
         }
     }
 
-    /// <summary>/cmd nio  二つ名を引く(無料・クールタイムはサーバーで管理)</summary>
     private static async Task DrawAsync(string fc, byte localId)
     {
         var (status, doc) = await RequestAsync(HttpMethod.Post, $"{BaseUrl}/draw", new { friendCode = fc }).ConfigureAwait(false);
@@ -1336,10 +1246,8 @@ public static partial class TitleSystem
         public bool IAmProposer;
         public byte PartnerId;
         public string MyFc = "", PartnerFc = "";
-        /// <summary>申し込んだ側が渡す二つ名 / 申し込んだ側がもらう二つ名</summary>
         public string ProposerGives = "", ProposerGets = "";
         public bool MyAccept1, PartnerAccept1, MyAccept2, PartnerAccept2;
-        /// <summary>両方が1回目の承諾をした時刻(この3秒後から2回目の承諾ができる)</summary>
         public float BothAcceptedAt = -1f;
         public float CreatedAt;
         public bool Executing;
@@ -1375,7 +1283,6 @@ public static partial class TitleSystem
         catch (Exception e) { Logger.Exception(e, Tag); }
     }
 
-    /// <summary>交換を終わらせる。notifyPartner なら相手にもキャンセルを伝える。</summary>
     private static void CancelTrade(string message, bool notifyPartner)
     {
         var t = trade;
@@ -1387,7 +1294,6 @@ public static partial class TitleSystem
             Utils.SendMessage(message, PlayerControl.LocalPlayer.PlayerId);
     }
 
-    /// <summary>ロビー中に毎フレーム: 相手が抜けた・時間切れならキャンセル</summary>
     private static void TradeTick()
     {
         // 申し込んだ側はサーバーの応答待ちの間は待つ(応答で必ず終わる)。受けた側は相手が落ちても時間切れで抜けられるようにする
@@ -1471,7 +1377,6 @@ public static partial class TitleSystem
         return null;
     }
 
-    /// <summary>色の名前から色の番号(わからなければ -1)。ゲームの表示名(Palette)でも探す</summary>
     private static int ColorIdOf(string value)
     {
         var v = (value ?? "").Trim().ToLowerInvariant();
@@ -1507,7 +1412,6 @@ public static partial class TitleSystem
         return -1;
     }
 
-    /// <summary>/cmd nit 名前  相手のインベントリ(番号は交換の申し込みで使う)</summary>
     private static async void ShowPartnerInventoryAsync(byte partnerId, string partnerFc)
     {
         try

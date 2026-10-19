@@ -86,7 +86,6 @@ public static class NewsTabPatch
     }
 
 
-    /// <summary>翻訳が見つからず「&lt;INVALID:…&gt;」になる場合に備え、直接の文字列へ切り替える</summary>
     private static string TabLabel(string key, string ja, string en)
     {
         var s = Translator.GetString(key);

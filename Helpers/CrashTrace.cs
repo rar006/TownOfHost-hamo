@@ -3,11 +3,6 @@ using System.IO;
 
 namespace TownOfHost;
 
-/// <summary>
-/// ゲームごと落ちる(ログも残らない)不具合の調査用の足跡。
-/// BepInEx のログは落ちる直前の分が書き込まれずに消えるので、1行ずつその場でファイルへ書き出す。
-/// 保存先: BepInEx/TOHhamo_Logs/TOHhamo-Trace.log (起動ごとに前回分を .prev.log へ退避)
-/// </summary>
 internal static class CrashTrace
 {
     private static string path;

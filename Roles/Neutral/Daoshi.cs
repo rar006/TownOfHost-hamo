@@ -8,16 +8,6 @@ using TownOfHost.Roles.Core.Interfaces;
 
 namespace TownOfHost.Roles.Neutral;
 
-/// <summary>
-/// 🎃ダオシー(第三陣営・限定役職)
-/// ・ペットボタンで「通報モード」と「能力モード」を切り替える
-/// ・能力モードで死体を通報(1回押し)すると、その死体の人をキョンシー(守護天使)にする。素早く2回押すと通常通報
-///   キョンシーにした人の死体は通報できない
-/// ・自分以外の全員が白色に見え(名前も見えない)、見分けがつかない
-/// ・死体が出ると自分にだけキルフラッシュ(設定で死体への矢印)
-/// ・キョンシーの「霊視」を受けている人だけキルできる(それ以外をキルしようとすると不発でキルクールを消費)
-/// 勝利条件: キョンシーとダオシーの数が生存数を超え、他が無害な役職だけになったら単独勝利
-/// </summary>
 public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -43,7 +33,6 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
     static OptionItem OptionNotify;
     internal static OptionItem OptionJiangshiCooldown;
     internal static OptionItem OptionSightTime;
-    /// <summary>自分がキルした人の死体はキョンシーにできない</summary>
     static OptionItem OptionCantJiangshiOwnKill;
     enum OptionName { DaoshiMaxJiangshi, DaoshiKillFlash, DaoshiBodyArrow, DaoshiNotify, JiangshiCooldown, JiangshiSightTime, DaoshiCantJiangshiOwnKill }
 
@@ -70,7 +59,6 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
     float lastReportAttempt = -10f;
     byte lastReportTarget = byte.MaxValue;
     readonly HashSet<byte> Jiangshi = new();
-    /// <summary>霊視されている人 → 見える期限</summary>
     readonly Dictionary<byte, float> sight = new();
     readonly List<Vector3> bodyArrows = new();
 
@@ -120,14 +108,12 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
         bodyArrows.Clear();
     }
 
-    /// <summary>自分の画面の色を本来の色に戻す</summary>
     void RestoreColors()
     {
         foreach (var pc in PlayerCatch.AllPlayerControls)
             if (pc != null && pc.Data != null) SendColor(pc, (byte)pc.Data.DefaultOutfit.ColorId);
     }
 
-    /// <summary>試合終了時: 白いままロビーに戻らないように色を戻す</summary>
     public override void OnDestroy()
     {
         try
@@ -137,7 +123,6 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
         catch (System.Exception e) { Logger.Warn($"Daoshi.OnDestroy: {e.Message}", "Daoshi"); }
     }
 
-    /// <summary>名前も見えない(霊視中の人は見える)</summary>
     public override bool GetTemporaryName(ref string name, ref bool NoMarker, bool isForMeeting, PlayerControl seer, PlayerControl seen = null)
     {
         seen ??= seer;
@@ -169,7 +154,6 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
         }
     }
 
-    /// <summary>霊視されていない人はキルできない(不発・キルクールは消費)</summary>
     public void OnCheckMurderAsKiller(MurderInfo info)
     {
         var target = info.AttemptTarget;
@@ -238,7 +222,6 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
 
     public bool IsJiangshiOf(byte id) => Jiangshi.Contains(id);
 
-    /// <summary>単独勝利: キョンシー+ダオシーの数が他の生存数を超え、他が無害(キル陣営なし)</summary>
     public static bool CheckInstantWin(out GameOverReason reason)
     {
         reason = GameOverReason.ImpostorsByKill;
@@ -270,12 +253,6 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
     }
 }
 
-/// <summary>
-/// キョンシー(ダオシーが作るゴースト役職・守護天使ボタン)
-/// 対象に守護天使ボタンを押すと、設定秒数ダオシーがその人を視認できる(霊視)。
-/// ダオシー生存時はダオシーの勝利で追加勝利。ダオシー死亡時は元の役職の勝利条件に戻る。
-/// この役職になるとクルーのタスク勝利に含まれない。
-/// </summary>
 public static class Jiangshi
 {
     public static void UseAbility(PlayerControl pc, PlayerControl target)

@@ -212,9 +212,7 @@ namespace TownOfHost.Patches
         private static readonly System.Collections.Generic.List<string> _pendingAttachmentPaths = new();
         private static SimpleButton _closeButton;
         private static SimpleButton _newReportButton;
-        /// <summary>「みんなの報告」と「自分の報告」を切り替えるボタン</summary>
         private static SimpleButton _publicToggleButton;
-        /// <summary>true = 今出ている報告(みんなの報告)を一覧に出す</summary>
         private static bool _showPublic;
         private static System.Collections.Generic.List<BugReportSystem.PublicTicket> _publicItems;
         private static bool _publicLoading;
@@ -717,7 +715,6 @@ namespace TownOfHost.Patches
             BugReportWizard.OpenExistingTicket(tickets[tickets.Count - 1 - index].TicketId);
         }
 
-        /// <summary>「みんなの報告」⇔「自分の報告」を切り替える。みんなの報告はサーバーから読み直す</summary>
         private static void TogglePublicList()
         {
             _showPublic = !_showPublic;
@@ -805,8 +802,6 @@ namespace TownOfHost.Patches
         // 入力中表示は廃止。互換性のため呼び出し側が残っていても何もしない。
         private static void SetTypingIndicator(bool visible) { }
 
-        /// <summary>「添付」ボタン押下時に呼ぶ。ファイル選択ダイアログを開き(Ctrl+クリックで3つまで)、
-        /// 選んだファイルを次の送信時に一緒にアップロードする対象として保持する。選び直すと入れ替わる。</summary>
         private static void OnAttachButtonClicked()
         {
             // 別スレッドで開く(ゲームを止めない)。選んだら、ゲームのスレッドで添付に設定する

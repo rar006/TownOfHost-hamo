@@ -9,35 +9,21 @@ using TownOfHost.Roles.Core;
 
 namespace TownOfHost;
 
-/// <summary>
-/// ケイドロモード。鬼(インポスター)と逃走者(エンジニア)に分かれる。
-/// ・鬼のキルは「捕獲」になり、逃走者は牢屋(カスタムスポーン位置。2つ以上ならランダム)へ送られる
-/// ・逃走者は捕まった人の近くでペットを撫でると解放できる(クールダウンあり)
-/// ・解放した人/された人には、一定時間スピードアップとシールドが付く
-/// ・逃走者はタスクを全部終えるとシールド1枚とスピードアップが付く
-/// ・逃走者全体のタスク進捗率に応じて、鬼のキルクールが短くなり、スピードが上がる
-/// </summary>
 public static class Kedoro
 {
-    /// <summary>タスク全完了のごほうびのスピード倍率(設定項目なし)</summary>
     private const float TaskCompleteSpeedMultiplier = 1.25f;
-    /// <summary>牢屋からこれ以上離れたら連れ戻す距離</summary>
     private const float JailLeashDistance = 0.9f; // 檻の中だけ動ける
     private const float RescueRange = 2.5f; // 牢屋(または捕まっている人)からこの距離以内
     private const float TickInterval = 0.5f;
 
     private static readonly HashSet<byte> Oni = new();
     private static readonly HashSet<byte> Runners = new();
-    /// <summary>捕まっている逃走者 → 入れられている牢屋の位置</summary>
     private static readonly Dictionary<byte, Vector2> Captured = new();
     private static readonly Dictionary<byte, float> LastRescue = new();
     private static readonly List<Vector2> JailPositions = new();
-    /// <summary>牢屋の見た目(ジェイラーと同じ檻)</summary>
     private static readonly List<TownOfHost.Roles.Crewmate.PrisonNetObject> JailObjects = new();
     private static bool jailObjectsSpawned;
-    /// <summary>時間制限つきのスピード倍率(倍率, 終わる時刻)</summary>
     private static readonly Dictionary<byte, List<(float Mult, float Until)>> SpeedBuffs = new();
-    /// <summary>シールド1枚ごとの有効期限(float.MaxValue = 期限なし)</summary>
     private static readonly Dictionary<byte, List<float>> Shields = new();
     private static readonly HashSet<byte> TaskCompleted = new();
     private static readonly Dictionary<byte, float> SentSpeed = new();
@@ -156,7 +142,6 @@ public static class Kedoro
     private static readonly Dictionary<MapNames, List<(OptionItem Option, Vector2 Pos)>> JailRoomOptions = new();
     private static readonly Dictionary<MapNames, List<(OptionItem opt, int posId)>> JailMenuItems = new();
 
-    /// <summary>「牢屋の位置を選ぶ」を押したとき: ランダムスポーンと同じ地図画面で部屋を選ぶ</summary>
     public static void OpenJailMenu(Transform parent, string actionKey)
     {
         var name = actionKey.Substring("KedoroJail".Length);
@@ -175,10 +160,6 @@ public static class Kedoro
         _ => null,
     };
 
-    /// <summary>
-    /// マップごとに「牢屋にする部屋」を選べるオプションを作る(ID: 112600〜)。
-    /// どれも選んでいないマップでは、部屋の中からランダムに選ぶ。
-    /// </summary>
     public static void SetupJailOptions()
     {
         var maps = new (MapNames Map, string Label, int Base)[]
@@ -247,7 +228,6 @@ public static class Kedoro
     // ===== ベントの回数制限 =====
     private static readonly Dictionary<byte, int> VentUsed = new();
 
-    /// <summary>ベントに入ってよいか(ホストが CanUse から呼ぶ)。入れるなら回数を数える</summary>
     private static readonly Dictionary<byte, float> LastVentCount = new();
 
     public static bool TryUseVent(PlayerControl pc, bool count = true)
@@ -272,7 +252,6 @@ public static class Kedoro
         return true;
     }
 
-    /// <summary>名前に付ける「ベント残り回数」(逃走者本人用・回数制限ありの時だけ)</summary>
     public static string GetVentMark(PlayerControl pc)
     {
         if (!IsActive || pc == null || !IsRunner(pc) || !pc.IsAlive()) return "";
@@ -290,7 +269,6 @@ public static class Kedoro
         return Mathf.Max(0, max - used);
     }
 
-    /// <summary>移動はクライアント側で決まるので、牢屋から離れたら連れ戻す</summary>
     private static void KeepCapturedInJail()
     {
         foreach (var (id, jail) in Captured.ToArray())
@@ -305,7 +283,6 @@ public static class Kedoro
     // =====================================================================
     //  タスク進捗
     // =====================================================================
-    /// <summary>逃走者全体のタスク進捗率(0〜100)</summary>
     private static float RunnerTaskProgress()
     {
         int done = 0, all = 0;
@@ -319,7 +296,6 @@ public static class Kedoro
         return all <= 0 ? 0f : done * 100f / all;
     }
 
-    /// <summary>しきい値から100%に向けて 0→1 になる割合</summary>
     private static float Ramp(float progress, float threshold)
     {
         if (progress < threshold) return 0f;
@@ -327,7 +303,6 @@ public static class Kedoro
         return Mathf.Clamp01((progress - threshold) / (100f - threshold));
     }
 
-    /// <summary>今の鬼のキルクール(タスク進捗で短くなる)</summary>
     public static float CurrentOniKillCooldown()
     {
         var baseCd = Options.KedoroKillCooldown.GetFloat();
@@ -390,7 +365,6 @@ public static class Kedoro
         list.Add((mult, Time.time + seconds));
     }
 
-    /// <summary>seconds が 0 のときは期限なし</summary>
     private static void AddShields(byte id, int count, float seconds)
     {
         if (count <= 0) return;
@@ -399,7 +373,6 @@ public static class Kedoro
         for (int i = 0; i < count; i++) list.Add(until);
     }
 
-    /// <summary>有効なシールドを1枚使う(期限の近いものから)。使えたら true</summary>
     private static bool TryConsumeShield(byte id)
     {
         if (!Shields.TryGetValue(id, out var list)) return false;
@@ -498,7 +471,6 @@ public static class Kedoro
         opt.SetFloat(FloatOptionNames.EngineerInVentMaxTime, maxTime >= 180f ? 0f : maxTime);
     }
 
-    /// <summary>逃走者のスピード(PlayerGameOptionsSender が逃走者用の早期returnの前に使う)</summary>
     public static float GetRunnerSpeed(byte id) => SentSpeed.TryGetValue(id, out var s) ? s : BaseSpeed;
 
     public static bool CheckGameEnd(out GameOverReason reason)
@@ -524,7 +496,6 @@ public static class Kedoro
         return false;
     }
 
-    /// <summary>ペットを撫でた時(Petactionpatch.OnPetUse から。ホスト自身もリモートも通る)</summary>
     public static void OnPet(PlayerControl pc)
     {
         if (!IsActive || AmongUsClient.Instance?.AmHost != true) return;

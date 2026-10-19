@@ -40,7 +40,6 @@ public sealed class Reversal : RoleBase, IMeetingTimeAlterable
 
     public static OptionItem OptionRequiredTaskCount;
     public static OptionItem OptionMeetingSeconds;
-    /// <summary>ベントに入っても逆転会議を開ける(条件を満たしていないと自殺)</summary>
     public static OptionItem OptionCanUseVent;
     private enum OptionName
     {
@@ -241,7 +240,6 @@ public sealed class Reversal : RoleBase, IMeetingTimeAlterable
         StartReversalMeeting(2f);
     }
 
-    /// <summary>逆転会議を開く(delay 秒後)</summary>
     private void StartReversalMeeting(float delay)
     {
         ActiveMeetingPlayerIds.Add(Player.PlayerId);
@@ -259,10 +257,6 @@ public sealed class Reversal : RoleBase, IMeetingTimeAlterable
         }, delay, "Reversal.Meeting", true);
     }
 
-    /// <summary>
-    /// 設定ON: ベントに入ろうとすると発動。必要タスク数を満たしていれば逆転会議、満たしていなければ自殺。
-    /// (追放される時しか発動できず、使える機会がほとんど無かったため)
-    /// </summary>
     public override bool OnEnterVent(PlayerPhysics physics, int ventId)
     {
         if (OptionCanUseVent?.GetBool() != true) return true;

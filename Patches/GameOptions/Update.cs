@@ -1087,10 +1087,6 @@ namespace TownOfHost
         private static float _nextVanillaHideAt;
         private static readonly System.Collections.Generic.HashSet<int> _modBehaviourIds = new();
 
-        /// <summary>
-        /// MOD設定タブ(RoleSettingsTabの複製)に、バニラの設定(キル可能距離など)が紛れて表示されることがある(Androidで確認)。
-        /// MODのオプション以外の設定行は隠す。
-        /// </summary>
         private static void HideVanillaRowsInModTab()
         {
             var tab = GameSettingMenuStartPatch.ModSettingsTab;
@@ -1111,10 +1107,6 @@ namespace TownOfHost
         private static bool _overlaysHidden;
         private static readonly System.Collections.Generic.List<GameObject> _hiddenOverlays = new();
 
-        /// <summary>
-        /// ランダムスポーン/牢屋の地図画面を開いている間は、検索欄・プリセット欄・左の役職タブのアイコンが
-        /// 地図の上に重なって見えるので隠す(閉じたら元に戻す)
-        /// </summary>
         private static void HideOverlaysWhileMapMenu()
         {
             var bg = ShowRandomSpawnOption.CustomBackground;

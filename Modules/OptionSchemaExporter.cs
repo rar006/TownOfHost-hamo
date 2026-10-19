@@ -8,11 +8,6 @@ using TownOfHost.Roles.Core;
 
 namespace TownOfHost.Modules;
 
-/// <summary>
-/// Webのプリセット作成サイト用に「全オプションの一覧」(ID・名前・選択肢・親・タブ)をJSONで書き出す。
-/// メインメニューに来た時に、バージョンごとに1回だけ OptionOutputs/OptionSchema_バージョン.json を作る。
-/// サイトはこの一覧を読み込み、OptionSerializer と同じ形式のコード(%TOH-hamoOptions%...%End%)を作る。
-/// </summary>
 public static class OptionSchemaExporter
 {
     static bool done;
@@ -30,7 +25,6 @@ public static class OptionSchemaExporter
         }, 2f, "OptionSchemaExport", true);
     }
 
-    /// <summary>書き出す。force=false なら、同じバージョンのファイルが既にあれば何もしない</summary>
     public static string Export(bool force)
     {
         var path = FilePath;
@@ -80,7 +74,6 @@ public static class OptionSchemaExporter
         catch { return o.Name; }
     }
 
-    /// <summary>種類と、値(インデックス)ごとの表示名</summary>
     static (string type, List<string> values) Describe(OptionItem o)
     {
         try

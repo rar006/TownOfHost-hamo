@@ -5,12 +5,6 @@ using TownOfHost.Roles.Core.Interfaces;
 
 namespace TownOfHost.Roles.Impostor;
 
-/// <summary>
-/// 孤独な狼(インポスター)
-/// ・仲間のインポスターが分からない。仲間を認識できる他のインポスターからは「孤独な狼」として見える
-/// ・キル可能な人外をキルしようとすると、代わりに対象をマッドメイトに変える(お互いが分かる)
-///   インポスターに対しては設定次第: ON=マッドメイトに変える / OFF=キルが弾かれる
-/// </summary>
 public sealed class LonelyWolf : RoleBase, IImpostor
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -42,7 +36,6 @@ public sealed class LonelyWolf : RoleBase, IImpostor
 
     public float CalculateKillCooldown() => OptionKillCooldown.GetFloat();
 
-    /// <summary>キル可能な人外か(クルー・マッドメイト以外で、キルボタンを使える)</summary>
     static bool IsKillableNonCrew(PlayerControl target)
     {
         var role = target.GetCustomRole();
@@ -83,7 +76,6 @@ public sealed class LonelyWolf : RoleBase, IImpostor
         UtilsNotifyRoles.NotifyRoles();
     }
 
-    /// <summary>仲間を認識できる他のインポスターからは「孤独な狼」として見える</summary>
     public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
     {
         if (seer == null || seer.PlayerId == Player.PlayerId) return;

@@ -50,10 +50,6 @@ public sealed class Amnesiac : RoleBase, IImpostor
         KillCount = 0;
         mode = new PetModeSwitch(player);
     }
-    /// <summary>
-    /// シェリフと同じ、ペットでキルモード ⇔ タスクモードの切り替え(シェリフの「タスクモードで開始」がONの時)。
-    /// シェリフのふりをしている間(思い出す前)だけ使う。思い出したらずっとキルモード。
-    /// </summary>
     readonly PetModeSwitch mode;
     public override void Add()
     {
@@ -81,7 +77,6 @@ public sealed class Amnesiac : RoleBase, IImpostor
     static OptionItem OptCanUseSabotage;
     static OptionItem OptNeedtoLastImpostor;
     static OptionItem OptIsWolfBoy;
-    /// <summary>思い出した後のキルクール(0 = 普通のインポスターと同じ)</summary>
     static OptionItem OptRealizedKillCooldown;
 
     public static bool CantKillImpostor;

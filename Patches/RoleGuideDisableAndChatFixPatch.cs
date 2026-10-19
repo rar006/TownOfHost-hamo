@@ -69,13 +69,11 @@ namespace TownOfHost.Patches
             }
         }
 
-        /// <summary>試合中で、部屋の設定「タスク中のチャット」がONか(生きている人がタスク中にチャットできる)</summary>
         public static bool IsTaskChatEnabled()
             => GameStates.IsInGame && !GameStates.IsLobby && !GameStates.IsMeeting
                && PlayerControl.LocalPlayer != null && PlayerControl.LocalPlayer.IsAlive()
                && (Options.OptionGameChatSetting?.GetBool() ?? false);
 
-        /// <summary>試合中(タスク中)に自分が死んでいるか</summary>
         public static bool IsLocalGhost()
         {
             var me = PlayerControl.LocalPlayer;

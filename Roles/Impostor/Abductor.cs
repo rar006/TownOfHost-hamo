@@ -7,11 +7,6 @@ using TownOfHost.Roles.Core.Interfaces;
 
 namespace TownOfHost.Roles.Impostor;
 
-/// <summary>
-/// アブダクター(インポスター): ペンギンのように相手を掴んで引きずれる。
-/// 掴むと部屋が指定され、その部屋に設定秒数いると、死体を残さずにキルできる(会議時の死亡表記はある)。
-/// もう一度キルを押すと通常キルもできる(引きずり始めてから設定秒数が経つまではキル不可)。
-/// </summary>
 public sealed class Abductor : RoleBase, IImpostor
 {
     public static readonly SimpleRoleInfo RoleInfo =

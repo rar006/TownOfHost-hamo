@@ -4,19 +4,12 @@ using TownOfHost.Modules;
 
 namespace TownOfHost;
 
-/// <summary>
-/// 設定画面の上の列のタイル「全役職 〇%」「まとめて適用」で、すべての役職の出現率を一度に変える。
-/// (ホストのみ。全役職を書き換えてから、保存と同期は最後に1回だけ行う)
-/// </summary>
 public static class AllRolesChance
 {
-    /// <summary>次に適用する出現率(%)</summary>
     public static int Percent { get; private set; } = 0;
 
-    /// <summary>0 → 10 → … → 100 → 0 と切り替える</summary>
     public static void Next() => Percent = Percent >= 100 ? 0 : Percent + 10;
 
-    /// <summary>すべての役職の出現率をランダムにする(0〜100%・10%きざみ)。「おまかせ」タイル</summary>
     public static void Randomize()
     {
         if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;

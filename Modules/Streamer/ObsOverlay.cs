@@ -10,12 +10,6 @@ using UnityEngine;
 
 namespace TownOfHost;
 
-/// <summary>
-/// OBS用の「試合の状況」ページ(配信用・自分のPCの中だけ)。
-/// http://localhost:52525/ をOBSの「ブラウザ」ソースに入れると、フェーズ・マップ・全員の生死・タスク・(設定次第で)役職が出る。
-/// ON/OFFと役職の出し方は、メインメニューの「Stream」で切り替える(Main.ObsOverlay / Main.ObsShowRoles)。
-/// 役職の出し方: 0=出さない / 1=自分が死んだら(と試合が終わったら) / 2=いつも(ネタバレ注意)
-/// </summary>
 [HarmonyPatch(typeof(HudManager), nameof(HudManager.Update))]
 public static class ObsOverlay
 {
@@ -136,7 +130,6 @@ public static class ObsOverlay
         }
     }
 
-    /// <summary>OBSのブラウザソースで開くページ(背景は透明。0.5秒ごとに状態を読み直す)</summary>
     private const string Page = @"<!doctype html>
 <html lang=""ja""><head><meta charset=""utf-8""><title>TOH-hamo</title>
 <style>

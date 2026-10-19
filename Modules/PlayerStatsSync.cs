@@ -11,12 +11,6 @@ using TownOfHost.Roles.Core;
 
 namespace TownOfHost.Modules;
 
-/// <summary>
-/// 戦績(/me)と「初めての人」マーク(便利機能・ホストのみ)。データはBot(サーバー)に保存する。
-/// ・試合が終わるたびに、全員の役職・勝ち負け・キル数・死亡をサーバーに送る
-/// ・「/me」(または「/cmd me」)で自分の戦績(試合数・勝率・キル数・よく引く役職)を表示
-/// ・ロビーに入ってきた人がサーバーに記録の無い人なら、全員に知らせて、名前の上に「初」マークを付ける
-/// </summary>
 [HarmonyPatch]
 public static class PlayerStatsSync
 {
@@ -26,7 +20,6 @@ public static class PlayerStatsSync
     private static readonly HttpClient http = new() { Timeout = TimeSpan.FromSeconds(10) };
     private static string BaseUrl => LobbyChatRemoteConfig.EndpointUrl.Replace("/lobbychat", "/stats").TrimEnd('/');
 
-    /// <summary>この部屋で「初めての人」と分かった人(プレイヤーID)。MOD導入者にはホストがRPCで知らせる</summary>
     internal static readonly HashSet<byte> FirstTimers = new();
     private static readonly HashSet<string> checkedFcs = new();
 
@@ -110,7 +103,6 @@ public static class PlayerStatsSync
     }
 
     // ===== /me =====
-    /// <summary>「/me」「/cmd me」なら、その人の戦績をサーバーから取って返信して true</summary>
     public static bool TryHandle(string text, PlayerControl who)
     {
         if (RecordEnabled?.GetBool() != true || who == null || string.IsNullOrWhiteSpace(text)) return false;
@@ -202,7 +194,6 @@ public static class PlayerStatsSync
     }
 }
 
-/// <summary>ホストが自分で「/me」を打った時</summary>
 [HarmonyPatch(typeof(ChatController), nameof(ChatController.SendChat))]
 [HarmonyPriority(Priority.First)]
 class PlayerStatsChatPatch

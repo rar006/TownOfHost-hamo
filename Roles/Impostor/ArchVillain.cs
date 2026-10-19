@@ -8,14 +8,6 @@ using TownOfHost.Roles.Core.Interfaces;
 
 namespace TownOfHost.Roles.Impostor;
 
-/// <summary>
-/// ヴィラン(インポスター) ※第三陣営の「ヴィラン」が既にあるため、内部名は ArchVillain
-/// ・インポスター陣営(相方が分かる人)からは「ヴィラン」として見える
-/// ・誤爆・道連れ・後追い以外では死なない(キル・追放を無効化)。仲間のインポスターが全滅すると後追いで死ぬ
-/// ・キル/追放を無効化した次のターンはキルできない
-/// ・設定で、キルを防いだ時に相手へ自分の役職を伝える
-/// ・配役時にインポスターがヴィランだけなら、通常のインポスターになる
-/// </summary>
 public sealed class ArchVillain : RoleBase, IImpostor
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -50,11 +42,8 @@ public sealed class ArchVillain : RoleBase, IImpostor
     }
 
     public bool CanBeLastImpostor { get; } = false;
-    /// <summary>この日(UtilsGameLog.day)はキルできない</summary>
     int cantKillDay;
-    /// <summary>このターン中に死亡を無効化した → 次のターンはキル不可</summary>
     bool nullifiedThisTurn;
-    /// <summary>試合中に仲間のインポスターがいたか(いなかった時は後追いしない)</summary>
     bool hadPartner;
 
     public float CalculateKillCooldown() => OptionKillCooldown.GetFloat();
@@ -74,7 +63,6 @@ public sealed class ArchVillain : RoleBase, IImpostor
         }
     }
 
-    /// <summary>キルを無効化(誤爆・道連れ・後追い以外)</summary>
     public override bool OnCheckMurderAsTarget(MurderInfo info)
     {
         if (IsAllowedDeath(info.DeathReason) || info.IsSuicide) return true;
@@ -86,7 +74,6 @@ public sealed class ArchVillain : RoleBase, IImpostor
         return false;
     }
 
-    /// <summary>追放を無効化</summary>
     public override bool VotingResults(ref NetworkedPlayerInfo Exiled, ref bool IsTie, Dictionary<byte, int> vote, byte[] mostVotedPlayers, bool ClearAndExile)
     {
         if (Exiled == null || Exiled.PlayerId != Player.PlayerId) return false;
@@ -106,7 +93,6 @@ public sealed class ArchVillain : RoleBase, IImpostor
         SendRPC();
     }
 
-    /// <summary>毎フレーム(ホスト): 仲間のインポスターが全滅したら後追い</summary>
     public void CheckFollow()
     {
         if (!Player.IsAlive()) return;
@@ -124,7 +110,6 @@ public sealed class ArchVillain : RoleBase, IImpostor
         Player.RpcMurderPlayerV2(Player);
     }
 
-    /// <summary>インポスター陣営(とマッドメイト、設定次第)にはヴィランだと分かる</summary>
     public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
     {
         if (seer == null) return;

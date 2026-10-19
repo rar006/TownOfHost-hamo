@@ -39,10 +39,6 @@ public sealed class Judge : RoleBase
     {
     }
 
-    /// <summary>
-    /// ジャッジの「判決(Overrule)」でこの人を追放してよいか。
-    /// マッドメイト・第三陣営・ラバーズは、それぞれの設定がONの時だけ対象にできる。
-    /// </summary>
     public static bool CanOverrule(PlayerControl target)
     {
         if (target == null || !target.IsAlive()) return false;

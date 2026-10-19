@@ -7,12 +7,6 @@ using UnityEngine;
 
 namespace TownOfHost;
 
-/// <summary>
-/// ホストが仲介する二つ名の交換。MODを入れていない人が関わる交換はこちらで行う。
-/// (MOD導入者どうしの交換は、今まで通りそれぞれの端末どうしのRPCで行う)
-/// 流れ: 申し込み → 両方 /cmd nit y(承諾) → 3秒後に両方もう一度 /cmd nit y(確定) → サーバーで入れ替え
-/// 状態はすべてメインスレッドで触る。
-/// </summary>
 public static partial class TitleSystem
 {
     private sealed class HostTrade
@@ -31,12 +25,10 @@ public static partial class TitleSystem
 
     private static HostTrade HostTradeOf(byte id) => hostTrades.FirstOrDefault(t => t.Has(id));
 
-    /// <summary>ホストが仲介する交換に関わっているか(MOD導入者の端末で、y/n をホストへ送るかの判断に使う)</summary>
     internal static bool InHostTrade(byte id) => HostTradeOf(id) != null;
 
     private static void Say(byte id, string msg) => Utils.SendMessage(msg, id);
 
-    /// <summary>ホスト用: /cmd nit をホストが仲介して処理する(player は打った人。ホスト本人でもよい)</summary>
     internal static void HostTradeCommand(PlayerControl player, string[] args)
     {
         if (player == null) return;
@@ -224,7 +216,6 @@ public static partial class TitleSystem
         });
     }
 
-    /// <summary>毎フレーム(ホスト): 時間切れ・相手がいなくなった交換を片付ける。ロビーを出たら全部キャンセル</summary>
     private static void HostTradeTick()
     {
         if (hostTrades.Count == 0) return;

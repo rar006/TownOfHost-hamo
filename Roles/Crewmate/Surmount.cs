@@ -7,12 +7,6 @@ using TownOfHost.Roles.Impostor;
 
 namespace TownOfHost.Roles.Crewmate;
 
-/// <summary>
-/// サーマウント(クルーメイト)
-/// タスクをするたびにトラウマにデバフ(視界低下 / キルクール増加)を与える。
-/// そのデバフは元々自分が持っていて(最初は視界が狭い)、与えるたびに自分のデバフが解消されていく。
-/// 死亡するともうデバフは与えられない。ワークホース・天邪鬼・属性は付かない。
-/// </summary>
 public sealed class Surmount : RoleBase
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -33,7 +27,6 @@ public sealed class Surmount : RoleBase
             isNewRole: true
         );
 
-    /// <summary>今の試合のサーマウント(1人だけ)</summary>
     public static Surmount Instance { get; private set; }
 
     public Surmount(PlayerControl player) : base(RoleInfo, player)
@@ -64,7 +57,6 @@ public sealed class Surmount : RoleBase
         return true;
     }
 
-    /// <summary>自分が持っているデバフ(視界)の段階 = まだ与えていない「視界デバフ」の数</summary>
     int RemainingVisionDebuffs
     {
         get

@@ -4,12 +4,6 @@ using TownOfHost.Roles.Core;
 
 namespace TownOfHost.Roles.Neutral;
 
-/// <summary>
-/// カレイ(第三陣営): マグロの逆。
-/// 設定時間以上動くと、そのターンの会議の最初に「カレイだ」と暴露される。
-/// 設定で、動き続けたときに自害する。
-/// 勝利条件: 生存時、キル役の全滅もしくはクルーのタスク勝ちで単独勝利。
-/// </summary>
 public sealed class Flatfish : RoleBase
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -83,7 +77,6 @@ public sealed class Flatfish : RoleBase
         return Utils.ColorString(exposedThisTurn ? Color.red : RoleInfo.RoleColor, $"({left:0.0}s)");
     }
 
-    /// <summary>勝利判定: 生きていて、クルーの勝利(キル役の全滅・タスク勝ち)なら単独勝利</summary>
     public static bool CheckWin(ref GameOverReason reason)
     {
         if (CustomWinnerHolder.WinnerTeam != CustomWinner.Crewmate) return false;

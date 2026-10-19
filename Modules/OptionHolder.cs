@@ -1113,7 +1113,6 @@ namespace TownOfHost
 
         public static OptionItem OptionCommandAco;
         public static OptionItem OptionCommandTitleList, OptionCommandTitleInventory, OptionCommandTitleEquip, OptionCommandTitleDraw, OptionCommandTitleTrade, OptionCommandBugReport;
-        /// <summary>カジノ(/cmd nic)・売る/SHOP(/cmd nis nip nib nim)を使えなくする</summary>
         public static OptionItem OptionCommandTitleCasino, OptionCommandTitleShop;
 
         public static OptionItem OptionCommandAcl;

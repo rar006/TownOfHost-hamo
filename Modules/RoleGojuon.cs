@@ -6,13 +6,6 @@ using UnityEngine;
 
 namespace TownOfHost;
 
-/// <summary>
-/// 役職設定画面の役職を「あ行〜わ行」に分けて並べる。
-/// ・役職は五十音順(読みの順)で登録され、行の先頭に「あ行」などの見出しが入る。
-/// ・登録順(OptionItem.AllOptions の並び)はすべてのクライアントで同じになるので、設定の同期はずれない。
-/// ・読みの表に無い役職(日本語名が無い役職)は最後の「その他」にまとめる。
-/// ・Enabled を false にすると従来の並び(OptionSort順)に戻る。
-/// </summary>
 public static class RoleGojuon
 {
     public static readonly bool Enabled = true;
@@ -26,26 +19,19 @@ public static class RoleGojuon
         "#ff8a80", "#ffb74d", "#fff176", "#aed581", "#4db6ac", "#4fc3f7", "#7986cb", "#ba68c8", "#f06292", "#a1887f", "#b0bec5", "#ffd54f",
     };
     public const int OtherRow = 10;
-    /// <summary>NEWの役職(SimpleRoleInfo の isNewRole: true)を、各陣営タブの先頭にまとめて置く見出しの行番号</summary>
     public const int NewRow = 11;
 
     // ===== 見出しの開閉(この端末の画面だけの状態。設定の同期には関係しない) =====
-    /// <summary>役職 → その役職が並んでいる見出し(あ行など)のオプションID</summary>
     private static readonly Dictionary<CustomRoles, int> RoleHeader = new();
-    /// <summary>見出しのオプションID → その下に並んでいる役職</summary>
     private static readonly Dictionary<int, List<CustomRoles>> HeaderRoles = new();
-    /// <summary>閉じている見出しのオプションID</summary>
     private static readonly HashSet<int> Collapsed = new();
 
-    /// <summary>NEWの役職か(五十音の行から外して「NEW」見出しにまとめる)</summary>
     public static bool IsNewRow(CustomRoles role) => role.IsNewRole();
 
-    /// <summary>見出しのIDか(あ行〜限定役職)</summary>
     public static bool IsRowHeader(int optionId) => HeaderRoles.ContainsKey(optionId);
 
     public static bool IsHeaderCollapsed(int optionId) => Collapsed.Contains(optionId);
 
-    /// <summary>全部の見出しを開く/閉じる(クライアント設定の切り替え時)</summary>
     public static void SetAllCollapsed(bool collapsed)
     {
         Collapsed.Clear();
@@ -53,21 +39,17 @@ public static class RoleGojuon
         foreach (var id in HeaderRoles.Keys) OnHeaderStateChanged?.Invoke(id);
     }
 
-    /// <summary>閉じている見出しが1つでもあるか(「全部ひらく/全部とじる」ボタン用)</summary>
     public static bool AnyCollapsed => Collapsed.Count > 0;
 
-    /// <summary>見出しをクリックした時: 開いていれば閉じ、閉じていれば開く</summary>
     public static bool ToggleHeader(int optionId)
     {
         if (!Collapsed.Remove(optionId)) Collapsed.Add(optionId);
         return Collapsed.Contains(optionId);
     }
 
-    /// <summary>見出しに表示する文字([-]=開いている / [+]=閉じている)</summary>
     public static string HeaderTitle(int optionId, string name)
         => (Collapsed.Contains(optionId) ? "[+] " : "[-] ") + name;
 
-    /// <summary>検索で役職へ飛ぶ時など: その設定項目がある見出しを開く。開いたら true</summary>
     public static bool ExpandFor(OptionItem option)
     {
         if (option == null) return false;
@@ -77,10 +59,8 @@ public static class RoleGojuon
         return true;
     }
 
-    /// <summary>見出しの表示名を、今の開閉状態に合わせて更新する(検索で開いた時など)</summary>
     public static System.Action<int> OnHeaderStateChanged;
 
-    /// <summary>この設定項目が、閉じている見出しの中にあるか(その役職の子設定も含む)</summary>
     public static bool IsInCollapsedRow(OptionItem option)
     {
         if (Collapsed.Count == 0 || option == null) return false;
@@ -90,11 +70,9 @@ public static class RoleGojuon
             && Collapsed.Contains(header);
     }
 
-    /// <summary>見出しの下に役職が1つもなければ true(見出しごと隠す)</summary>
     public static bool IsEmptyLimitedHeader(int optionId)
         => HeaderRoles.TryGetValue(optionId, out var roles) && roles.Count == 0;
 
-    /// <summary>役職名(CustomRolesの名前) -> (行番号, 読みの並び替えキー)</summary>
     private static readonly Dictionary<string, (int Row, string Key)> Table = new()
     {
         ["VillainWolf"] = (0, "あくやくのおおかみ"),
@@ -519,7 +497,6 @@ public static class RoleGojuon
     private static string GetKey(CustomRoles role)
         => Table.TryGetValue(role.ToString(), out var v) ? v.Key : role.ToString();
 
-    /// <summary>行 → 読み → 元の並び(OptionSort) の順に並べる</summary>
     public static List<SimpleRoleInfo> Order(IEnumerable<SimpleRoleInfo> roles)
     {
         var list = roles
@@ -532,7 +509,6 @@ public static class RoleGojuon
         return list;
     }
 
-    /// <summary>行の見出し(「あ行」など)を作る。IDはロード時に必ず同じ順で作られる。</summary>
     public static int CreateRowHeader(TabGroup tab, CustomRoleTypes roleType, int row)
     {
         // 役職タイプごとにIDを分ける(同じタブを複数のタイプが使っても重ならない)
@@ -547,10 +523,6 @@ public static class RoleGojuon
         return id;
     }
 
-    /// <summary>
-    /// 属性・ゴースト役職・コンビネーションなど用: タブとグループ番号ごとに見出しを作る
-    /// (ID: 1_950_000 + グループ番号*100 + 行)
-    /// </summary>
     public static int CreateGroupHeader(TabGroup tab, int groupKey, int row)
     {
         var id = 1_950_000 + groupKey * 100 + row;
@@ -564,9 +536,6 @@ public static class RoleGojuon
         return id;
     }
 
-    /// <summary>
-    /// 設定を作る処理を「NEW → あ行〜わ行 → その他」の順に並べ替えて、見出しの下に作る
-    /// </summary>
     public static void SetupGrouped(TabGroup tab, int groupKey, IEnumerable<(CustomRoles Role, System.Action Setup)> items)
     {
         var list = items.ToList();
@@ -588,7 +557,6 @@ public static class RoleGojuon
         }
     }
 
-    /// <summary>役職を見出しの下に登録する(開閉で一緒に隠すため)</summary>
     public static void AddRoleToHeader(int headerId, CustomRoles role)
     {
         RoleHeader[role] = headerId;

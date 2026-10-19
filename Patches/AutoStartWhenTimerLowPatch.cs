@@ -9,13 +9,9 @@ namespace TownOfHost.Patches
     {
         private static float timer = 0f;
         private static int lastPlayerCount = 0;
-        /// <summary>タイマーを数えている部屋。部屋が変わったら(作り直し・入り直し)0から数え直す</summary>
         private static int lastGameId = 0;
-        /// <summary>最後に人数が変わった時刻(入ってきた直後の人は色などの準備がまだなので、少し待つ)</summary>
         private static float lastCountChangedAt = 0f;
-        /// <summary>入ってきてから自動スタートしてよくなるまでの秒数</summary>
         private const float JoinSettleSeconds = 5f;
-        /// <summary>Among Usで試合を始められる最少人数</summary>
         private const int MinPlayers = 4;
 
         public static void Postfix()
@@ -81,7 +77,6 @@ namespace TownOfHost.Patches
             }, 0.15f, "AutoStart.DelayedStart", true);
         }
 
-        /// <summary>試合を始めても壊れない状態か(人数が足りている・入ってきたばかりの人がいない・全員の色が決まっている)</summary>
         private static bool IsReadyToStart(int playerCount)
         {
             if (playerCount < MinPlayers) return false;

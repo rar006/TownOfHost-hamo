@@ -6,8 +6,6 @@ namespace TownOfHost;
 /// JToken型の変数に対する token["key"] は、コンパイル時に JToken.get_Item(object) を呼ぶコードになる。
 /// ゲーム/BepInEx側が読み込む Newtonsoft.Json のバージョンによってはこのメソッドが存在せず、
 /// 実行時に MissingMethodException になる(アップデート確認・ブラックリスト・MODニュース取得が失敗していた)。
-/// JObject.GetValue(string) も、別のバージョンでは無いことがあった(MissingMethodException: JObject.GetValue)。
-/// IDictionary&lt;string, JToken&gt; のインターフェース経由なら、どのバージョンにもあるのでそれを使う。
 /// </summary>
 public static class JTokenExtensions
 {

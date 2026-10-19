@@ -6,14 +6,6 @@ using UnityEngine;
 
 namespace TownOfHost;
 
-/// <summary>
-/// YouTubeのライブのコメントを、画面左下の枠に表示する(自分の画面だけ)。
-/// 配信URLは「Stream」メニューか、ゲーム内の設定(クライアント設定の2ページ目)で設定する。
-/// ・枠はマウスでドラッグして好きな場所に動かせる
-/// ・右下の「◢」をドラッグすると大きさを変えられる
-/// ・右上の「－」で最小化(タイトルだけの細い枠になる)、「＋」で元に戻す
-/// 位置・大きさ・最小化はすべて保存される。
-/// </summary>
 [HarmonyPatch(typeof(HudManager), nameof(HudManager.Update))]
 public static class StreamCommentFrame
 {
@@ -49,7 +41,6 @@ public static class StreamCommentFrame
 
     private static float W => Main.StreamCommentMinimized.Value ? MinimizedWidth : Mathf.Clamp(Main.StreamCommentWidth.Value, MinWidth, MaxWidth);
     private static float H => Main.StreamCommentMinimized.Value ? HeaderHeight + 0.04f : Mathf.Clamp(Main.StreamCommentHeight.Value, MinHeight, MaxHeight);
-    /// <summary>枠の大きさに合わせて、表示するコメントの件数を決める</summary>
     private static int ShowCount => Mathf.Max(1, (int)((H - HeaderHeight - 0.15f) / LineHeight));
 
     public static void Postfix(HudManager __instance)
@@ -135,7 +126,6 @@ public static class StreamCommentFrame
         Layout();
     }
 
-    /// <summary>今の大きさ・最小化に合わせて、背景・文字・ボタンを置き直す</summary>
     private static void Layout()
     {
         if (text == null) return;
@@ -160,7 +150,6 @@ public static class StreamCommentFrame
         shownVersion = -1; // 件数が変わるので書き直す
     }
 
-    /// <summary>マウスの位置を、枠の左下を(0,0)とした座標にする</summary>
     private static Vector2 ToFrame(Vector3 world)
     {
         var p = text.transform.InverseTransformPoint(world);
@@ -169,10 +158,6 @@ public static class StreamCommentFrame
 
     private static bool InRect(Vector2 p, float x, float y, float w, float h) => p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h;
 
-    /// <summary>
-    /// 左クリックで: 「－」「＋」なら最小化の切り替え、右下の「◢」なら大きさを変える、それ以外の枠の中ならつかんで動かす。
-    /// 離した時に位置・大きさを保存する。
-    /// </summary>
     private static void HandleMouse()
     {
         var cam = Camera.main;
@@ -233,7 +218,6 @@ public static class StreamCommentFrame
         Main.StreamCommentPosY.Value = aspect.DistanceFromEdge.y;
     }
 
-    /// <summary>最小化 ⇔ 元の大きさ。枠の上の端の位置は変えない(上に向かって縮む・伸びる)</summary>
     private static void ToggleMinimize()
     {
         var oldH = H;
@@ -247,7 +231,6 @@ public static class StreamCommentFrame
         Layout();
     }
 
-    /// <summary>枠の位置・大きさを最初の状態(左下)に戻す(ゲーム内の設定・Streamメニューのボタンから)</summary>
     public static void ResetPosition()
     {
         Main.StreamCommentPosX.Value = DefaultX;
@@ -282,7 +265,6 @@ public static class StreamCommentFrame
         return sb.ToString();
     }
 
-    /// <summary>タグとして読まれないように &lt; &gt; を全角に、表示できない絵文字を消す</summary>
     private static string Clean(string s)
     {
         if (string.IsNullOrEmpty(s)) return "";

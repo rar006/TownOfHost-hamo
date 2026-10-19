@@ -22,18 +22,11 @@ class StreamerInfo
     static StreamerInfo streamerInfo;
     public static int number;
 
-    /// <summary>画面のコメント枠に出す、最近のコメント(古い順・最大 MaxRecentComments 件)</summary>
     public static readonly List<(string Name, string Text)> RecentComments = new();
     private const int MaxRecentComments = 30;
-    /// <summary>コメント枠の内容が変わった回数(表示側が書き換えるかの判断に使う)</summary>
     public static int RecentCommentsVersion;
-    /// <summary>配信URLが設定されていて、コメントを取りに行ける状態か</summary>
     public static bool HasStream => StreamURL != "" && !string.IsNullOrEmpty(streamkey) && streamerInfo != null;
 
-    /// <summary>
-    /// 配信URLを設定する(メニュー・ゲーム内の設定の両方から使う)。YouTubeのURLでなければ false。
-    /// 設定したURLは保存して、次に起動した時も使う。
-    /// </summary>
     public static bool TrySetStreamURL(string url)
     {
         url = (url ?? "").Trim();
@@ -50,7 +43,6 @@ class StreamerInfo
         return true;
     }
 
-    /// <summary>前回保存した配信URLを読み込む(起動時に1回)</summary>
     private static bool savedLoaded;
     public static void LoadSavedURL()
     {
@@ -60,10 +52,6 @@ class StreamerInfo
         if (!string.IsNullOrEmpty(saved) && StreamURL == "") TrySetStreamURL(saved);
     }
 
-    /// <summary>
-    /// ホスト以外(参加者として配信している人)でも、コメント枠のためにコメントを取りに行く。
-    /// (ホストは参加希望の処理 FixUpdate で取りに行っているので、ここでは何もしない)
-    /// </summary>
     public static void CommentFrameTick(float deltaTime)
     {
         // ホストも参加者も、コメント枠を出している時はここから取りに行く
@@ -76,7 +64,6 @@ class StreamerInfo
     private static volatile bool fetching;
     private static System.DateTime lastErrorLogAt = System.DateTime.MinValue;
 
-    /// <summary>前回から3秒以上たっていて、取得中でなければコメントを取りに行く(参加希望の処理と共通)</summary>
     private static void TryStartFetch()
     {
         if (streamerInfo == null || fetching) return;
@@ -130,16 +117,8 @@ class StreamerInfo
         }
     }
 
-    /// <summary>
-    /// YouTubeのURLから動画IDを取り出す。次の形に対応する:
-    /// youtube.com/watch?v=ID / youtube.com/live/ID / youtube.com/shorts/ID / youtube.com/embed/ID / youtu.be/ID
-    /// (www. や m. 付き、?si= などの付け足しがあってもよい)
-    /// 以前は「https://www.youtube.com/live/ID?si=…」の形を読めず、si の値を動画IDとして使っていたため、コメントが一切取れなかった。
-    /// </summary>
-    /// <summary>streamkey がチャンネルを表す時の印(この後ろにチャンネルのURL)</summary>
     private const string ChannelPrefix = "channel:";
 
-    /// <summary>YouTubeのチャンネルのURL(@名前・/channel/ID・/c/名前・/user/名前)なら、その形に整えて返す</summary>
     public static bool TryGetChannelUrl(string url, out string channelUrl)
     {
         channelUrl = "";
@@ -303,7 +282,6 @@ class StreamerInfo
 
         return comments;
     }
-    /// <summary>ライブチャットのページに入っている最近のコメント(ytInitialData)を枠に追加する</summary>
     private static void AddInitialComments(string html)
     {
         try
@@ -357,16 +335,10 @@ class StreamerInfo
         }
         return response;
     }
-    /// <summary>コメント枠に出す状態(取れない時の理由など)。空なら問題なし</summary>
     public static string StatusText = "";
-    /// <summary>チャットが見つからなかった時、次に探し直す時刻(何度も取りに行かないように)</summary>
     private static System.DateTime retryAt = System.DateTime.MinValue;
     private const string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
 
-    /// <summary>
-    /// チャンネルのURL(@名前・/channel/…・/c/…)なら、今そのチャンネルで配信中の動画IDを探す。
-    /// 「チャンネルURL/live」を開くと、配信中ならその動画のページになるので、ページの canonical から動画IDを取る。
-    /// </summary>
     private async Task<string> ResolveVideoIdAsync()
     {
         if (!streamkey.StartsWith(ChannelPrefix)) return streamkey;

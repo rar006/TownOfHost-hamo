@@ -7,12 +7,6 @@ using static TownOfHost.Modules.SelfVoteManager;
 
 namespace TownOfHost.Roles.Crewmate;
 
-/// <summary>
-/// ヒュージティブ(逃亡者): 自投票してから投票すると、投票先が追放されなければ投票先に逃亡する。
-/// 逃亡中は次の会議までキル・特殊キルで死亡しない(パワフルでも貫通できない。一途な狼は貫通する)。
-/// ただし逃亡先が死亡すると道連れになる。キル可能な人外に逃亡すると、次の会議で死亡する。
-/// 君臨者・ワルキューレ・独裁者には逃亡できない。
-/// </summary>
 public sealed class Fugitive : RoleBase, ISelfVoter
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -41,9 +35,7 @@ public sealed class Fugitive : RoleBase, ISelfVoter
         fleeTarget = byte.MaxValue;
     }
 
-    /// <summary>会議中に選んだ逃亡先(会議が終わって追放されていなければ逃亡する)</summary>
     byte pendingTarget;
-    /// <summary>今逃亡している先</summary>
     byte fleeTarget;
     bool fleeToKiller;
     bool attackedWhileFleeing;
@@ -112,7 +104,6 @@ public sealed class Fugitive : RoleBase, ISelfVoter
         SendRPC();
     }
 
-    /// <summary>逃亡中はキル・特殊キルで死亡しない(一途な狼は貫通する)</summary>
     public override bool OnCheckMurderAsTarget(MurderInfo info)
     {
         if (!IsFleeing) return true;
@@ -122,7 +113,6 @@ public sealed class Fugitive : RoleBase, ISelfVoter
         return false;
     }
 
-    /// <summary>毎フレーム(ホスト): 逃亡先が死亡したら道連れ</summary>
     public void CheckFleeTargetDead()
     {
         if (!IsFleeing || !Player.IsAlive()) return;
