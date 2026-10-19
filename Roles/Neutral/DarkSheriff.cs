@@ -29,7 +29,29 @@ public sealed class DarkSheriff : RoleBase, IKiller
     {
         Awakened = false;
         CurrentKillCooldown = OptionKillCooldownBefore.GetFloat();
+        mode = new PetModeSwitch(player);
     }
+    /// <summary>シェリフと同じ、ペットでキルモード ⇔ タスクモードの切り替え(シェリフの「タスクモードで開始」がONの時)</summary>
+    readonly PetModeSwitch mode;
+    public override void Add()
+    {
+        TownOfHost.Patches.PetActionManager.Register(Player.PlayerId, () => mode.Toggle());
+        mode.Start();
+    }
+    public override void OnDestroy() => TownOfHost.Patches.PetActionManager.Unregister(Player.PlayerId);
+    public bool CanUseKillButton() => Player.IsAlive() && !mode.TaskMode;
+    // 会議が始まったらタスクモードに戻す(シェリフと同じ)。会議の後は、役職が元に戻されることがあるのでもう一度合わせる
+    public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
+    {
+        if (PetModeSwitch.Enabled && Player.IsAlive()) mode.Set(true);
+    }
+    public override void AfterMeetingTasks()
+    {
+        if (!AmongUsClient.Instance.AmHost || !PetModeSwitch.Enabled || !Player.IsAlive()) return;
+        _ = new LateTask(() => { if (Player.IsAlive()) mode.Set(mode.TaskMode); }, Main.LagTime + 0.5f, "DarkSheriff.Mode", true);
+    }
+    public override string GetProgressText(bool comms = false, bool gamelog = false)
+        => GameStates.CalledMeeting || gamelog ? "" : mode.ModeText();
 
     static OptionItem OptionKillCooldownBefore;
     static OptionItem OptionKillCooldownAfter;

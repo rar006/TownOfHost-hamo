@@ -1113,6 +1113,8 @@ namespace TownOfHost
 
         public static OptionItem OptionCommandAco;
         public static OptionItem OptionCommandTitleList, OptionCommandTitleInventory, OptionCommandTitleEquip, OptionCommandTitleDraw, OptionCommandTitleTrade, OptionCommandBugReport;
+        /// <summary>カジノ(/cmd nic)・売る/SHOP(/cmd nis nip nib nim)を使えなくする</summary>
+        public static OptionItem OptionCommandTitleCasino, OptionCommandTitleShop;
 
         public static OptionItem OptionCommandAcl;
 
@@ -3146,6 +3148,14 @@ namespace TownOfHost
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#ffd36e")
                 .SetOptionName(() => "/cmd nit - 二つ名を交換する");
+            OptionCommandTitleShop = BooleanOptionItem.Create(1_601_362, "DisableCommandTitleShop", false, TabGroup.Other2, true)
+                .SetParent(OptionCommandSetting)
+                .SetColorcode("#ffd36e")
+                .SetOptionName(() => "/cmd nis・nip・nib・nim - 二つ名を売る・SHOP・hm");
+            OptionCommandTitleCasino = BooleanOptionItem.Create(1_601_364, "DisableCommandTitleCasino", false, TabGroup.Other2, true)
+                .SetParent(OptionCommandSetting)
+                .SetColorcode("#ffd36e")
+                .SetOptionName(() => "/cmd nic - カジノ");
             // モデレーター用のバグ報告コマンド。ONにすると使えなくする
             OptionCommandBugReport = BooleanOptionItem.Create(1_601_370, "DisableCommandBugReport", false, TabGroup.Other2, true)
                 .SetParent(OptionCommandSetting)
@@ -3169,10 +3179,14 @@ namespace TownOfHost
             var youtubeHeader = ObjectOptionitem.Create(1_400_160, "StreamCommentHeader", true, null, TabGroup.Other2)
                 .SetColorcode("#ff4040")
                 .SetOptionName(() => "YouTubeコメント枠");
-            ObjectOptionitem.Create(1_400_161, "StreamCommentToggle", false, "StreamCommentToggle", TabGroup.Other2)
+            // 普通の ON/OFF の設定にする(以前は ρ ボタンで押して切り替える形だった)。
+            // 本当の値はクライアント設定(Main.ShowStreamComments)で、この設定はそれと同じ値を表示・変更する
+            Modules.ExtraFeatureOptions.ShowStreamComments = BooleanOptionItem.Create(1_400_196, "StreamCommentShow", Main.ShowStreamComments.Value, TabGroup.Other2, true)
                 .SetParent(youtubeHeader).SetColorcode("#ff8080")
-                .SetOptionName(() => "コメント枠を表示する");
-            ((ObjectOptionitem)OptionItem.AllOptions.Last()).SetValueOverride(() => Translator.GetString(Main.ShowStreamComments.Value ? BooleanOptionItem.TEXT_true : BooleanOptionItem.TEXT_false));
+                .SetOptionName(() => "コメント枠を表示する")
+                .RegisterUpdateValueEvent((_, _) => Main.ShowStreamComments.Value = Modules.ExtraFeatureOptions.ShowStreamComments.GetBool());
+            if (Modules.ExtraFeatureOptions.ShowStreamComments.GetBool() != Main.ShowStreamComments.Value)
+                Modules.ExtraFeatureOptions.ShowStreamComments.SetValue(Main.ShowStreamComments.Value ? 1 : 0, false, false);
             ObjectOptionitem.Create(1_400_162, "StreamCommentPasteURL", false, "StreamCommentPasteURL", TabGroup.Other2)
                 .SetParent(youtubeHeader).SetColorcode("#ff8080")
                 .SetOptionName(() => "配信URLを貼り付け")

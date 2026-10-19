@@ -25,7 +25,7 @@ public static class BountyGuesser
 {
     private static readonly int Id = 74400; // 既存の最大ブロック(74300番台)より後ろの空きブロックを使用
     private static Color RoleColor = UtilsRoleText.GetRoleColor(CustomRoles.BountyGuesser);
-    public static string SubRoleMark = Utils.ColorString(RoleColor, "؟");
+    public static string SubRoleMark = Utils.ColorString(RoleColor, "¿");
 
     private static List<byte> playerIdList = new();
     private static readonly Dictionary<byte, byte> TargetOf = new();

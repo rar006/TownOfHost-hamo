@@ -47,12 +47,15 @@ public sealed class Pharaoh : RoleBase, IKiller, ISystemTypeUpdateHook, IAdditio
     static OptionItem OptionKillCooldown;
     static OptionItem OptionInitialCount;
     static OptionItem OptionMarkExpireMeetings;
+    /// <summary>マーク(☥)をファラオ本人と死んだ人にだけ見せる</summary>
+    static OptionItem OptionMarkOnlyPharaoh;
 
     enum OptionName
     {
         PharaohKillCooldown,
         PharaohInitialCount,
         PharaohMarkExpireMeetings,
+        PharaohMarkOnlyPharaoh,
     }
 
     static void SetupOptionItem()
@@ -66,6 +69,8 @@ public sealed class Pharaoh : RoleBase, IKiller, ISystemTypeUpdateHook, IAdditio
         OptionMarkExpireMeetings = IntegerOptionItem.Create(RoleInfo, 12, OptionName.PharaohMarkExpireMeetings,
             new(1, 99, 1), 2, false)
             .SetValueFormat(OptionFormat.Turns);
+        OptionMarkOnlyPharaoh = BooleanOptionItem.Create(RoleInfo, 13, OptionName.PharaohMarkOnlyPharaoh, true, false)
+            .SetOptionName(() => "マークはファラオと死んだ人にだけ見える");
     }
 
     // 現在のカウント
@@ -214,6 +219,8 @@ public sealed class Pharaoh : RoleBase, IKiller, ISystemTypeUpdateHook, IAdditio
         foreach (var pharaoh in Instances.Values)
         {
             if (!pharaoh.Player.IsAlive()) continue;
+            // 設定ON: ファラオ本人と死んだ人にだけ見せる
+            if (OptionMarkOnlyPharaoh?.GetBool() == true && seer != null && seer.PlayerId != pharaoh.Player.PlayerId && seer.IsAlive()) continue;
             if (pharaoh.markedPlayers.ContainsKey(seen.PlayerId))
                 return Utils.ColorString(RoleInfo.RoleColor, "☥");
         }

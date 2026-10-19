@@ -1487,7 +1487,7 @@ namespace TownOfHost
 
             var AddRoleInfoTitleString = $"{GetString("AddonInfoTitle")}";
 
-            var AddRoleInfoTitle = $"<{AddRoleTextData}>{AddRoleInfoTitleString}";
+            var AddRoleInfoTitle = $"<{AddRoleTextData}>{AddRoleInfoTitleString}</color>"; // 閉じないと、役職の色が属性の説明の文字まで付いてしまう
 
             var sb = new StringBuilder();
 
@@ -1639,7 +1639,7 @@ namespace TownOfHost
 
                 CustomRoles.Serial => AddonInfo(role, "∂"),
 
-                CustomRoles.BountyGuesser => AddonInfo(role, "؟"),
+                CustomRoles.BountyGuesser => AddonInfo(role, "¿"),
 
                 CustomRoles.MagicHand => AddonInfo(role, "ж"),
                 CustomRoles.Surviving => AddonInfo(role, "Sv"),
@@ -1716,7 +1716,7 @@ namespace TownOfHost
 
                 CustomRoles.Surrender => AddonInfo(role, "s", From.TownOfHost_hamo),
 
-                CustomRoles.Reporting => AddonInfo(role, "Ⓡ", From.TownOfHost_hamo),
+                CustomRoles.Reporting => AddonInfo(role, "®", From.TownOfHost_hamo),
 
                 CustomRoles.News => AddonInfo(role, "Ｎ"),
 

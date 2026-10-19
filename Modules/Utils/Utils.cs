@@ -930,9 +930,10 @@ namespace TownOfHost
                 if (ShowTitle("nii")) titleHelp += "\n/cmd nii - インベントリ(▶は付けているもの・×3 は個数・持っている hm)";
                 if (ShowTitle("nih")) titleHelp += "\n/cmd nih 1.2.3 - インベントリの番号で付ける(複数可) / /cmd nih 0 で外す";
                 if (ShowTitle("nio")) titleHelp += "\n/cmd nio - 二つ名を引く(無料・クールタイムあり・かぶりは個数が増える)";
-                titleHelp += "\n/cmd nis (番号) (個数) - 二つ名を売って hm にする(個数を省略で1個・all で全部。付けているものを全部売ると外れる)";
-                titleHelp += "\n/cmd nim - 持っている hm を見る";
-                titleHelp += "\n/cmd nip - SHOPの商品を見る / /cmd nib (番号) - SHOPで買う";
+                if (ShowTitle("nis")) titleHelp += "\n/cmd nis (番号) (個数) - 二つ名を売って hm にする(個数を省略で1個・all で全部。付けているものを全部売ると外れる)";
+                if (ShowTitle("nim")) titleHelp += "\n/cmd nim - 持っている hm を見る";
+                if (ShowTitle("nip")) titleHelp += "\n/cmd nip - SHOPの商品を見る / /cmd nib (番号) - SHOPで買う";
+                if (ShowTitle("nic")) titleHelp += "\n/cmd nic - カジノ(hm を賭けて coin / dice / slot)";
                 if (ShowTitle("nit"))
                 {
                     titleHelp += "\n/cmd nit (名前) (自分の番号) (相手の番号) - 二つ名の交換を申し込む";

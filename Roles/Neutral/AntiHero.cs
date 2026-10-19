@@ -119,6 +119,8 @@ public sealed class AntiHero : RoleBase, IAdditionalWinner, IKiller
     static OptionItem OptionMarkVisible;
 
     static OptionItem OptionMarkClearOnDeath;
+    /// <summary>一度もキルしなかった時、クルーメイトの勝利に追加勝利する</summary>
+    static OptionItem OptionNoKillCrewWin;
 
 
 
@@ -133,7 +135,7 @@ public sealed class AntiHero : RoleBase, IAdditionalWinner, IKiller
         AntiHeroMarkVisible,
 
         AntiHeroMarkClearOnDeath,
-
+        AntiHeroNoKillCrewWin,
     }
 
 
@@ -161,6 +163,8 @@ public sealed class AntiHero : RoleBase, IAdditionalWinner, IKiller
         OptionMarkVisible = BooleanOptionItem.Create(RoleInfo, 13, OptionName.AntiHeroMarkVisible, true, false);
 
         OptionMarkClearOnDeath = BooleanOptionItem.Create(RoleInfo, 14, OptionName.AntiHeroMarkClearOnDeath, true, false);
+        OptionNoKillCrewWin = BooleanOptionItem.Create(RoleInfo, 15, OptionName.AntiHeroNoKillCrewWin, true, false)
+            .SetOptionName(() => "一度もキルしなかった時、クルーメイトの勝利に追加勝利する");
 
     }
 
@@ -295,10 +299,8 @@ public sealed class AntiHero : RoleBase, IAdditionalWinner, IKiller
         // 一度もキルしていない場合、試合終了時にクルーメイト勝利へ追加勝利する
 
         if (!hasKilledEver)
-
         {
-
-            if (CustomWinnerHolder.winners.Contains(CustomWinner.Crewmate))
+            if (OptionNoKillCrewWin?.GetBool() != false && CustomWinnerHolder.winners.Contains(CustomWinner.Crewmate))
 
             {
 

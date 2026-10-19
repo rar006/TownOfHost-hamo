@@ -545,15 +545,14 @@ namespace TownOfHost
 
                     {
 
-                        if (Main.ForkId != ver.forkId) // フォークIDが違う場合
-
-                            __instance.cosmetics.nameText.text = $"<#f07d0d><size=1.2>{ver.forkId}</size>\n{__instance?.name}</color>";
+	                        if (Main.ForkId != ver.forkId) // フォークIDが違う場合
+	                            __instance.cosmetics.nameText.text = $"<#f07d0d><size=1.2>{ver.forkId}</size>\n</color><#FFB7D5>{__instance?.name}</color>";
 
                         else if (Main.version.CompareTo(ver.version) == 0)
 
-                            __instance.cosmetics.nameText.text = ver.tag == $"{ThisAssembly.Git.Commit}({ThisAssembly.Git.Branch})" ? $"<#a1b0ff>{__instance.name}</color>" : $"<#ffff00><size=1.2>{ver.tag}</size>\n{__instance?.name}</color>";
+	                        __instance.cosmetics.nameText.text = ver.tag == $"{ThisAssembly.Git.Commit}({ThisAssembly.Git.Branch})" ? $"<#FFB7D5>{__instance.name}</color>" : $"<#ffff00><size=1.2>{ver.tag}</size>\n</color><#FFB7D5>{__instance?.name}</color>";
 
-                        else __instance.cosmetics.nameText.text = $"<#ff0000><size=1.2>v{ver.version}</size>\n{__instance?.name}</color>";
+	                        else __instance.cosmetics.nameText.text = $"<#ff0000><size=1.2>v{ver.version}</size>\n</color><#FFB7D5>{__instance?.name}</color>";
 
                     }
 

@@ -454,7 +454,7 @@ public static class RoleGuideButtonPatch
     private static bool ShouldShowTopRightChatButton()
 
         // フリープレイ(カスタムスポーン編集)ではチャットを出さない
-        => (GameStates.IsLobby && !GameStates.IsFreePlay) || GameStates.IsMeeting || TownOfHost.Patches.ChatButtonAutoHidePatch.IsLocalGhost();
+        => (GameStates.IsLobby && !GameStates.IsFreePlay) || GameStates.IsMeeting || TownOfHost.Patches.ChatButtonAutoHidePatch.IsLocalGhost() || TownOfHost.Patches.ChatButtonAutoHidePatch.IsTaskChatEnabled();
 
 
 

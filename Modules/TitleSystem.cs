@@ -75,7 +75,8 @@ public static partial class TitleSystem
     internal static bool RoomEnabled => Enabled && (Options.OptionTitleEnabled?.GetBool() ?? true);
 
     // nis = 売る / nip = SHOP / nib = 買う / nim = 持っている hm
-    private static readonly string[] TitleSubs = { "nil", "nii", "nih", "nio", "nit", "code", "nis", "nip", "nib", "nim" };
+    // nic = カジノ
+    private static readonly string[] TitleSubs = { "nil", "nii", "nih", "nio", "nit", "code", "nis", "nip", "nib", "nim", "nic" };
 
     /// <summary>
     /// 二つ名のコマンドを読み取る。「/cmd nil ...」と「/nil ...」のどちらでも使える。
@@ -321,6 +322,7 @@ public static partial class TitleSystem
         if (AmongUsClient.Instance != null && AmongUsClient.Instance.AmHost) HostTradeTick();
         if (!GameStates.IsLobby)
         {
+            gameStarting = false; // ロビーを出た(試合が始まった)ので、次にロビーに戻ったらまた送る
             lobbyEnteredAt = -1f;
             PendingForce.Clear();
             initDone = false;
@@ -475,9 +477,19 @@ public static partial class TitleSystem
         return $"{VanillaNameHead}{baseName}\r\n<size=60%>{titles}</size></line-height>";
     }
 
+    /// <summary>
+    /// 試合の開始ボタンが押されてから、実際にロビーを出るまで(数秒)は true。
+    /// この間に二つ名付きの名前を送り直すと、試合中も二つ名が出たままになることがあったので送らない。
+    /// </summary>
+    private static bool gameStarting;
+    private static float gameStartingAt;
+
     private static void VanillaNameTick()
     {
         if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
+        // 開始が取り消されてロビーに残った時は、15秒たったら元に戻す
+        if (gameStarting && Time.time - gameStartingAt > 15f) gameStarting = false;
+        if (gameStarting) return;
         if (lobbyEnteredAt < 0f) lobbyEnteredAt = Time.time;
         if (Time.time - lobbyEnteredAt < LobbySendDelay) return;
         if (Time.time < nextVanillaNameAt) return;
@@ -520,6 +532,13 @@ public static partial class TitleSystem
     public static void StripVanillaNamesForGame()
     {
         if (!Enabled || AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
+        gameStarting = true;
+        gameStartingAt = Time.time;
+        PendingForce.Clear();
+        // 「前回送った名前」に二つ名付きの名前が残っていると、試合中の名前の更新で同じだと思われて送られないことがあるので消す
+        if (Main.LastNotifyNames != null)
+            foreach (var key in Main.LastNotifyNames.Keys.ToList())
+                if (Main.LastNotifyNames[key]?.StartsWith(VanillaNameHead) == true) Main.LastNotifyNames.Remove(key);
         try
         {
             var all = PlayerControl.AllPlayerControls.ToArray().Where(p => p != null && p.Data != null).ToArray();
@@ -724,7 +743,7 @@ public static partial class TitleSystem
 
             var tr = nameText.transform.Find("TitleText");
             string text = null;
-            if (GameStates.IsLobby && RoomEnabled && Shown.TryGetValue(pc.PlayerId, out var shown) && shown.Fc == CachedFriendCode(pc))
+            if (GameStates.IsLobby && !gameStarting && !GameStates.InGame && RoomEnabled && Shown.TryGetValue(pc.PlayerId, out var shown) && shown.Fc == CachedFriendCode(pc))
             {
                 var parts = new List<string>();
                 foreach (var id in shown.Ids)
@@ -826,6 +845,8 @@ public static partial class TitleSystem
             "nih" => Options.OptionCommandTitleEquip,
             "nio" => Options.OptionCommandTitleDraw,
             "nit" => Options.OptionCommandTitleTrade,
+            "nis" or "nip" or "nib" or "nim" => Options.OptionCommandTitleShop,
+            "nic" => Options.OptionCommandTitleCasino,
             _ => null,
         };
         return opt?.GetBool() ?? false;
@@ -888,6 +909,7 @@ public static partial class TitleSystem
             if (sub == "nip") { await ShowShopAsync(fc).ConfigureAwait(false); return; }
             if (sub == "nib") { await BuyAsync(fc, args).ConfigureAwait(false); return; }
             if (sub == "nim") { await ShowWalletAsync(fc).ConfigureAwait(false); return; }
+            if (sub == "nic") { await CasinoAsync(fc, args).ConfigureAwait(false); return; }
         }
         catch (Exception e) { Logger.Exception(e, Tag); Reply("二つ名の処理でエラーが起きました。"); }
     }
@@ -1185,6 +1207,89 @@ public static partial class TitleSystem
                 "item_not_found" => "その商品はもうありません。",
                 "inventory_full" => "インベントリがいっぱいです。",
                 _ => "買えませんでした。",
+            });
+        }
+    }
+
+    // =====================================================================
+    //  カジノ  /cmd nic   (抽選・hmの増減はすべてサーバーで行う。ゲームは結果を出すだけ)
+    //   /cmd nic coin 100 表   コイン(表か裏を当てる)
+    //   /cmd nic dice 100 3    サイコロ(1〜6を当てる)
+    //   /cmd nic slot 100      スロット(7が3つ・同じ絵が3つ・2つで当たり)
+    // =====================================================================
+    private static async Task CasinoAsync(string fc, string[] args)
+    {
+        if (args.Length == 0)
+        {
+            var me = await FetchUserAsync(fc, true).ConfigureAwait(false);
+            Reply("<b>カジノ</b>(持っている hm: <color=#ffd36e>" + Abbrev(me.Wallet) + "hm</color>)\n"
+                + "/cmd nic coin 金額 表/裏 … コイン(表か裏を当てる)\n"
+                + "/cmd nic dice 金額 1〜6 … サイコロ(出る目を当てる)\n"
+                + "/cmd nic slot 金額 … スロット(7が3つで大当たり・同じ絵が3つ・2つでも当たり)\n"
+                + "倍率や賭けられる金額はサーバーで決まっています");
+            return;
+        }
+        var game = args[0].ToLowerInvariant() switch
+        {
+            "coin" or "c" or "コイン" => "coin",
+            "dice" or "d" or "サイコロ" or "さいころ" => "dice",
+            "slot" or "s" or "スロット" => "slot",
+            _ => null,
+        };
+        if (game == null) { Reply("ゲームは coin / dice / slot のどれかです。/cmd nic で説明を見られます。"); return; }
+        if (args.Length < 2 || !long.TryParse(args[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var bet) || bet <= 0)
+        {
+            Reply("賭ける金額(hm)を数字で書いてください。例: /cmd nic " + game + " 100" + (game == "coin" ? " 表" : game == "dice" ? " 3" : ""));
+            return;
+        }
+        object choice = null;
+        if (game == "coin")
+        {
+            var c = args.Length >= 3 ? args[2].ToLowerInvariant() : "";
+            choice = c is "表" or "おもて" or "h" or "heads" ? "heads" : c is "裏" or "うら" or "t" or "tails" ? "tails" : null;
+            if (choice == null) { Reply("表か裏を選んでください。例: /cmd nic coin " + bet + " 表"); return; }
+        }
+        else if (game == "dice")
+        {
+            if (args.Length < 3 || !int.TryParse(args[2], out var n) || n < 1 || n > 6) { Reply("1〜6の数を選んでください。例: /cmd nic dice " + bet + " 3"); return; }
+            choice = n;
+        }
+        var (status, doc) = await RequestAsync(HttpMethod.Post, $"{BaseUrl}/casino", new { friendCode = fc, game, bet, choice }).ConfigureAwait(false);
+        using (doc)
+        {
+            if (doc == null) { Reply("カジノに接続できませんでした。"); return; }
+            var root = doc.RootElement;
+            if (status == 200 && root.TryGetProperty("ok", out var ok) && ok.ValueKind == JsonValueKind.True)
+            {
+                var net = (long)GetDouble(root, "net");
+                string show;
+                if (game == "coin")
+                {
+                    string Face(string v) => v == "heads" ? "表" : "裏";
+                    show = $"コイン: <b>{Face(GetString(root, "result"))}</b>(あなたは{Face(GetString(root, "pick"))})";
+                }
+                else if (game == "dice") show = $"サイコロ: <b>{(int)GetDouble(root, "result")}</b>(あなたは{(int)GetDouble(root, "pick")})";
+                else
+                {
+                    var reels = new List<string>();
+                    if (root.TryGetProperty("reels", out var r) && r.ValueKind == JsonValueKind.Array)
+                        foreach (var x in r.EnumerateArray()) reels.Add(x.GetString());
+                    show = "スロット: <b><size=130%>[ " + string.Join(" | ", reels) + " ]</size></b>";
+                }
+                var result = net > 0 ? $"<color=#7fff7f>当たり! +{Abbrev(net)}hm</color>(×{GetDouble(root, "mult").ToString("0.##", CultureInfo.InvariantCulture)})"
+                    : net == 0 ? "<color=#ffffff>±0hm</color>"
+                    : $"<color=#ff7f7f>はずれ… {Abbrev(net)}hm</color>";
+                Reply($"{show}\n{result}\n持っている hm: <color=#ffd36e>{Abbrev((long)GetDouble(root, "wallet"))}hm</color>");
+                return;
+            }
+            Reply(GetString(root, "error") switch
+            {
+                "casino_closed" => "カジノは今お休みです。",
+                "invalid_bet" => $"賭けられるのは {Abbrev((long)GetDouble(root, "minBet", 1))}〜{Abbrev((long)GetDouble(root, "maxBet", 0))}hm です。",
+                "not_enough_hm" => $"hm が足りません(持っている {Abbrev((long)GetDouble(root, "wallet"))}hm)。",
+                "cooldown" => $"少し待ってからもう一度どうぞ(あと{(int)GetDouble(root, "retryAfterSec")}秒)。",
+                "invalid_choice" => "選び方が正しくありません。/cmd nic で説明を見られます。",
+                _ => "カジノで遊べませんでした。",
             });
         }
     }

@@ -43,7 +43,9 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
     static OptionItem OptionNotify;
     internal static OptionItem OptionJiangshiCooldown;
     internal static OptionItem OptionSightTime;
-    enum OptionName { DaoshiMaxJiangshi, DaoshiKillFlash, DaoshiBodyArrow, DaoshiNotify, JiangshiCooldown, JiangshiSightTime }
+    /// <summary>自分がキルした人の死体はキョンシーにできない</summary>
+    static OptionItem OptionCantJiangshiOwnKill;
+    enum OptionName { DaoshiMaxJiangshi, DaoshiKillFlash, DaoshiBodyArrow, DaoshiNotify, JiangshiCooldown, JiangshiSightTime, DaoshiCantJiangshiOwnKill }
 
     static void SetupOptionItem()
     {
@@ -55,6 +57,8 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
         OptionNotify = BooleanOptionItem.Create(RoleInfo, 14, OptionName.DaoshiNotify, true, false);
         OptionJiangshiCooldown = FloatOptionItem.Create(RoleInfo, 15, OptionName.JiangshiCooldown, new(0f, 180f, 1f), 25f, false).SetValueFormat(OptionFormat.Seconds);
         OptionSightTime = FloatOptionItem.Create(RoleInfo, 16, OptionName.JiangshiSightTime, new(0f, 999f, 1f), 3f, false).SetValueFormat(OptionFormat.Seconds);
+        OptionCantJiangshiOwnKill = BooleanOptionItem.Create(RoleInfo, 17, OptionName.DaoshiCantJiangshiOwnKill, false, false)
+            .SetOptionName(() => "自分がキルした死体はキョンシーにできない");
     }
 
     public Daoshi(PlayerControl player) : base(RoleInfo, player, () => HasTask.False) { }
@@ -186,6 +190,13 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
         lastReportAttempt = Time.time;
         lastReportTarget = target.PlayerId;
         if (Jiangshi.Count >= OptionMaxJiangshi.GetInt()) { reason = DontReportreson.Other; return true; }
+        // 設定ON: 自分がキルした人の死体はキョンシーにできない(通報もできない・知らせるだけ)
+        if (OptionCantJiangshiOwnKill.GetBool() && PlayerState.GetByPlayerId(target.PlayerId)?.GetRealKiller() == Player.PlayerId)
+        {
+            Utils.SendMessage("自分がキルした死体はキョンシーにできません。", Player.PlayerId);
+            reason = DontReportreson.Other;
+            return true;
+        }
         var pc = PlayerCatch.GetPlayerById(target.PlayerId);
         _ = new LateTask(() =>
         {

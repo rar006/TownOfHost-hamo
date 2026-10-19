@@ -124,6 +124,16 @@ public sealed class Tomorrow : RoleBase
 
     // 直前に開いた特殊会議で、まだ死体情報の公開を行っていない場合はtrue
     private bool revealPending;
+    /// <summary>このターンが始まった時点で、もう死んでいた人。特殊会議では、このターン中に死んだ人だけを公開する</summary>
+    private readonly System.Collections.Generic.HashSet<byte> deadAtTurnStart = new();
+    private void RememberDeadAtTurnStart()
+    {
+        deadAtTurnStart.Clear();
+        foreach (var pc in PlayerCatch.AllPlayerControls)
+            if (pc?.Data != null && pc.Data.IsDead) deadAtTurnStart.Add(pc.PlayerId);
+    }
+    public override void Add() => RememberDeadAtTurnStart();
+    public override void AfterMeetingTasks() => RememberDeadAtTurnStart();
 
     public override void OnStartMeeting()
     {
@@ -135,7 +145,7 @@ public sealed class Tomorrow : RoleBase
         foreach (var pc in PlayerCatch.AllPlayerControls)
         {
             if (pc?.Data == null || !pc.Data.IsDead) continue;
-
+            if (deadAtTurnStart.Contains(pc.PlayerId)) continue; // 前のターンまでに死んでいた人は公開しない
             var parts = new System.Collections.Generic.List<string>();
             if (revealDeathTime)
             {

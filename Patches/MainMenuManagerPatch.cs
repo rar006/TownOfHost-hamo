@@ -103,18 +103,12 @@ namespace TownOfHost
 
             SimpleButton.SetBase(__instance.quitButton);
 
-            // オンラインを押した時の遷移先をモードごとに固定する。
-            // ホスト版はゲーム作成画面、参加者専用版は部屋コード入力画面を直接開く。
+            // 同じDLLをホストと参加者の両方が使うため、オンライン画面を開いて
+            // 「部屋を作成」「コードを入力」のどちらかを選べるようにする。
             if (__instance.PlayOnlineButton != null)
             {
                 __instance.PlayOnlineButton.OnClick = new();
-                __instance.PlayOnlineButton.OnClick.AddListener((Action)(() =>
-                {
-                    if (Main.IsNonHostClient)
-                        __instance.OpenEnterCodeMenu(false);
-                    else
-                        __instance.OpenCreateGame();
-                }));
+                __instance.PlayOnlineButton.OnClick.AddListener((Action)(() => __instance.OpenOnlineMenu()));
             }
 
             // 左上はAMONG USロゴのまま維持する。追加ボタンだけは初期hamo版の
@@ -864,12 +858,18 @@ namespace TownOfHost
         // 戻るボタンはプレイ画面の入れ物の中にあるため、画面を閉じれば一緒に消える。
         private static void HidePlayBackButton() { }
         // バージョン切り替え/統計の「閉じる✘」ボタン位置(右パネルの右上。ずれる場合はここを調整)
-        private static readonly Vector3 CloseSubMenuButtonPosition = new(3.5f, 0.95f, -6f); // 要望で少し右下へ
+        private static readonly Vector3 CloseSubMenuButtonPosition = new(4.05f, 0.45f, -6f); // 要望でさらに右下へ
         private static bool suppressOpenMenuPostfixOnce;
         /// <summary>ホームのUI(hamoロゴ・追加ボタン群)を隠して、サブ画面(統計/バージョン切り替え)用の✘ボタンを表示する。</summary>
         internal static void EnterSubMenu(MainMenuManager mainMenu)
         {
             SetInitialMenuUiVisible(false);
+            EnsureCloseButton(mainMenu);
+        }
+
+        /// <summary>✘ボタン(閉じる)を作って表示する。要望でホーム画面でも常に表示する(押すとホーム画面に戻る)</summary>
+        internal static void EnsureCloseButton(MainMenuManager mainMenu)
+        {
             try
             {
                 var parent = MenuButtonAnchor != null ? MenuButtonAnchor.transform.parent : null;
@@ -887,6 +887,15 @@ namespace TownOfHost
                         isActive: false,
                         transform: parent);
                     if (closeSubMenuButton != null) closeSubMenuButton.FontSize = 3f;
+                    // 画面の右下の角に固定する(パネルの外に出て見えなくなっていたため。解像度が変わってもずれない)
+                    if (!SimpleButton.IsNullOrDestroyed(closeSubMenuButton))
+                    {
+                        var go = closeSubMenuButton.Button.gameObject;
+                        var ap = go.GetComponent<AspectPosition>() ?? go.AddComponent<AspectPosition>();
+                        ap.Alignment = AspectPosition.EdgeAlignments.RightBottom;
+                        ap.DistanceFromEdge = new Vector3(0.6f, 0.55f, -30f);
+                        ap.AdjustPosition();
+                    }
                 }
                 if (!SimpleButton.IsNullOrDestroyed(closeSubMenuButton))
                     closeSubMenuButton.Button.gameObject.SetActive(true);
@@ -943,8 +952,7 @@ namespace TownOfHost
             // 追加ボタン群とhamoロゴだけを切り替える。バニラのAMONG USロゴ・プレイ画面UIは触らない。
             if (MenuButtonAnchor != null) MenuButtonAnchor.SetActive(visible);
             // ホームUIを表示する時は、サブ画面用の✘ボタンは隠す
-            if (visible && !SimpleButton.IsNullOrDestroyed(closeSubMenuButton))
-                closeSubMenuButton.Button.gameObject.SetActive(false);
+
             if (visible) HidePlayBackButton();
             if (CredentialsPatch.TOHhmLogo != null) CredentialsPatch.TOHhmLogo.gameObject.SetActive(visible);
         }
@@ -955,10 +963,12 @@ namespace TownOfHost
         /// </summary>
         [HarmonyPatch(nameof(MainMenuManager.LateUpdate))]
         [HarmonyPostfix]
-        private static void KeepHomeUiHiddenWhileSubMenuOpen()
+        private static void KeepHomeUiHiddenWhileSubMenuOpen(MainMenuManager __instance)
         {
             try
             {
+                if (SimpleButton.IsNullOrDestroyed(closeSubMenuButton) || !closeSubMenuButton.Button.gameObject.activeSelf)
+                    EnsureCloseButton(__instance);
                 var subMenuOpen = (VersionMenu != null && VersionMenu.activeSelf)
                     || (betaVersionMenu != null && betaVersionMenu.activeSelf)
                     || (Statistics_ScrollStuff != null && Statistics_ScrollStuff.activeSelf);
@@ -1064,13 +1074,9 @@ namespace TownOfHost
                     return false;
                 }
             }
-            // バニラのオンライン中間画面（ゲーム作成／コード入力カード）は使用しない。
-            // どのボタン経路でも、起動モードに必要な最終画面へ直接遷移する。
-            if (Main.IsNonHostClient)
-                __instance.OpenEnterCodeMenu(false);
-            else
-                __instance.OpenCreateGame();
-            return false;
+            // 同じDLLをホストと参加者の両方が使うため、バニラのオンライン画面を開き、
+            // 作成／コード入力を選ばせる。
+            return true;
         }
 
         [HarmonyPatch(nameof(MainMenuManager.OpenGameModeMenu))]
@@ -1122,13 +1128,12 @@ namespace TownOfHost
 
 
 
-            // 「ゲームを探す」はホスト・参加者専用版のどちらでも使用しない。
+            // 「ゲームを探す」は使用しない。作成とコード入力は同じDLLで両方使う。
             scaler.Find("Find Game Button")?.gameObject.SetActive(false);
             scaler.Find("Line")?.gameObject.SetActive(false);
 
-            // ホスト専用MODは部屋作成だけ、参加者専用MODはコード入力だけを表示する。
-            scaler.Find("Enter Code Button")?.gameObject.SetActive(Main.IsNonHostClient);
-            scaler.Find("Create Lobby Button")?.gameObject.SetActive(!Main.IsNonHostClient);
+            scaler.Find("Enter Code Button")?.gameObject.SetActive(true);
+            scaler.Find("Create Lobby Button")?.gameObject.SetActive(true);
 
             ApplyOnlineButtonsLayout(scaler);
 
@@ -1213,22 +1218,15 @@ namespace TownOfHost
 
 
 
-                // ホスト専用MODは「ゲームを作成」だけ、参加者専用MODは「コードを入力」だけを中央に置く。
-                const float scaleMultiplier = 1.35f;
-                if (Main.IsNonHostClient)
-                {
-                    createLobbyButton.gameObject.SetActive(false);
-                    enterCodeButton.gameObject.SetActive(true);
-                    enterCodeButton.localPosition = new Vector3(centerX, centerY, codePos.z);
-                    enterCodeButton.localScale = _originalEnterCodeScale.Value * scaleMultiplier;
-                }
-                else
-                {
-                    createLobbyButton.gameObject.SetActive(true);
-                    enterCodeButton.gameObject.SetActive(false);
-                    createLobbyButton.localPosition = new Vector3(centerX, centerY, createPos.z);
-                    createLobbyButton.localScale = _originalCreateLobbyScale.Value * scaleMultiplier;
-                }
+                // 同じDLLをホストと参加者の両方が使うため、両方の入口を表示する。
+                const float scaleMultiplier = 1.15f;
+                const float buttonSpacing = 1.55f;
+                createLobbyButton.gameObject.SetActive(true);
+                enterCodeButton.gameObject.SetActive(true);
+                createLobbyButton.localPosition = new Vector3(centerX - buttonSpacing, centerY, createPos.z);
+                enterCodeButton.localPosition = new Vector3(centerX + buttonSpacing, centerY, codePos.z);
+                createLobbyButton.localScale = _originalCreateLobbyScale.Value * scaleMultiplier;
+                enterCodeButton.localScale = _originalEnterCodeScale.Value * scaleMultiplier;
 
             }
 

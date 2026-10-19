@@ -188,9 +188,7 @@ namespace TownOfHost
 
                 NormalGameOptionsV12 gameOptions = Main.NormalOptions.TryCast<NormalGameOptionsV12>();
 
-                if (Main.NormalOptions.NumImpostors == 0 && GameStates.IsOnlineGame)
-
-                    gameOptions.SetInt(Int32OptionNames.NumImpostors, 1);
+                // インポスター0人も設定できるようにしたので、0人を1人に戻す処理はしない
 
 
 

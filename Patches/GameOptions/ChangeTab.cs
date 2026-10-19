@@ -239,15 +239,8 @@ namespace TownOfHost
                                 break;
 
                             case StringNames.GameNumImpostors:
-
-                                if (DebugModeManager.IsDebugMode)
-
-                                {
-
-                                    ob.TryCast<NumberOption>().ValidRange.min = 0;
-
-                                }
-
+                                // 要望: インポスターを0人や4人以上にもできるように(バニラは1〜3人)
+                                ob.TryCast<NumberOption>().ValidRange = new FloatRange(0, 15);
                                 break;
 
                             case StringNames.GameTaskBarMode:

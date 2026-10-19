@@ -519,6 +519,9 @@ namespace TownOfHost
 
 
             if (!player.SetNameCheck(name, seer, force)) return;
+            // 名前1つが大きすぎると、サーバーが受け取らない(さらに大きいと切断される)ので切り詰める。
+            // (前回送った名前の比較は切り詰める前の名前で済ませてあるので、毎回送り直しにはならない)
+            name = TownOfHost.Modules.NetworkSafety.ClampName(name);
 
 
 
@@ -1117,9 +1120,9 @@ namespace TownOfHost
         }
 
         public static void RpcSnapToForced(this PlayerControl pc, Vector2 position, SendOption sendOption = SendOption.None)
-
         {
-
+            // テレポートは本数を数えられていて、多すぎるとホストが切断されるので、超えそうな時は送らない
+            if (!TownOfHost.Modules.NetworkSafety.AllowTeleport()) return;
             var netTransform = pc.NetTransform;
 
             if (AmongUsClient.Instance.AmClient)
@@ -1143,8 +1146,8 @@ namespace TownOfHost
         }
 
         public static void RpcSnapToDesync(this PlayerControl pc, PlayerControl seer, Vector2 position)
-
         {
+            if (!TownOfHost.Modules.NetworkSafety.AllowTeleport()) return;
 
             var net = pc.NetTransform;
 

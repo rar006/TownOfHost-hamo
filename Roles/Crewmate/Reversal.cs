@@ -22,7 +22,8 @@ public sealed class Reversal : RoleBase, IMeetingTimeAlterable
             typeof(Reversal),
             player => new Reversal(player),
             CustomRoles.Reversal,
-            () => RoleTypes.Crewmate,
+            // ベントで発動する設定の時は、ベントに入れるようにエンジニアにする
+            () => OptionCanUseVent?.GetBool() == true ? RoleTypes.Engineer : RoleTypes.Crewmate,
             CustomRoleTypes.Crewmate,
             25300,
             SetupOptionItem,
@@ -39,11 +40,13 @@ public sealed class Reversal : RoleBase, IMeetingTimeAlterable
 
     public static OptionItem OptionRequiredTaskCount;
     public static OptionItem OptionMeetingSeconds;
-
+    /// <summary>ベントに入っても逆転会議を開ける(条件を満たしていないと自殺)</summary>
+    public static OptionItem OptionCanUseVent;
     private enum OptionName
     {
         ReversalRequiredTaskCount,
         ReversalMeetingSeconds,
+        ReversalCanUseVent,
     }
 
     private static readonly HashSet<byte> PendingMeetingPlayerIds = new();
@@ -56,6 +59,8 @@ public sealed class Reversal : RoleBase, IMeetingTimeAlterable
         OptionRequiredTaskCount = IntegerOptionItem.Create(RoleInfo, 10, OptionName.ReversalRequiredTaskCount, new(0, 99, 1), 6, false);
         OptionMeetingSeconds = FloatOptionItem.Create(RoleInfo, 11, OptionName.ReversalMeetingSeconds, new(10f, 350f, 1f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
+        OptionCanUseVent = BooleanOptionItem.Create(RoleInfo, 12, OptionName.ReversalCanUseVent, false, false)
+            .SetOptionName(() => "ベントに入っても逆転会議を開ける(条件を満たしていないと自殺)");
     }
 
     /// <summary>
@@ -233,7 +238,12 @@ public sealed class Reversal : RoleBase, IMeetingTimeAlterable
         // 直前の通常会議で多数決追放を無効化した場合だけ、専用会議を開く。
         if (!PendingMeetingPlayerIds.Remove(Player.PlayerId)) return;
         if (!Player.IsAlive()) return;
+        StartReversalMeeting(2f);
+    }
 
+    /// <summary>逆転会議を開く(delay 秒後)</summary>
+    private void StartReversalMeeting(float delay)
+    {
         ActiveMeetingPlayerIds.Add(Player.PlayerId);
         LockedSelectionPlayerIds.Remove(Player.PlayerId);
         SelectedTargetIds[Player.PlayerId] = new();
@@ -246,7 +256,32 @@ public sealed class Reversal : RoleBase, IMeetingTimeAlterable
             ReportDeadBodyPatch.ExReportDeadBody(Player, null, false, "ReversalMeeting", RoleInfo.RoleColorCode);
             Utils.SendMessage(GetString("ReversalMeetingAnnounce"), title: GetString("ReversalMeeting"));
             Utils.SendMessage(GetString("ReversalTargetGuide"), Player.PlayerId, GetString("ReversalMeeting"));
-        }, 2f, "Reversal.Meeting", true);
+        }, delay, "Reversal.Meeting", true);
+    }
+
+    /// <summary>
+    /// 設定ON: ベントに入ろうとすると発動。必要タスク数を満たしていれば逆転会議、満たしていなければ自殺。
+    /// (追放される時しか発動できず、使える機会がほとんど無かったため)
+    /// </summary>
+    public override bool OnEnterVent(PlayerPhysics physics, int ventId)
+    {
+        if (OptionCanUseVent?.GetBool() != true) return true;
+        if (!AmongUsClient.Instance.AmHost) return false;
+        if (!Player.IsAlive() || GameStates.IsMeeting || IsAnyReversalMeeting() || PendingMeetingPlayerIds.Contains(Player.PlayerId)) return false;
+        if (MeetsCondition(Player))
+        {
+            UtilsGameLog.AddGameLog("Reversal", $"{UtilsName.GetPlayerColor(Player)} がベントから逆転会議を開いた");
+            StartReversalMeeting(0.3f);
+        }
+        else
+        {
+            UtilsGameLog.AddGameLog("Reversal", $"{UtilsName.GetPlayerColor(Player)} はタスクが足りないまま逆転会議を開こうとして自殺した");
+            var state = PlayerState.GetByPlayerId(Player.PlayerId);
+            if (state != null) state.DeathReason = CustomDeathReason.Suicide;
+            Player.SetRealKiller(Player);
+            Player.RpcMurderPlayerV2(Player);
+        }
+        return false; // ベントには入らない
     }
 
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)

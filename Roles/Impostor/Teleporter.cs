@@ -107,6 +107,11 @@ public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
 
 
     float pendingTimer;
+    /// <summary>
+    /// ペットで使える次の時刻。ペットからの使用はゲームの能力ボタンのクールタイムを通らないので、
+    /// ここで同じ秒数のクールタイムをかける(以前はペットを撫でると何度でも使えた)
+    /// </summary>
+    float petReadyAt;
 
     byte destPlayerId;
 
@@ -151,6 +156,7 @@ public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
     {
 
         PetActionManager.Register(Player.PlayerId, OnPetUsed);
+        petReadyAt = UnityEngine.Time.time + AbilityCooldown; // 試合開始直後もボタンと同じだけ待つ
 
     }
 
@@ -249,13 +255,10 @@ public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
 
 
     private void OnPetUsed()
-
     {
-
         if (!AmongUsClient.Instance.AmHost) return;
-
+        if (UnityEngine.Time.time < petReadyAt) return; // クールタイム中
         TryStartTeleport();
-
     }
 
 
@@ -287,9 +290,7 @@ public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
         destPlayerId = dest.PlayerId;
 
         pendingTimer = WaitingTime;
-
-
-
+        petReadyAt = UnityEngine.Time.time + AbilityCooldown;
         Player.RpcResetAbilityCooldown(Sync: true);
 
         SendRpc();
@@ -473,9 +474,8 @@ public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
             if (!Player.IsAlive()) return;
 
             AURoleOptions.PhantomCooldown = AbilityCooldown;
-
             Player.RpcResetAbilityCooldown();
-
+            petReadyAt = UnityEngine.Time.time + AbilityCooldown; // 会議の後もボタンと同じだけ待つ
         }, 0.3f, "Teleporter.AfterMeeting.CD", true);
 
     }

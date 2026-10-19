@@ -99,6 +99,8 @@ namespace TownOfHost
                     () =>
                     {
                         Main.ShowStreamComments.Value = !Main.ShowStreamComments.Value;
+                        // ゲーム内の設定(OTHER2)の ON/OFF も合わせる
+                        Modules.ExtraFeatureOptions.ShowStreamComments?.SetValue(Main.ShowStreamComments.Value ? 1 : 0, false, false);
                         if (CommentFrameToggle?.Label != null) CommentFrameToggle.Label.text = CommentFrameLabel();
                     },
                     CommentFrameLabel(),

@@ -30,7 +30,7 @@ class AddondataInfo
 
                 CustomRoles.Serial => "∂",
 
-                CustomRoles.BountyGuesser => "؟",
+                CustomRoles.BountyGuesser => "¿",
 
                 CustomRoles.MagicHand => "ж",
 
@@ -100,7 +100,7 @@ class AddondataInfo
 
                 CustomRoles.Surrender => "s",
 
-                CustomRoles.Reporting => "Ⓡ",
+                CustomRoles.Reporting => "®",
 
                 CustomRoles.SilverBuzzer => "Sb",
                 CustomRoles.Surviving => "Sv",

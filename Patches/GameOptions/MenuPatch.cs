@@ -395,6 +395,10 @@ namespace TownOfHost
         public static PassiveButton activeonly;
         /// <summary>役職の見出しを全部ひらく/全部とじるボタン</summary>
         public static PassiveButton expandAll;
+        /// <summary>上の列に並べたタイル(人数におすすめ・全部ひらく など)。設定画面の上に重なる時は隠す</summary>
+        public static readonly System.Collections.Generic.List<PassiveButton> ModTiles = new();
+        /// <summary>役職の行の「New!」。ポーズメニューを開いている間は隠す</summary>
+        public static readonly System.Collections.Generic.List<GameObject> NewBadges = new();
         /// <summary>「全部ひらく/とじる」タイルの位置(一番左のアイコンからの距離)。アイコン1個分 = 0.762</summary>
         public const float ExpandAllTileOffsetX = 5.4f;
         /// <summary>
@@ -1425,6 +1429,8 @@ namespace TownOfHost
                             tile.OnClick.AddListener((Action)(() => { onClick(); Refresh(); }));
                         }
                         ForceRenderInFront(tile.transform);
+                        ModTiles.RemoveAll(t => t == null);
+                        ModTiles.Add(tile);
                     }
 
                     // 全部ひらく ⇔ 全部とじる
@@ -3232,7 +3238,11 @@ namespace TownOfHost
                                     // 役職名の右横、Hボタン(x=-0.58)のすぐ左に、Hと同じ高さで置く
                                     badgeRenderer.transform.localPosition = new Vector3(-1.45f, stringOption.MinusBtn.transform.localPosition.y, -10.2f);
                                     badgeRenderer.transform.localScale = Vector3.one;
-                                    badgeRenderer.sortingOrder = 50;
+                                    // 行の背景と同じ順番にして、手前かどうかは位置(z)で決める
+                                    // (以前は50や+1で、手前に開いたポーズメニューの上にも浮き出ていた)
+                                    badgeRenderer.sortingOrder = stringOption.LabelBackground.sortingOrder;
+                                    NewBadges.RemoveAll(b => b == null);
+                                    NewBadges.Add(badgeRenderer.gameObject);
                                 }
                             }
 

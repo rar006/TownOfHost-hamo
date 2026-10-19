@@ -23,7 +23,7 @@ public static class Reporting
 {
     private static readonly int Id = 74300;
     private static Color RoleColor = UtilsRoleText.GetRoleColor(CustomRoles.Reporting);
-    public static string SubRoleMark = Utils.ColorString(RoleColor, "𝛱");
+    public static string SubRoleMark = Utils.ColorString(RoleColor, "®"); // 以前の 𝛱 はゲームの文字に無く □ になっていた
     private static List<byte> playerIdList = new();
 
     public static OptionItem PenetrateTransparent;

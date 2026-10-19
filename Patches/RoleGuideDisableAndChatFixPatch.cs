@@ -53,18 +53,27 @@ namespace TownOfHost.Patches
 
             // 死んでいる時(ゴースト)はタスク中でも幽霊チャットが使えるので消さない
             // (以前はロビー・会議以外で必ず消していたため、ゴースト中のホストがチャットを開けなかった)
-            var shouldShow = GameStates.IsLobby || GameStates.IsMeeting || IsLocalGhost();
+            // 「タスク中のチャット」(通常チャット・近接チャットなど)がONの時は、タスク中でもチャットを使うので消さない
+            // (以前は消していたため、近接チャットなどでチャットボタンが出なかった)
+            var taskChat = IsTaskChatEnabled();
+            var shouldShow = GameStates.IsLobby || GameStates.IsMeeting || IsLocalGhost() || taskChat;
             if (!shouldShow && chatButton.gameObject.activeSelf)
             {
                 chatButton.gameObject.SetActive(false);
             }
-            else if (shouldShow && IsLocalGhost() && !chatButton.gameObject.activeSelf)
+            else if (shouldShow && (IsLocalGhost() || taskChat) && !chatButton.gameObject.activeSelf)
             {
-                // ゴースト中は、ほかの処理で消されたチャットボタンを出し直す
+                // ゴースト中・タスク中のチャットがONの時は、ほかの処理で消されたチャットボタンを出し直す
                 chatButton.gameObject.SetActive(true);
                 __instance.Chat.SetVisible(true);
             }
         }
+
+        /// <summary>試合中で、部屋の設定「タスク中のチャット」がONか(生きている人がタスク中にチャットできる)</summary>
+        public static bool IsTaskChatEnabled()
+            => GameStates.IsInGame && !GameStates.IsLobby && !GameStates.IsMeeting
+               && PlayerControl.LocalPlayer != null && PlayerControl.LocalPlayer.IsAlive()
+               && (Options.OptionGameChatSetting?.GetBool() ?? false);
 
         /// <summary>試合中(タスク中)に自分が死んでいるか</summary>
         public static bool IsLocalGhost()

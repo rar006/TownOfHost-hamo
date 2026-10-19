@@ -88,7 +88,14 @@ namespace TownOfHost
 
                 TaskPanelBehaviourPatch.RestoreDeferredTaskPanel(__instance, player);
 
-            if (!GameStates.IsModHost) return;
+            // 同じDLLをホスト・参加者の両方で使う。
+            // 非ホストではゲーム進行処理を実行せず、ローカルのボタン表示だけ更新する。
+            if (!GameStates.IsModHost)
+            {
+                if (AmongUsClient.Instance.AmHost) return;
+                CustomButtonHud.BottonHud();
+                return;
+            }
 
             if (player == null) return;
 
@@ -852,7 +859,7 @@ namespace TownOfHost
 
 
 
-                    if (!GameStates.IsModHost) return;
+                    var isLocalHost = AmongUsClient.Instance.AmHost;
 
                     //リセット
 
@@ -944,7 +951,7 @@ namespace TownOfHost
 
                                     player.Data.Role.InitializeAbilityButton();
 
-                                    if (reset && OldValue == Main.CustomSprite.Value)
+                                    if (isLocalHost && reset && OldValue == Main.CustomSprite.Value)
 
                                     {
 

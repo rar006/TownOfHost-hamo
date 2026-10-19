@@ -113,17 +113,19 @@ namespace TownOfHost
 
                     // 地図(ランダムスポーン/牢屋)の画面を開いている間は出さない(出す→隠すを毎フレーム繰り返してチカチカしていた)
                     var mapMenuOpen = ShowRandomSpawnOption.CustomBackground != null && ShowRandomSpawnOption.CustomBackground.gameObject.activeInHierarchy;
+                    // 役職の「New!」は、ポーズメニューを開いている間は隠す(上に浮き出ていた)
+                    foreach (var badge in NewBadges)
+                        if (badge != null && badge.activeSelf == pauseMenuOpen) badge.SetActive(!pauseMenuOpen);
                     var active = !pauseMenuOpen && !mapMenuOpen && ((ModSettingsButton?.selected ?? false) || (sideTabButtons?.Any(sb => sb != null && sb.selected) ?? false));
 
 
 
-                    searchtext.gameObject.SetActive(active);
-
-                    prisettext.gameObject.SetActive(active && GameSettingMenuStartPatch.PresetNameEditorOpen);
-
-                    search.gameObject.SetActive(active);
-
-                    priset.gameObject.SetActive(active && GameSettingMenuStartPatch.PresetNameEditorOpen); // 「名前」ボタンを押した時だけ表示
+                    // チャットを開いている時は、検索欄なども隠す(いちばん手前に描いているので、チャットの文字の上に重なっていた)
+                    var chatOpenNow = (HudManager.Instance?.Chat != null && (HudManager.Instance.Chat.IsOpenOrOpening || (HudManager.Instance.Chat.chatScreen != null && HudManager.Instance.Chat.chatScreen.activeInHierarchy)));
+                    searchtext.gameObject.SetActive(active && !chatOpenNow);
+                    prisettext.gameObject.SetActive(active && !chatOpenNow && GameSettingMenuStartPatch.PresetNameEditorOpen);
+                    search.gameObject.SetActive(active && !chatOpenNow);
+                    priset.gameObject.SetActive(active && !chatOpenNow && GameSettingMenuStartPatch.PresetNameEditorOpen); // 「名前」ボタンを押した時だけ表示
 
 
 
@@ -135,7 +137,7 @@ namespace TownOfHost
 
                     // それらが開いている間はこの2つのボタンだけ追加で隠すようにする。
 
-                    var chatOpen = HudManager.Instance?.Chat?.IsOpenOrOpening ?? false;
+                    var chatOpen = (HudManager.Instance?.Chat != null && (HudManager.Instance.Chat.IsOpenOrOpening || (HudManager.Instance.Chat.chatScreen != null && HudManager.Instance.Chat.chatScreen.activeInHierarchy))); // 開く動きが終わった後も、チャット画面が出ていれば開いている扱い
 
                     var taskPanelOpen = HudManager.Instance?.TaskPanel?.open ?? false;
 
@@ -143,9 +145,14 @@ namespace TownOfHost
 
 
 
-                    activeonly.gameObject.SetActive(activeExceptChatTask);
-
-                    if (GamePresetButton) GamePresetButton.gameObject.SetActive(activeExceptChatTask);
+                    // 役職説明(タスク欄)を開いている時も消さない(要望)。チャットを開いている時だけ隠す
+                    activeonly.gameObject.SetActive(active && !chatOpen);
+                    // ゲーム・プリセットは、役職説明(タスク欄)を開いている時も消さない(要望)
+                    if (GamePresetButton) GamePresetButton.gameObject.SetActive(active && !chatOpen);
+                    // 人数におすすめ・全部ひらく などのタイルは、いちばん手前に描いているので、
+                    // ポーズメニュー・地図の画面・チャットなどが開いている時は隠す(上に浮き出ていた)
+                    foreach (var tile in ModTiles)
+                        if (tile != null && tile.gameObject.activeSelf != (active && !chatOpen)) tile.gameObject.SetActive(active && !chatOpen);
 
                 }
 

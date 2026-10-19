@@ -95,7 +95,7 @@ namespace TownOfHost.Roles
                 var offset = 1;
                 foreach (var roleTypes in new[] { CustomRoleTypes.Impostor, CustomRoleTypes.Madmate, CustomRoleTypes.Crewmate, CustomRoleTypes.Neutral })
                 {
-                    var maxCount = roleTypes == CustomRoleTypes.Impostor ? Math.Min(3, playerCount) : playerCount;
+                    var maxCount = playerCount; // インポスターも人数まで(以前は3人まで)
                     var name = GetColoredRoleTypeName(roleTypes);
                     var replacementDictionary = new Dictionary<string, string>() { { "%roleType%", name } };
 
@@ -123,6 +123,15 @@ namespace TownOfHost.Roles
             }
 
             public int Min(CustomRoleTypes roleTypes) => minOptions.TryGetValue(roleTypes, out var opt) ? opt.GetInt() : 0;
+            /// <summary>最大・最少を変える(設定できる範囲に収める。値の番号 = 人数)</summary>
+            public void SetMax(CustomRoleTypes roleTypes, int value)
+            {
+                if (maxOptions.TryGetValue(roleTypes, out var opt)) opt.SetValue(Math.Clamp(value, 0, opt.Rule.MaxValue));
+            }
+            public void SetMin(CustomRoleTypes roleTypes, int value)
+            {
+                if (minOptions.TryGetValue(roleTypes, out var opt)) opt.SetValue(Math.Clamp(value, 0, opt.Rule.MaxValue));
+            }
             public int Max(CustomRoleTypes roleTypes) => maxOptions.TryGetValue(roleTypes, out var opt) ? opt.GetInt() : 0;
             public int MadFromCrewMax => madFromCrewMaxOption.GetInt();
         }
@@ -287,7 +296,7 @@ namespace TownOfHost.Roles
 
             assignMode = () => (AssignAlgorithm)OptionAssignMode.GetInt();
             RandomAssignOptionsCollection.Clear();
-            RandomAssignOptions.Create(10, OptionAssignMode, CustomRoleTypes.Impostor, 3);
+            RandomAssignOptions.Create(10, OptionAssignMode, CustomRoleTypes.Impostor, 15); // インポスターも0〜15人(以前は3人まで)
             RandomAssignOptions.Create(20, OptionAssignMode, CustomRoleTypes.Madmate);
             RandomAssignOptions.Create(30, OptionAssignMode, CustomRoleTypes.Crewmate);
             RandomAssignOptions.Create(40, OptionAssignMode, CustomRoleTypes.Neutral);
@@ -402,10 +411,10 @@ namespace TownOfHost.Roles
                 Logger.Warn($"ApplyPerCountSettings: {e.Message}", "RoleAssignManager");
             }
         }
-        /// <summary>Among Us 側のインポスター数を、人数別設定のインポスター最大数(1〜3)にする。変えたら true</summary>
+        /// <summary>Among Us 側のインポスター数を、人数別設定のインポスター最大数(0〜15)にする。変えたら true</summary>
         private static bool SyncImpostorCount(PerCountAssignOptions pc)
         {
-            var imp = Math.Clamp(pc.Max(CustomRoleTypes.Impostor), 1, 3);
+            var imp = Math.Clamp(pc.Max(CustomRoleTypes.Impostor), 0, 15);
             if (Main.NormalOptions.NumImpostors == imp) return false;
             Main.NormalOptions.NumImpostors = imp;
             GameOptionsSender.RpcSendOptions();
@@ -425,6 +434,8 @@ namespace TownOfHost.Roles
         // ===== アサインモードのインポスター数 ⇔ ゲーム設定のインポスター数 の同期(ロビー・ホスト) =====
         private static int lastSyncedMax = -1;
         private static int lastSyncedVanilla = -1;
+        private static int lastPcMax = -1;
+        private static int lastPcVanilla = -1;
         private static float nextImpSyncCheck;
         /// <summary>
         /// どちらかを変えたら、もう片方を合わせる。
@@ -440,7 +451,29 @@ namespace TownOfHost.Roles
                 nextImpSyncCheck = UnityEngine.Time.time + 0.3f;
                 if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost || !GameStates.IsLobby) return;
                 if (Main.NormalOptions == null || OptionAssignMode?.GetBool() != true || AssignMode != AssignAlgorithm.Random) { lastSyncedMax = lastSyncedVanilla = -1; return; }
-                if (TryGetPerCountOverride(out _)) { lastSyncedMax = lastSyncedVanilla = -1; return; }
+                if (TryGetPerCountOverride(out var pc))
+                {
+                    // 人数ごとの設定を使っている時は、今の人数の「インポスター 最大」とゲーム設定のインポスター数を合わせる
+                    lastSyncedMax = lastSyncedVanilla = -1;
+                    var pmax = pc.Max(CustomRoleTypes.Impostor);
+                    var vNow = Main.NormalOptions.NumImpostors;
+                    if (lastPcMax < 0) { lastPcMax = pmax; lastPcVanilla = vNow; }
+                    if (pmax != lastPcMax)
+                    {
+                        if (vNow != pmax) { Main.NormalOptions.NumImpostors = Math.Clamp(pmax, 0, 15); GameOptionsSender.RpcSendOptions(); }
+                        vNow = Main.NormalOptions.NumImpostors;
+                    }
+                    else if (vNow != lastPcVanilla)
+                    {
+                        pc.SetMax(CustomRoleTypes.Impostor, vNow);
+                        if (pc.Min(CustomRoleTypes.Impostor) > vNow) pc.SetMin(CustomRoleTypes.Impostor, vNow);
+                        pmax = pc.Max(CustomRoleTypes.Impostor);
+                    }
+                    lastPcMax = pmax;
+                    lastPcVanilla = vNow;
+                    return;
+                }
+                lastPcMax = lastPcVanilla = -1;
                 if (!RandomAssignOptionsCollection.TryGetValue(CustomRoleTypes.Impostor, out var imp)) return;
 
                 var max = imp.Max;
@@ -450,11 +483,11 @@ namespace TownOfHost.Roles
                 if (max != lastSyncedMax)
                 {
                     // アサインモード側を変えた
-                    var v = Math.Clamp(max, 1, 3);
+                    var v = Math.Clamp(max, 0, 15);
                     if (vanilla != v) { Main.NormalOptions.NumImpostors = v; GameOptionsSender.RpcSendOptions(); }
                     vanilla = v;
                 }
-                else if (vanilla != lastSyncedVanilla || vanilla != Math.Clamp(max, 1, 3))
+                else if (vanilla != lastSyncedVanilla || vanilla != Math.Clamp(max, 0, 15))
                 {
                     // ゲーム設定側を変えた(または初回でずれている)
                     imp.SetMaxValue(vanilla);
@@ -878,7 +911,7 @@ namespace TownOfHost.Roles
             AssignRoleType = roleType;
             IsInitiallyAssignableCallBack = () => true;
             AssignCountRule =
-                roleType == CustomRoleTypes.Impostor ? new(1, 3, 1) : new(1, 15, 1);
+                new(1, 15, 1); // インポスターも4人以上にできるので、最大数も15まで(以前は3)
             AssignUnitRoles =
                 Enumerable.Repeat(role, AssignCountRule.Step).ToArray();
         }

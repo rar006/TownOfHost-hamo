@@ -9,6 +9,8 @@ public static class ExtraFeatureOptions
     public static OptionItem SendRuleOnJoin;
     /// <summary>YouTubeのコメントで参加希望した人だけ部屋に入れる(参加希望制)</summary>
     public static OptionItem JoinByCommentOnly;
+    /// <summary>YouTubeのコメント枠を表示する(Main.ShowStreamComments と同じ値)</summary>
+    public static OptionItem ShowStreamComments;
 }
 
 /// <summary>

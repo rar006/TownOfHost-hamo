@@ -58,6 +58,66 @@ public static class BugReportSystem
         /// <summary>Discord側のステータス(open / in_progress / resolved / read)。一覧でタグとして表示する</summary>
         public string Status { get; set; } = "open";
         public List<TicketMessage> Messages { get; set; } = new();
+        /// <summary>「みんなの報告」から開いた、他の人の報告(自分の報告の数には数えない)</summary>
+        public bool Followed { get; set; } = false;
+    }
+
+    /// <summary>「みんなの報告」の一覧の1件(サーバーの /public から)</summary>
+    public class PublicTicket
+    {
+        public string TicketId { get; set; } = "";
+        public string Summary { get; set; } = "";
+        public string Status { get; set; } = "open";
+        public string ReporterName { get; set; } = "";
+        public long CreatedAtMs { get; set; } = 0;
+        public int MessageCount { get; set; } = 0;
+    }
+    private class PublicList
+    {
+        public List<PublicTicket> Items { get; set; } = new();
+    }
+
+    /// <summary>今出ている報告の一覧(みんなの報告)。取れなければ null</summary>
+    public static async Task<List<PublicTicket>> FetchPublicAsync()
+    {
+        if (string.IsNullOrEmpty(BugReportRemoteConfig.EndpointUrl)) return null;
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, BugReportRemoteConfig.EndpointUrl.TrimEnd('/') + "/public");
+            if (!string.IsNullOrEmpty(BugReportRemoteConfig.ApiKey))
+                request.Headers.Add("Authorization", $"Bearer {BugReportRemoteConfig.ApiKey}");
+            using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode) return null;
+            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            return JsonSerializer.Deserialize<PublicList>(json, JsonOptions)?.Items ?? new();
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"みんなの報告を取得できませんでした: {ex.Message}", "BugReport");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 他の人の報告を「見ている報告」として自分の一覧に入れる(チャット・画像の添付・返信の受け取りが自分の報告と同じようにできる)。
+    /// すでに入っていれば何もしない。入れたら、すぐに今までのやり取りを読みに行く。
+    /// </summary>
+    public static void FollowTicket(PublicTicket p)
+    {
+        if (p == null || string.IsNullOrEmpty(p.TicketId)) return;
+        if (_data.Tickets.Any(t => t.TicketId == p.TicketId)) return;
+        var info = new TicketInfo
+        {
+            TicketId = p.TicketId,
+            Summary = p.Summary,
+            CreatedAtMs = p.CreatedAtMs,
+            LastPolledAtMs = 0,
+            Status = p.Status,
+            Followed = true,
+        };
+        _data.Tickets.Add(info);
+        Save();
+        _ = PollSingleTicketAsync(info);
     }
 
     private class SaveData
@@ -608,7 +668,7 @@ public static class BugReportRemoteConfig
     /// 枠を使っている(まだ未対応の)報告の数。既読・修正中・修正済みになった報告は数えない(サーバー側と同じ)。
     /// (以前は状態に関係なく持っている報告の数で判断していたため、対応済みでも追加の報告ができなかった)
     /// </summary>
-    public static int ActiveTicketCount => BugReportSystem.Tickets.Count(t => t.Status is not ("in_progress" or "resolved" or "read"));
+    public static int ActiveTicketCount => BugReportSystem.Tickets.Count(t => !t.Followed && t.Status is not ("in_progress" or "resolved" or "read"));
 
     public static bool CanSubmitAdditionalReport => AllowAdditionalReports && ActiveTicketCount < MaxTickets;
 

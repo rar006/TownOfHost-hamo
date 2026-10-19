@@ -65,6 +65,14 @@ namespace TownOfHost.Patches
             ResultMessage = "";
             ErrorMessage = "";
             BugReportUIPatch.TakePendingAttachmentPaths();
+            // 要望: フレンドコードが無い(アカウント未作成・ゲスト等)とバグ報告は使えない
+            string friendCode = "";
+            try { friendCode = EOSManager.InstanceExists ? EOSManager.Instance.FriendCode : ""; } catch { }
+            if (string.IsNullOrWhiteSpace(friendCode))
+            {
+                Step = BugReportWizardStep.Done;
+                ResultMessage = "バグ報告を使うには、フレンドコードが必要です。\nAmong Us のアカウントでログインして、フレンドコードを作ってから、もう一度開いてください。";
+            }
             BugReportUIPatch.ShowPanel();
         }
 
@@ -204,6 +212,12 @@ namespace TownOfHost.Patches
         private static readonly System.Collections.Generic.List<string> _pendingAttachmentPaths = new();
         private static SimpleButton _closeButton;
         private static SimpleButton _newReportButton;
+        /// <summary>「みんなの報告」と「自分の報告」を切り替えるボタン</summary>
+        private static SimpleButton _publicToggleButton;
+        /// <summary>true = 今出ている報告(みんなの報告)を一覧に出す</summary>
+        private static bool _showPublic;
+        private static System.Collections.Generic.List<BugReportSystem.PublicTicket> _publicItems;
+        private static bool _publicLoading;
         private const int MaxTicketListButtons = BugReportRemoteConfig.MaxListedTickets;
         private static readonly SimpleButton[] _ticketButtons = new SimpleButton[MaxTicketListButtons];
 
@@ -313,6 +327,16 @@ namespace TownOfHost.Patches
                     label: "追加で報告する");
                 _newReportButton.Scale = new Vector2(2.8f, 0.42f);
                 _newReportButton.FontSize = 1.3f;
+                _publicToggleButton = new SimpleButton(
+                    parent: _panelRoot.transform,
+                    name: "BugReportPublicToggle",
+                    localPosition: new Vector3(0f, -2.15f, -1f),
+                    normalColor: new Color32(40, 110, 140, 230),
+                    hoverColor: new Color32(60, 140, 175, 230),
+                    action: () => TogglePublicList(),
+                    label: "みんなの報告を見る");
+                _publicToggleButton.Scale = new Vector2(2.8f, 0.38f);
+                _publicToggleButton.FontSize = 1.2f;
 
                 // ===== Step0: チャット希望の選択ボタン =====
                 _chooseDiscordButton = new SimpleButton(
@@ -679,9 +703,40 @@ namespace TownOfHost.Patches
 
         private static void OpenTicketByIndex(int index)
         {
+            if (_showPublic)
+            {
+                if (_publicItems == null || index < 0 || index >= _publicItems.Count) return;
+                var p = _publicItems[index];
+                BugReportSystem.FollowTicket(p); // 自分の一覧に「見ている報告」として入れる(チャット・画像の添付ができる)
+                BugReportWizard.OpenExistingTicket(p.TicketId);
+                return;
+            }
             var tickets = BugReportSystem.Tickets;
             if (index < 0 || index >= tickets.Count) return;
-            BugReportWizard.OpenExistingTicket(tickets[index].TicketId);
+            // 一覧は新しい順に並べているので、同じ順番で選ぶ(以前は古い順で選んでいて、違う報告が開いていた)
+            BugReportWizard.OpenExistingTicket(tickets[tickets.Count - 1 - index].TicketId);
+        }
+
+        /// <summary>「みんなの報告」⇔「自分の報告」を切り替える。みんなの報告はサーバーから読み直す</summary>
+        private static void TogglePublicList()
+        {
+            _showPublic = !_showPublic;
+            if (_showPublic && !_publicLoading)
+            {
+                _publicLoading = true;
+                _publicItems = null;
+                _ = System.Threading.Tasks.Task.Run(async () =>
+                {
+                    var items = await BugReportSystem.FetchPublicAsync().ConfigureAwait(false);
+                    MainThreadDispatcher.Enqueue(() =>
+                    {
+                        _publicItems = items ?? new();
+                        _publicLoading = false;
+                        RefreshPanelText();
+                    });
+                });
+            }
+            RefreshPanelText();
         }
 
         /// <summary>Discordから未読返信があるときにボタンの右上に出す、小さな赤丸バッジ。</summary>
@@ -799,6 +854,7 @@ namespace TownOfHost.Patches
             // 一旦全部隠してから、現在のStepに必要なものだけ表示する。
             for (var i = 0; i < MaxTicketListButtons; i++) SetActiveSafe(_ticketButtons[i], false);
             SetActiveSafe(_newReportButton, false);
+            SetActiveSafe(_publicToggleButton, false);
             SetActiveSafe(_chooseDiscordButton, false);
             SetActiveSafe(_chooseInGameButton, false);
             SetActiveSafe(_discordIdBox, false);
@@ -819,6 +875,25 @@ namespace TownOfHost.Patches
             switch (BugReportWizard.Step)
             {
                 case BugReportWizardStep.TicketList:
+                    SetActiveSafe(_publicToggleButton, true);
+                    if (_publicToggleButton != null) _publicToggleButton.Label.text = _showPublic ? "自分の報告に戻る" : "みんなの報告を見る";
+                    if (_showPublic)
+                    {
+                        // ===== みんなの報告(今出ている報告。押すとやり取りを見て、チャット・画像を送れる) =====
+                        if (_publicLoading || _publicItems == null) { _bodyText.text = "読み込み中…"; break; }
+                        _bodyText.text = _publicItems.Count == 0
+                            ? "今出ている報告はありません。"
+                            : "今出ている報告です。押すと、やり取りを見たり、チャット・画像を送ったりできます。";
+                        for (var i = 0; i < MaxTicketListButtons && i < _publicItems.Count; i++)
+                        {
+                            var p = _publicItems[i];
+                            var button = _ticketButtons[i];
+                            SetActiveSafe(button, true);
+                            var who = string.IsNullOrEmpty(p.ReporterName) ? "" : p.ReporterName + ": ";
+                            button.Label.text = BugReportSystem.StatusTag(p.Status) + who + p.Summary + (p.MessageCount > 0 ? $" ({p.MessageCount}件)" : "");
+                        }
+                        break;
+                    }
                     var tickets = BugReportSystem.Tickets;
                     _bodyText.text = tickets.Count == 0
                         ? "現在報告中のバグはありません。"
@@ -826,7 +901,7 @@ namespace TownOfHost.Patches
                     for (var i = 0; i < MaxTicketListButtons && i < tickets.Count; i++)
                     {
                         var t = tickets[tickets.Count - 1 - i]; // 新しい順
-                        var unreadMark = t.HasUnread ? "[未読] " : "";
+                        var unreadMark = (t.HasUnread ? "[未読] " : "") + (t.Followed ? "[見ている] " : "");
                         var button = _ticketButtons[i];
                         SetActiveSafe(button, true);
                         button.Label.text = unreadMark + BugReportSystem.StatusTag(t.Status) + t.Summary;

@@ -115,16 +115,8 @@ namespace TownOfHost
                     codePassive.OnClick.AddListener((Action)(() => LobbyInfoPane.Instance.CopyGameCode()));
                 }
 
-                // 非ホスト表示専用版を誤ってホストとして起動しても、配役・設定同期などの
-                // ホスト権限処理を行わない。ホスト運用はランチャーでホスト版を選択する。
-                if (Main.IsNonHostClient && AmongUsClient.Instance.AmHost)
-                {
-                    __instance.StartButton?.gameObject.SetActive(false);
-                    __instance.GameStartText.text = "非ホスト表示専用版ではゲームを開始できません。ランチャーでホスト版を選択してください。";
-                    __instance.GameStartText.gameObject.SetActive(true);
-                }
-
-                if (!AmongUsClient.Instance.AmHost || Main.IsNonHostClient) return;
+                // 同じMOD DLLをホスト・参加者の両方で使い、ホスト専用UIはゲーム内の実際の権限で判定する。
+                if (!AmongUsClient.Instance.AmHost) return;
 
                 // Make Public Button
                 /*if (!Main.IsPublicRoomAllowed())
@@ -304,13 +296,6 @@ namespace TownOfHost
                 if (__instance.startState == GameStartManager.StartingStates.Countdown)
                 {
                     __instance.ResetStartState();
-                    return false;
-                }
-
-                // 開始ボタン以外の経路から呼ばれた場合も、表示専用版でのホスト開始を止める。
-                if (Main.IsNonHostClient && AmongUsClient.Instance != null && AmongUsClient.Instance.AmHost)
-                {
-                    Logger.Warn("非ホスト表示専用版でのゲーム開始を中止しました。ランチャーからホスト版を選択してください。", "ClientOnly");
                     return false;
                 }
 
