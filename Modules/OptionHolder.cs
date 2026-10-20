@@ -1435,11 +1435,12 @@ namespace TownOfHost
             PresetOptionItem.Preset = PresetOptionItem.Create(0, TabGroup.MainSettings)
 
                 .SetColor(new Color32(204, 204, 0, 255))
-
                 .SetHeader(true);
-
-
-
+            // 設定のバックアップ(右の ρ を押すと一覧が開き、選んで戻せる)
+            ObjectOptionitem.Create(1_400_200, "OptionBackupPanel", false, "OptionBackupList", TabGroup.MainSettings)
+                .SetColorcode("#ff8fc8")
+                .SetOptionName(() => "設定のバックアップ");
+            ((ObjectOptionitem)OptionItem.AllOptions.Last()).SetValueOverride(() => $"{Modules.OptionBackup.Count}件");
             // ゲームモード
 
             GameMode = StringOptionItem.Create(1, "GameMode", gameModes, 0, TabGroup.MainSettings, false)
@@ -3073,7 +3074,7 @@ namespace TownOfHost
 
                 .SetColorcode("#00c1ff")
 
-                .SetOptionName(() => "/co - 役職をCO(宣言)する");
+                .SetOptionName(() => "/co - 役職をCOする");
 
             // 「/co」コマンドが使える設定(DisableCommandCoがOFF)の時だけ表示する。
             // ONの場合、役職名が公開される場面(自分自身の役職表示、死亡後の他プレイヤー視認等)で、
@@ -3104,7 +3105,7 @@ namespace TownOfHost
 
                 .SetColorcode("#00c1ff")
 
-                .SetOptionName(() => "/aco - 属性をCO(宣言)する");
+                .SetOptionName(() => "/aco - 属性をCOする");
 
             // 「/aco」コマンドが使える設定(DisableCommandAcoがOFF)の時だけ表示する。
             // ONの場合、属性が公開される場面で、/acoでCOした属性をマークとして表示する。
@@ -3256,13 +3257,19 @@ namespace TownOfHost
                 .SetParent(extraHeader).SetColorcode("#ff8080")
                 .SetOptionName(() => "Discordの共有ブラックリストを使う")
                 .SetTooltip(() => "Discordの /ban-share add で登録された人が入ってきたら、自動でキックします。");
-            Modules.OptionBackup.Enabled = BooleanOptionItem.Create(1_400_185, "OptionBackup", false, TabGroup.Other2, true)
+            // 設定のバックアップ: 変える前に毎回残し、一覧から戻せる(最初からON。以前の「3つまで」の設定とは別の番号にした)
+            Modules.OptionBackup.Enabled = BooleanOptionItem.Create(1_400_198, "OptionBackup2", true, TabGroup.Other2, true)
                 .SetParent(extraHeader).SetColorcode("#7fd8ff")
-                .SetOptionName(() => "設定を自動でバックアップする(3つまで)");
+                .SetOptionName(() => "設定の自動バックアップ(最大30件)")
+                .SetTooltip(() => "設定やプリセットを変更するたびに、変更前の状態を自動で保存します。ゲーム設定の「設定のバックアップ」から一覧を開き、好きな時点に戻せます。");
+            ObjectOptionitem.Create(1_400_199, "OptionBackupList", false, "OptionBackupList", TabGroup.Other2)
+                .SetParent(Modules.OptionBackup.Enabled).SetColorcode("#7fd8ff")
+                .SetOptionName(() => "バックアップ一覧を開く");
+            ((ObjectOptionitem)OptionItem.AllOptions.Last()).SetValueOverride(() => $"{Modules.OptionBackup.Count}件");
             ObjectOptionitem.Create(1_400_186, "OptionBackupRestore", false, "OptionBackupRestore", TabGroup.Other2)
                 .SetParent(Modules.OptionBackup.Enabled).SetColorcode("#7fd8ff")
-                .SetOptionName(() => "1つ前の設定に戻す");
-            ((ObjectOptionitem)OptionItem.AllOptions.Last()).SetValueOverride(() => $"{Modules.OptionBackup.Count}件");
+                .SetOptionName(() => "直前の状態に戻す");
+            ((ObjectOptionitem)OptionItem.AllOptions.Last()).SetValueOverride(() => "押すと戻る");
             Modules.LobbyChatRelay.ReceiveEnabled = BooleanOptionItem.Create(1_400_195, "LobbyChatReceive", true, TabGroup.Other2, true)
                 .SetParent(extraHeader).SetColorcode("#7fd8ff")
                 .SetOptionName(() => "Discordからのメッセージ(/say)を受け取る")

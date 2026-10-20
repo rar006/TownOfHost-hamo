@@ -589,7 +589,8 @@ namespace TownOfHost.Roles
             //マッド、クルー、ニュートラル合計の限界値
             int numOthersLeft = GameData.Instance.PlayerCount - numImpostorsLeft;
 
-            foreach (var _role in GetCandidateRoleList(10).OrderBy(x => Guid.NewGuid()))
+            // 100%の役職は確定で先に入れる。枠より多い時は100%の役職の中からランダムに選ばれる
+            foreach (var _role in GetCandidateRoleList(10).OrderBy(x => x.GetChance() >= 100 ? 0 : 1).ThenBy(x => Guid.NewGuid()))
             {
                 if (numImpostorsLeft <= 0 && numOthersLeft <= 0) break;
 
@@ -632,6 +633,7 @@ namespace TownOfHost.Roles
             int numOthers = GameData.Instance.PlayerCount - numImpostors;
 
             List<CustomRoleTypes> otherRoleTypesList = new();
+            var guaranteed = GetGuaranteedCounts();
             if (numOthers > 0) //マッド、クルー、ニュートラルの人数決定
             {
                 var otherRoleTypes = RandomAssignOptionsCollection.Keys.Where(x => x != CustomRoleTypes.Impostor).ToList();
@@ -639,15 +641,21 @@ namespace TownOfHost.Roles
                 // 余った枠の人には役職が付かない。最大・最少はこの数までに抑える。
                 var capacity = GetAssignableCapacity();
                 int Limit(CustomRoleTypes t) => Math.Min(EffectiveMax(t), capacity.TryGetValue(t, out var c) ? c : 0);
-                int MinOf(CustomRoleTypes t) => Math.Min(EffectiveMin(t), Limit(t));
-
-                //一旦最少人数を設定
+                int Sure(CustomRoleTypes t) => Math.Min(guaranteed.TryGetValue(t, out var g) ? g : 0, Limit(t));
+                int MinOf(CustomRoleTypes t) => Math.Max(Math.Min(EffectiveMin(t), Limit(t)), Sure(t));
+                // 100%の役職の分の枠を先に入れ、そのあと最少人数までの枠を入れる
+                List<CustomRoleTypes> sureList = new();
                 foreach (var roleType in otherRoleTypes)
-                    otherRoleTypesList.AddRange(Enumerable.Repeat(roleType, MinOf(roleType)).ToList());
-
-                //超えている場合はランダムに削除
-                while (otherRoleTypesList.Count > numOthers)
+                {
+                    sureList.AddRange(Enumerable.Repeat(roleType, Sure(roleType)));
+                    otherRoleTypesList.AddRange(Enumerable.Repeat(roleType, MinOf(roleType) - Sure(roleType)));
+                }
+                // 人数を超えている場合は、100%以外の枠から先にランダムに削除する
+                while (sureList.Count + otherRoleTypesList.Count > numOthers && otherRoleTypesList.Count > 0)
                     otherRoleTypesList.RemoveAt(rand.Next(otherRoleTypesList.Count));
+                while (sureList.Count > numOthers)
+                    sureList.RemoveAt(rand.Next(sureList.Count));
+                otherRoleTypesList.AddRange(sureList);
 
                 int numAdditional = numOthers - otherRoleTypesList.Count;
                 if (numAdditional > 0) //最少人数で限界値に満たない場合
@@ -671,13 +679,29 @@ namespace TownOfHost.Roles
             {
                 if (roleTypes == CustomRoleTypes.Impostor)
                 {
-                    int impAssignCount = Math.Min(numImpostors, rand.Next(EffectiveMin(roleTypes), EffectiveMax(roleTypes) + 1));
+                    var impCount = rand.Next(EffectiveMin(roleTypes), EffectiveMax(roleTypes) + 1);
+                    // 100%のインポスター役職の数までは枠を増やす(最大人数の設定は超えない)
+                    var sureImp = Math.Min(guaranteed.TryGetValue(roleTypes, out var gi) ? gi : 0, EffectiveMax(roleTypes));
+                    int impAssignCount = Math.Min(numImpostors, Math.Max(impCount, sureImp));
                     AssignCount.Add(roleTypes, impAssignCount);
                 }
                 else
                     AssignCount.Add(roleTypes, otherRoleTypesList.Count(x => x == roleTypes));
             }
         }
+        // 出現率100%(確定)の役職が、陣営ごとに何人分あるか
+        private static Dictionary<CustomRoleTypes, int> GetGuaranteedCounts()
+        {
+            var result = new Dictionary<CustomRoleTypes, int>();
+            foreach (var role in GetCandidateRoleList(100))
+                foreach (var unitRole in role.GetAssignUnitRolesArray())
+                {
+                    var type = unitRole.GetAssignRoleType();
+                    result[type] = (result.TryGetValue(type, out var c) ? c : 0) + 1;
+                }
+            return result;
+        }
+
         private static Dictionary<CustomRoleTypes, int> GetAssignableCapacity()
         {
             var capacity = new Dictionary<CustomRoleTypes, int>();

@@ -94,7 +94,7 @@ public sealed class VillainWolf : RoleBase, IImpostor, IKiller
 
         GiveAttribute = OptionGiveAttributeOnAwaken.GetBool();
 
-        AttributeToGive = AttributeChoices[OptionAttributeToGive.GetValue()];
+        AttributesToGive = OptionAttributeToGive.GetNowRoleValue().ToList();
 
 
 
@@ -144,7 +144,7 @@ public sealed class VillainWolf : RoleBase, IImpostor, IKiller
 
     static OptionItem OptionGiveAttributeOnAwaken;
 
-    static OptionItem OptionAttributeToGive;
+    static AssignOptionItem OptionAttributeToGive;
 
 
 
@@ -176,7 +176,7 @@ public sealed class VillainWolf : RoleBase, IImpostor, IKiller
 
     private bool GiveAttribute;
 
-    private CustomRoles AttributeToGive;
+    private List<CustomRoles> AttributesToGive = new();
 
 
 
@@ -187,24 +187,6 @@ public sealed class VillainWolf : RoleBase, IImpostor, IKiller
     public bool Awakened { get; private set; }
 
     private List<byte> MarkedVictims;
-
-
-
-    // 覚醒時に選べる属性(AddOn)の候補。任意で拡張可。
-
-    private static readonly CustomRoles[] AttributeChoices =
-
-    {
-
-        CustomRoles.Powerful,
-
-        CustomRoles.Speeding,
-
-        CustomRoles.Guarding,
-
-        CustomRoles.Watching,
-
-    };
 
 
 
@@ -230,11 +212,8 @@ public sealed class VillainWolf : RoleBase, IImpostor, IKiller
 
         OptionGiveAttributeOnAwaken = BooleanOptionItem.Create(RoleInfo, 14, OptionName.VillainWolfGiveAttributeOnAwaken, true, false);
 
-        OptionAttributeToGive = StringOptionItem.Create(RoleInfo, 15, OptionName.VillainWolfAttributeToGive,
-
-            AttributeChoices.Select(x => x.ToString()).ToArray(), 0, false)
-
-            .SetParent(OptionGiveAttributeOnAwaken);
+        // 付与する属性は、フォーチュナーと同じく一覧から選ぶ(複数選ぶと全部付く)
+        OptionAttributeToGive = AssignOptionItem.Create(RoleInfo, 16, OptionName.VillainWolfAttributeToGive, 0, false, OptionGiveAttributeOnAwaken, false, false, false, false, true, TownOfHost.Roles.Crewmate.Fortuner.RemoveAddon);
 
     }
 
@@ -412,11 +391,15 @@ public sealed class VillainWolf : RoleBase, IImpostor, IKiller
 
 
 
-        if (GiveAttribute && AttributeToGive != CustomRoles.NotAssigned)
+        if (GiveAttribute)
 
         {
 
-            PlayerState.GetByPlayerId(Player.PlayerId).SetSubRole(AttributeToGive);
+            var state = PlayerState.GetByPlayerId(Player.PlayerId);
+
+            foreach (var addon in AttributesToGive)
+
+                if (addon != CustomRoles.NotAssigned && !Player.Is(addon)) state.SetSubRole(addon);
 
         }
 

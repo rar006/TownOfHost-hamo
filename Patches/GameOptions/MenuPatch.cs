@@ -394,6 +394,8 @@ namespace TownOfHost
 
         public static PassiveButton activeonly;
         public static PassiveButton expandAll;
+        // ゲーム・プリセットの段の「バックアップ」ボタン
+        public static PassiveButton BackupButton;
         public static readonly System.Collections.Generic.List<PassiveButton> ModTiles = new();
         public static readonly System.Collections.Generic.List<GameObject> NewBadges = new();
         public const float ExpandAllTileOffsetX = 5.4f;
@@ -788,6 +790,9 @@ namespace TownOfHost
                     ForceRenderInFront(expandAll.transform);
                     expandAll.transform.SetAsFirstSibling();
                 }
+                // 設定のバックアップの一覧(プリセットの下の行から開く)を出す場所
+                BackupPanel.SetParent(__instance.RoleSettingsTab.transform.parent);
+                DestroyStaleChildByName(__instance.RoleSettingsTab.transform.parent, "BackupButton");
 
 
 
@@ -3593,6 +3598,9 @@ namespace TownOfHost
                 case "StreamCommentPasteURL": StreamerInfo.TrySetStreamURL(GUIUtility.systemCopyBuffer); RefreshStreamCommentRows(); break;
                 case "StreamCommentResetPos": StreamCommentFrame.ResetPosition(); break;
                 // 設定の自動バックアップ(便利機能)
+                case "OptionBackupList":
+                    BackupPanel.Toggle();
+                    break;
                 case "OptionBackupRestore":
                     Modules.OptionBackup.RestoreLatest();
                     foreach (var opt in OptionItem.AllOptions)

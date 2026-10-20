@@ -732,7 +732,7 @@ namespace TownOfHost
             // 設定を変えたらロビーで知らせる(便利機能)。画面から変えた時(同期する時)だけ
             var beforeText = doSync && beforeValue != afterValue ? SafeGetString() : null;
             // 設定の自動バックアップ(便利機能): 変え始める前の状態を残す
-            if (doSync && beforeValue != afterValue) TownOfHost.Modules.OptionBackup.BeforeChange();
+            if (doSync && beforeValue != afterValue) TownOfHost.Modules.OptionBackup.BeforeChange(this);
 
             if (IsSingleValue)
 

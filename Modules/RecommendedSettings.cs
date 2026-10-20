@@ -17,7 +17,7 @@ public static class RecommendedSettings
     public static void Apply()
     {
         if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost || !GameStates.IsLobby) return;
-        OptionBackup.BeforeChange(); // まとめて変える前の状態を残す(自動バックアップがONの時)
+        OptionBackup.BeforeChange(label: "おすすめ設定の適用前"); // まとめて変える前の状態を残す(自動バックアップがONの時)
         var players = PlayerCount;
         var (imp, kcd) = For(players);
         Main.NormalOptions.SetInt(Int32OptionNames.NumImpostors, imp);

@@ -13,7 +13,7 @@ public static class AllRolesChance
     public static void Randomize()
     {
         if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
-        OptionBackup.BeforeChange(); // まとめて変える前の状態を残す(自動バックアップがONの時)
+        OptionBackup.BeforeChange(label: "一括変更前"); // まとめて変える前の状態を残す(自動バックアップがONの時)
         if (Options.CustomRoleSpawnChances == null) return;
         var rand = IRandom.Instance;
         var changed = 0;
@@ -43,7 +43,7 @@ public static class AllRolesChance
     public static void Apply()
     {
         if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
-        OptionBackup.BeforeChange(); // まとめて変える前の状態を残す(自動バックアップがONの時)
+        OptionBackup.BeforeChange(label: "一括変更前"); // まとめて変える前の状態を残す(自動バックアップがONの時)
         if (Options.CustomRoleSpawnChances == null) return;
         var changed = 0;
         foreach (var (role, option) in Options.CustomRoleSpawnChances)

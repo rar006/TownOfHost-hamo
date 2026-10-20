@@ -54,7 +54,7 @@ namespace TownOfHost.Patches
 
         private static IEnumerator CoShowHamoLoadingScreen(SplashManager __instance)
         {
-            foreach (var name in new[] { "TOHhamoLogo", "TOHhamoLoadingBar", "TOHhamoBubble0", "TOHhamoBubble1", "TOHhamoBubble2", "TOHhamoBubble3", "TOHhm_LoadingLogo" })
+            foreach (var name in new[] { "TOHhamoLogo", "TOHhamoLoadingBar", "TOHhamoBubble0", "TOHhamoBubble1", "TOHhamoBubble2", "TOHhamoBubble3", "TOHhm_LoadingLogo", "TOHhamoFloor", "TOHhamoBouncer" })
             {
                 var existing = GameObject.Find(name);
                 if (existing != null) GameObject.Destroy(existing);
@@ -185,13 +185,22 @@ namespace TownOfHost.Patches
                 var bubble = new GameObject($"TOHhamoBubble{i}");
                 var sr = bubble.AddComponent<SpriteRenderer>();
                 sr.sprite = CreateCircleSprite(bubbleColors[i]);
-                sr.sortingOrder = 97;
+                sr.sortingOrder = 95;
                 var scale = UnityEngine.Random.Range(0.16f, 0.3f);
                 bubble.transform.localScale = new Vector3(scale, scale, 1f);
                 bubble.transform.position = new Vector3((i - (bubbleColors.Length - 1) / 2f) * 0.5f, barY - 0.9f, -10f);
                 bubbles.Add(bubble.transform);
             }
-            var bubbleAnim = __instance.StartCoroutine(CoAnimateBubbles(bubbles, barY - 0.9f).WrapToIl2Cpp());
+            var bubbleAnim2 = __instance.StartCoroutine(CoAnimateBubbles(bubbles, barY - 0.9f).WrapToIl2Cpp());
+            // MODのボタン画像(ランダム)が床でバウンドしながら右へ流れていく
+            const float floorY = barY - 2.3f;
+            var cam = Camera.main;
+            var halfWidth = cam != null ? cam.orthographicSize * cam.aspect : 5.4f;
+            var floorColor = new Color(1f, 0.52f, 0.85f, 0.5f);
+            var floor = CreateBar(new Vector3(-halfWidth - 1f, floorY, -10f), halfWidth * 2f + 2f, 0.04f, SetAlpha(floorColor, 0f), sortingOrder: 96);
+            floor.name = "TOHhamoFloor";
+            bouncerAlpha = 0f;
+            var bubbleAnim = __instance.StartCoroutine(CoAnimateBouncers(floorY, halfWidth).WrapToIl2Cpp());
 
             float fade = 0f;
             while (fade < 1f)
@@ -203,6 +212,8 @@ namespace TownOfHost.Patches
                 barFill.GetComponent<SpriteRenderer>().color = SetAlpha(barFillColor, barFillColor.a * Mathf.Clamp01(fade));
                 foreach (var b in bubbles)
                     if (b != null) b.GetComponent<SpriteRenderer>().color = SetAlpha(b.GetComponent<SpriteRenderer>().color, Mathf.Clamp01(fade));
+                bouncerAlpha = Mathf.Clamp01(fade);
+                floor.GetComponent<SpriteRenderer>().color = SetAlpha(floorColor, floorColor.a * bouncerAlpha);
                 yield return null;
             }
 
@@ -279,7 +290,7 @@ namespace TownOfHost.Patches
                 Logger.LogError($"{maxInitWaitSeconds}秒待ってもMain.IsLoadedがtrueになりませんでした。安全のため続行します。");
             }
 
-            const float finalCheckSeconds = 5f;
+            const float finalCheckSeconds = 3f;
             var finalCheckElapsed = 0f;
             var unloadOp = Resources.UnloadUnusedAssets();
             var gcDone = false;
@@ -327,18 +338,25 @@ namespace TownOfHost.Patches
                 barFill.GetComponent<SpriteRenderer>().color = SetAlpha(barFillColor, barFillColor.a * Mathf.Clamp01(fade));
                 foreach (var b in bubbles)
                     if (b != null) b.GetComponent<SpriteRenderer>().color = SetAlpha(b.GetComponent<SpriteRenderer>().color, Mathf.Clamp01(fade));
+                bouncerAlpha = Mathf.Clamp01(fade);
+                floor.GetComponent<SpriteRenderer>().color = SetAlpha(floorColor, floorColor.a * bouncerAlpha);
                 yield return null;
             }
 
             if (bubbleAnim != null) __instance.StopCoroutine(bubbleAnim);
+            if (bubbleAnim2 != null) __instance.StopCoroutine(bubbleAnim2);
 
             if (logoObj != null) GameObject.Destroy(logoObj);
             GameObject.Destroy(loadText.gameObject);
             GameObject.Destroy(overlay.gameObject);
             GameObject.Destroy(barBg.gameObject);
             GameObject.Destroy(barFill.gameObject);
+            GameObject.Destroy(floor);
             foreach (var b in bubbles)
                 if (b != null) GameObject.Destroy(b.gameObject);
+            foreach (var b in bouncers)
+                if (b.Renderer != null) GameObject.Destroy(b.Renderer.gameObject);
+            bouncers.Clear();
 
             foreach (var c in hiddenCanvases) if (c != null) c.enabled = true;
             foreach (var anim in hiddenAnimators) if (anim != null) anim.enabled = true;
@@ -373,6 +391,113 @@ namespace TownOfHost.Patches
                 try { __instance.sceneChanger.AllowFinishLoadingScene(); } catch { }
                 __instance.startedSceneLoad = true;
                 finished = true;
+            }
+        }
+
+        private sealed class Bouncer
+        {
+            public SpriteRenderer Renderer;
+            public float X;
+            public float Y;
+            public float VelocityY;
+            public float Speed;
+            public float Size;
+            public float Bounce;
+            public float Spin;
+            public float Angle;
+            public float Squash;
+        }
+        private static readonly List<Bouncer> bouncers = new();
+        private static float bouncerAlpha;
+        private const float Gravity = 9f;
+
+        private static IEnumerator CoAnimateBouncers(float floorY, float halfWidth)
+        {
+            var paths = new List<string>();
+            foreach (var path in UtilsSprite.GetAllEmbeddedImagePaths())
+                if (path.Contains(".TOHhm.Button.") && !path.Contains("Lobby_")) paths.Add(path);
+            if (paths.Count == 0) yield break;
+
+            // 大きさ・高さ・速さ・はね方をランダムに決めて、左の上から落とす
+            void Spawn()
+            {
+                try
+                {
+                    var size = UnityEngine.Random.Range(0.4f, 0.8f);
+                    var sprite = UtilsSprite.LoadSprite(paths[UnityEngine.Random.Range(0, paths.Count)], 150f / size);
+                    if (sprite == null) return;
+                    var go = new GameObject("TOHhamoBouncer");
+                    var sr = go.AddComponent<SpriteRenderer>();
+                    sr.sprite = sprite;
+                    sr.sortingOrder = 97;
+                    sr.color = new Color(1f, 1f, 1f, bouncerAlpha);
+                    var b = new Bouncer
+                    {
+                        Renderer = sr,
+                        Size = size,
+                        X = -halfWidth - size + UnityEngine.Random.Range(0f, 1.2f),
+                        Y = floorY + size / 2f + UnityEngine.Random.Range(0.8f, 3.2f),
+                        VelocityY = UnityEngine.Random.Range(-0.5f, 1.5f),
+                        Speed = UnityEngine.Random.Range(1.1f, 2.2f),
+                        Bounce = UnityEngine.Random.Range(0.62f, 0.85f),
+                        Spin = UnityEngine.Random.Range(-90f, 90f),
+                        Angle = UnityEngine.Random.Range(-20f, 20f),
+                    };
+                    bouncers.Add(b);
+                    Place(b);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogWarning($"ロード画面のボタンを出せませんでした: {ex.Message}");
+                }
+            }
+
+            void Place(Bouncer b)
+            {
+                var t = b.Renderer.transform;
+                t.localScale = new Vector3(1f + b.Squash, 1f - b.Squash, 1f);
+                t.position = new Vector3(b.X, b.Y - b.Size * b.Squash / 2f, -10f);
+                t.rotation = Quaternion.Euler(0f, 0f, b.Angle);
+            }
+
+            var nextSpawn = 0f;
+            while (true)
+            {
+                var dt = Mathf.Min(Time.deltaTime, 1f / 20f);
+                nextSpawn -= dt;
+                if (nextSpawn <= 0f)
+                {
+                    Spawn();
+                    nextSpawn = UnityEngine.Random.Range(0.25f, 0.6f);
+                }
+                for (int i = bouncers.Count - 1; i >= 0; i--)
+                {
+                    var b = bouncers[i];
+                    if (b.Renderer == null) { bouncers.RemoveAt(i); continue; }
+                    b.X += b.Speed * dt;
+                    b.VelocityY -= Gravity * dt;
+                    b.Y += b.VelocityY * dt;
+                    b.Angle += b.Spin * dt;
+                    var ground = floorY + b.Size / 2f;
+                    if (b.Y <= ground && b.VelocityY < 0f)
+                    {
+                        b.Y = ground;
+                        // はねる強さを少しずつ弱めるが、低くなりすぎたら元気よくはね直す
+                        b.VelocityY = -b.VelocityY * b.Bounce;
+                        if (b.VelocityY < 2.2f) b.VelocityY = UnityEngine.Random.Range(3f, 4.6f);
+                        b.Spin = UnityEngine.Random.Range(-120f, 120f);
+                        b.Squash = 0.22f;
+                    }
+                    b.Squash = Mathf.MoveTowards(b.Squash, 0f, dt * 1.6f);
+                    b.Renderer.color = new Color(1f, 1f, 1f, bouncerAlpha);
+                    Place(b);
+                    if (b.X > halfWidth + b.Size)
+                    {
+                        GameObject.Destroy(b.Renderer.gameObject);
+                        bouncers.RemoveAt(i);
+                    }
+                }
+                yield return null;
             }
         }
 

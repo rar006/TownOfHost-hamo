@@ -323,6 +323,19 @@ public class ModNewsHistory
                 };
                 AllModNews.Add(news);
             }
+            {
+                var news = new ModNews
+                {
+                    Number = 100023,
+                    Title = "アップデート！",
+                    SubTitle = "<color=#fb85ff>Town Of Host-hamo v4.35.14β</color>",
+                    ShortTitle = "<color=#fb85ff>●TOH-hamo v4.35.14β</color>",
+                    Text = "【追加】\r\n・設定の自動バックアップ(設定やプリセットを変える前の状態を最大30件まで自動で保存。ゲーム設定の「設定のバックアップ」から一覧を開いて戻せる)\r\n・タイトルのロゴが、起動して最初の1回だけ1文字ずつ飛んできてバウンドするように\r\n・ロード画面で、MODのボタンが床でバウンドしながら流れるように\r\n・ロビーのTabの設定表示に、何も表示しないページを追加\r\n\r\n【役職】\r\n・出現率100%の役職は確定で出るように(枠より多い時は100%の役職の中からランダム)\r\n・悪役の狼: 覚醒時に付与する属性を一覧から選べるように(複数選ぶと全部付く)\r\n・アルカナ: 「自分をアルカナと自覚する」設定を追加\r\n\r\n【変更】\r\n・メインメニューの赤い×ボタンを画面の右下の角に\r\n・ロード画面の最終確認を3秒に\r\n\r\n【修正】\r\n・メインメニューの赤い×ボタンが、持ち物を開いて戻るまで表示されない不具合\r\n・ロビーのTabの設定表示が出ない・Tabを押すとエラーになる不具合\r\n・その他、多少のバグ修正"
+                    ,
+                    Date = "2026-10-20"
+                };
+                AllModNews.Add(news);
+            }
             AnnouncementPopUp.UpdateState = AnnouncementPopUp.AnnounceState.NotStarted;
         }
     }

@@ -65,15 +65,51 @@ namespace TownOfHost
 
         private static bool bugReportWasOpenLastFrame;
 
-        public static void Postfix(HudManager __instance)
+        // ロビー左の設定表示(Tabでページ切り替え)。HUDの他の処理が途中で止まっても出るように最初に作る
+        private static void UpdateLobbySettingsText(HudManager __instance)
+        {
+            try
+            {
+                if (!GameStates.IsLobby || GameStates.IsFreePlay || CustomSpawnEditor.ActiveEditMode)
+                {
+                    if (GameSettings) GameSettings.gameObject.SetActive(false);
+                    return;
+                }
+                if (!GameSettings)
+                {
+                    var parent = __instance.roomTracker != null ? __instance.roomTracker.transform.parent : __instance.transform;
+                    GameSettings = Templates.TMPTemplate.Create("GameSettings");
+                    if (__instance.TaskPanel?.taskText?.font != null) GameSettings.font = __instance.TaskPanel.taskText.font;
+                    GameSettings.alignment = TMPro.TextAlignmentOptions.TopLeft;
+                    GameSettings.transform.SetParent(parent);
+                    GameSettings.rectTransform.pivot = new(-0.67f, 1.13f);
+                    GameSettingsAspectPos = GameSettings.gameObject.AddComponent<AspectPosition>();
+                    GameSettingsAspectPos.Alignment = AspectPosition.EdgeAlignments.LeftTop;
+                    GameSettingsAspectPos.DistanceFromEdge = new(-2.5f, 0, 0);
+                }
+                GameSettings.text = Main.ShowGameSettingsTMP.Value ? OptionShower.GetText() : "";
+                GameSettings.SetOutlineColor(Color.black);
+                GameSettings.SetOutlineThickness(0.13f);
+                GameSettings.fontSizeMin =
+                GameSettings.fontSizeMax = (TranslationController.Instance.currentLanguage.languageID == SupportedLangs.Japanese || Main.ForceJapanese.Value) ? 1.05f : 1.2f;
+                GameSettings.gameObject.SetActive(Main.ShowGameSettingsTMP.Value);
+            }
+            catch (System.Exception e)
+            {
+                if (!lobbySettingsErrorLogged) Logger.Warn($"ロビーの設定表示を作れませんでした: {e}", "HudManager");
+                lobbySettingsErrorLogged = true;
+            }
+        }
+        private static bool lobbySettingsErrorLogged;
 
+        public static void Postfix(HudManager __instance)
         {            
             // HudManagerの生成途中はUpdateが先行することがあるため、
 
             // UI参照が揃うまで処理を次フレームへ延期して反復例外を防ぐ。
 
             if (__instance == null || AmongUsClient.Instance == null) return;
-
+            UpdateLobbySettingsText(__instance);
             var player = PlayerControl.LocalPlayer;
 
             // イントロ中はバニラ側の初期タスク更新も含めてパネルを抑止し、

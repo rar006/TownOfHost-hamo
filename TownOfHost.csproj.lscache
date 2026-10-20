@@ -30,9 +30,9 @@ TemporaryDependencyNodeTargetIdentifier=net6.0
 
 [commandLineArguments]
 /noconfig
-/unsafe-
+/unsafe+
 /checked-
-/nowarn:MSB3246,CS0162,CS0169,CS0184,CS0649,CS0414,GI001,IDE0017,IDE0090,1701,1702,8002
+/nowarn:MSB3246,CS0162,CS0169,CS0184,CS0649,CS0414,GI001,IDE0017,IDE0090,RCS1102,RCS1155,RCS1075,1701,1702,8002
 /fullpaths
 /nostdlib+
 /errorreport:prompt
@@ -59,12 +59,14 @@ Attributes/
  PluginModuleInitializerAttribute.cs
 Helpers/
  ColorHelper.cs
+ CrashTrace.cs
  CustomRolesHelper.cs
  EnumHelper.cs
  IEnumeratorHelper.cs
  JsonHelper.cs
  JTokenExtensions.cs
  ObjectHelper.cs
+ SafeFocus.cs
  StringHelper.cs
 Modules/
  Achievement/
@@ -126,7 +128,9 @@ Modules/
   Xorshift.cs
  Streamer/
   ChatData.cs
+  ObsOverlay.cs
   Readcomment.cs
+  StreamCommentFrame.cs
   StreamerHopeMenu.cs
   StreamerMenu.cs
  Utils/
@@ -140,6 +144,8 @@ Modules/
   UtilsRoletext.cs
   UtilsTask.cs
  AdminProvider.cs
+ AfkDetector.cs
+ AllRolesChance.cs
  AntiBlackout.cs
  AURoleOptions.cs
  AutoRehost.cs
@@ -152,6 +158,7 @@ Modules/
  ChatManager.cs
  ClientOptionsManager.cs
  CoCommandOption.cs
+ ConnectionTuning.cs
  Croissant.cs
  Customnetobject.cs
  CustomRpcSender.cs
@@ -165,46 +172,65 @@ Modules/
  DoubleTrigger.cs
  ErrorText.cs
  Fakedeadbodyplacer.cs
+ FirstMeetingChatBlock.cs
  GameState.cs
  GuessManager.cs
  HashAuth.cs
  HealthLog.cs
+ IncrementalGcInvalidator.cs
  InfectedTracker.cs
+ InitialKillCooldownOption.cs
  InvisiblePatch.cs
  InvisibleRPC.cs.cs
  LastGameSave.cs
  LateTask.cs
  LobbyBGM.cs
  LobbyChatRelay.cs
+ LobbyVote.cs
  LocalPresetReceiver.cs
  Mainthreaddispatcher.cs
  MatchmakingWordManager.cs
+ MeetingSendTrace.cs
+ MeetingTimeAnnounce.cs
  MeetingTimeManager.cs
  MeetingVoteManager.cs
  Moderator.cs
  ModeSwitchManager.cs
  ModUpdater.cs
  MonkeyBehaviorBanOption.cs
+ MvpAnnouncer.cs
  NameColorManager.cs
+ NetworkSafety.cs
+ OptionBackup.cs
  OptionHolder.cs
  OptionLazyLoader.cs
  OptionRoles.cs
  OptionSaver.cs
+ OptionSchemaExporter.cs
  OptionSerializer.cs
  OptionShower.cs
  PlayerCatch.cs
  PlayerOutfitManager.cs
+ PlayerStatsSync.cs
  Presetshareclient.cs
  Presetsharemenu.cs
+ RecommendedSettings.cs
+ RelayLink.cs
+ RoleGojuon.cs
  RoleInfoShower.cs
+ RoleRepeatAvoid.cs
+ RoleWinStats.cs
  RoomStatusTextSaver.cs
  RoomTaskAssign.cs
  RPC.cs
  SaruWarningOption.cs
  SelfVoteManager.cs
+ SettingChangeNotice.cs
+ SharedBanList.cs
  SlotRoleAssing.cs
  Special.cs
  StandardIntro.cs
+ StartupPrefetch.cs
  Statistics.cs
  StatisticsRecord.cs
  SurveySystem.cs
@@ -213,6 +239,8 @@ Modules/
  TemplateManager.cs
  TestBotManager.cs
  TimedAutoRehost.cs
+ TitleHostTrade.cs
+ TitleSystem.cs
  Tooltip.cs
  Translator.cs
  VanillaOptionHolder.cs
@@ -221,7 +249,9 @@ Modules/
  VersionInfoManager.cs
  WatchdogLauncher.cs
  Win32FileDialog.cs
+ WinStreak.cs
  Yomiage.cs
+ YouTubeMapVote.cs
  Zoom.cs
 obj/Debug/net6.0/
  .NETCoreApp,Version=v6.0.AssemblyAttributes.cs
@@ -232,10 +262,12 @@ Patches/
   HideAndSeekGameEndPredicate.cs
   NormalGameEndPredicate.cs
  GameOptions/
+  BackupPanel.cs
   ChangeTab.cs
   ChangeValue.cs
   MenuPatch.cs
   NumericOptionInput.cs
+  OptionSearch.cs
   PresetNameDialog.cs
   PresetPatch.cs
   ShowFilter.cs
@@ -271,6 +303,7 @@ Patches/
  BugChatPanelPatch.cs
  BugReportHudButtonPatch.cs
  BugReportUIPatch.cs
+ BugUiTheme.cs
  ChatBubblePatch.cs
  ChatCommandPatch.cs
  ChatControlPatch.cs
@@ -310,6 +343,7 @@ Patches/
  MeetingHudPatch.cs
  ModeMenuBackNavigationPatch.cs
  ModeSwitchGuardPatch.cs
+ ModLobbyNameColorPatch.cs
  ModStampPatch.cs
  MovingPlatformBehaviourPatch.cs
  NetworkedPlayrInfoPatch.cs
@@ -336,6 +370,7 @@ Patches/
  TestPatch LobbyWallWalkDebug.cs
  TestPatch PetShapeshiftAssignPatch.cs
  TestPatch RandomSukinOnDeathPatch.cs
+ TitleLogoBouncePatch.cs
  TopRightButtonFramePatch.cs
  UsablesPatch.cs
 Properties/Resources.Designer.cs
@@ -389,6 +424,7 @@ Roles/
     Surrender.cs
     Transparent.cs
     Water.cs
+   UserAddons2026.cs
   Crewmate/
    Amanojaku.cs
    Chain.cs
@@ -432,8 +468,10 @@ Roles/
    IUsePhantomButton.cs
    LNKiller.cs
   CustomRoleManager.cs
+  PetModeSwitch.cs
   RoleBase.cs
   SimpleRoleInfo.cs
+  UserRoles2026.cs
  Crewmate/
   AllArounder.cs
   AmateurTeller.cs
@@ -451,6 +489,7 @@ Roles/
   CandleLighter.cs
   Comebacker.cs
   Corexis.cs
+  Coroner.cs
   Dictator.cs
   Doctor.cs
   Efficient.cs
@@ -458,6 +497,7 @@ Roles/
   Fanatic.cs
   Fortuner.cs
   FortuneTeller.cs
+  Fugitive.cs
   Gasp.cs
   Guardian.cs
   GuardMaster.cs
@@ -470,11 +510,14 @@ Roles/
   King.cs
   LegendStar.cs
   Lighter.cs
+  Locksmith.cs
   MagicalGirl.cs
   Mayor.cs
   Medium.cs
   MeetingSheriff.cs
+  MemoryRestorer.cs
   Merlin.cs
+  Messenger.cs
   Milkman.cs
   Moving.cs
   NiceAddoer.cs
@@ -504,6 +547,7 @@ Roles/
   Satellite.cs
   SatsumatoImo.cs
   Seer.cs
+  Sender.cs
   Sheriff.cs
   SheriffHadouHo.cs
   ShrineMaiden.cs
@@ -512,6 +556,7 @@ Roles/
   SpeedBooster.cs
   Staff.cs
   Stolener.cs
+  Surmount.cs
   SuspiciousTeller.cs
   SwitchSheriff.cs
   Taskstar.cs
@@ -548,6 +593,7 @@ Roles/
   GhostRoleAssign.cs
   GhostRoleCore.cs
  Impostor/
+  Abductor.cs
   Abuser.cs
   Administer.cs
   Alien.cs
@@ -555,6 +601,7 @@ Roles/
   Amnesiac.cs
   AntiReporter.cs
   Archer.cs
+  ArchVillain.cs
   Assassin.cs
   Ballooner.cs
   BeginnerImpostor.cs
@@ -565,6 +612,7 @@ Roles/
   Camouflager.cs
   CharismaStar.cs
   Chaser.cs
+  Clockworker.cs
   Conjurer.cs
   ConnectSaver.cs
   Curser.cs
@@ -590,6 +638,7 @@ Roles/
   EvilTracker.cs
   EvilTrapper.cs
   Evolver.cs
+  Experiencer.cs
   FireWorks.cs
   Greedier.cs
   HadouHo.cs
@@ -598,6 +647,7 @@ Roles/
   Insider.cs
   Jumper.cs
   Limiter.cs
+  LonelyWolf.cs
   Maestro.cs
   Mafia.cs
   Magician.cs
@@ -625,6 +675,7 @@ Roles/
   Sniper.cs
   Spider.cs
   Stealth.cs
+  StepBomber.cs
   Surrogate.cs
   Survivor.cs
   Swooper.cs
@@ -635,6 +686,7 @@ Roles/
   Test Reverser.cs
   TimeSleeper.cs
   TimeThief.cs
+  Trauma.cs
   UnFortuner.cs
   Vampire.cs
   VampireBloodStain.cs
@@ -655,14 +707,17 @@ Roles/
   MadCount.cs
   MadGuardian.cs
   MadHacker.cs
+  MadInvisible.cs
   MadJester.cs
   MadKaiser.cs
+  MadMagic.cs
   Madmate.cs
   MadParasite.cs
   MadProxy.cs
   Madpsycho.cs
   MadReduced.cs
   MadScream.cs
+  MadSender.cs
   MadSheriff.cs
   MadSnitch.cs
   MadSuicide.cs
@@ -680,6 +735,7 @@ Roles/
   BakeCat.cs
   Banker.cs
   BatGirl.cs
+  Catalyst.cs
   Chatter.cs
   Chef.cs
   Connector.cs
@@ -687,6 +743,7 @@ Roles/
   Cupid.cs
   CurseMaker.cs
   Dancer.cs
+  Daoshi.cs
   DarkHide.cs
   DarkSheriff.cs
   DoppelGanger.cs
@@ -697,6 +754,7 @@ Roles/
   Emptiness.cs
   Executioner.cs
   FakeJester.cs
+  Flatfish.cs
   Fool.cs
   Fox.cs
   Freeter.cs
@@ -714,6 +772,7 @@ Roles/
   Jester.cs
   Lawyer.cs
   LoversBreaker.cs
+  Lupin.cs
   Madonna.cs
   Mario.cs
   MassMedia.cs
@@ -728,6 +787,7 @@ Roles/
   Ogre.cs
   Onmyoji.cs
   Opportunist.cs
+  Parity.cs
   PavlovDog.cs
   PhantomThief.cs
   Pharaoh.cs
@@ -943,7 +1003,17 @@ Microsoft.NETCore.App.Ref
 <NETSDK>/Sdks/Microsoft.NET.Sdk/analyzers/
  Microsoft.CodeAnalysis.CSharp.NetAnalyzers.dll
  Microsoft.CodeAnalysis.NetAnalyzers.dll
-<NUGET>/thisassembly.constants/2.1.2/analyzers/dotnet/roslyn4.0/cs/ThisAssembly.Constants.dll
+<NUGET>/
+ roslynator.analyzers/4.16.1/analyzers/dotnet/roslyn4.7/cs/
+  Roslynator.CSharp.Analyzers.CodeFixes.dll
+  Roslynator.CSharp.Analyzers.dll
+  Roslynator_Analyzers_Roslynator.Common.dll
+  Roslynator_Analyzers_Roslynator.Core.dll
+  Roslynator_Analyzers_Roslynator.CSharp.dll
+  Roslynator_Analyzers_Roslynator.CSharp.Workspaces.dll
+  Roslynator_Analyzers_Roslynator.Workspaces.Common.dll
+  Roslynator_Analyzers_Roslynator.Workspaces.Core.dll
+ thisassembly.constants/2.1.2/analyzers/dotnet/roslyn4.0/cs/ThisAssembly.Constants.dll
 
 [sdkAnalyzerConfigPolicy]
 Microsoft.NET.Sdk/analyzers
@@ -987,78 +1057,88 @@ Resources/
  Button/#U30ab#U30b9#U30bf#U30e0#U30dc#U30bf#U30f3#U7b49#U306b#U3064#U3044#U3066.md
  TOHhm/
   Button/
-   #U30a4#U30d3#U30eb#U30ea#U30f3#U30ab#U30fc.png
-   #U30a8#U30dc#U30eb#U30d0#U30fc#U30fb#U30a4#U30fc#U30bf#U30fc#U30fb#U30f4#U30a1#U30eb#U30c1#U30e3#U30fc.png
-   #U30ad#U30e5#U30fc#U30d4#U30c3#U30c9.png
-   #U30b8#U30a7#U30a4#U30e9#U30fc.png
-   #U30b9#U30a6#U30fc#U30d1#U30fc.png
-   #U30b9#U30bf#U30f3#U30c9#U30de#U30b9#U30bf#U30fc#Uff08#U30d5#U30a1#U30f3#U30c8#U30e0#Uff09.png
-   #U30b9#U30bf#U30f3#U30c9#U30de#U30b9#U30bf#U30fc(#U4f5c#U6210).png
-   #U30bf#U30a4#U30e0#U30ea#U30fc#U30d1#U30fc.png
-   #U30c0#U30d6#U30eb#U30ad#U30e9#U30fc.png
-   #U30c1#U30a7#U30a4#U30b5#U30fc.png
-   #U30c6#U30ec#U30dd#U30fc#U30bf#U30fc.png
-   #U30d0#U30c3#U30c8#U30ac#U30fc#U30eb#U81ea#U6c7a.png
-   #U30de#U30b9#U30de#U30fc#U30c0#U30fc.png
-   #U30de#U30c3#U30c9#U30b7#U30a7#U30ea#U30d5.png
-   #U30e0#U30fc#U30d3#U30f3#U30b0.png
-   #U6ce2#U52d5#U7832.png
-   #U7206#U305c#U5e2b.png
-   #U81ea#U6bba#U9858#U671b#U8005.png
-   #U8ce2#U8005.png
    AntiReporter_Ability.png
    Archer_Ability.png
    Arsonist_Kill.png
+   BadGirl_Ability.png
    Ballooner_Ability.png
    Banker_Vent.png
    BeginnerImpostor_Ability.png
+   BlackSanta_Kill.png
    BlackVisioner_Ability.png
    Bomber_Ability.png
    BountyHunter_Ability.png
+   Camouflager_Ability.png
    CharismaStar_Ability.png
+   Chaser_Ability.png
    Chef_Kill.png
    Comebacker_Ability.png
+   Conjurer_Beacon.png
+   Conjurer_Start.png
+   Cupid_Kill.png
    CurseMaker_Ability.png
    CurseMaker_Kill.png
    Curser_Ability.png
+   DeadBodyEat_Ability.png
    DoppelGanger_Ability.png
+   DoubleKiller_Ability.png
    EarnestWolf_Ability.png
+   Eater_eat.png
    Eraser_Ability.png
    EvilBlender_AbilityButton.png
    EvilHacker_ability.png
+   EvilLinker_Ability.png
    EvilMoving_Ability.png
+   EvilStandMaster_Ability.png
    EvilStandMaster_Warp.png
    EvilTracker_Ability.png
    EvliTeller_Ability.png
    FireWorks_Ability.png
    Fortuner_Ability.png
    Freeter_Job.png
+   Freeter_Kill.png
+   Grim_Kill.png
+   HadouHo_Ability.png
+   Hunter_Ability.png
    Impostor_Side.png
+   JackalHadouHo_Kill.png
    Jailer_Ability.png
+   Jailer_Kill.png
+   Jizo_Ability.png
    Jumper_Ability.png
    Limiter_Kill.png
    Lobby_Spotlight.png
+   LoversBreaker_Kill.png
    MadChanger_Ability.png
    MadChanger_Kill.png
+   MadSheriff_Kill.png
    MadSuicide_Ability.png
    MadSuicide_Kill.png
    Magician_Ability.png
    MassMedia_Kill.png
+   MassMurder_Ability.png
    Mayor_Ability.png
    Milkman_Deliver.png
+   Milkman_Kill.png
+   Mode_change.png
    Mole_Vent.png
    Monika_Erase.png
+   Monika_Kill.png
+   Moving_Ability.png
    Moving_Vent.png
    NiceLogger_Ability.png
    Null_Phase.png
+   Onmyoji_Kill.png
    Onmyoji_Nominate.png
    Pavlov_Imprint.png
+   Pavlov_Kill.png
    Penguin_Ability.png
    PhantomThief_Kill.png
    Plague_Kill.png
    ProBowler_Ability.png
    Professional_SpecialKill.png
    Puppeteer_Kill.png
+   Puppeteer_Mode.png
    QuickKiller_Ability.png
    Raccoon_Carry.png
    Raccoon_Grab.png
@@ -1066,23 +1146,40 @@ Resources/
    Reloader_Ability.png
    Remotekiller_Kill.png
    Remotekiller_Vent.png
+   Rocket_Ability.png
    Rocket_Grab.png
+   Rocket_Kill.png
    Rocket_Launch.png
+   Sage_Vent.png
+   Samurai_Ability.png
    Samurai_hissatu.png
    SantaClaus_Ability.png
    Santa_Gift.png
+   Santa_Kill.png
    Serialkiller_Ability.png
    Sheriff_Kill.png
+   Shikigami_Ability.png
+   Shikigami_Kill.png
    SideKick.png
    Sleeper_Sleep.png
    Sleeper_Timer.png
+   SmokeMaker_Ability.png
    Sniper_Ability.png
+   StandMaster_Ability.png
+   StandMaster_Kill.png
    Stealth_ability.png
    Strawdoll_Ability.png
    Strawdoll_Kill.png
+   Suicider_Vent.png
+   SuperHadouHo_Ability.png
    Surrogate_Kill.png
    Surrogate_SK.png
+   Swooper_Ability.png
+   Swooper_Vent.png
+   Tama_Kill.png
+   Teleporter_Ability.png
    TeleportKiller_Ability.png
+   TimeSleeper_Ability.png
    ToiletFan_Ability.png
    UnFortuner_Ability.png
    Vampire_Kill.png
@@ -1090,6 +1187,7 @@ Resources/
    VentHunter_Ability.png
    VentOpener_Ability.png
    VillageChief_Appoint.png
+   VillageChief_Kill.png
    Walkure_Kill.png
    Warlock_Ability.png
    Witch_Ability.png
@@ -1131,7 +1229,10 @@ Resources/
   SpawnMark.png
  achievements.csv
  string.csv
- TOHhamoWatchdog.ps1
+ TownOfHost-hamo-logo-hamo.png
+ TownOfHost-hamo-logo-host.png
+ TownOfHost-hamo-logo-of.png
+ TownOfHost-hamo-logo-town.png
  TownOfHost-hamo-logo.png
  TownOfHost-hamo-logo2.png
 

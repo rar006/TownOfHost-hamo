@@ -561,6 +561,8 @@ namespace TownOfHost
                         175f);
                 }
                 TOHhmLogo.gameObject.SetActive(true);
+                // ロゴを Town / Of / Host / hamo に分けてバウンドさせる(イベント用のロゴの時はしない)
+                if (!(Event.April || Event.Special)) TitleLogoBounce.Play(TOHhmLogo);
 
             }
 

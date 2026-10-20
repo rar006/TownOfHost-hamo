@@ -41,12 +41,14 @@ public sealed class Arcana : RoleBase
 
     static OptionItem OptionReflectRoleChange;
     static OptionItem OptionReflectAttributeGrant;
+    static OptionItem OptionKnowSelf;
     private static OverrideTasksData Tasks;
 
     enum OptionName
     {
         ArcanaReflectRoleChange,
         ArcanaReflectAttributeGrant,
+        ArcanaKnowSelf,
     }
 
     static void SetupOptionItem()
@@ -55,6 +57,8 @@ public sealed class Arcana : RoleBase
         OptionReflectAttributeGrant = BooleanOptionItem.Create(RoleInfo, 11, OptionName.ArcanaReflectAttributeGrant, false, false);
         // タスク置き換え(レジェンドスターと同じ0/99/1形式: オン/オフ, 通常, ロング, ショート)
         Tasks = OverrideTasksData.Create(RoleInfo, 12, tasks: (false, 4, 3, 4));
+        // ONにすると、自分の役職をクルーメイトではなくアルカナと分かる
+        OptionKnowSelf = BooleanOptionItem.Create(RoleInfo, 20, OptionName.ArcanaKnowSelf, false, false);
     }
 
     /// <summary>役職が変更されようとした時、反射して殺害する設定かどうか</summary>
@@ -87,7 +91,7 @@ public sealed class Arcana : RoleBase
     }
 
     // 何らかの手段(占い師・霊媒師等)で正体が知られる時、必ず「クルーメイト」として伝わる。
-    public override CustomRoles Misidentify() => CustomRoles.Crewmate;
+    public override CustomRoles Misidentify() => OptionKnowSelf.GetBool() ? CustomRoles.NotAssigned : CustomRoles.Crewmate;
     public override CustomRoles TellResults(PlayerControl player) => CustomRoles.Crewmate;
 
     // ===== 役職・属性 反射キル =====

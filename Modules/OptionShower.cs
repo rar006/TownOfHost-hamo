@@ -40,7 +40,10 @@ namespace TownOfHost
 
 
 
+            if (pages == null || pages.Count == 0) return "";
             if (currentPage >= pages.Count) currentPage = pages.Count - 1; //現在のページが最大ページ数を超えていれば最後のページに修正
+            // 最後のページは何も表示しない(Tabでまた最初のページに戻る)
+            if (currentPage == pages.Count - 1) return "";
 
             return $"{pages[currentPage]}{GetString("PressTabToNextPage")}({currentPage + 1}/{pages.Count})";
 
@@ -506,6 +509,8 @@ namespace TownOfHost
                 pages.Add($"\n～<{CustomWinnerColor}>{CustomWinnerText}</color></color>～<size=80%>\n" + SetEverythingUpPatch.sb.ToString() + "</size>\n\n");
 
             }
+            // 何も表示しないページ(Tabで最後に来る)
+            pages.Add("");
 
         }
 
@@ -515,6 +520,8 @@ namespace TownOfHost
 
         {
 
+            if (pages == null) UpdateText();
+            if (pages == null || pages.Count == 0) { currentPage = 0; return; }
             currentPage++;
 
             if (currentPage >= pages.Count) currentPage = 0; //現在のページが最大ページを超えていれば最初のページに

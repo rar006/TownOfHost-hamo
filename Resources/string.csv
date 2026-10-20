@@ -4032,6 +4032,7 @@
 "Arcana.ReflectAttributeGrantAnnounce","You tried to grant an attribute to {0}, but were killed by the reflection.","{0}に属性を付与しようとしたが、反射によって死亡した。"
 "ArcanaReflectRoleChange","Reflect kill on role change","役職変更を反射してキル"
 "ArcanaReflectAttributeGrant","Reflect kill on attribute grant","属性付与を反射してキル"
+"ArcanaKnowSelf","Know own role as Arcana","自分をアルカナと自覚する"
 "ArcanaTaskReplacement","Task Replacement","タスク置き換え"
 "FakeJester","Fake Jester","フェイクジェスター"
 "fje","Fake Jester","フェイクジェスター"

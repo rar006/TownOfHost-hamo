@@ -763,8 +763,8 @@ namespace TownOfHost
         private static readonly System.Collections.Generic.Dictionary<int, Vector3> redButtonOriginalScales = new();
         private const float RedButtonShrinkScale = 0.45f;
         private static readonly System.Collections.Generic.Dictionary<int, Vector3> redButtonOriginalPositions = new();
-        // 赤い✘ボタンを右・下へずらす量(x:右へ / y:下へはマイナス)。足りなければここを調整。
-        private static readonly Vector3 RedButtonOffset = new(0.9f, -0.75f, 0f); // 右へ0.9 / 下へ0.75
+        // 赤い✘ボタンは画面の右下の角に置く(角からの距離。小さいほど端に寄る)
+        private static readonly Vector2 RedButtonDistanceFromCorner = new(0.4f, 0.4f);
         private static MainMenuManager mainMenuInstance;
         private static void KeepRedButtonVisible() { } // 毎フレーム処理(ApplyRedButtonLayout)に置き換えたため何もしない
         private static void ShrinkBottomRightRedButton() => ApplyRedButtonLayout();
@@ -797,10 +797,20 @@ namespace TownOfHost
                     Logger.Info($"赤い✘ボタンを固定: scale {original}, pos {tf.localPosition}", "MainMenu");
                 }
                 var targetScale = original * RedButtonShrinkScale;
-                var targetPos = redButtonOriginalPositions[id] + RedButtonOffset;
                 if (tf.localScale != targetScale) tf.localScale = targetScale;
-                if (tf.localPosition != targetPos) tf.localPosition = targetPos;
+                // 起動直後は✘ボタンの入れ物(EjectMainMenu)が隠れていて、持ち物を開いて戻るまで出なかったので、入れ物ごと表示する
+                var ejectMenu = menu.ejectMenu.gameObject;
+                if (!ejectMenu.activeSelf) ejectMenu.SetActive(true);
                 if (!button.activeSelf) button.SetActive(true);
+                // 画面の右下の角に固定する(解像度が変わってもずれない)
+                var cam = Camera.main;
+                if (cam != null)
+                {
+                    var wp = AspectPosition.ComputeWorldPosition(cam, AspectPosition.EdgeAlignments.RightBottom,
+                        new Vector3(RedButtonDistanceFromCorner.x, RedButtonDistanceFromCorner.y, 0f));
+                    var targetPos = new Vector3(wp.x, wp.y, tf.position.z);
+                    if ((tf.position - targetPos).sqrMagnitude > 0.0001f) tf.position = targetPos;
+                }
             }
             catch (Exception e)
             {

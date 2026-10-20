@@ -149,6 +149,7 @@ namespace TownOfHost
                     activeonly.gameObject.SetActive(active && !chatOpen);
                     // ゲーム・プリセットは、役職説明(タスク欄)を開いている時も消さない(要望)
                     if (GamePresetButton) GamePresetButton.gameObject.SetActive(active && !chatOpen);
+                    if (BackupPanel.IsOpen && (pauseMenuOpen || chatOpen)) BackupPanel.Close();
                     // 人数におすすめ・全部ひらく などのタイルは、いちばん手前に描いているので、
                     // ポーズメニュー・地図の画面・チャットなどが開いている時は隠す(上に浮き出ていた)
                     foreach (var tile in ModTiles)
