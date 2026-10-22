@@ -294,9 +294,9 @@ namespace TownOfHost
 
             {
 
-if (!((CustomRPC)callId is CustomRPC.VersionCheck or CustomRPC.RequestRetryVersionCheck or CustomRPC.ClientSendHideMessage or CustomRPC.RequestCommandProcessing)
+                if (!((CustomRPC)callId is CustomRPC.VersionCheck or CustomRPC.RequestRetryVersionCheck or CustomRPC.ClientSendHideMessage)
 
-                && reader.ReadString() != Main.ForkId)
+                    && reader.ReadString() != Main.ForkId)
 
                 {
 

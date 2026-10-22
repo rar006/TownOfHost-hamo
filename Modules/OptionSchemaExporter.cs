@@ -11,7 +11,7 @@ namespace TownOfHost.Modules;
 public static class OptionSchemaExporter
 {
     static bool done;
-    public static string FilePath => $"{Main.BaseDirectory}/OptionOutputs/OptionSchema_{Main.PluginVersion}.json";
+    public static string FilePath => $"{Main.BaseDirectory}/OptionOutputs/OptionSchema_{Main.PluginVersion}_v2.json";
 
     [HarmonyPatch(typeof(MainMenuManager), nameof(MainMenuManager.Start)), HarmonyPostfix]
     public static void MainMenuStartPostfix()
@@ -41,6 +41,7 @@ public static class OptionSchemaExporter
                 ["tab"] = o.Tab.ToString(),
                 ["parent"] = o.Parent?.Id ?? -1,
                 ["default"] = o.DefaultValue,
+                ["current"] = o.GetValue(),
                 ["hidden"] = o.IsHidden,
             };
             if (o.CustomRole is not CustomRoles.NotAssigned) d["role"] = o.CustomRole.ToString();
@@ -55,7 +56,7 @@ public static class OptionSchemaExporter
 
         var root = new Dictionary<string, object>
         {
-            ["format"] = 1,
+            ["format"] = 2,
             ["modVersion"] = Main.PluginShowVersion,
             ["optionVersion"] = OptionSaver.Version,
             ["header"] = "%TOH-hamoOptions%",
