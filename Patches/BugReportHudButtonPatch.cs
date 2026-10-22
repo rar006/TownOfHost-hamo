@@ -21,6 +21,8 @@ namespace TownOfHost.Patches
         // 例: 0.30f = さらに左、0.00f = HELPに近い位置。
         // 前回位置より少し右へ。マイナス値ほどさらに右へ移動する。
         public static float BugButtonHorizontalOffset = -0.6f;
+        // HELPボタンの中心からBUGボタンの中心までの距離(ボタン1つ分と少しの隙間)
+        private const float HelpSpacing = 0.78f;
         private static GameObject _buttonObj;
         private static TextMeshPro _unreadBadgeText;
 
@@ -129,12 +131,10 @@ namespace TownOfHost.Patches
             var help = hud.transform.Find("RoleGuideButton");
             if (help == null) return;
             var helpPos = hud.transform.InverseTransformPoint(help.position);
-            var settings = hud.SettingsButton;
-            var settingsPos = settings != null ? hud.transform.InverseTransformPoint(settings.transform.position) : helpPos;
-            var spacing = Mathf.Abs(settingsPos.x - helpPos.x);
-            if (spacing < 0.45f || spacing > 1.5f) spacing = 0.78f;
+            // HELPのすぐ左に置く。以前は「HELPと設定ボタンの間の距離」から決めていたため、
+            // 試合中(HELPが設定ボタンのすぐ隣にある)はBUGがHELPに重なっていた
             _buttonObj.transform.localPosition = new Vector3(
-                helpPos.x - spacing - BugButtonHorizontalOffset,
+                helpPos.x - HelpSpacing,
                 helpPos.y,
                 helpPos.z - 0.1f);
         }
@@ -151,6 +151,8 @@ namespace TownOfHost.Patches
                 // 試合中・ロビー外に加えて、設定画面(GameSettingMenu)が開いている間も
                 // 要望により非表示にする(HELPボタンと同じ判定方法)。
                 var shouldShow = GameStates.IsLobby && !GameStates.IsInGame && GameSettingMenu.Instance == null && !(AmongUsClient.Instance != null && AmongUsClient.Instance.NetworkMode == NetworkModes.FreePlay); // フリープレイではBUGを表示しない
+                // デバッグ版は、試合中(フリープレイも)でもバグ報告できるようにする
+                if (DebugModeManager.AmDebugger) shouldShow = (GameStates.IsLobby || GameStates.IsInGame) && GameSettingMenu.Instance == null;
                 if (_buttonObj.activeSelf != shouldShow)
                     _buttonObj.SetActive(shouldShow);
 

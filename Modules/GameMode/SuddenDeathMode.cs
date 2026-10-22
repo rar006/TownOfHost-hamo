@@ -649,9 +649,11 @@ namespace TownOfHost.Modules
         public static readonly CustomRoles[] InvalidRoles =
         {
             CustomRoles.Crewmate,
+            CustomRoles.Eater, // リストラした役職
             CustomRoles.Emptiness,
             CustomRoles.Phantom,
             CustomRoles.GuardianAngel,
+            CustomRoles.Influencer,
             CustomRoles.SKMadmate,
             CustomRoles.HASFox,
             CustomRoles.HASTroll,

@@ -209,6 +209,7 @@ namespace TownOfHost
                 gameOptions.RoleOptions.SetRoleRate(RoleTypes.Viper, 0, 0);
 
                 gameOptions.RoleOptions.SetRoleRate(RoleTypes.Judge, 0, 0);
+                gameOptions.RoleOptions.SetRoleRate(RoleTypes.SpiritGuide, 0, 0);
 
                 if (Main.NormalOptions.roleOptions.TryGetRoleOptions(RoleTypes.GuardianAngel, out GuardianAngelRoleOptionsV12 roleData))
                     roleData.ProtectionDurationSeconds = 9999999999;

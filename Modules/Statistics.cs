@@ -220,7 +220,7 @@ namespace TownOfHost
                         gamemodecount.TryAdd(gamemode, (count, win));
                     }
                     version = Version.Parse(age[8]);
-                    if (Main.version < version) IsOldVersion = true;
+                    // 保存した時のバージョンの方が新しくても、統計・実績は止めない(バージョン切り替えやベータ版で数字が前後すると「過去バージョン」と出て記録されなくなっていた)
                 }
                 else
                 {

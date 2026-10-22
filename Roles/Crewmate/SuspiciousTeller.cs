@@ -11,7 +11,7 @@ using static TownOfHost.Modules.SelfVoteManager;
 
 namespace TownOfHost.Roles.Crewmate;
 
-public sealed class SuspiciousTeller : RoleBase, ISelfVoter
+public sealed class SuspiciousTeller : RoleBase, IKiller, ISelfVoter
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
@@ -94,6 +94,7 @@ public sealed class SuspiciousTeller : RoleBase, ISelfVoter
     public SuspiciousTeller(PlayerControl player)
         : base(RoleInfo, player)
     {
+        taskTurn = new(this, TaskTurnSettings, () => CanUseTellAbility(), id => UseTellAbility(id));
         ReloadOptions();
         ResetRuntime();
     }
@@ -122,10 +123,12 @@ public sealed class SuspiciousTeller : RoleBase, ISelfVoter
         optionStableResult = BooleanOptionItem.Create(RoleInfo, 26, OptionName.PonkotuDontChengeGame, true, false, optionNonAlignFortuneTeller);
         SaruWarningOption.AddTo(RoleInfo);
 
+            TaskTurnSettings = TaskTurnFortune.CreateOptions(RoleInfo, 90);
     }
 
     public override void Add()
     {
+        taskTurn.Add();
         ReloadOptions();
         ResetRuntime();
         SendRPC();
@@ -133,6 +136,7 @@ public sealed class SuspiciousTeller : RoleBase, ISelfVoter
 
     public override void OnDestroy()
     {
+        taskTurn.OnDestroy();
         SetMode(Player, false);
     }
 
@@ -219,10 +223,11 @@ public sealed class SuspiciousTeller : RoleBase, ISelfVoter
         return true;
     }
 
-    bool ISelfVoter.CanUseVoted() => CanUseTellAbility();
+    bool ISelfVoter.CanUseVoted() => (CanUseTellAbility()) && !taskTurn.BlocksMeeting;
 
     public override bool CheckVoteAsVoter(byte votedForId, PlayerControl voter)
     {
+        if (taskTurn.BlocksMeeting) return true;
         if (!Is(voter)) return true;
         if (!CanUseTellAbility()) return true;
 
@@ -450,4 +455,20 @@ public sealed class SuspiciousTeller : RoleBase, ISelfVoter
             stableResults[playerId] = role;
         }
     }
+
+    // ===== タスクターンで占う(ペットでタスク/占いモード切替・キルボタンで相手を選んで近くにいる) =====
+    static TaskTurnFortune.Settings TaskTurnSettings;
+    readonly TaskTurnFortune taskTurn;
+    bool IKiller.CanKill => false;
+    bool IKiller.IsKiller => false;
+    bool IKiller.CanUseKillButton() => taskTurn.CanUseKillButton();
+    float IKiller.CalculateKillCooldown() => taskTurn.Cooldown;
+    bool IKiller.CanUseSabotageButton() => false;
+    bool IKiller.CanUseImpostorVentButton() => false;
+    public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target) => taskTurn.OnReportDeadBody();
+    public override void AfterMeetingTasks() => taskTurn.AfterMeetingTasks();
+    public override void OnFixedUpdate(PlayerControl player) => taskTurn.OnFixedUpdate();
+    public override string GetMark(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false) => taskTurn.GetMark(seer, seen ?? seer, isForMeeting);
+    // タスクターンで占う時は、シェリフと同じくクルーの視界にする
+    public override void ApplyGameOptions(IGameOptions opt) { if (taskTurn.On) opt.SetVision(false); }
 }

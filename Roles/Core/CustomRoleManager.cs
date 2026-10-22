@@ -85,6 +85,8 @@ public static class CustomRoleManager
     public static bool OnCheckMurder(PlayerControl attemptKiller, PlayerControl attemptTarget)
 
     {
+        // 占い師系の「タスクターンで占う」: 占いモードのキルボタンはキルにしない(相手側のガード等も反応させない)
+        if (TaskTurnFortune.TryHandleKill(attemptKiller, attemptTarget)) return false;
 
         if (attemptKiller.Is(CustomRoles.Powerful)
 
@@ -1240,6 +1242,7 @@ public static class CustomRoleManager
                 case CustomRoles.GhostRumour: GhostRumour.Add(pc.PlayerId); break;
 
                 case CustomRoles.GuardianAngel: GuardianAngel.Add(pc.PlayerId); break;
+                case CustomRoles.Influencer: TownOfHost.Roles.Vanilla.Influencer.Add(pc.PlayerId); break;
 
                 case CustomRoles.DemonicTracker: DemonicTracker.Add(pc.PlayerId); break;
 
@@ -2000,11 +2003,16 @@ public enum CustomRoles
     Ruler,
     Abuser,
     Victim,
-    Influencer = 287,
+
     // PR #1 で追加した役職(旧ブランチから移植)。既存の役職の番号を変えないよう、空いている番号を明示する
     StepBomber = 580,
     Locksmith = 581,
     Coroner = 582,
+    MadKind = 583,
+    Framer = 584,
+    NiceHacker = 585,
+    Romeo = 586,
+    Juliet = 587,
     // Sub-role after 1000←今後の拡張のため広げます。
     //NotAssigned = 500,
     NotAssigned = 1000,
@@ -2081,6 +2089,8 @@ public enum CustomRoles
     Sealer,
     Triplets,
     SilverBuzzer,
+    // インフルエンサー(TownOfHost-K の SpiritGuide を移植した幽霊役職)。空いている番号を明示する
+    Influencer = 1072,
 
     //=== hamo独自ロール (マージ時に統合) ===
     // 【重要・バグ修正】この一群は元々ここ(NotAssigned=500より後ろ)に追加されていたため、

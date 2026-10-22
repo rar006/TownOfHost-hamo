@@ -1609,9 +1609,10 @@ public static class RoleGuideButtonPatch
 
     {
 
-        activeListTop = ListTop;
+        // 左のタブ(自分の役職/配役情報/コマンド説明)と重ならないよう、配役情報の一覧と同じくタブの下に置く
+        activeListTop = RoleListTop;
 
-        activeListHeight = ListH;
+        activeListHeight = RoleListH;
 
         var addons = localPc.GetCustomSubRoles()
 
@@ -3492,6 +3493,8 @@ public static class RoleGuideButtonPatch
 
         else if (role is CustomRoles.Altair && Options.CustomRoleSpawnChances.TryGetValue(CustomRoles.Vega, out option))
 
+            UtilsShowOption.ShowChildrenSettings(option, ref builder);
+        else if (role is CustomRoles.Juliet && Options.CustomRoleSpawnChances.TryGetValue(CustomRoles.Romeo, out option))
             UtilsShowOption.ShowChildrenSettings(option, ref builder);
 
 

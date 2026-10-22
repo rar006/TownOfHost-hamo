@@ -49,6 +49,7 @@ class GhostRoleCore
         GuardianAngel.Init();
 
         GhostFloodlight.Init();
+        TownOfHost.Roles.Vanilla.Influencer.Init();
 
         GhostSaboteur.Init();
 
@@ -240,6 +241,7 @@ class GhostRoleCore
             (CustomRoles.GhostReseter, GhostReseter.SetupCustomOption),
             (CustomRoles.GhostRumour, GhostRumour.SetupCustomOption),
             (CustomRoles.GuardianAngel, GuardianAngel.SetupCustomOption),
+            (CustomRoles.Influencer, TownOfHost.Roles.Vanilla.Influencer.SetupCustomOption),
         });
     }
 

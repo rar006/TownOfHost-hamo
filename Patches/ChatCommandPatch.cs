@@ -257,14 +257,12 @@ namespace TownOfHost
 
 
 
+            // MOD 独自の RPC(RequestCommandProcessing)は使わず、普通のチャット送信をホストにだけ届ける。
+            // ホストは MOD の無い参加者が打ったコマンドと同じように処理する(他の人には届かない)。
             var writer = AmongUsClient.Instance.StartRpcImmediately(
-
                 PlayerControl.LocalPlayer.NetId,
-
-                (byte)CustomRPC.RequestCommandProcessing,
-
+                (byte)RpcCalls.SendChat,
                 SendOption.Reliable,
-
                 AmongUsClient.Instance.HostId);
 
             writer.Write(text);
@@ -3033,6 +3031,12 @@ namespace TownOfHost
 
                         break;
 
+                    case "/rj":
+                    case "/rjchat":
+                        // ロミオとジュリエットの秘匿チャット
+                        canceled = true;
+                        Roles.Neutral.RomeoJuliet.TrySendChat(PlayerControl.LocalPlayer, args);
+                        break;
                     case "/Twinschat":
 
                     case "/twinschet":
@@ -6263,6 +6267,11 @@ namespace TownOfHost
 
                     break;
 
+                case "/rj":
+                case "/rjchat":
+                    if (Roles.Neutral.RomeoJuliet.TrySendChat(player, args)) player.RpcProtectedMurderPlayer();
+                    canceled = true;
+                    break;
                 case "/Twinschat":
 
                 case "/twinschet":

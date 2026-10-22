@@ -210,8 +210,10 @@ namespace TownOfHost
         }
 
         [HarmonyPatch(typeof(InnerNetClient), nameof(InnerNetClient.SendOrDisconnect)), HarmonyPrefix]
-        public static bool SendOrDisconnectPatch(InnerNetClient __instance, MessageWriter msg)
+        public static bool SendOrDisconnectPatch(InnerNetClient __instance, MessageWriter msg, bool __runOriginal)
         {
+            // 先に別の処理(NetworkSafety)が分けて送った時は、ここで送り直さない(同じ通信を2回送っていた)
+            if (!__runOriginal) return false;
             // 部屋作成中はconnectionがまだ初期化されていないフレームがある。
             // ここで独自のパケット分割・直接送信を行うと暗転中にNullReferenceで落ちるため、
             // その状態はバニラのSendOrDisconnectへ委ねる。

@@ -132,18 +132,24 @@ namespace TownOfHost
         public static bool IsNonHostClient =>
             AmongUsClient.Instance != null && !AmongUsClient.Instance.AmHost;
 
-        public const string BepInExPluginVersion = "4.00.35.14";
+        public const string BepInExPluginVersion = "4.00.35.15";
 
-        public const string PluginVersion = "4.00.35.14";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
+        public const string PluginVersion = "4.00.35.15";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
 
-        public const string PluginShowVersion = "4.35.14β";
+        public const string PluginShowVersion = "4.35.15β";
 
         public const string ModVersion = ".35.14";//リリースver用バージョン変更dc9b79
 
 
 
         /// 配布するデバッグ版なのであればtrue。リリース時にはfalseにすること。
-        public static bool DebugVersion = false;
+        // Debug構成でビルドした時は自動でデバッグ版になる
+        public static bool DebugVersion =
+#if DEBUG
+            true;
+#else
+            false;
+#endif
         public static bool WarnDuplicatetranslate = false;
 
 
@@ -949,6 +955,7 @@ namespace TownOfHost
         PlagueDoctor = CustomRoles.PlagueDoctor,
 
         Terrorist = CustomRoles.Terrorist,
+        Romeo = CustomRoles.Romeo,
 
         Lovers = CustomRoles.Lovers,
 
@@ -1182,7 +1189,9 @@ namespace TownOfHost
 
         TraumaandSurmount,
 
-        CatalystandConductor
+        CatalystandConductor,
+
+        RomeoandJuliet
 
     }
 

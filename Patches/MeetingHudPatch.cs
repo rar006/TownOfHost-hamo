@@ -1431,26 +1431,28 @@ public static class MeetingHudPatch
 
     }
 
-    private static void RevengeOnExile(byte playerId, CustomDeathReason deathReason)
-
+    private static void RevengeOnExile(byte playerId, CustomDeathReason deathReason, int chainDepth = 0)
     {
-
         var player = PlayerCatch.GetPlayerById(playerId);
-
         if (player == null) return;
-
-        var target = PickRevengeTarget(player, deathReason);
-
-        if (target == null) return;
-
-        TryAddAfterMeetingDeathPlayers(CustomDeathReason.Vote, playerId);
-
-        TryAddAfterMeetingDeathPlayers(CustomDeathReason.Revenge, target.PlayerId);
-
-        target.SetRealKiller(player);
-
-        Logger.Info($"{player.GetNameWithRole()}の道連れ先:{target.GetNameWithRole()}", "RevengeOnExile");
-
+        // 追放された時に道連れにする人数(設定。選ばれた人は次の抽選の候補から外れる)
+        var count = Revenger.ExileRevengeCount?.GetInt() ?? 1;
+        var chained = new List<PlayerControl>();
+        for (var i = 0; i < count; i++)
+        {
+            var target = PickRevengeTarget(player, deathReason);
+            if (target == null) break;
+            // 連鎖で道連れになった人は、死因を「道連れ」のままにする
+            if (chainDepth == 0) TryAddAfterMeetingDeathPlayers(CustomDeathReason.Vote, playerId);
+            TryAddAfterMeetingDeathPlayers(CustomDeathReason.Revenge, target.PlayerId);
+            target.SetRealKiller(player);
+            Logger.Info($"{player.GetNameWithRole()}の道連れ先:{target.GetNameWithRole()}", "RevengeOnExile");
+            if (Revenger.ChainRevenge?.GetBool() == true && target.Is(CustomRoles.Revenger)) chained.Add(target);
+        }
+        // 道連れにした相手がリベンジャーなら、その人もさらに道連れを起こす(念のため15段まで)
+        if (chainDepth >= 15) return;
+        foreach (var next in chained)
+            RevengeOnExile(next.PlayerId, CustomDeathReason.Vote, chainDepth + 1);
     }
 
     private static PlayerControl PickRevengeTarget(PlayerControl exiledplayer, CustomDeathReason deathReason)//道連れ先選定

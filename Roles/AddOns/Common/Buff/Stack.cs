@@ -34,6 +34,8 @@ namespace TownOfHost.Roles.AddOns.Common
                 foreach (var addon in AssignAddon.GetNowRoleValue())
                 {
                     if (!CustomRolesHelper.CanHaveSubRole(pc.GetCustomRole(), addon)) continue;
+                    // シンボルなど、陣営を決めて付ける属性は、付けられない陣営には付けない(クルー以外にシンボルが付いていた)
+                    if (!AddOnsAssignData.CanAssignToTeam(addon, pc.GetCustomRole())) continue;
                     if (pc.Is(addon) is false)
                     {
                         PlayerState.GetByPlayerId(playerId).SetSubRole(addon);

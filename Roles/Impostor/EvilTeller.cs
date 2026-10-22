@@ -6,10 +6,11 @@ using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
 using TownOfHost.Roles.Madmate;
 using Hazel;
+using static TownOfHost.Modules.SelfVoteManager;
 
 namespace TownOfHost.Roles.Impostor;
 
-public sealed class EvilTeller : RoleBase, IImpostor, IUsePhantomButton
+public sealed class EvilTeller : RoleBase, IImpostor, IUsePhantomButton, ISelfVoter
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
@@ -42,6 +43,9 @@ public sealed class EvilTeller : RoleBase, IImpostor, IUsePhantomButton
         tellroleteam = opttellroleteam.GetBool();
         tellrole = opttellrole.GetBool();
         maxtellcount = optCanTellCount.GetInt();
+        meetingMode = optMeetingMode.GetBool();
+        needKills = optNeedKills.GetInt();
+        kills = 0;
     }
     static OptionItem optcooldown;
     static OptionItem optkillcooldown;
@@ -51,6 +55,13 @@ public sealed class EvilTeller : RoleBase, IImpostor, IUsePhantomButton
     static OptionItem opttellrole;
     static OptionItem optusekillcoool;
     static OptionItem optCanTellCount;
+    static OptionItem optMeetingMode;
+    static OptionItem optNeedKills;
+    // ワンクリ(タスクターン)ではなく、会議で投票して占う
+    static bool meetingMode;
+    // 会議で1回占うのに必要なキル回数(0なら回数だけで占える)
+    static int needKills;
+    int kills;
     static float cooldown;
     static float killcooldown;
     static float telltime;
@@ -62,7 +73,7 @@ public sealed class EvilTeller : RoleBase, IImpostor, IUsePhantomButton
     bool nowuse;
     bool fall;
     Dictionary<byte, CustomRoles> seentarget = new();
-    enum OptionName { EvilTellerTellTime, EvilTellerDistance, EvilTellertellrole, EvilTellerCanTellCount }
+    enum OptionName { EvilTellerTellTime, EvilTellerDistance, EvilTellertellrole, EvilTellerCanTellCount, EvilTellerNeedKills }
 
     private TimerInfo TargetInfo;
     public class TimerInfo
@@ -85,13 +96,19 @@ public sealed class EvilTeller : RoleBase, IImpostor, IUsePhantomButton
         opttellroleteam = BooleanOptionItem.Create(RoleInfo, 14, "TellRole", false, false);
         opttellrole = BooleanOptionItem.Create(RoleInfo, 15, OptionName.EvilTellertellrole, false, false);
         optusekillcoool = BooleanOptionItem.Create(RoleInfo, 16, "OptionSetKillcooldown", false, false);
+        optMeetingMode = BooleanOptionItem.Create(RoleInfo, 18, "EvilTellerMeetingMode", true, false)
+            .SetOptionName(() => "ワンクリではなく会議で占う");
+        optNeedKills = IntegerOptionItem.Create(RoleInfo, 19, OptionName.EvilTellerNeedKills, new(0, 14, 1), 1, false, optMeetingMode)
+            .SetValueFormat(OptionFormat.Times)
+            .SetOptionName(() => "占うのに必要なキル回数");
     }
     public float CalculateKillCooldown() => killcooldown;
     public override void ApplyGameOptions(IGameOptions opt) => AURoleOptions.PhantomCooldown = maxtellcount <= seentarget.Count ? 200f : (fall ? 1 : (nowuse ? telltime : cooldown));
-    bool IUsePhantomButton.IsPhantomRole => maxtellcount > seentarget.Count;
+    bool IUsePhantomButton.IsPhantomRole => !meetingMode && maxtellcount > seentarget.Count;
     public void OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
         AdjustKillCooldown = true;
+        if (meetingMode) return;
         if (maxtellcount <= seentarget.Count) return;
         ResetCooldown = false;
         var target = Player.GetKillTarget(true);
@@ -162,7 +179,15 @@ public sealed class EvilTeller : RoleBase, IImpostor, IUsePhantomButton
             roleColor = UtilsRoleText.GetRoleColor(role);
         }
     }
-    public override string GetProgressText(bool comms = false, bool GameLog = false) => maxtellcount <= seentarget.Count ? $"<color=#cccccc>({maxtellcount - seentarget.Count})</color>" : $"<color=#ff1919>({maxtellcount - seentarget.Count})</color>";
+    public override string GetProgressText(bool comms = false, bool GameLog = false)
+    {
+        if (meetingMode)
+        {
+            var left = MeetingTellLimit - seentarget.Count;
+            return left <= 0 ? $"<color=#cccccc>({maxtellcount - seentarget.Count})</color>" : $"<color=#ff1919>({left})</color>";
+        }
+        return maxtellcount <= seentarget.Count ? $"<color=#cccccc>({maxtellcount - seentarget.Count})</color>" : $"<color=#ff1919>({maxtellcount - seentarget.Count})</color>";
+    }
     public override void OnFixedUpdate(PlayerControl player)
     {
         if (!AmongUsClient.Instance.AmHost) return;
@@ -215,6 +240,56 @@ public sealed class EvilTeller : RoleBase, IImpostor, IUsePhantomButton
             }
         }
     }
+    // ===== 会議で占う =====
+    // 占える回数: 最大回数と、キル回数(必要なキル回数ごとに1回)の少ない方
+    int MeetingTellLimit => needKills <= 0 ? maxtellcount : System.Math.Min(maxtellcount, kills / needKills);
+    bool CanMeetingTell() => meetingMode && Player.IsAlive() && seentarget.Count < MeetingTellLimit;
+    bool ISelfVoter.CanUseVoted() => Canuseability() && CanMeetingTell();
+    void IKiller.OnMurderPlayerAsKiller(MurderInfo info)
+    {
+        if (info.IsSuicide || !Is(info.AttemptKiller)) return;
+        kills++;
+        RpcSetKills();
+    }
+    public override bool CheckVoteAsVoter(byte votedForId, PlayerControl voter)
+    {
+        if (!Is(voter) || !Canuseability() || !CanMeetingTell()) return true;
+        if (CheckSelfVoteMode(Player, votedForId, out var status))
+        {
+            if (status is VoteStatus.Self)
+                Utils.SendMessage(string.Format(GetString("SkillMode"), GetString("Mode.Divied"), GetString("Vote.Divied")) + GetString("VoteSkillMode"), Player.PlayerId);
+            if (status is VoteStatus.Skip)
+                Utils.SendMessage(GetString("VoteSkillFin"), Player.PlayerId);
+            if (status is VoteStatus.Vote)
+                MeetingTell(votedForId);
+            SetMode(Player, status is VoteStatus.Self);
+            return false;
+        }
+        return true;
+    }
+    void MeetingTell(byte targetId)
+    {
+        var target = PlayerCatch.GetPlayerById(targetId);
+        if (target == null || !target.IsAlive() || target == Player) return;
+        if (target.IsTeammate(Player) || seentarget.ContainsKey(targetId)) return;
+        if (target.Is(CustomRoles.Madpsycho) && Madpsycho.CanPsycho)
+        {
+            PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = Madpsycho.deathReasons[Madpsycho.OptionDeathReason.GetValue()];
+            target.RpcMurderPlayer(Player);
+            return;
+        }
+        var role = target.GetCustomRole();
+        seentarget.TryAdd(targetId, role);
+        RpcAddTarget(targetId);
+        var shown = tellrole || tellroleteam
+            ? "<b>" + GetString($"{role}").Color(UtilsRoleText.GetRoleColor(role)) + "</b>"
+            : GetString($"{role.GetCustomRoleTypes()}");
+        Utils.SendMessage(string.Format(GetString("Skill.Teller"), UtilsName.GetPlayerColor(target, true), shown) + GetString("Skill.Tellerfin") + "\n\n"
+            + string.Format(GetString("RemainingCount"), MeetingTellLimit - seentarget.Count), Player.PlayerId);
+        UtilsNotifyRoles.NotifyRoles(SpecifySeer: Player);
+        if (role.IsNeutral()) Achievements.RpcCompleteAchievement(Player.PlayerId, 0, achievements[0]);
+        if (role.IsMadmate()) Achievements.RpcCompleteAchievement(Player.PlayerId, 0, achievements[1]);
+    }
     public override string GetAbilityButtonText() => GetString("EvliTellerAbility");
     public override bool OverrideAbilityButton(out string text)
     {
@@ -224,6 +299,12 @@ public sealed class EvilTeller : RoleBase, IImpostor, IUsePhantomButton
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
     {
         seen ??= seer;
+        if (meetingMode)
+        {
+            if (seen.PlayerId != seer.PlayerId || !isForMeeting || !CanMeetingTell()) return "";
+            var mes = GetString("SelfVoteRoleInfoMeg");
+            return isForHud ? mes : $"<size=40%>{mes}</size>";
+        }
         if (seen.PlayerId != seer.PlayerId || isForMeeting || maxtellcount <= seentarget.Count || !Player.IsAlive()) return "";
 
         if (isForHud) return GetString("PhantomButtonKilltargetLowertext");
@@ -237,6 +318,12 @@ public sealed class EvilTeller : RoleBase, IImpostor, IUsePhantomButton
         sender.Writer.Write(targetId);
     }
 
+    void RpcSetKills()
+    {
+        using var sender = CreateSender();
+        sender.Writer.WritePacked((int)RPC_Types.SetKills);
+        sender.Writer.Write(kills);
+    }
     public void RpcAddTarget(byte targetId)
     {
         using var sender = CreateSender();
@@ -251,6 +338,9 @@ public sealed class EvilTeller : RoleBase, IImpostor, IUsePhantomButton
             case RPC_Types.SetTargetInfo:
                 TargetInfo = new(reader.ReadByte(), 0f);
                 break;
+            case RPC_Types.SetKills:
+                kills = reader.ReadInt32();
+                break;
             case RPC_Types.AddTarget:
                 var targetId = reader.ReadByte();
                 seentarget.TryAdd(targetId, PlayerCatch.GetPlayerById(targetId).GetCustomRole());
@@ -261,7 +351,8 @@ public sealed class EvilTeller : RoleBase, IImpostor, IUsePhantomButton
     enum RPC_Types
     {
         SetTargetInfo,
-        AddTarget
+        AddTarget,
+        SetKills
     }
     public static Dictionary<int, Achievement> achievements = new();
     [Attributes.PluginModuleInitializer]

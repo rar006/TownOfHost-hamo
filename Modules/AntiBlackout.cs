@@ -285,7 +285,7 @@ namespace TownOfHost
                     }
                     if (!isalive)
                     {
-                        role = (WasSpiritGuide(pc.PlayerId) || pc.Data?.Role?.Role == RoleTypes.SpiritGuide)
+                        role = (pc.Is(CustomRoles.Influencer) || WasSpiritGuide(pc.PlayerId) || pc.Data?.Role?.Role == RoleTypes.SpiritGuide)
                             ? RoleTypes.SpiritGuide : pc.CanUseSabotageButton() ?
                                 RoleTypes.ImpostorGhost : RoleTypes.CrewmateGhost;
                     }
@@ -326,7 +326,7 @@ namespace TownOfHost
                     }
 
                     if (!isalive && pc.PlayerId == Player.PlayerId &&
-                        (WasSpiritGuide(pc.PlayerId) || pc.Data?.Role?.Role == RoleTypes.SpiritGuide))
+                        (pc.Is(CustomRoles.Influencer) || WasSpiritGuide(pc.PlayerId) || pc.Data?.Role?.Role == RoleTypes.SpiritGuide))
                         setrole = RoleTypes.SpiritGuide;
 
                     sender.StartRpc(pc.NetId, RpcCalls.SetRole)

@@ -11,7 +11,8 @@ namespace TownOfHost.Modules;
 public static class NetworkSafety
 {
     public const int PacketLimit = 1000;
-    public const int SplitThreshold = 1150;
+    // 1000バイトを超えるパケットも分ける(以前は1150。Switch・スマホの回線では1000バイト超が届きにくかった)
+    public const int SplitThreshold = 1000;
     public const int NameByteLimit = 800;
 
     // ===================== 2. 名前の切り詰め =====================
@@ -68,13 +69,29 @@ public static class NetworkSafety
 
     private static bool splitting;
 
-    [HarmonyPatch(typeof(InnerNetClient), nameof(InnerNetClient.SendOrDisconnect))]
+    [HarmonyPatch(typeof(InnerNetClient), nameof(InnerNetClient.SendOrDisconnect)), HarmonyPriority(Priority.First)] // 参加者が送ってはいけないRPCは、ほかの処理より先に取り除く
     private static class SendOrDisconnectPatch
     {
-        public static bool Prefix(InnerNetClient __instance, [HarmonyArgument(0)] MessageWriter msg)
+        public static bool Prefix(InnerNetClient __instance, [HarmonyArgument(0)] MessageWriter msg, bool __runOriginal)
         {
+            // 先に別の処理(ClientPatch)が分けて送った時は、ここで送り直さない(同じ通信を2回送っていた)
+            if (!__runOriginal) return false;
             try
             {
+                if (!splitting && msg != null && ShouldFilterForNonHost())
+                {
+                    var filtered = FilterNonHostRpcs(msg, out var removed);
+                    if (removed > 0)
+                    {
+                        if (filtered != null)
+                        {
+                            splitting = true;
+                            try { __instance.SendOrDisconnect(filtered); }
+                            finally { splitting = false; filtered.Recycle(); }
+                        }
+                        return false;
+                    }
+                }
                 if (splitting || msg == null || msg.Length <= SplitThreshold) return true;
                 var parts = Split(msg);
                 if (parts == null || parts.Count <= 1)
@@ -102,6 +119,116 @@ public static class NetworkSafety
                 return true;
             }
         }
+    }
+
+    // ===================== 2. 非ホストは MOD 独自の RPC を送らない =====================
+    // 参加者(ホスト以外)が MOD を入れている時に MOD 独自の RPC を送ると、ホストに「不正なRPC」としてキックされたり、
+    // 公式サーバーに弾かれて切断されたりしていた。参加者は普通のプレイヤーと同じ通信だけを送る。
+    // ホストしか送らないはずのバニラの RPC(名前・役職・キルの確定など)も、念のため送らない。
+    private static readonly HashSet<string> HostOnlyVanillaRpcNames = new()
+    {
+        "SetName", "SetColor", "MurderPlayer", "Exiled", "StartMeeting", "SetRole", "ProtectPlayer",
+        "Shapeshift", "RejectShapeshift", "StartVanish", "StartAppear", "SetInfected",
+    };
+    private static HashSet<byte> hostOnlyVanillaRpcs;
+    private static readonly HashSet<byte> loggedBlocked = new();
+
+    private static bool ShouldFilterForNonHost()
+        => AmongUsClient.Instance != null && AmongUsClient.Instance.AmConnected && !AmongUsClient.Instance.AmHost
+           && AmongUsClient.Instance.NetworkMode == NetworkModes.OnlineGame;
+
+    private static bool IsBlockedForNonHost(byte callId)
+    {
+        if (hostOnlyVanillaRpcs == null)
+        {
+            hostOnlyVanillaRpcs = new();
+            foreach (var name in HostOnlyVanillaRpcNames)
+                if (Enum.TryParse<RpcCalls>(name, out var rc)) hostOnlyVanillaRpcs.Add((byte)rc);
+        }
+        if (hostOnlyVanillaRpcs.Contains(callId)) return true;
+        return Enum.IsDefined(typeof(CustomRPC), (int)callId) && !Enum.IsDefined(typeof(RpcCalls), callId);
+    }
+
+    // 送るパケットから、非ホストが送ってはいけない RPC だけを取り除く。取り除いたものが無ければ removed=0
+    private static MessageWriter FilterNonHostRpcs(MessageWriter msg, out int removed)
+    {
+        removed = 0;
+        var buf = (byte[])msg.ToByteArray(true);
+        var header = msg.SendOption == SendOption.Reliable ? 3 : 1;
+        if (buf.Length <= header) return null;
+        var output = new List<byte[]>();
+        var pos = header;
+        while (pos + 3 <= buf.Length)
+        {
+            var len = buf[pos] | (buf[pos + 1] << 8);
+            var tag = buf[pos + 2];
+            var start = pos + 3;
+            if (start + len > buf.Length) { removed = 0; return null; }
+            if (tag is 5 or 6)
+            {
+                var p = start + 4;
+                if (tag == 6)
+                {
+                    while (p < start + len && (buf[p] & 0x80) != 0) p++;
+                    p++;
+                }
+                var prefixLen = p - start;
+                var kept = new List<byte[]>();
+                while (p + 3 <= start + len)
+                {
+                    var sl = buf[p] | (buf[p + 1] << 8);
+                    var total = 3 + sl;
+                    if (p + total > start + len) { removed = 0; return null; }
+                    var subTag = buf[p + 2];
+                    var drop = false;
+                    if (subTag == 2)
+                    {
+                        // RPC: [netId(可変長)][callId]
+                        var q = p + 3;
+                        while (q < p + total && (buf[q] & 0x80) != 0) q++;
+                        q++;
+                        if (q < p + total && IsBlockedForNonHost(buf[q]))
+                        {
+                            drop = true;
+                            if (loggedBlocked.Add(buf[q]))
+                                Logger.Info($"参加者なので RPC {buf[q]}({RPC.GetRpcName(buf[q])}) は送りません", "NetworkSafety");
+                        }
+                    }
+                    if (drop) removed++;
+                    else
+                    {
+                        var sub = new byte[total];
+                        Array.Copy(buf, p, sub, 0, total);
+                        kept.Add(sub);
+                    }
+                    p += total;
+                }
+                if (kept.Count > 0)
+                {
+                    var bodyLen = prefixLen;
+                    foreach (var k in kept) bodyLen += k.Length;
+                    var unit = new byte[3 + bodyLen];
+                    unit[0] = (byte)(bodyLen & 0xff);
+                    unit[1] = (byte)(bodyLen >> 8);
+                    unit[2] = tag;
+                    Array.Copy(buf, start, unit, 3, prefixLen);
+                    var o = 3 + prefixLen;
+                    foreach (var k in kept) { Array.Copy(k, 0, unit, o, k.Length); o += k.Length; }
+                    output.Add(unit);
+                }
+            }
+            else
+            {
+                var raw = new byte[3 + len];
+                Array.Copy(buf, pos, raw, 0, raw.Length);
+                output.Add(raw);
+            }
+            pos = start + len;
+        }
+        if (removed == 0 || output.Count == 0) return null;
+        var w = MessageWriter.Get(msg.SendOption);
+        foreach (var u in output) w.Write(u);
+        return w;
     }
 
     private static List<MessageWriter> Split(MessageWriter msg)

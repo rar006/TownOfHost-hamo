@@ -68,6 +68,23 @@ public static class PresetNameDialog
         if (index >= 0 && index < names.Length) names[index].Value = value;
     }
 
+    // 設定画面ができた時に、見えない状態で先に作っておく(押した時に作る処理を減らす)
+    public static void Prebuild()
+    {
+        try
+        {
+            var menu = GameSettingMenu.Instance;
+            if (menu == null) return;
+            if (root != null && root.transform.parent == menu.transform && nameBox?.TextBox != null) return;
+            if (root != null) UnityEngine.Object.Destroy(root);
+            Build(menu.transform);
+        }
+        catch (Exception e)
+        {
+            Logger.Warn($"PresetNameDialog.Prebuild: {e.Message}", "PresetNameDialog");
+        }
+    }
+
     public static void Open()
     {
         try
@@ -89,7 +106,6 @@ public static class PresetNameDialog
             nameBox.SetText(GetCurrentPresetName());
             CrashTrace.Mark("PresetNameDialog.Focus");
             SafeFocus.Give(nameBox.TextBox);
-            Tick();
             CrashTrace.Mark("PresetNameDialog.Open done");
         }
         catch (Exception e)
@@ -225,30 +241,17 @@ public static class PresetNameDialog
         cancel.Scale = new Vector2(1.7f, 0.5f);
         cancel.FontSize = 1.8f;
 
-        // 入力文字が見えない問題の対策: タイトルと同じ(日本語対応の)フォント・マテリアルを使い、白色で最前面に描画する
-        if (nameBox.DisplayText != null)
-        {
-            nameBox.DisplayText.font = title.font;
-            nameBox.DisplayText.fontSharedMaterial = title.fontSharedMaterial;
-            nameBox.DisplayText.color = Color.white;
-            nameBox.DisplayText.fontSize = 2.2f;
-            nameBox.DisplayText.fontSizeMin = nameBox.DisplayText.fontSizeMax = 2.2f;
-        }
-        // 入力欄の文字が「フォーカスが外れている間だけ」見えない問題の対策:
-        // 入力欄本来の表示は隠し、入力内容を毎回コピーして表示する専用のテキストを重ねる。
-        if (nameBox.DisplayText != null) nameBox.DisplayText.gameObject.SetActive(false);
-        previewText = TMPTemplate.Create(
-            name: "PresetNameDialogPreview",
-            text: "",
-            color: Color.white,
-            fontSize: 2.2f,
-            alignment: TextAlignmentOptions.Left,
-            setActive: true,
-            parent: root.transform);
-        previewText.rectTransform.localPosition = new Vector3(0f, 0.05f, -2f); // 中心は入力欄の中心(左揃えなので文字は左端から始まる)
-        previewText.rectTransform.sizeDelta = new Vector2(3.9f, 0.45f);
-        previewText.enableWordWrapping = false;
+        // バグ報告の入力欄と同じ作りにする(入力欄の文字をそのまま見せる。コピー用の文字を重ねたり、
+        // 入力欄の文字を隠したり、フォントを差し替えたりしない。全画面で押すと落ちることがあったため)
         ApplySorting(menuTransform);
         root.SetActive(false);
     }
+}
+
+[HarmonyLib.HarmonyPatch(typeof(GameSettingMenu), nameof(GameSettingMenu.Start))]
+static class PresetNameDialogPrebuildPatch
+{
+    // 設定画面が開いてから少し後(画面の部品ができた後)に、プリセット名の入力フォームを先に作っておく
+    public static void Postfix()
+        => _ = new LateTask(PresetNameDialog.Prebuild, 0.5f, "PresetNameDialog.Prebuild", true);
 }

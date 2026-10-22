@@ -139,6 +139,7 @@ namespace TownOfHost
         public class GameStartManagerUpdatePatch
         {
             private static float exitTimer = 0f;
+            private static TextMeshPro timerLabelCache;
             //private static float ext = 0f;
             private static GameObject startHiddenByMod;
             private static bool versionMismatchHide;
@@ -263,7 +264,9 @@ namespace TownOfHost
 
                 timer = Mathf.Max(0f, timer -= Time.deltaTime);
 
-                var timerLabel = GameObject.Find("ModeLabel")?.transform?.FindChild("Text_TMP")?.GetComponent<TextMeshPro>();
+                // 毎フレーム名前で探さず、見つけたものを使い回す
+                if (timerLabelCache == null) timerLabelCache = GameObject.Find("ModeLabel")?.transform?.FindChild("Text_TMP")?.GetComponent<TextMeshPro>();
+                var timerLabel = timerLabelCache;
 
                 if (__instance.RulesPresetText != null && timerLabel != null)
                 {
@@ -381,7 +384,7 @@ namespace TownOfHost
                         // 1体作るごとに次のIDへ進めるようにする。
                         id++;
                         var playerinfo = GameData.Instance.AddDummy(dummy);
-                        var colorid = (byte)((PlayerControl.LocalPlayer.Data.DefaultOutfit.ColorId + id) % 18);
+                        var colorid = (byte)((PlayerControl.LocalPlayer.Data.DefaultOutfit.ColorId + i + 1) % 18);
 
                         dummy.NetTransform.enabled = true;
                         dummy.RpcSetColor(colorid);
@@ -427,7 +430,7 @@ namespace TownOfHost
                                 dummy.SetPet("");
                                 break;
                         }
-                        id++;
+                        // (ここでもう一度 id を増やしていたため番号が1つ飛ばしになり、指定より少ない数しか出ていなかった)
                         AmongUsClient.Instance.Spawn(dummy);
                         playerinfo.RpcSetTasks(Array.Empty<byte>());
                     }

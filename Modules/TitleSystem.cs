@@ -1205,6 +1205,31 @@ public static partial class TitleSystem
         }
     }
 
+    private const double RareProbability = 0.01;
+
+    private static void ShowRareGuard(byte playerId)
+    {
+        if (!GameStates.IsLobby || AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
+        var pc = FindPlayerById(playerId);
+        if (pc == null || pc.Data == null || pc.Data.Disconnected) return;
+        foreach (var seer in PlayerControl.AllPlayerControls.ToArray())
+        {
+            if (seer == null || seer.Data == null || seer.Data.Disconnected) continue;
+            if (seer == PlayerControl.LocalPlayer)
+            {
+                pc.MurderPlayer(pc, MurderResultFlags.FailedProtected);
+                continue;
+            }
+            var clientId = seer.GetClientId();
+            if (clientId == -1) continue;
+            var writer = AmongUsClient.Instance.StartRpcImmediately(pc.NetId, (byte)RpcCalls.MurderPlayer, Hazel.SendOption.None, clientId);
+            InnerNet.MessageExtensions.WriteNetObject(writer, pc);
+            writer.Write((int)MurderResultFlags.FailedProtected);
+            AmongUsClient.Instance.FinishRpcImmediately(writer);
+        }
+        Logger.Info($"{pc.Data.GetLogPlayerName()} がレアな二つ名を引いたので、ガードの演出を出しました", "TitleSystem");
+    }
+
     private static async Task DrawAsync(string fc, byte localId)
     {
         var (status, doc) = await RequestAsync(HttpMethod.Post, $"{BaseUrl}/draw", new { friendCode = fc }).ConfigureAwait(false);
@@ -1223,6 +1248,8 @@ public static partial class TitleSystem
                 if (root.TryGetProperty("newTraits", out var nt) && nt.ValueKind == JsonValueKind.Array)
                     foreach (var t in nt.EnumerateArray())
                         traitText.Append($"\n属性が付いた!  <color={GetString(t, "color", "#ffffff")}>{GetString(t, "mark")}</color> {GetString(t, "name")} 【{GetString(t, "rarityName")}】");
+                // レアな二つ名(確率1%以下)を引いたら、キルをガードした時の演出を出す(ロビーだけ)
+                if (p > 0 && p <= RareProbability) RunOnMain(() => ShowRareGuard(localId));
                 await FetchUserAsync(fc, true).ConfigureAwait(false);
                 Reply($"二つ名を引きました!  {marks}<color={color}>{name}</color>  (確率 {Pct(p)})"
                     + traitText

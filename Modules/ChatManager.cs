@@ -559,6 +559,16 @@ namespace TownOfHost.Modules.ChatManager
                     Nwriter.SendMessage();
 
                 }
+                // 会議中は、送り終わったら会議用の名前を全員に送り直す(ほかの送り方と同じ)。
+                // 送り直さないと、見出し(Day.4 など)が自分の名前の所に残ることがあった
+                if (GameStates.CalledMeeting && Main.MessagesToSend.Count < 1)
+                {
+                    _ = new LateTask(() =>
+                    {
+                        NameColorManager.RpcMeetingColorName();
+                        ChatUpdatePatch.DoBlockChat = false;
+                    }, Main.LagTime, "Setname", true);
+                }
                 if (chatController is not null)
                     chatController.timeSinceLastMessage = sendTo is byte.MaxValue ? 0 : Main.MessageWait.Value - 0.2f;
             }
@@ -599,9 +609,10 @@ namespace TownOfHost.Modules.ChatManager
             // ホスト視点でのチャット送信
             if (clientId is -1)
             {
-                senderplayer.SetName(title);
+                // 部屋に入った直後など、名前の表示がまだ用意できていないと SetName が落ちることがある(落ちてもチャットは出す)
+                try { senderplayer.SetName(title); } catch (System.Exception e) { Logger.Warn($"SetNameに失敗: {e.Message}", "SendmessageInLobby"); }
                 DestroyableSingleton<HudManager>.Instance.Chat.AddChat(senderplayer, msg);
-                senderplayer.SetName(name);
+                try { senderplayer.SetName(name); } catch (System.Exception e) { Logger.Warn($"SetNameに失敗: {e.Message}", "SendmessageInLobby"); }
             }
             void SendLobbyChat(int cid, string shownName)
             {

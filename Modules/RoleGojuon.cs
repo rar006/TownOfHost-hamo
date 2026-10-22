@@ -505,6 +505,16 @@ public static class RoleGojuon
             .ThenBy(info => info.OptionSort.TabNumber)
             .ThenBy(info => info.OptionSort.SortNumber)
             .ToList();
+        // 2人1組の役職は、設定を持つ方(親)を先に作らないと、相方の設定の親が見つからずに設定の読み込みが止まる
+        // (「ジュリエット」が「ロミオ」より先に来て、ロビーを建てられなくなっていた)。相方は親のすぐ後ろに移す
+        var followers = list.Where(i => i.Combination != CombinationRoles.None && i.OptionCreator == null
+            && list.Any(l => l != i && l.Combination == i.Combination && l.OptionCreator != null)).ToList();
+        foreach (var f in followers)
+        {
+            list.Remove(f);
+            var leader = list.FindIndex(l => l.Combination == f.Combination && l.OptionCreator != null);
+            list.Insert(leader + 1, f);
+        }
         Logger.Info($"役職を五十音順に並べました({list.Count}件)", "RoleGojuon");
         return list;
     }

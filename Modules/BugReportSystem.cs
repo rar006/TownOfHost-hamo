@@ -200,6 +200,13 @@ public static class BugReportSystem
         Save();
     }
 
+    public static bool IsDebugBuild =>
+#if DEBUG
+        true;
+#else
+        false;
+#endif
+
     /// <summary>
     /// バグ報告を新規送信する。discordUserIdは空文字でも良い(白紙=Discordで会話しない/IDが無い)。
     /// 戻り値: (成功したか, ユーザーに見せるメッセージ, 作成されたチケットID)
@@ -225,6 +232,9 @@ public static class BugReportSystem
                 hostFriendCode = moderatorFriendCode != null ? GetLocalFriendCode() : "",
                 viaModerator = moderatorFriendCode != null,
                 gameVersion = Main.PluginShowVersion ?? "",
+                amongUsVersion = UnityEngine.Application.version ?? "",
+                // デバッグ版から送った報告は、ボット側でデバッグ用の場所に振り分ける
+                debugBuild = IsDebugBuild,
             };
 
             var json = JsonSerializer.Serialize(payload, JsonOptions);

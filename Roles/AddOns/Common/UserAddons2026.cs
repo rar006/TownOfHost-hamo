@@ -63,6 +63,9 @@ namespace TownOfHost.Roles.AddOns.Common
         public static OptionItem OptionAutoKillTime;
         public static OptionItem OptionAccumulate;
         static readonly Dictionary<(byte, byte), float> together = new();
+        // 勝手にキルできるようになる時刻(Time.time)。会議のあと・キルのあとにキルクール分だけ待つ
+        static readonly Dictionary<byte, float> readyAt = new();
+        static float lastTick = -100f;
 
         public static void SetupCustomOption()
         {
@@ -73,7 +76,7 @@ namespace TownOfHost.Roles.AddOns.Common
             OptionAutoKillTime = FloatOptionItem.Create(Id + 7, "BerserkerAutoKillTime", new(0f, 30f, 1f), 10f, TabGroup.Addons, false).SetSubRoleOptionItem(CustomRoles.Berserker).SetValueFormat(OptionFormat.Seconds);
             OptionAccumulate = BooleanOptionItem.Create(Id + 8, "BerserkerAccumulate", false, TabGroup.Addons, false).SetSubRoleOptionItem(CustomRoles.Berserker);
         }
-        public static void Init() { playerIdList = new(); together.Clear(); }
+        public static void Init() { playerIdList = new(); together.Clear(); readyAt.Clear(); lastTick = -100f; }
         public static void Add(byte playerId) { if (!playerIdList.Contains(playerId)) playerIdList.Add(playerId); }
 
         public static void ApplyKillCooldown(PlayerControl pc)
@@ -89,16 +92,26 @@ namespace TownOfHost.Roles.AddOns.Common
             if (playerIdList.Count == 0) return;
             var limit = OptionAutoKillTime.GetFloat();
             var dist = NormalGameOptionsV12.KillDistances[Mathf.Clamp(Main.NormalOptions.KillDistance, 0, 2)];
+            var now = Time.time;
+            // しばらくタスク中でなかった(会議・イントロの)あとは、キルクールを最初から数え直す。
+            // 以前は「最後のキルからの時間」で判断していて会議中も時間が進んでいたため、
+            // 会議が終わった直後(全員が近くにいる時)に勝手にキルしてしまっていた。
+            if (now - lastTick > 1f)
+            {
+                readyAt.Clear();
+                if (!OptionAccumulate.GetBool()) together.Clear();
+            }
+            lastTick = now;
             foreach (var id in playerIdList)
             {
                 var killer = PlayerCatch.GetPlayerById(id);
-                if (killer == null || !killer.IsAlive() || !killer.CanUseKillButton()) continue;
-                // キルクールが明けているか(最後のキルからの経過時間で判断)
+                if (killer == null || !killer.IsAlive() || !killer.CanUseKillButton() || killer.inVent) continue;
                 var cd = Main.AllPlayerKillCooldown.TryGetValue(id, out var c) ? c : OptionKillCooldown.GetFloat();
-                if (CheckMurderPatch.TimeSinceLastKill.TryGetValue(id, out var since) && since < cd) continue;
+                if (!readyAt.TryGetValue(id, out var ready)) readyAt[id] = ready = now + cd;
+                if (now < ready) continue;
                 foreach (var target in PlayerCatch.AllAlivePlayerControls)
                 {
-                    if (target == null || target.PlayerId == id || IsTeammate(killer, target)) continue;
+                    if (target == null || target.PlayerId == id || IsTeammate(killer, target) || target.inVent) continue;
                     var key = (id, target.PlayerId);
                     var near = Vector2.Distance(killer.GetTruePosition(), target.GetTruePosition()) <= dist;
                     if (!near)
@@ -111,6 +124,7 @@ namespace TownOfHost.Roles.AddOns.Common
                     together.Remove(key);
                     Logger.Info($"バーサーカー: {killer.Data?.PlayerName} が {target.Data?.PlayerName} を勝手にキル", "Berserker");
                     CustomRoleManager.OnCheckMurder(killer, target);
+                    readyAt[id] = Time.time + cd;
                     break;
                 }
             }
@@ -119,6 +133,9 @@ namespace TownOfHost.Roles.AddOns.Common
         public static void OnKill(byte killerId)
         {
             foreach (var k in together.Keys.Where(k => k.Item1 == killerId).ToList()) together.Remove(k);
+            // キルしたら、またキルクール分は勝手にキルしない
+            var cd = Main.AllPlayerKillCooldown.TryGetValue(killerId, out var c) ? c : OptionKillCooldown.GetFloat();
+            readyAt[killerId] = Time.time + cd;
         }
     }
 

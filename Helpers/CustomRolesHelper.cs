@@ -111,10 +111,8 @@ namespace TownOfHost
 
         // 表示上も配役上も、クルー役職と属性を同じ分類規則で扱う。
 
-        public static bool IsCrewmateTabDisplay(this CustomRoles role) => role.IsCrewmate() && role != CustomRoles.Influencer;
-
-        // ゴースト枠に表示する役職(インフルエンサーはバニラのSpiritGuideのためIsGhostRoleには含めず、表示だけゴースト枠に入れる)
-        public static bool IsGhostRoleTabDisplay(this CustomRoles role) => role.IsGhostRole() || role == CustomRoles.Influencer;
+        public static bool IsCrewmateTabDisplay(this CustomRoles role) => role.IsCrewmate();
+        public static bool IsGhostRoleTabDisplay(this CustomRoles role) => role.IsGhostRole();
 
         public static bool IsAddOnTabDisplay(this CustomRoles role) => role.IsAddOn();
 
@@ -137,8 +135,6 @@ namespace TownOfHost
                 CustomRoles.Detective or
 
                 CustomRoles.Judge or
-                
-                CustomRoles.Influencer or
 
                 //CustomRoles.GuardianAngel or幽霊役職でやったからちょっと不都合になる
 
@@ -383,6 +379,7 @@ namespace TownOfHost
         CustomRoles.Driver or CustomRoles.Braid or
 
         CustomRoles.Vega or CustomRoles.Altair or
+        CustomRoles.Romeo or CustomRoles.Juliet or
 
         CustomRoles.Abuser or CustomRoles.Victim or
 
@@ -411,6 +408,8 @@ namespace TownOfHost
                 case CustomRoles.Vega: return CustomRoles.Altair;
 
                 case CustomRoles.Altair: return CustomRoles.Vega;
+                case CustomRoles.Romeo: return CustomRoles.Juliet;
+                case CustomRoles.Juliet: return CustomRoles.Romeo;
 
                 case CustomRoles.Abuser: return CustomRoles.Victim;
 
@@ -597,6 +596,7 @@ namespace TownOfHost
         {
 
             return role is CustomRoles.GuardianAngel
+                        or CustomRoles.Influencer
 
                         or CustomRoles.Ghostbuttoner
 

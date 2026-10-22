@@ -157,8 +157,18 @@ public static class GMAutoPossessPatch
     // (会議終了時にfalseへ戻し、次の待機時間経過後にまた1回だけ押す)
 
     static bool alreadyClickedThisWindow = false;
-
     static float logThrottle = 0f;
+    // 押した後に憑依の画面が本当に開いたかを確かめる。開かなかったら、少し待ってから押し直す
+    const float VerifySeconds = 1.5f;
+    const int MaxClickAttempts = 5;
+    static float clickedAt = -1f;
+    static bool verified;
+    static int clickAttempts;
+    static bool IsHauntMenuOpen()
+    {
+        try { return Minigame.Instance != null && Minigame.Instance.TryCast<HauntMenuMinigame>() != null; }
+        catch { return false; }
+    }
 
     // ===== canInteract=false 長時間固着に対する救済 =====
     // 「時々、いつまで経っても自動憑依されない」不具合の実体は、待機時間を過ぎても
@@ -205,7 +215,15 @@ public static class GMAutoPossessPatch
 
 
 
-        if (alreadyClickedThisWindow) return;
+        if (alreadyClickedThisWindow)
+        {
+            if (verified) return;
+            if (IsHauntMenuOpen()) { verified = true; return; }
+            // 押したのに画面が開かなかった(ボタンの状態の取りこぼしなど)。少し待ってから押し直す
+            if (Time.realtimeSinceStartup - clickedAt < VerifySeconds || clickAttempts >= MaxClickAttempts) return;
+            Logger.Info($"GM自動憑依: 憑依の画面が開かなかったため押し直します({clickAttempts}/{MaxClickAttempts})", "GMAutoPossess");
+            alreadyClickedThisWindow = false;
+        }
 
 
 
@@ -321,8 +339,10 @@ public static class GMAutoPossessPatch
         Logger.Info("GM自動憑依: AbilityButtonをクリックします", "GMAutoPossess");
 
         hud.AbilityButton.DoClick();
-
         alreadyClickedThisWindow = true;
+        clickedAt = Time.realtimeSinceStartup;
+        clickAttempts++;
+        verified = IsHauntMenuOpen();
 
 
 
@@ -388,7 +408,13 @@ public static class GMAutoPossessPatch
 
     // 次の会議が終わったら、また1回だけ自動で押せるように戻す。
 
-    public static void ResetClickLatch() => alreadyClickedThisWindow = false;
+    public static void ResetClickLatch()
+    {
+        alreadyClickedThisWindow = false;
+        verified = false;
+        clickAttempts = 0;
+        clickedAt = -1f;
+    }
 
 }
 

@@ -86,13 +86,21 @@ namespace TownOfHost
                     GameSettingsAspectPos = GameSettings.gameObject.AddComponent<AspectPosition>();
                     GameSettingsAspectPos.Alignment = AspectPosition.EdgeAlignments.LeftTop;
                     GameSettingsAspectPos.DistanceFromEdge = new(-2.5f, 0, 0);
+                    // 縁取り・文字の大きさは作った時だけ設定する(毎フレーム設定し直すと重い)
+                    GameSettings.SetOutlineColor(Color.black);
+                    GameSettings.SetOutlineThickness(0.13f);
+                    GameSettings.fontSizeMin =
+                    GameSettings.fontSizeMax = (TranslationController.Instance.currentLanguage.languageID == SupportedLangs.Japanese || Main.ForceJapanese.Value) ? 1.05f : 1.2f;
+                    nextLobbySettingsTextAt = 0f;
                 }
-                GameSettings.text = Main.ShowGameSettingsTMP.Value ? OptionShower.GetText() : "";
-                GameSettings.SetOutlineColor(Color.black);
-                GameSettings.SetOutlineThickness(0.13f);
-                GameSettings.fontSizeMin =
-                GameSettings.fontSizeMax = (TranslationController.Instance.currentLanguage.languageID == SupportedLangs.Japanese || Main.ForceJapanese.Value) ? 1.05f : 1.2f;
-                GameSettings.gameObject.SetActive(Main.ShowGameSettingsTMP.Value);
+                // 文字は0.2秒ごとに作り直し、変わった時だけ書き換える
+                if (Time.unscaledTime >= nextLobbySettingsTextAt)
+                {
+                    nextLobbySettingsTextAt = Time.unscaledTime + 0.2f;
+                    var settingsText = Main.ShowGameSettingsTMP.Value ? OptionShower.GetText() : "";
+                    if (GameSettings.text != settingsText) GameSettings.text = settingsText;
+                }
+                if (GameSettings.gameObject.activeSelf != Main.ShowGameSettingsTMP.Value) GameSettings.gameObject.SetActive(Main.ShowGameSettingsTMP.Value);
             }
             catch (System.Exception e)
             {
@@ -101,6 +109,8 @@ namespace TownOfHost
             }
         }
         private static bool lobbySettingsErrorLogged;
+        private static float nextLobbySettingsTextAt;
+        private static GameObject taskDisplayCache;
 
         public static void Postfix(HudManager __instance)
         {            
@@ -241,15 +251,7 @@ namespace TownOfHost
 
 
 
-                GameSettings.text = Main.ShowGameSettingsTMP.Value ? OptionShower.GetText() : "";
-
-                GameSettings.SetOutlineColor(Color.black);
-
-                GameSettings.SetOutlineThickness(0.13f);
-
-                GameSettings.fontSizeMin =
-
-                GameSettings.fontSizeMax = (TranslationController.Instance.currentLanguage.languageID == SupportedLangs.Japanese || Main.ForceJapanese.Value) ? 1.05f : 1.2f;
+                // 設定表示の文字・縁取りは UpdateLobbySettingsText で設定する(ここで毎フレームもう一度設定していた)
 
 
 
@@ -267,9 +269,12 @@ namespace TownOfHost
 
                      (GameSettingMenuStartPatch.sideTabButtons?.Any(sb => sb != null && sb.selected) ?? false));
 
-                GameObject.Find("Main Camera/Hud/TaskDisplay")?.gameObject?.SetActive(settaskPanel);
-
-                GameObject.Find("Main Camera/Hud/TaskDisplay")?.transform?.SetLocalZ(settaskPanel ? -500 : 5);
+                if (taskDisplayCache == null) taskDisplayCache = GameObject.Find("Main Camera/Hud/TaskDisplay");
+                if (taskDisplayCache != null)
+                {
+                    if (taskDisplayCache.activeSelf != settaskPanel) taskDisplayCache.SetActive(settaskPanel);
+                    taskDisplayCache.transform.SetLocalZ(settaskPanel ? -500 : 5);
+                }
 
 
 
@@ -565,7 +570,7 @@ namespace TownOfHost
 
 #if DEBUG
 
-                if (Main.ShowDistance.Value)
+                if (Main.ShowDistance.Value && !TownOfHost.Modules.DebugOverlay.Active)
 
                 {
 
@@ -1640,7 +1645,7 @@ namespace TownOfHost
 
                 else
 
-                    if (inforole.IsVanilla() && inforole is not CustomRoles.GuardianAngel)
+                    if (inforole.IsVanilla() && inforole is not CustomRoles.GuardianAngel and not CustomRoles.Influencer)
 
                     {
 
@@ -1774,7 +1779,7 @@ namespace TownOfHost
 
 
 
-            if (Main.DebugTours.Value && AmongUsClient.Instance.NetworkMode is not NetworkModes.OnlineGame && GameStates.introDestroyed)
+            if (Main.DebugTours.Value && !TownOfHost.Modules.DebugOverlay.Active && AmongUsClient.Instance.NetworkMode is not NetworkModes.OnlineGame && GameStates.introDestroyed)
 
             {
 

@@ -905,6 +905,7 @@ namespace TownOfHost
                     + $"\n/cmd /ma (I|M|C|N) 数字 - {GetString("Command.ma")}"
 
                     + $"\n/cmd /mn (I|M|C|N) 数字 - {GetString("Command.mn")}"
+                    + $"\n/cmd /setting 役職や設定の名前 値 - ゲームの設定を変更(例: /cmd setting シェリフ キルクール 20)"
 
                     + $"\n/cmd /sr 色 名前 - 指定した色のプレイヤーの名前を変更";
 

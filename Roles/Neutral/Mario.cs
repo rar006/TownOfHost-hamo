@@ -60,7 +60,7 @@ public sealed class Mario : RoleBase, IKiller, IUsePhantomButton
         opt.SetVision(false);
         AURoleOptions.EngineerCooldown = OptionVentCooldown.GetFloat();
         AURoleOptions.EngineerInVentMaxTime = 0.1f;
-        AURoleOptions.PhantomCooldown = (float)VentCooldownTimer;
+        AURoleOptions.PhantomCooldown = VentCooldownTimer ?? 0f; // ベントを使った直後は空(null)。空のまま読むとエラーで、この人のゲーム設定が送られなかった
     }
     bool IKiller.CanUseSabotageButton() => false;
     bool IKiller.CanUseImpostorVentButton() => true;

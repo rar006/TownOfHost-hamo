@@ -502,6 +502,8 @@ namespace TownOfHost.Roles
         }
         public static void SelectAssignRoles()
         {
+            // 占い師系の「タスクターンで占う」がONなら、自分にだけインポスターに見える役職にする
+            TownOfHost.Roles.Core.TaskTurnFortune.ApplyAll();
             // 「自動で変更」がOFFでも、試合開始前には必ず人数別設定を反映する
             ApplyPerCountSettings("試合開始前");
             AssignCount.Clear();

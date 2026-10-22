@@ -186,6 +186,7 @@ namespace TownOfHost
                     RoleTypes.Detective => CustomRoles.Detective,
 
                     RoleTypes.GuardianAngel => CustomRoles.GuardianAngel,
+                    RoleTypes.SpiritGuide => CustomRoles.Influencer,
 
                     RoleTypes.Impostor => CustomRoles.Impostor,
 

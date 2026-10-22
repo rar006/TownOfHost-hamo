@@ -58,6 +58,15 @@ namespace TownOfHost
 
         }
 
+        private static readonly System.Collections.Generic.Dictionary<byte, float> missingClientLoggedAt = new();
+        private static bool ShouldLogMissingClient(PlayerControl player)
+        {
+            var id = player?.PlayerId ?? byte.MaxValue;
+            var now = UnityEngine.Time.realtimeSinceStartup;
+            if (missingClientLoggedAt.TryGetValue(id, out var at) && now - at < 10f) return false;
+            missingClientLoggedAt[id] = now;
+            return true;
+        }
         public static int GetClientId(this PlayerControl player)
 
         {
@@ -66,7 +75,8 @@ namespace TownOfHost
 
             var client = player?.GetClient();
 
-            if (client == null) Logger.Error($"{player?.Data?.GetLogPlayerName() ?? "null"}のclientがnull", "GetClientId");
+            // 抜けた人などで何度も呼ばれるため、同じ人については10秒に1回だけ記録する(毎回出すとログを書くだけで重くなっていた)
+            if (client == null && ShouldLogMissingClient(player)) Logger.Error($"{player?.Data?.GetLogPlayerName() ?? "null"}のclientがnull", "GetClientId");
 
             return client == null ? -1 : client.Id;
 

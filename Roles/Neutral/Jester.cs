@@ -58,7 +58,8 @@ public sealed class Jester : RoleBase, IKiller
     public bool CanUseImpostorVentButton() => false;
     // ★ EngineerのベントボタンをそのままCanUseVentで制御
     public override bool CanClickUseVentButton => CanUseVent.GetBool();
-    public override bool CanUseAbilityButton() => false;
+    // ベントを使える設定の時は、エンジニアのベントボタン(能力ボタン)を出す。falseのままだと部屋主の画面でだけボタンが消えていた
+    public override bool CanUseAbilityButton() => CanUseVent.GetBool();
     public bool CanUseSabotageButton() => false;
     public override bool OnInvokeSabotage(SystemTypes systemType) => false;
     public bool CanKill { get; private set; } = false;

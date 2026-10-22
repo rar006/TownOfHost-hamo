@@ -92,6 +92,7 @@ namespace TownOfHost
                 }
             }
             TimeSinceLastKill[killer.PlayerId] = 0f;
+            TownOfHost.Roles.AddOns.Common.Berserker.OnKill(killer.PlayerId);
 
             // HideAndSeek_キルボタンが使用可能か
             if ((Options.CurrentGameMode == CustomGameMode.HideAndSeek || Options.IsStandardHAS) && Options.HideAndSeekKillDelayTimer > 0)

@@ -276,7 +276,7 @@ namespace TownOfHost.Roles.Neutral
 
             var targetrole = target.GetCustomRole();
 
-            if (target == null || (targetrole is CustomRoles.King or CustomRoles.Jackal or CustomRoles.JackalAlien or CustomRoles.Jackaldoll or CustomRoles.JackalMafia or CustomRoles.Merlin or CustomRoles.JackalWolf or CustomRoles.AlienHijack or CustomRoles.JackalHadouHo or CustomRoles.Tama or CustomRoles.Autocrat) || ((targetrole.IsImpostor() || targetrole is CustomRoles.Egoist) && !OptionImpostorCanSidekick.GetBool()))
+            if (target == null || (targetrole is CustomRoles.King or CustomRoles.Jackal or CustomRoles.JackalAlien or CustomRoles.Jackaldoll or CustomRoles.JackalMafia or CustomRoles.Merlin or CustomRoles.Romeo or CustomRoles.Juliet or CustomRoles.JackalWolf or CustomRoles.AlienHijack or CustomRoles.JackalHadouHo or CustomRoles.Tama or CustomRoles.Autocrat) || ((targetrole.IsImpostor() || targetrole is CustomRoles.Egoist) && !OptionImpostorCanSidekick.GetBool()))
 
             {
 

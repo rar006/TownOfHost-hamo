@@ -1,4 +1,4 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 
 
 
@@ -66,6 +66,12 @@ namespace TownOfHost.Patches
                 // Unity/IL2CPPの「破棄済みオブジェクトの偽null」対策:
                 // 5秒待つ間に何らかの理由でシーン遷移が既に始まっている等、
                 // EndGameNavigation側の内部状態が壊れている場合がある。
+                // もうロビーに戻っている時は何もしない(ロビーで NextGame を呼ぶと失敗していた)
+                if (GameStates.IsLobby)
+                {
+                    ReturnScheduled = false;
+                    return;
+                }
                 var nav = DestroyableSingleton<EndGameNavigation>.Instance;
                 if (nav == null)
                 {

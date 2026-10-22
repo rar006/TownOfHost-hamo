@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Data;
 
@@ -1761,6 +1761,7 @@ namespace TownOfHost
                 CustomRoles.GhostRumour => AddonInfo(role),
 
                 CustomRoles.GuardianAngel => AddonInfo(role),
+                CustomRoles.Influencer => AddonInfo(role),
 
                 CustomRoles.DemonicTracker => AddonInfo(role),
 
@@ -1798,6 +1799,9 @@ namespace TownOfHost
             if (Mark != "") Mark = $" {Mark}";
 
             if (Options.CustomRoleSpawnChances.TryGetValue(role, out var op)) ShowChildrenSettings(op, ref builder, Askesu: true, pc: pc);
+            // キョンシーの設定は道士の中にある
+            else if (role is CustomRoles.Juliet) ShowChildrenSettings(Options.CustomRoleSpawnChances[CustomRoles.Romeo], ref builder, Askesu: true, pc: pc);
+            else if (role is CustomRoles.Jiangshi) ShowChildrenSettings(Options.CustomRoleSpawnChances[CustomRoles.Daoshi], ref builder, Askesu: true, pc: pc);
 
             if (builder.ToString().RemoveHtmlTags() != "") text = $"\n\n<size=45%>{builder}";
 

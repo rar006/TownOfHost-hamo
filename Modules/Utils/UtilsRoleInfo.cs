@@ -1,4 +1,4 @@
-using static TownOfHost.Utils;
+﻿using static TownOfHost.Utils;
 
 using static TownOfHost.Translator;
 

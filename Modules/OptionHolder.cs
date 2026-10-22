@@ -1114,6 +1114,7 @@ namespace TownOfHost
         public static OptionItem OptionCommandAco;
         public static OptionItem OptionCommandTitleList, OptionCommandTitleInventory, OptionCommandTitleEquip, OptionCommandTitleDraw, OptionCommandTitleTrade, OptionCommandBugReport;
         public static OptionItem OptionCommandTitleCasino, OptionCommandTitleShop;
+        public static OptionItem OptionCommandModeratorSetting;
 
         public static OptionItem OptionCommandAcl;
 
@@ -1400,11 +1401,20 @@ namespace TownOfHost
 
 
 
+        // リストラした役職(コードは残すが、設定にも配役にも出さない)
+        public static bool IsRetiredRole(CustomRoles role) => role is CustomRoles.Eater;
+        // スタンド・アライグマの子などは、親の役職が作る役職。設定で出現率が残っていると、親がいないのに配られていた
+        public static bool IsDerivedRole(CustomRoles role) => role is CustomRoles.Stand or CustomRoles.RaccoonChild or CustomRoles.PoisonedBakery or CustomRoles.Tama or CustomRoles.Shikigami or CustomRoles.Pursuer or CustomRoles.Gang;
+
         public static int GetRoleChance(CustomRoles role)
 
         {
 
             if (!Event.CheckRole(role)) return 0;
+            // リストラした役職(イーター)は、設定に値が残っていても出さない(古いプリセットや「全役職○%」で値が入ると配役に出ていた)
+            if (IsRetiredRole(role)) return 0;
+            // 派生役職(親の役職から生まれる役職)は、保存された出現率が残っていても最初から配らない
+            if (IsDerivedRole(role)) return 0;
 
 
 
@@ -3161,6 +3171,11 @@ namespace TownOfHost
                 .SetParent(OptionCommandSetting)
                 .SetColorcode("#ff6b6b")
                 .SetOptionName(() => "/cmd bug - モデレーターのバグ報告");
+            // モデレーターがゲームの設定を名前で探して変えるコマンド。ONにすると使えなくする
+            OptionCommandModeratorSetting = BooleanOptionItem.Create(1_601_372, "DisableCommandModeratorSetting", false, TabGroup.Other2, true)
+                .SetParent(OptionCommandSetting)
+                .SetColorcode("#ff6b6b")
+                .SetOptionName(() => "/cmd setting - モデレーターの設定変更");
 
 
 
@@ -3274,6 +3289,10 @@ namespace TownOfHost
                 .SetParent(extraHeader).SetColorcode("#7fd8ff")
                 .SetOptionName(() => "Discordからのメッセージ(/say)を受け取る")
                 .SetTooltip(() => "OFFにすると、Discordの /say・/chat で送られたメッセージをこの部屋に出しません。運営が「強制」で送ったものだけは出ます。");
+            Modules.ReleaseAnnouncer.Enabled = BooleanOptionItem.Create(1_400_201, "ReleaseAnnounce", true, TabGroup.Other2, true)
+                .SetParent(extraHeader).SetColorcode("#ff8fc8")
+                .SetOptionName(() => "新しいバージョンが出たらゲーム内で知らせる")
+                .SetTooltip(() => "新しいバージョンがリリースされたら、チャットで知らせます。ロビーではすぐ、試合中は会議の時だけ(会議でない時は次の会議で)知らせます。");
             Modules.LobbyVote.Enabled = BooleanOptionItem.Create(1_400_188, "LobbyVote", false, TabGroup.Other2, true)
                 .SetParent(extraHeader).SetColorcode("#7fd8ff")
                 .SetOptionName(() => "ロビー投票(/vote プリセット・/poll 自由な質問)")
@@ -3805,6 +3824,7 @@ namespace TownOfHost
 
 
             IsLoaded = true;
+            TownOfHost.Roles.Core.TaskTurnFortune.ApplyAll();
 
 
 

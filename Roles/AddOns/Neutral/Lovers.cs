@@ -38,7 +38,9 @@ class Lovers
         CustomRoles.Autocrat,
         CustomRoles.GM,
         CustomRoles.Vega,
-        CustomRoles.Altair
+        CustomRoles.Altair,
+        CustomRoles.Romeo,
+        CustomRoles.Juliet
     };
     public static void SetLoversOptions()
     {
@@ -113,6 +115,7 @@ class Lovers
             if (player.Is(CustomRoles.King) || player.Is(CustomRoles.Autocrat)) continue;
             if (player.Is(CustomRoles.Vega)) continue;
             if (player.Is(CustomRoles.Altair)) continue;
+            if (player.Is(CustomRoles.Romeo) || player.Is(CustomRoles.Juliet)) continue;
             allPlayers.Add(player);
         }
 

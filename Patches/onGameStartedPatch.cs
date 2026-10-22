@@ -55,6 +55,7 @@ namespace TownOfHost
 
             Main.NormalOptions.roleOptions.SetRoleRate(RoleTypes.GuardianAngel, 0, 0);
             TownOfHost.Roles.Vanilla.Influencer.ApplyOptions();
+            TownOfHost.Roles.Core.TaskTurnFortune.ApplyAll();
 
 
             Modules.DiscordRichPresenceService.UpdatePresence("ゲーム中", $"{Options.CurrentGameMode}");

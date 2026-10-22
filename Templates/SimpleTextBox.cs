@@ -259,6 +259,28 @@ public class SimpleTextBox
     }
 
     /// <summary>点滅カーソルの表示/非表示切り替えに応じて、表示テキストを再描画する。</summary>
+    // 日本語入力の変換中(未確定)の文字。確定するまでは本文には入れず、表示だけカーソルの位置に出す
+    private string _composition = "";
+    public bool IsComposing => !string.IsNullOrEmpty(_composition);
+    private int DisplayCursor => _cursorIndex + _composition.Length;
+    private string DisplayFullText
+    {
+        get
+        {
+            var full = _fullText ?? "";
+            if (_composition.Length == 0) return full;
+            var idx = Mathf.Clamp(_cursorIndex, 0, full.Length);
+            return full[..idx] + _composition + full[idx..];
+        }
+    }
+    internal void SetComposition(string composition)
+    {
+        composition ??= "";
+        if (composition == _composition) return;
+        _composition = composition;
+        RefreshDisplay(scrollToEnd: false);
+    }
+
     internal void SetCaretVisible(bool visible)
     {
         _caretVisible = visible && TextBox != null && TextBox.hasFocus;
@@ -272,7 +294,7 @@ public class SimpleTextBox
     /// </summary>
     private void RefreshDisplay(bool scrollToEnd)
     {
-        var full = _fullText;
+        var full = DisplayFullText;
 
         if (_placeholderText != null)
             _placeholderText.gameObject.SetActive(string.IsNullOrEmpty(full));
@@ -306,7 +328,7 @@ public class SimpleTextBox
     private int GetCaretLineIndex()
     {
         if (_wrappedLines.Length == 0) return 0;
-        var remaining = _cursorIndex;
+        var remaining = DisplayCursor;
         for (var i = 0; i < _wrappedLines.Length; i++)
         {
             var lineLen = _wrappedLines[i].Length;
@@ -395,7 +417,7 @@ public class SimpleTextBox
     private string BuildTextWithCaret(string full)
     {
         if (!_caretVisible) return full;
-        var idx = Mathf.Clamp(_cursorIndex, 0, full.Length);
+        var idx = Mathf.Clamp(DisplayCursor, 0, full.Length);
         return full[..idx] + "|" + full[idx..];
     }
 
@@ -434,7 +456,7 @@ public class SimpleTextBox
     /// <summary>_cursorIndexが、指定した折り返し行の中で何文字目(列)に位置するかを求める。</summary>
     private int GetCaretColumnInLine(int targetLine)
     {
-        var remaining = _cursorIndex;
+        var remaining = DisplayCursor;
         for (var i = 0; i < _wrappedLines.Length; i++)
         {
             var lineLen = _wrappedLines[i].Length;
@@ -574,9 +596,14 @@ internal class TextBoxCaretBlinker : MonoBehaviour
                 _visible = false;
                 Owner.SetCaretVisible(false);
             }
+            Owner.SetComposition("");
             _repeatingKey = KeyCode.None;
             return;
         }
+        // 日本語入力(IME)を使えるようにして、変換中の文字を表示に出す
+        if (Input.imeCompositionMode != IMECompositionMode.On) Input.imeCompositionMode = IMECompositionMode.On;
+        var composing = !string.IsNullOrEmpty(Input.compositionString);
+        Owner.SetComposition(Input.compositionString);
 
 
         var shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
@@ -584,7 +611,7 @@ internal class TextBoxCaretBlinker : MonoBehaviour
             || Input.GetKey(KeyCode.LeftCommand) || Input.GetKey(KeyCode.RightCommand);
 
         // ===== Enter / Shift+Enter =====
-        if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+        if (!composing && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)))
         {
             if (Owner.IsMultiline && shift)
             {
@@ -608,6 +635,11 @@ internal class TextBoxCaretBlinker : MonoBehaviour
         }
 
         // ===== 矢印キー・Backspace・Delete・Home・End(押した瞬間 + リピート) =====
+        if (composing)
+        {
+            _repeatingKey = KeyCode.None;
+            return;
+        }
         HandleRepeatableKey(KeyCode.LeftArrow, () => Owner.MoveCursor(-1));
         HandleRepeatableKey(KeyCode.RightArrow, () => Owner.MoveCursor(1));
         HandleRepeatableKey(KeyCode.Backspace, () => Owner.DeleteAtCursor(backward: true));

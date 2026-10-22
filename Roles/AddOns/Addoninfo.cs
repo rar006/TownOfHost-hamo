@@ -312,6 +312,7 @@ class AddondataInfo
                     {CustomRoles.GhostRumour , "#707cab"},
 
                     {CustomRoles.GuardianAngel,"#7cc0fc"},
+                    {CustomRoles.Influencer,"#8cffff"},
 
                     {CustomRoles.DemonicTracker,"#824880"},
 

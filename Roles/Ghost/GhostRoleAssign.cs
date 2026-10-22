@@ -210,7 +210,7 @@ namespace TownOfHost.Roles.Ghost
 
                         {
 
-                            pc.RpcSetRole(RoleTypes.GuardianAngel, true);
+                            pc.RpcSetRole(role is CustomRoles.Influencer ? RoleTypes.SpiritGuide : RoleTypes.GuardianAngel, true);
 
                             _ = new LateTask(() => pc.RpcResetAbilityCooldown(Sync: true), 0.5f, "GhostRoleResetAbilty");
 
@@ -228,7 +228,7 @@ namespace TownOfHost.Roles.Ghost
 
                                     {
 
-                                        pc.RpcSetRole(RoleTypes.GuardianAngel, true);
+                                        pc.RpcSetRole(role is CustomRoles.Influencer ? RoleTypes.SpiritGuide : RoleTypes.GuardianAngel, true);
 
                                         _ = new LateTask(() => pc.RpcResetAbilityCooldown(Sync: true), 0.5f, "GhostRoleResetAbilty");
 

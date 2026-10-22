@@ -29,6 +29,7 @@ namespace TownOfHost.Roles.AddOns.Common
             CustomRoles.Phantom,
             CustomRoles.Emptiness,
             CustomRoles.GuardianAngel,
+            CustomRoles.Influencer,
             CustomRoles.SKMadmate,
             CustomRoles.Jackaldoll,
             CustomRoles.HASFox,

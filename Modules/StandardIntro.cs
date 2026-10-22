@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+﻿using AmongUs.GameOptions;
 using Hazel;
 using System;
 using HarmonyLib;
@@ -277,6 +277,9 @@ class StandardIntro
             _ = new LateTask(() =>
             {
                 Logger.Info($"SetRole", "StandardIntro");
+                // 試合がすぐ終わって(廃村など)ロビーに戻った後に動くと、ロビーの参加者に役職を送ってしまい、
+                // バニラの参加者が「部屋から追い出されました」で落ちていた
+                if (GameStates.IsLobby) return;
                 //イントロ中回線落ち用の奴
                 // ...ホストが廃村してほしいけド...一応...
                 var send = false;

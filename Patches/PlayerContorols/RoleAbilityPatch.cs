@@ -801,6 +801,13 @@ namespace TownOfHost
         public static Dictionary<byte, bool> OldOnEnterVent = new();
 
         static bool MadBool = false;
+        // ベントに入れなかった時(Prefixでfalseを返した時)、ゲーム側が空の処理を動かそうとして
+        // 「routine is null」のエラーになり、同じ通信の他の処理まで止まることがあった。何もしない処理を返す
+        public static void Postfix(ref Il2CppSystem.Collections.IEnumerator __result)
+        {
+            if (__result == null) __result = BepInEx.Unity.IL2CPP.Utils.Collections.CollectionExtensions.WrapToIl2Cpp(EmptyRoutine());
+        }
+        static System.Collections.IEnumerator EmptyRoutine() { yield break; }
 
         public static bool Prefix(PlayerPhysics __instance, [HarmonyArgument(0)] int id)
 
@@ -1156,6 +1163,13 @@ namespace TownOfHost
     class ExitVentPatch
 
     {
+        // ベントから出る処理を止めた時(Prefixでfalse)に、ゲーム側が空の処理を動かそうとして
+        // 「routine is null」のエラーになっていた(RpcBootFromVent など)。何もしない処理を返す
+        public static void Postfix(ref Il2CppSystem.Collections.IEnumerator __result)
+        {
+            if (__result == null) __result = BepInEx.Unity.IL2CPP.Utils.Collections.CollectionExtensions.WrapToIl2Cpp(EmptyRoutine());
+        }
+        static System.Collections.IEnumerator EmptyRoutine() { yield break; }
 
         public static bool Prefix(PlayerPhysics __instance)
 

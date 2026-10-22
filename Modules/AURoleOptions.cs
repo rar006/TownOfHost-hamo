@@ -84,6 +84,11 @@ namespace TownOfHost
             get => Opt.GetFloat(FloatOptionNames.PhantomDuration);
             set => Opt.SetFloat(FloatOptionNames.PhantomDuration, value);
         }
+        public static float SpiritGuideCooldownSeconds
+        {
+            get => Opt.GetFloat(FloatOptionNames.SpiritGuideCooldownSeconds);
+            set => Opt.SetFloat(FloatOptionNames.SpiritGuideCooldownSeconds, value);
+        }
         public static float GuardianAngelCooldown
         {
             get => Opt.GetFloat(FloatOptionNames.GuardianAngelCooldown);

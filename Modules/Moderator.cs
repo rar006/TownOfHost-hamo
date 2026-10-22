@@ -111,6 +111,9 @@ public static class Moderator
             case "/bug":
                 HandleBugReport(player, args);
                 break;
+            case "/setting":
+                ModeratorSettingCommand.Handle(player, args);
+                break;
         }
 
         return true;
@@ -145,7 +148,7 @@ public static class Moderator
     }
 
     private static bool IsManagedCommand(string command)
-        => command is "/kick" or "/ban" or "/say" or "/fe" or "/forceend" or "/sw" or "/start" or "/kf" or "/mf" or "/ms" or "/cs" or "/fm" or "/ma" or "/mn" or "/bug";
+        => command is "/kick" or "/ban" or "/say" or "/fe" or "/forceend" or "/sw" or "/start" or "/kf" or "/mf" or "/ms" or "/cs" or "/fm" or "/ma" or "/mn" or "/bug" or "/setting";
 
     private static void HandleBugReport(PlayerControl player, string[] args)
     {

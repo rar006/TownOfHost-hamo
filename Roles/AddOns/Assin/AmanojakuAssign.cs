@@ -27,6 +27,7 @@ namespace TownOfHost.Roles.AddOns.Common
             CustomRoles.Phantom,
             CustomRoles.Emptiness,
             CustomRoles.GuardianAngel,
+            CustomRoles.Influencer,
             CustomRoles.SKMadmate,
             CustomRoles.Jackaldoll,
             CustomRoles.HASFox,
@@ -37,7 +38,9 @@ namespace TownOfHost.Roles.AddOns.Common
             CustomRoles.King,
             CustomRoles.Autocrat,
             CustomRoles.Trauma,
-            CustomRoles.Surmount
+            CustomRoles.Surmount,
+            CustomRoles.Romeo,
+            CustomRoles.Juliet
         };
         static readonly IEnumerable<CustomRoles> ValidRoles = CustomRolesHelper.AllRoles.Where(role => !InvalidRoles.Contains(role));
 

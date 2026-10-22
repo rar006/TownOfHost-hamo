@@ -1,29 +1,44 @@
+using System.Collections.Generic;
 using AmongUs.GameOptions;
 using TownOfHost.Roles.Core;
+using TownOfHost.Roles.Ghost;
+using static TownOfHost.Options;
 
 namespace TownOfHost.Roles.Vanilla;
 
-public sealed class Influencer : RoleBase
+// TownOfHost-K の SpiritGuide(インフルエンサー)をそのまま移植。
+// 死亡したクルー陣営(設定でマッドメイトも)に、守護天使と同じ幽霊役職の仕組みで付与する。
+// バニラの自動配布(SpiritGuide の出現率)は使わない。
+public static class Influencer
 {
-    public static readonly SimpleRoleInfo RoleInfo =
-        SimpleRoleInfo.CreateForVanilla(
-            typeof(Influencer),
-            player => new Influencer(player),
-            RoleTypes.SpiritGuide,
-            SetUpCustomOption,
-            "#8cffff",
-            assignInfo: new RoleAssignInfo(CustomRoles.Influencer, CustomRoleTypes.Crewmate)
-            {
-                IsInitiallyAssignableCallBack = () => false
-            },
-            from: From.AmongUs,
-            tab: TabGroup.GhostRoles
-        );
+    static GhostRoleAssingData Data;
+    private static readonly int Id = 25150;
+    public static List<byte> playerIdList = new();
+    public static OptionItem CoolDown;
+    static OptionItem AssingMadmate;
 
-    private static OptionItem messageCooldown;
+    public static void SetupCustomOption()
+    {
+        SetupRoleOptions(Id, TabGroup.GhostRoles, CustomRoles.Influencer, fromtext: UtilsOption.GetFrom(From.AmongUs));
+        Data = GhostRoleAssingData.Create(Id + 1, CustomRoles.Influencer, CustomRoleTypes.Crewmate, CustomRoleTypes.Madmate);
+        CoolDown = FloatOptionItem.Create(Id + 2, "Cooldown", new(0f, 180f, 0.5f), 27.5f, TabGroup.GhostRoles, false)
+            .SetValueFormat(OptionFormat.Seconds).SetParent(CustomRoleSpawnChances[CustomRoles.Influencer]).SetParentRole(CustomRoles.Influencer);
+        AssingMadmate = BooleanOptionItem.Create(Id + 4, "AssgingMadmate", false, TabGroup.GhostRoles, false)
+            .SetParent(CustomRoleSpawnChances[CustomRoles.Influencer]).SetParentRole(CustomRoles.Influencer);
+    }
 
-    public Influencer(PlayerControl player) : base(RoleInfo, player) { }
+    public static void Init()
+    {
+        playerIdList = new();
+        Data.SubRoleType = AssingMadmate.GetBool() ? CustomRoleTypes.Madmate : CustomRoleTypes.Crewmate;
+    }
 
+    public static void Add(byte playerId)
+    {
+        playerIdList.Add(playerId);
+    }
+
+    // バニラの SpiritGuide がそのまま配られた人(以前の仕組みの名残)を、インフルエンサーとして表示するか
     public static bool IsDisplayedAsInfluencer(PlayerControl player)
     {
         if (player == null) return false;
@@ -36,26 +51,11 @@ public sealed class Influencer : RoleBase
             player.Data?.Role?.Role == RoleTypes.SpiritGuide);
     }
 
-    private static void SetUpCustomOption()
-    {
-        messageCooldown = FloatOptionItem.Create(RoleInfo, 2, "InfluencerMessageCooldown", new(0f, 180f, 5f), 30f, false)
-            .SetValueFormat(OptionFormat.Seconds);
-        Options.CustomRoleSpawnChances[CustomRoles.Influencer].RegisterUpdateValueEvent((_, _) => ApplyOptions());
-        Options.CustomRoleCounts[CustomRoles.Influencer].RegisterUpdateValueEvent((_, _) => ApplyOptions());
-        messageCooldown.RegisterUpdateValueEvent((_, _) => ApplyOptions());
-    }
-
+    // バニラの SpiritGuide の出現率は0にしておく(配るのはMODの幽霊役職の仕組み)
     public static void ApplyOptions()
     {
-        if (GameOptionsManager.Instance == null || messageCooldown == null ||
-            Options.CustomRoleSpawnChances == null || Options.CustomRoleCounts == null) return;
-
         var options = Main.NormalOptions;
         if (options?.roleOptions == null) return;
-        var chance = Options.GetRoleChance(CustomRoles.Influencer);
-        options.roleOptions.SetRoleRate(RoleTypes.SpiritGuide,
-            chance > 0 ? Options.CustomRoleCounts[CustomRoles.Influencer].GetInt() : 0, chance);
-        if (options.roleOptions.TryGetRoleOptions(RoleTypes.SpiritGuide, out SpiritGuideRoleOptionsV12 roleOptions))
-            roleOptions.SpiritGuideCooldownSeconds = messageCooldown.GetFloat();
+        options.roleOptions.SetRoleRate(RoleTypes.SpiritGuide, 0, 0);
     }
 }

@@ -742,6 +742,7 @@ namespace TownOfHost.Modules
                         case CustomRoles.GhostRumour: AURoleOptions.GuardianAngelCooldown = CoolDown(GhostRumour.CoolDown.GetFloat()); break;
 
                         case CustomRoles.GuardianAngel: AURoleOptions.GuardianAngelCooldown = CoolDown(GuardianAngel.CoolDown.GetFloat()); break;
+                        case CustomRoles.Influencer: AURoleOptions.SpiritGuideCooldownSeconds = CoolDown(TownOfHost.Roles.Vanilla.Influencer.CoolDown.GetFloat()); break;
 
                         case CustomRoles.DemonicTracker: AURoleOptions.GuardianAngelCooldown = CoolDown(DemonicTracker.CoolDown.GetFloat()); break;
 

@@ -113,15 +113,18 @@ namespace TownOfHost
 
                     // 地図(ランダムスポーン/牢屋)の画面を開いている間は出さない(出す→隠すを毎フレーム繰り返してチカチカしていた)
                     var mapMenuOpen = ShowRandomSpawnOption.CustomBackground != null && ShowRandomSpawnOption.CustomBackground.gameObject.activeInHierarchy;
-                    // 役職の「New!」は、ポーズメニューを開いている間は隠す(上に浮き出ていた)
+                    // 役職を選ぶ画面(付与する属性・All Roles など)を開いている間も出さない(検索欄やタイルが上に重なっていた)
+                    var filterMenuOpen = ShowFilter.CustomBackground != null && ShowFilter.CustomBackground.gameObject.activeInHierarchy;
+                    // 役職の「New!」は、ポーズメニュー・役職を選ぶ画面を開いている間は隠す(上に浮き出ていた)
+                    var hideBadges = pauseMenuOpen || filterMenuOpen;
                     foreach (var badge in NewBadges)
-                        if (badge != null && badge.activeSelf == pauseMenuOpen) badge.SetActive(!pauseMenuOpen);
-                    var active = !pauseMenuOpen && !mapMenuOpen && ((ModSettingsButton?.selected ?? false) || (sideTabButtons?.Any(sb => sb != null && sb.selected) ?? false));
+                        if (badge != null && badge.activeSelf == hideBadges) badge.SetActive(!hideBadges);
+                    var active = !pauseMenuOpen && !mapMenuOpen && !filterMenuOpen && ((ModSettingsButton?.selected ?? false) || (sideTabButtons?.Any(sb => sb != null && sb.selected) ?? false));
 
 
 
                     // チャットを開いている時は、検索欄なども隠す(いちばん手前に描いているので、チャットの文字の上に重なっていた)
-                    var chatOpenNow = (HudManager.Instance?.Chat != null && (HudManager.Instance.Chat.IsOpenOrOpening || (HudManager.Instance.Chat.chatScreen != null && HudManager.Instance.Chat.chatScreen.activeInHierarchy)));
+                    var chatOpenNow = (HudManager.Instance?.Chat != null && (HudManager.Instance.Chat.IsOpenOrOpening || (HudManager.Instance.Chat.chatScreen != null && HudManager.Instance.Chat.chatScreen.activeInHierarchy))) || ChatNotificationInFront.Apply();
                     searchtext.gameObject.SetActive(active && !chatOpenNow);
                     prisettext.gameObject.SetActive(active && !chatOpenNow && GameSettingMenuStartPatch.PresetNameEditorOpen);
                     search.gameObject.SetActive(active && !chatOpenNow);
@@ -138,6 +141,8 @@ namespace TownOfHost
                     // それらが開いている間はこの2つのボタンだけ追加で隠すようにする。
 
                     var chatOpen = (HudManager.Instance?.Chat != null && (HudManager.Instance.Chat.IsOpenOrOpening || (HudManager.Instance.Chat.chatScreen != null && HudManager.Instance.Chat.chatScreen.activeInHierarchy))); // 開く動きが終わった後も、チャット画面が出ていれば開いている扱い
+                    // チャットを閉じている時に上に出る「誰が何を打ったか」の通知は、いちばん手前に出して、上の段のボタン・検索欄は隠す
+                    if (ChatNotificationInFront.Apply()) chatOpen = true;
 
                     var taskPanelOpen = HudManager.Instance?.TaskPanel?.open ?? false;
 
@@ -1111,7 +1116,9 @@ namespace TownOfHost
         private static void HideOverlaysWhileMapMenu()
         {
             var bg = ShowRandomSpawnOption.CustomBackground;
-            var open = bg != null && bg.gameObject.activeInHierarchy;
+            var filterBg = ShowFilter.CustomBackground;
+            // 地図の画面か、役職を選ぶ画面を開いている間は、左の役職タブも隠す
+            var open = (bg != null && bg.gameObject.activeInHierarchy) || (filterBg != null && filterBg.gameObject.activeInHierarchy);
             if (open)
             {
                 void Hide(GameObject go)
@@ -1219,3 +1226,30 @@ namespace TownOfHost
 
 }
 
+
+static class ChatNotificationInFront
+{
+    private const int FrontOrder = 300;
+    private static readonly System.Collections.Generic.HashSet<int> raised = new();
+
+    // 通知が出ていれば true
+    public static bool Apply()
+    {
+        try
+        {
+            var notification = HudManager.Instance?.Chat?.chatNotification;
+            if (notification == null || !notification.gameObject.activeInHierarchy) return false;
+            foreach (var r in notification.GetComponentsInChildren<Renderer>(true))
+            {
+                if (r == null || !raised.Add(r.GetInstanceID())) continue;
+                r.sortingLayerID = 0;
+                r.sortingOrder += FrontOrder;
+            }
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+}

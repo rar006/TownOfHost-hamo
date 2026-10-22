@@ -529,15 +529,8 @@ namespace TownOfHost
 
             if (clientId == -1) return;
 
-            MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(player.NetId, (byte)RpcCalls.SetName, Hazel.SendOption.None, clientId);
-
-            writer.Write(player.Data.NetId);
-
-            writer.Write(name);
-
-            writer.Write(DontShowOnModdedClient);
-
-            AmongUsClient.Instance.FinishRpcImmediately(writer);
+            // 送り先ごとにまとめて、このフレームの最後に送る(1つずつ送るとパケットが多すぎて参加者の回線が詰まっていた)
+            TownOfHost.Modules.NameRpcBatch.Add(clientId, player.NetId, player.Data.NetId, name, DontShowOnModdedClient);
 
         }
 
@@ -987,7 +980,7 @@ namespace TownOfHost
 
             RPC.RpcSyncAllNetworkedPlayer();
 
-            player.RpcSetRole(currentRole is RoleTypes.SpiritGuide ? RoleTypes.SpiritGuide :
+            player.RpcSetRole(currentRole is RoleTypes.SpiritGuide || player.Is(CustomRoles.Influencer) ? RoleTypes.SpiritGuide :
                 player.IsGhostRole() ? RoleTypes.GuardianAngel :
                 (player.CanUseSabotageButton() ? RoleTypes.ImpostorGhost : RoleTypes.CrewmateGhost));
 

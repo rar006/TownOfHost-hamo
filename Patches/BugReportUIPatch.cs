@@ -154,7 +154,8 @@ namespace TownOfHost.Patches
             if (Step != BugReportWizardStep.AskDescription) return;
 
             var trimmed = (description ?? "").Trim();
-            if (trimmed.Length == 0)
+            // テンプレートのまま何も書いていない時は送らない
+            if (trimmed.Length == 0 || trimmed == BugReportUIPatch.DescriptionTemplate.Trim())
             {
                 ErrorMessage = "バグの内容は必ず入力してください。";
                 BugReportUIPatch.RefreshPanelText();
@@ -221,6 +222,13 @@ namespace TownOfHost.Patches
 
         private static SimpleTextBox _discordIdBox;
         private static SimpleTextBox _descriptionBox;
+        // バグ報告の説明欄に最初から入れておくテンプレート(Discord のテンプレートと同じ項目。MODのバージョンは不要)
+        public const string DescriptionTemplate =
+            "【必須項目】\n" +
+            "発生内容(簡潔に):\n" +
+            "発生時の状況(いつ / 誰が / 何をしたか):\n" +
+            "発生タイミング(○試合目 / ○日目・○ターン目 / ロビー / メインメニュー など):\n" +
+            "実際の挙動・症状:\n";
         private static GameObject _discordIdBoxFrame;
         private static GameObject _descriptionBoxFrame;
 
@@ -709,12 +717,15 @@ namespace TownOfHost.Patches
                 BugReportWizard.OpenExistingTicket(p.TicketId);
                 return;
             }
-            var tickets = BugReportSystem.Tickets;
+            var tickets = OwnTickets();
             if (index < 0 || index >= tickets.Count) return;
             // 一覧は新しい順に並べているので、同じ順番で選ぶ(以前は古い順で選んでいて、違う報告が開いていた)
             BugReportWizard.OpenExistingTicket(tickets[tickets.Count - 1 - index].TicketId);
         }
 
+        // 自分の報告だけ(みんなの報告から開いて「見ている」にしたものは、自分の一覧には出さない)
+        private static System.Collections.Generic.List<BugReportSystem.TicketInfo> OwnTickets()
+            => System.Linq.Enumerable.ToList(System.Linq.Enumerable.Where(BugReportSystem.Tickets, t => !t.Followed));
         private static void TogglePublicList()
         {
             _showPublic = !_showPublic;
@@ -889,14 +900,14 @@ namespace TownOfHost.Patches
                         }
                         break;
                     }
-                    var tickets = BugReportSystem.Tickets;
+                    var tickets = OwnTickets();
                     _bodyText.text = tickets.Count == 0
                         ? "現在報告中のバグはありません。"
                         : "現在のバグ報告一覧です。修正完了後も履歴を確認できます。";
                     for (var i = 0; i < MaxTicketListButtons && i < tickets.Count; i++)
                     {
                         var t = tickets[tickets.Count - 1 - i]; // 新しい順
-                        var unreadMark = (t.HasUnread ? "[未読] " : "") + (t.Followed ? "[見ている] " : "");
+                        var unreadMark = t.HasUnread ? "[未読] " : "";
                         var button = _ticketButtons[i];
                         SetActiveSafe(button, true);
                         button.Label.text = unreadMark + BugReportSystem.StatusTag(t.Status) + t.Summary;
@@ -928,6 +939,8 @@ namespace TownOfHost.Patches
                 case BugReportWizardStep.AskDescription:
                     _bodyText.text = errorSuffix;
                     SetActiveSafe(_descriptionBox, true);
+                    // 何を書けばいいか分かるよう、空の時はテンプレートを入れておく(Among Us のバージョンは自動で送る)
+                    if (_descriptionBox != null && string.IsNullOrWhiteSpace(_descriptionBox.Text)) _descriptionBox.SetText(DescriptionTemplate);
                     _descriptionBoxFrame?.SetActive(true);
                     SetActiveSafe(_submitButton, true);
                     SetActiveSafe(_descriptionBackButton, true);
