@@ -8,6 +8,16 @@ public static class AllRolesChance
 {
     public static int Percent { get; private set; } = 0;
 
+    // まとめて変えた後に、開いている設定画面の表示を全部書き直す(値は変わっているのに表示が古いままになることがあった)
+    private static void RefreshShown()
+    {
+        foreach (var opt in OptionItem.AllOptions)
+        {
+            try { opt?.Refresh(false); } catch { }
+        }
+        OptionShower.Update = true;
+    }
+
     public static void Next() => Percent = Percent >= 100 ? 0 : Percent + 10;
 
     public static void Randomize()
@@ -37,7 +47,9 @@ public static class AllRolesChance
             OptionSaver.Save();
             OptionItem.SyncAllOptions();
         }
+        RefreshShown();
         Logger.Info($"すべての役職の出現率をランダムにしました({changed}件変更)", "AllRolesChance");
+        Utils.SendMessage($"すべての役職の出現率をランダムにしました({changed}件変更)", PlayerControl.LocalPlayer.PlayerId);
     }
 
     public static void Apply()
@@ -66,6 +78,8 @@ public static class AllRolesChance
             OptionSaver.Save();
             OptionItem.SyncAllOptions();
         }
+        RefreshShown();
         Logger.Info($"すべての役職の出現率を{Percent}%にしました({changed}件変更)", "AllRolesChance");
+        Utils.SendMessage($"すべての役職の出現率を{Percent}%にしました({changed}件変更)", PlayerControl.LocalPlayer.PlayerId);
     }
 }

@@ -131,7 +131,8 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
 
 
 
-    public float CalculateKillCooldown() => Main.AllPlayerKillCooldown.GetValueOrDefault(Player.PlayerId, Main.NormalOptions.KillCooldown);
+    // 今のキルクールを返すと、ほかの仕組みが足した分が積み重なり、分身を置くたびにキルクールが増えていた。基本のキルクールを返す
+    public float CalculateKillCooldown() => Options.DefaultKillCooldown;
 
     public bool CanUseSabotageButton() => true;
 
@@ -613,9 +614,9 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
 
         Player.RpcResetAbilityCooldown(Sync: true);
 
-        Main.AllPlayerKillCooldown[Player.PlayerId] = CalculateKillCooldown();
+        Player.ResetKillCooldown();
 
-        Player.SetKillCooldown(CalculateKillCooldown());
+        Player.SetKillCooldown();
 
 
 

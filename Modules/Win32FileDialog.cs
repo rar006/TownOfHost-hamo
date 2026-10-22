@@ -67,10 +67,14 @@ public static class Win32FileDialog
     {
         if (!OperatingSystem.IsWindows() || dialogOpen) return;
         dialogOpen = true;
+        // ゲームの窓を親にして、選ぶ画面がゲームの後ろに隠れないようにする。
+        // (親が無いと後ろに隠れて見えず、開いたままになるので、再起動するまで添付ボタンが効かなくなっていた)
+        var owner = GetActiveWindow();
+        if (owner == IntPtr.Zero) owner = System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle;
         var thread = new System.Threading.Thread(() =>
         {
             string[] paths = null;
-            try { paths = ShowOpenImageOrVideoDialog(ownerless: true); }
+            try { paths = ShowOpenImageOrVideoDialog(owner); }
             finally { dialogOpen = false; }
             if (paths == null || paths.Length == 0) return;
             var truncated = paths.Length > MaxAttachments;
@@ -82,7 +86,7 @@ public static class Win32FileDialog
         thread.Start();
     }
 
-    public static string[] ShowOpenImageOrVideoDialog(bool ownerless = false)
+    public static string[] ShowOpenImageOrVideoDialog(IntPtr owner)
     {
         if (!OperatingSystem.IsWindows()) return null;
 
@@ -96,7 +100,7 @@ public static class Win32FileDialog
             var ofn = new OPENFILENAME
             {
                 lStructSize = Marshal.SizeOf<OPENFILENAME>(),
-                hwndOwner = ownerless ? IntPtr.Zero : GetActiveWindow(), // 別スレッドの時はゲームの窓を親にしない(ゲームが止まらないように)
+                hwndOwner = owner,
                 lpstrFilter = filter,
                 nFilterIndex = 1,
                 lpstrFile = Marshal.AllocHGlobal(bufferChars * 2),

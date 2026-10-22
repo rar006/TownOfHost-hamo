@@ -186,6 +186,9 @@ public sealed class Locksmith : RoleBase
             if (banishedPlayers.ContainsKey(user.PlayerId) &&
                 banishedPlayers[user.PlayerId] > 0f)
             {
+                // 追い出した直後にもう一度入った時も、必ず追い出す
+                // (以前は inVent を変えるだけで追い出しを送らず、本人の画面ではベントから出られなくなっていた)
+                user.MyPhysics?.RpcBootFromVent(ventId);
                 user.inVent = false;
                 return;
             }

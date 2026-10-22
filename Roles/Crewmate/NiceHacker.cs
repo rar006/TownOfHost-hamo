@@ -223,6 +223,9 @@ public sealed class NiceHacker : RoleBase
     {
         seen ??= seer;
         if (seer != Player || !hackMode || isForMeeting) return "";
+        // ホストがナイスハッカーの時は、シェイプシフトの画面を開いている間だけ出す
+        // (いつも出すと、マップの上のみんなの名前の下にずっと部屋が出ていた)
+        if (Player == PlayerControl.LocalPlayer && Minigame.Instance?.TryCast<ShapeshifterMinigame>() == null) return "";
         if (!nameAdmin.TryGetValue(seen.PlayerId, out var admin)) return "";
         return "<color=#C2FF00><size=1.5>" + admin + "</color></size>";
     }

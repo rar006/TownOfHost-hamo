@@ -71,6 +71,8 @@ namespace TownOfHost
             int Pavlov = 0;
 
             int StandMasterCount = 0;
+            // アライグマ陣営(親・子)。クルー扱いの役職なので、Crew の数から分けて数える
+            int RaccoonCount = 0;
 
             // ★ 変化済みヴィラン（キルボタン持ち）は Crew から除外して別カウント
 
@@ -98,6 +100,9 @@ namespace TownOfHost
 
                     case CountTypes.Fox:
 
+                    case CountTypes.Crew when pc.Is(CustomRoles.RaccoonParent) || pc.Is(CustomRoles.RaccoonChild):
+                        RaccoonCount++;
+                        break;
                     case CountTypes.Crew:
 
                         // ★ 変化済みヴィランは Crew ではなく VillainActive としてカウント
@@ -192,7 +197,7 @@ namespace TownOfHost
 
                 && Imp == 0 && Jackal == 0 && Remotekiller == 0
 
-                && MilkyWay == 0 && MadBetrayer == 0 && Pavlov == 0 && StandMasterCount == 0
+                && MilkyWay == 0 && MadBetrayer == 0 && Pavlov == 0 && StandMasterCount == 0 && RaccoonCount == 0
 
                 && VillainActive * 2 >= VillainActive + FoxAndCrew)
 
@@ -222,7 +227,7 @@ namespace TownOfHost
 
             if (Imp == 0 && FoxAndCrew == 0 && Jackal == 0 && Remotekiller == 0
 
-                && MilkyWay == 0 && MadBetrayer == 0 && Pavlov == 0 && StandMasterCount == 0
+                && MilkyWay == 0 && MadBetrayer == 0 && Pavlov == 0 && StandMasterCount == 0 && RaccoonCount == 0
 
                 && VillainActive == 0) //全滅
 
@@ -260,7 +265,7 @@ namespace TownOfHost
 
             else if (Jackal == 0 && Remotekiller == 0 && MilkyWay == 0 && MadBetrayer == 0
 
-                && Pavlov == 0 && StandMasterCount == 0 && VillainActive == 0
+                && Pavlov == 0 && StandMasterCount == 0 && RaccoonCount == 0 && VillainActive == 0
 
                 && FoxAndCrew <= Imp) //インポスター勝利
 
@@ -274,7 +279,7 @@ namespace TownOfHost
 
             else if (Imp == 0 && Remotekiller == 0 && MilkyWay == 0 && MadBetrayer == 0
 
-                && Pavlov == 0 && StandMasterCount == 0 && VillainActive == 0
+                && Pavlov == 0 && StandMasterCount == 0 && RaccoonCount == 0 && VillainActive == 0
 
                 && FoxAndCrew <= Jackal) //ジャッカル勝利
 
@@ -302,7 +307,7 @@ namespace TownOfHost
 
             else if (Imp == 0 && Jackal == 0 && MilkyWay == 0 && MadBetrayer == 0
 
-                && Pavlov == 0 && StandMasterCount == 0 && VillainActive == 0
+                && Pavlov == 0 && StandMasterCount == 0 && RaccoonCount == 0 && VillainActive == 0
 
                 && FoxAndCrew <= Remotekiller)
 
@@ -322,7 +327,7 @@ namespace TownOfHost
 
             else if (Jackal == 0 && Imp == 0 && GrimReaper == 1 && Remotekiller == 0
 
-                && MilkyWay == 0 && MadBetrayer == 0 && Pavlov == 0 && StandMasterCount == 0
+                && MilkyWay == 0 && MadBetrayer == 0 && Pavlov == 0 && StandMasterCount == 0 && RaccoonCount == 0
 
                 && VillainActive == 0)//死神勝利(2)
 
@@ -342,7 +347,7 @@ namespace TownOfHost
 
             else if (Imp == 0 && Jackal == 0 && Remotekiller == 0 && MadBetrayer == 0
 
-                && Pavlov == 0 && StandMasterCount == 0 && VillainActive == 0
+                && Pavlov == 0 && StandMasterCount == 0 && RaccoonCount == 0 && VillainActive == 0
 
                 && FoxAndCrew <= MilkyWay)
 
@@ -360,7 +365,7 @@ namespace TownOfHost
 
             else if (Imp == 0 && Jackal == 0 && Remotekiller == 0 && MilkyWay == 0
 
-                && Pavlov == 0 && StandMasterCount == 0 && VillainActive == 0
+                && Pavlov == 0 && StandMasterCount == 0 && RaccoonCount == 0 && VillainActive == 0
 
                 && FoxAndCrew <= MadBetrayer)
 
@@ -376,7 +381,7 @@ namespace TownOfHost
 
             else if (Imp == 0 && Jackal == 0 && Remotekiller == 0 && GrimReaper == 0
 
-                && MilkyWay == 0 && MadBetrayer == 0 && StandMasterCount == 0
+                && MilkyWay == 0 && MadBetrayer == 0 && StandMasterCount == 0 && RaccoonCount == 0
 
                 && VillainActive == 0
 
@@ -396,6 +401,23 @@ namespace TownOfHost
 
             }
 
+            // アライグマ陣営の勝利: ほかのキル陣営が全滅し、アライグマ陣営の数がクルー以上になった
+            else if (RaccoonCount > 0
+                && Imp == 0 && Jackal == 0 && Remotekiller == 0 && GrimReaper == 0
+                && MilkyWay == 0 && MadBetrayer == 0 && Pavlov == 0 && StandMasterCount == 0
+                && VillainActive == 0
+                && FoxAndCrew <= RaccoonCount)
+            {
+                reason = GameOverReason.ImpostorsByKill;
+                var raccoonWinner = PlayerCatch.AllAlivePlayerControls.FirstOrDefault(pc => pc.Is(CustomRoles.RaccoonParent) || pc.Is(CustomRoles.RaccoonChild));
+                CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.RaccoonParent, raccoonWinner?.PlayerId ?? byte.MaxValue);
+                foreach (var pc in PlayerCatch.AllPlayerControls
+                    .Where(pc => pc.Is(CustomRoles.RaccoonParent) || pc.Is(CustomRoles.RaccoonChild)))
+                {
+                    CustomWinnerHolder.WinnerIds.Add(pc.PlayerId);
+                    CustomWinnerHolder.NeutralWinnerIds.Add(pc.PlayerId);
+                }
+            }
             else if (standMasterAlive
 
                 && Imp == 0 && Jackal == 0 && Remotekiller == 0 && GrimReaper == 0
@@ -404,6 +426,7 @@ namespace TownOfHost
 
                 && VillainActive == 0
 
+                && RaccoonCount == 0
                 && FoxAndCrew <= StandMasterCount)
 
             {
@@ -428,7 +451,7 @@ namespace TownOfHost
 
             else if (Jackal == 0 && Remotekiller == 0 && MadBetrayer == 0
 
-                && MilkyWay == 0 && Pavlov == 0 && StandMasterCount == 0
+                && MilkyWay == 0 && Pavlov == 0 && StandMasterCount == 0 && RaccoonCount == 0
 
                 && VillainActive == 0 && Imp == 0) //クルー勝利
 
@@ -532,6 +555,8 @@ namespace TownOfHost
             int Pavlov = 0;
 
             int StandMasterCount = 0;
+            // アライグマ陣営(親・子)。クルー扱いの役職なので、Crew の数から分けて数える
+            int RaccoonCount = 0;
 
             int EaterCount = 0;
 
@@ -593,6 +618,9 @@ namespace TownOfHost
 
                     case CountTypes.Fox:
 
+                    case CountTypes.Crew when pc.Is(CustomRoles.RaccoonParent) || pc.Is(CustomRoles.RaccoonChild):
+                        RaccoonCount++;
+                        break;
                     case CountTypes.Crew: Crew++; FoxAndCrew++; break;
 
                     case CountTypes.Impostor: Imp++; break;
@@ -731,7 +759,7 @@ namespace TownOfHost
 
             if (Imp == 0 && FoxAndCrew == 0 && Jackal == 0 && Remotekiller == 0
 
-                && MilkyWay == 0 && MadBetrayer == 0 && Pavlov == 0 && StandMasterCount == 0
+                && MilkyWay == 0 && MadBetrayer == 0 && Pavlov == 0 && StandMasterCount == 0 && RaccoonCount == 0
 
                 && EaterCount == 0 && Daoshi == 0) //全滅
 
@@ -769,7 +797,7 @@ namespace TownOfHost
 
             else if (Jackal == 0 && Remotekiller == 0 && MilkyWay == 0 && MadBetrayer == 0
 
-                && Pavlov == 0 && StandMasterCount == 0 && EaterCount == 0 && Daoshi == 0 && FoxAndCrew <= Imp) //インポスター勝利
+                && Pavlov == 0 && StandMasterCount == 0 && RaccoonCount == 0 && EaterCount == 0 && Daoshi == 0 && FoxAndCrew <= Imp) //インポスター勝利
 
             {
 
@@ -781,7 +809,7 @@ namespace TownOfHost
 
             else if (Imp == 0 && Remotekiller == 0 && MilkyWay == 0 && MadBetrayer == 0
 
-                && Pavlov == 0 && StandMasterCount == 0 && EaterCount == 0 && Daoshi == 0 && FoxAndCrew <= Jackal) //ジャッカル勝利
+                && Pavlov == 0 && StandMasterCount == 0 && RaccoonCount == 0 && EaterCount == 0 && Daoshi == 0 && FoxAndCrew <= Jackal) //ジャッカル勝利
 
             {
 
@@ -807,7 +835,7 @@ namespace TownOfHost
 
             else if (Imp == 0 && Jackal == 0 && MilkyWay == 0 && MadBetrayer == 0
 
-                && Pavlov == 0 && StandMasterCount == 0 && EaterCount == 0 && Daoshi == 0 && FoxAndCrew <= Remotekiller)
+                && Pavlov == 0 && StandMasterCount == 0 && RaccoonCount == 0 && EaterCount == 0 && Daoshi == 0 && FoxAndCrew <= Remotekiller)
 
             {
 
@@ -825,7 +853,7 @@ namespace TownOfHost
 
             else if (Jackal == 0 && Imp == 0 && GrimReaper >= 1 && Remotekiller == 0
 
-                && MilkyWay == 0 && MadBetrayer == 0 && Pavlov == 0 && StandMasterCount == 0
+                && MilkyWay == 0 && MadBetrayer == 0 && Pavlov == 0 && StandMasterCount == 0 && RaccoonCount == 0
 
                 && EaterCount == 0 && Daoshi == 0)//死神勝利(2)
 
@@ -845,7 +873,7 @@ namespace TownOfHost
 
             else if (Imp == 0 && Jackal == 0 && Remotekiller == 0 && MadBetrayer == 0
 
-                && Pavlov == 0 && StandMasterCount == 0 && EaterCount == 0 && Daoshi == 0 && FoxAndCrew <= MilkyWay)
+                && Pavlov == 0 && StandMasterCount == 0 && RaccoonCount == 0 && EaterCount == 0 && Daoshi == 0 && FoxAndCrew <= MilkyWay)
 
             {
 
@@ -861,7 +889,7 @@ namespace TownOfHost
 
             else if (Imp == 0 && Jackal == 0 && Remotekiller == 0 && MilkyWay == 0
 
-                && Pavlov == 0 && StandMasterCount == 0 && EaterCount == 0 && Daoshi == 0 && FoxAndCrew <= MadBetrayer)
+                && Pavlov == 0 && StandMasterCount == 0 && RaccoonCount == 0 && EaterCount == 0 && Daoshi == 0 && FoxAndCrew <= MadBetrayer)
 
             {
 
@@ -873,7 +901,7 @@ namespace TownOfHost
 
             }
             else if (Imp == 0 && Jackal == 0 && Remotekiller == 0 && MilkyWay == 0
-            && Pavlov == 0 && StandMasterCount == 0 && EaterCount == 0 && MadBetrayer == 0 && FoxAndCrew <= Daoshi)
+            && Pavlov == 0 && StandMasterCount == 0 && RaccoonCount == 0 && EaterCount == 0 && MadBetrayer == 0 && FoxAndCrew <= Daoshi)
             {
                 reason = GameOverReason.ImpostorsByKill;
                 CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Daoshi, byte.MaxValue);
@@ -883,7 +911,7 @@ namespace TownOfHost
             }
             else if (Imp == 0 && Jackal == 0 && Remotekiller == 0 && GrimReaper == 0
 
-                && MilkyWay == 0 && MadBetrayer == 0 && StandMasterCount == 0 && Daoshi == 0 && EaterCount == 0
+                && MilkyWay == 0 && MadBetrayer == 0 && StandMasterCount == 0 && RaccoonCount == 0 && Daoshi == 0 && EaterCount == 0
 
                 && FoxAndCrew <= Pavlov && PavlovDog.HasAliveDog())
 
@@ -901,12 +929,30 @@ namespace TownOfHost
 
             }
 
+            // アライグマ陣営の勝利: ほかのキル陣営が全滅し、アライグマ陣営の数がクルー以上になった
+            else if (RaccoonCount > 0
+                && Imp == 0 && Jackal == 0 && Remotekiller == 0 && GrimReaper == 0
+                && MilkyWay == 0 && MadBetrayer == 0 && Pavlov == 0 && StandMasterCount == 0
+                && Daoshi == 0 && EaterCount == 0
+                && FoxAndCrew <= RaccoonCount)
+            {
+                reason = GameOverReason.ImpostorsByKill;
+                var raccoonWinner = PlayerCatch.AllAlivePlayerControls.FirstOrDefault(pc => pc.Is(CustomRoles.RaccoonParent) || pc.Is(CustomRoles.RaccoonChild));
+                CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.RaccoonParent, raccoonWinner?.PlayerId ?? byte.MaxValue);
+                foreach (var pc in PlayerCatch.AllPlayerControls
+                    .Where(pc => pc.Is(CustomRoles.RaccoonParent) || pc.Is(CustomRoles.RaccoonChild)))
+                {
+                    CustomWinnerHolder.WinnerIds.Add(pc.PlayerId);
+                    CustomWinnerHolder.NeutralWinnerIds.Add(pc.PlayerId);
+                }
+            }
             else if (standMasterAlive
 
                 && Imp == 0 && Jackal == 0 && Remotekiller == 0 && GrimReaper == 0
 
                 && MilkyWay == 0 && MadBetrayer == 0 && Daoshi == 0 && Pavlov == 0 && EaterCount == 0
 
+                && RaccoonCount == 0
                 && FoxAndCrew <= StandMasterCount)
 
             {
@@ -931,7 +977,7 @@ namespace TownOfHost
 
             else if (Jackal == 0 && Remotekiller == 0 && MadBetrayer == 0
 
-                && MilkyWay == 0 && Pavlov == 0 && StandMasterCount == 0 && Imp == 0
+                && MilkyWay == 0 && Pavlov == 0 && StandMasterCount == 0 && RaccoonCount == 0 && Imp == 0
 
                 && Daoshi == 0 && EaterCount == 0) //クルー勝利
 

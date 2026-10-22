@@ -44,6 +44,16 @@ namespace TownOfHost
             => colorId >= 0 && colorId < Palette.PlayerColors.Length ? Palette.PlayerColors[colorId] : UnityEngine.Color.white;
 
 
+        private static void FixZeroVision(FloatOptionNames name, float defaultValue)
+        {
+            var opt = GameOptionsManager.Instance?.CurrentGameOptions;
+            if (opt == null || !AmongUsClient.Instance.AmHost) return;
+            var value = opt.GetFloat(name);
+            if (value >= 0.25f) return;
+            opt.SetFloat(name, defaultValue);
+            Main.NormalOptions?.SetFloat(name, defaultValue);
+            Logger.Warn($"{name} が {value}x になっていたので {defaultValue}x に戻しました(0x だと視界が出ず真っ暗になるため)", "FixZeroVision");
+        }
         public static void Postfix(AmongUsClient __instance)
 
         {
@@ -156,6 +166,10 @@ namespace TownOfHost
 
             Options.UsedButtonCount = 0;
 
+            // ビジョンが 0x になっていると、マップは見えるのに視界が出ず真っ暗になる(バニラでは 0.25x より下にはできない)。
+            // 何かの拍子に 0 が保存されていた時は、バニラの初期値に戻してから始める
+            FixZeroVision(FloatOptionNames.CrewLightMod, 1f);
+            FixZeroVision(FloatOptionNames.ImpostorLightMod, 1.5f);
             Main.RealOptionsData = new OptionBackupData(GameOptionsManager.Instance.CurrentGameOptions);
 
 
