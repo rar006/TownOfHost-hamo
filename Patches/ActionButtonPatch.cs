@@ -45,9 +45,10 @@ public static class AbilityButtonDoClickPatch
 {
     public static bool Prefix(AbilityButton __instance)
     {
-        // 参加者専用MODでは、カスタム役職能力を発動・同期しない。
+        // 参加者専用MODでは、カスタム役職能力を自分で発動・同期せず、ボタンはバニラの動きのままにする(ホストが判定する)。
+        // 以前は false を返してバニラの動きまで止めていたので、ファントムの能力などが押しても無反応だった。
         // カスタムボタン自体の見た目とHELPの役職説明は引き続き表示される。
-        if (Main.IsNonHostClient) return false;
+        if (Main.IsNonHostClient) return true;
 
         var player = PlayerControl.LocalPlayer;
 

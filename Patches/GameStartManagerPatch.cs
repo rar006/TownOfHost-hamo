@@ -135,6 +135,20 @@ namespace TownOfHost
             }
         }
 
+        // 試合中に着せ替え(SetHat等)が走るとバニラがロビーのホスト画像を更新しようとして例外になり、
+        // 試合終了判定が毎フレーム止まって暗転したままになるため、ロビー以外では更新しない
+        [HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.UpdateHostPanelImage))]
+        public class GameStartManagerUpdateHostPanelImagePatch
+        {
+            public static bool Prefix(GameStartManager __instance)
+                => __instance != null && AmongUsClient.Instance != null && GameStates.IsLobby;
+            public static System.Exception Finalizer(System.Exception __exception)
+            {
+                if (__exception != null) Logger.Warn($"ホスト画像の更新に失敗: {__exception.Message}", "GameStartManager");
+                return null;
+            }
+        }
+
         [HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.Update))]
         public class GameStartManagerUpdatePatch
         {
@@ -145,6 +159,8 @@ namespace TownOfHost
             private static bool versionMismatchHide;
             public static void Prefix(GameStartManager __instance)
             {
+                // 試合中も呼ばれることがあり、ロビーUIが破棄済みだと毎フレーム例外になるのでロビー以外では何もしない
+                if (__instance == null || AmongUsClient.Instance == null || !GameStates.IsLobby) return;
                 RenamePrivacyLabel(__instance);
 
                 // 要望により、バグ報告パネルを開いている間は「開始」ボタンがパネルより
@@ -175,6 +191,7 @@ namespace TownOfHost
                 }
 
                 // Lobby code
+                if (__instance.GameRoomNameCode == null || HideName == null || GameMaster == null) return;
                 if (DataManager.Settings.Gameplay.StreamerMode
                 && AmongUsClient.Instance.NetworkMode == NetworkModes.OnlineGame)
                 {

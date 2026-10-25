@@ -192,8 +192,24 @@ public static class OptionSerializer
     {
         var bytes = Convert.FromBase64String(source);
         var options = GameOptionsManager.Instance.gameOptionsFactory.FromBytes(bytes);
-        GameOptionsManager.Instance.GameHostOptions = GameOptionsManager.Instance.CurrentGameOptions = options;
-        GameManager.Instance.LogicOptions.SetGameOptions(options);
-        GameManager.Instance.LogicOptions.SyncOptions();
+        // 古い/別モードの設定だと読めずに null や通常モード以外になり、そのまま入れると
+        // ロビーの開始処理や役職設定の表示が毎フレーム落ちて開始ボタンが効かなくなるので、読めた時だけ反映する
+        if (options == null || !options.TryCast<NormalGameOptionsV12>(out _))
+            throw new InvalidDataException("バニラ設定を読み込めませんでした");
+        var oldHost = GameOptionsManager.Instance.GameHostOptions;
+        var oldCurrent = GameOptionsManager.Instance.CurrentGameOptions;
+        try
+        {
+            GameOptionsManager.Instance.GameHostOptions = GameOptionsManager.Instance.CurrentGameOptions = options;
+            GameManager.Instance.LogicOptions.SetGameOptions(options);
+            GameManager.Instance.LogicOptions.SyncOptions();
+        }
+        catch
+        {
+            GameOptionsManager.Instance.GameHostOptions = oldHost;
+            GameOptionsManager.Instance.CurrentGameOptions = oldCurrent;
+            GameManager.Instance.LogicOptions.SetGameOptions(oldCurrent);
+            throw;
+        }
     }
 }

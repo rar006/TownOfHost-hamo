@@ -18,6 +18,7 @@ class PresetMenu
         CustomRoles.Tama,
         CustomRoles.Shikigami,
         CustomRoles.Stand,
+        CustomRoles.RaccoonChild,
         CustomRoles.Pursuer,
         CustomRoles.Gang,
     };
@@ -131,6 +132,9 @@ class PresetMenu
             OptionSaver.Save();
         });
 
+        // 闇鍋・人外村は、右の列の左にもう1列作って並べる(右の列は下までいっぱいのため)
+        CreatePresetButton("<#c86bff>闇鍋</color>", new Color32(90, 40, 120, byte.MaxValue), 5, ApplyYaminabe, 1.3f);
+        CreatePresetButton("<#d0d0d0>人外村</color>", new Color32(70, 70, 70, byte.MaxValue), 6, ApplyNeutralVillage, 1.3f);
         //(毒入りパン屋・弾・式神・スタンド・一味・追跡者)を0にするプリセット
         var ResetDerivedRoles = CreatePresetButton(
             $"<#d4af37>派生役職を削除</color>",
@@ -145,6 +149,7 @@ class PresetMenu
                         CustomRoles.Tama or
                         CustomRoles.Shikigami or
                         CustomRoles.Stand or
+                        CustomRoles.RaccoonChild or
                         CustomRoles.Pursuer or
                         CustomRoles.Gang;
                     if (isDerived && roleopt.Value.GetValue() != 0)
@@ -155,7 +160,42 @@ class PresetMenu
             });
     }
 
-    private static PassiveButton CreatePresetButton(string text, Color32 color, int yNum, Action onClick)
+    // 闇鍋: 役職(インポスター・クルー・マッド・第三陣営)の出現率を、すべて10%〜100%のランダムにする
+    private static void ApplyYaminabe()
+    {
+        OptionBackup.BeforeChange(label: "闇鍋プリセットの適用前");
+        var rand = IRandom.Instance;
+        foreach (var option in Options.CustomRoleSpawnChances)
+        {
+            var role = option.Key;
+            if (role is CustomRoles.NotAssigned || !Event.CheckRole(role)) continue;
+            if (!(role.IsImpostor() || role.IsCrewmate() || role.IsMadmate() || role.IsNeutral())) continue;
+            var value = rand.Next(1, 11);
+            if (option.Value.GetValue() != value) option.Value.SetValue(value, false, false);
+        }
+        ResetDerivedRolesTo0();
+        OptionItem.SyncAllOptions();
+        OptionSaver.Save();
+        Utils.SendMessage("闇鍋プリセットにしました。すべての役職の出現率がランダム(10%〜100%)になっています。", PlayerControl.LocalPlayer.PlayerId, "<#c86bff>【闇鍋】</color>");
+    }
+    // 人外村: 第三陣営の役職をすべて100%にして、ほかの陣営の役職は0%にする
+    private static void ApplyNeutralVillage()
+    {
+        OptionBackup.BeforeChange(label: "人外村プリセットの適用前");
+        foreach (var option in Options.CustomRoleSpawnChances)
+        {
+            var role = option.Key;
+            if (role is CustomRoles.NotAssigned || !Event.CheckRole(role)) continue;
+            if (!(role.IsImpostor() || role.IsCrewmate() || role.IsMadmate() || role.IsNeutral())) continue;
+            var value = role.IsNeutral() ? 10 : 0;
+            if (option.Value.GetValue() != value) option.Value.SetValue(value, false, false);
+        }
+        ResetDerivedRolesTo0();
+        OptionItem.SyncAllOptions();
+        OptionSaver.Save();
+        Utils.SendMessage("人外村プリセットにしました。第三陣営の役職がすべて100%、ほかの役職は0%です。\n(アサインモードがランダムの時は、第三陣営の最大人数も上げてください)", PlayerControl.LocalPlayer.PlayerId, "<#9e9e9e>【人外村】</color>");
+    }
+    private static PassiveButton CreatePresetButton(string text, Color32 color, int yNum, Action onClick, float x = 5.561f)
     {
         var setPresetButton = GameObject.Instantiate(GameSettingMenu.Instance.GamePresetsButton, GameSettingMenu.Instance.PresetsTab.AlternateRulesText.transform.parent);
         if (setPresetButton)
@@ -165,7 +205,7 @@ class PresetMenu
             setPresetButton.inactiveSprites.GetComponent<SpriteRenderer>().color =
             setPresetButton.activeSprites.GetComponent<SpriteRenderer>().color =
             setPresetButton.selectedSprites.GetComponent<SpriteRenderer>().color = color;
-            setPresetButton.transform.localPosition = new Vector3(5.561f, 1.7467f - (0.89803f * yNum), 0);
+            setPresetButton.transform.localPosition = new Vector3(x, 1.7467f - (0.89803f * yNum), 0);
             setPresetButton.transform.localScale = new Vector3(1.25f, 1.25f, 0);
             setPresetButton.OnClick = new();
             setPresetButton.OnClick.AddListener(onClick);

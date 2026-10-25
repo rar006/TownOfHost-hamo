@@ -13,7 +13,8 @@ namespace TownOfHost.Modules;
 public static class RoleWinStats
 {
     public static OptionItem Enabled;
-    private static bool IsOn => Enabled?.GetBool() == true;
+    // 要望により常にON(設定には出さない)
+    private static bool IsOn => true;
 
     private const int MinGamesForRanking = 3; // 順位に入れる最低試合数
     private const int RankingCount = 5;

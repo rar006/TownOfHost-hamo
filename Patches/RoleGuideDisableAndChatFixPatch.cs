@@ -48,6 +48,8 @@ namespace TownOfHost.Patches
         public static void Postfix(HudManager __instance)
         {
             if (__instance == null) return;
+            // 参加者専用MODでは、チャットボタンはゲームとホストに任せる(自分の画面の設定はホストの設定と違うので、勝手に消していた)
+            if (Main.IsNonHostClient) return;
             var chatButton = __instance.Chat?.chatButton;
             if (chatButton == null) return;
 

@@ -129,7 +129,11 @@ namespace TownOfHost
 
         // (正しいクリップが分かればPlaySoundのcase内を差し替えるだけでよい)
 
-        GuardBreak
+        GuardBreak,
+
+        // サボタージュの警報音(ノヴァの発射前など)
+
+        SabotageAlarm
 
     }
 
@@ -978,7 +982,9 @@ namespace TownOfHost
 
         {
 
-            if (PlayerControl.LocalPlayer.PlayerId == playerID)
+            // byte.MaxValue は全員に鳴らす
+
+            if (PlayerControl.LocalPlayer.PlayerId == playerID || playerID == byte.MaxValue)
 
                 switch (sound)
 
@@ -1003,6 +1009,14 @@ namespace TownOfHost
                         // 正確な音源フィールド名が判明次第、ここだけ差し替えればよい。
 
                         _ = SoundManager.Instance.PlaySound(PlayerControl.LocalPlayer.KillSfx, false, 0.8f);
+
+                        break;
+
+                    case Sounds.SabotageAlarm:
+
+                        if (ShipStatus.Instance != null && ShipStatus.Instance.SabotageSound != null)
+
+                            _ = SoundManager.Instance.PlaySound(ShipStatus.Instance.SabotageSound, false, 0.8f);
 
                         break;
 
@@ -1618,11 +1632,25 @@ namespace TownOfHost
 
     {
 
-        public static void Prefix(InnerNet.InnerNetClient __instance, [HarmonyArgument(0)] uint targetNetId, [HarmonyArgument(1)] byte callId, [HarmonyArgument(3)] int targetClientId = -1)
+        public static bool Prefix(InnerNet.InnerNetClient __instance, [HarmonyArgument(0)] uint targetNetId, [HarmonyArgument(1)] byte callId, [HarmonyArgument(2)] SendOption option, [HarmonyArgument(3)] int targetClientId, ref MessageWriter __result)
 
         {
 
+            // ホスト以外は MOD 独自の RPC を送らない(空の入れ物を渡し、送る時に捨てる)
+
+            if (TownOfHost.Modules.NonHostRpcGuard.Block(callId))
+
+            {
+
+                __result = TownOfHost.Modules.NonHostRpcGuard.Dummy(option);
+
+                return false;
+
+            }
+
             RPC.SendRpcLogger(targetNetId, callId, targetClientId);
+
+            return true;
 
         }
 

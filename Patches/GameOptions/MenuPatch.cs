@@ -1615,11 +1615,13 @@ namespace TownOfHost
 
                         {
 
-                            search?.gameObject?.SetActive(true);
+                            if (search == null || priset == null || activeonly == null) return; // 切断などでメニューが破棄済み
 
-                            priset?.gameObject?.SetActive(PresetNameEditorOpen);
+                            search.gameObject.SetActive(true);
 
-                            activeonly?.gameObject?.SetActive(true);
+                            priset.gameObject.SetActive(PresetNameEditorOpen);
+
+                            activeonly.gameObject.SetActive(true);
 
                             ForceRenderInFront(search);
 
@@ -2471,7 +2473,14 @@ namespace TownOfHost
 
         }
 
+        private const int CreatePerFrame = 30;
         public static void CreateOptions(TabGroup tab, Dictionary<TabGroup, GameObject> menus, Dictionary<CustomRoles, GameObject> crmenus, Transform tabtransfrom, bool forceAllTabs = false)
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            CreateOptionsCore(tab, menus, crmenus, tabtransfrom, forceAllTabs);
+            if (sw.ElapsedMilliseconds >= 25) Logger.Info($"{tab} の設定を作る: {sw.ElapsedMilliseconds}ms", "SettingsPerf");
+        }
+        private static void CreateOptionsCore(TabGroup tab, Dictionary<TabGroup, GameObject> menus, Dictionary<CustomRoles, GameObject> crmenus, Transform tabtransfrom, bool forceAllTabs)
 
         {
 
@@ -2589,6 +2598,8 @@ namespace TownOfHost
 
 
 
+            var createdNow = 0;
+            var unfinished = false;
             foreach (var option in OptionItem.AllOptions)
 
             {
@@ -2599,6 +2610,7 @@ namespace TownOfHost
 
                 {
 
+                    if (!forceAllTabs && ++createdNow > CreatePerFrame) { unfinished = true; break; }
                     var parentrole = option.ParentRole;
 
                     //タブの場合
@@ -2618,6 +2630,11 @@ namespace TownOfHost
                         var chm = tabtitle.transform.FindChild("CategoryHeaderMasked").GetComponent<CategoryHeaderMasked>();
 
                         CategoryHeaderEditRole[] tabsubtitle = chm.transform.parent.GetComponentsInChildren<CategoryHeaderEditRole>();
+                        foreach (var sub in tabsubtitle)
+                        {
+                            if (sub == null || sub.transform == tabtitle.transform || chm.transform.IsChildOf(sub.transform)) continue;
+                            Object.Destroy(sub.gameObject);
+                        }
 
                         chm.Title.DestroyTranslator();
 
@@ -2912,7 +2929,8 @@ namespace TownOfHost
 
                             var marksprite = UtilsSprite.LoadSprite($"TownOfHost.Resources.TOHhm.Label.{option.Name}.png");
 
-                            if (UtilsRoleInfo.GetRoleByInputName(GetString(option.Name), out var role, true) && role.IsVanilla())
+                            // 役職の名前かどうかは、翻訳を通さずに調べる(翻訳を探すと、訳のない見出しで「未翻訳」の警告が出ていた)
+                            if (Enum.TryParse<CustomRoles>(option.Name, out var role) && role.IsVanilla())
 
                             {
 
@@ -3432,7 +3450,20 @@ namespace TownOfHost
 
 
 
+            if (unfinished)
+            {
+                // 続きは次のフレームで(設定画面を閉じていたら止める)
+                var generation = tabGenerated;
+                _ = new LateTask(() =>
+                {
+                    // 閉じて開き直した時は、前の画面の続きは作らない
+                    if (ModSettingsTab == null || tabGenerated == null || tabGenerated != generation || tabGenerated.Contains(tab)) return;
+                    CreateOptions(tab, menus, crmenus, tabtransfrom);
+                }, 0.001f, "CreateOptions.Continue", true);
+                return;
+            }
             tabGenerated.Add(tab);
+            GameOptionsMenuUpdatePatch.ForceRelayout();
             }
             finally
             {
@@ -3623,34 +3654,19 @@ namespace TownOfHost
 
 
 
-    [HarmonyPatch(typeof(StringOption), nameof(StringOption.FixedUpdate))]
-
-    class PrisetNamechengePatch
-
+    // プリセットの名前の表示。以前は全部の設定の行(StringOption)の FixedUpdate に付けていて、
+    // 役職の多いタブでは1秒に何万回も呼ばれて重かったので、設定画面の更新(0.1秒ごと)から呼ぶ
+    static class PrisetNamechengePatch
     {
-
-        public static void Postfix(StringOption __instance)
-
+        public static void Refresh()
         {
-
             if (ModSettingsTab == null) return;
-
-
-
             var option = PresetOptionItem.Preset;
-
-            if (option == null) return;
-
-            if (option.OptionBehaviour != __instance) return;
-
-
-
-            __instance.ValueText.text = option.GetString();
-
+            if (option?.OptionBehaviour is not StringOption so || so == null || so.ValueText == null) return;
+            var text = option.GetString();
+            if (so.ValueText.text != text) so.ValueText.text = text;
         }
-
     }
-
     [HarmonyPatch(typeof(GameSettingMenu), nameof(GameSettingMenu.Start))]
 
     class Prisetkesu

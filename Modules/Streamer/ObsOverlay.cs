@@ -130,30 +130,39 @@ public static class ObsOverlay
         }
     }
 
+    // OBS のブラウザソースで読む表示。暗い背景・大きめの太字・役職は色の札で、配信の画面の上でも読みやすくする
     private const string Page = @"<!doctype html>
 <html lang=""ja""><head><meta charset=""utf-8""><title>TOH-hamo</title>
 <style>
-body{margin:0;background:transparent;font-family:'Yu Gothic UI','Meiryo',sans-serif;color:#fff}
-#box{display:inline-block;padding:10px 14px;background:rgba(0,0,0,.55);border-radius:10px;min-width:260px}
-#head{font-weight:bold;margin-bottom:6px;font-size:18px}
-.p{display:flex;align-items:center;gap:8px;font-size:16px;margin:2px 0;text-shadow:0 0 3px #000}
-.dot{width:14px;height:14px;border-radius:50%;border:2px solid #000;flex:none}
-.dead{opacity:.45;text-decoration:line-through}
-.role{font-size:13px;font-weight:bold}
-.t{font-size:12px;color:#ccc;margin-left:auto}
+body{margin:0;background:transparent;font-family:'BIZ UDPGothic','Yu Gothic UI','Meiryo',sans-serif;color:#fff;-webkit-font-smoothing:antialiased}
+#box{display:inline-block;padding:12px 16px 10px;background:rgba(10,14,24,.82);border:2px solid rgba(255,255,255,.18);border-radius:12px;min-width:320px;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+#head{font-weight:800;font-size:20px;letter-spacing:.04em;padding-bottom:6px;margin-bottom:6px;border-bottom:2px solid rgba(255,255,255,.18)}
+#list{display:grid;grid-template-columns:auto 1fr auto auto;column-gap:10px;row-gap:5px;align-items:center}
+.dot{width:18px;height:18px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 2px #000}
+.name{font-size:19px;font-weight:700;white-space:nowrap;text-shadow:0 0 2px #000,0 0 4px #000,1px 1px 0 #000}
+.role{font-size:15px;font-weight:800;padding:2px 9px;border-radius:999px;white-space:nowrap;border:1px solid rgba(255,255,255,.35)}
+.t{font-size:15px;font-weight:700;color:#e8edf5;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;text-shadow:0 0 3px #000}
+.t.done{color:#7cff7c}
+.dead{opacity:.5}
+.tag{font-size:12px;font-weight:800;color:#fff;background:#b3262e;border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:middle}
 </style></head><body><div id=""box""><div id=""head"">TOH-hamo</div><div id=""list""></div></div>
 <script>
 function esc(s){return String(s).replace(/[&<>""]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','""':'&quot;'}[c];});}
+function ink(hex){var m=/^#?([0-9a-f]{6})/i.exec(hex||'');if(!m)return '#fff';var n=parseInt(m[1],16),r=n>>16&255,g=n>>8&255,b=n&255;return (0.299*r+0.587*g+0.114*b)>150?'#111':'#fff';}
 async function tick(){
   try{
     var r=await fetch('/state',{cache:'no-store'});var s=await r.json();
-    var head=(s.phase||'')+(s.map?' / '+s.map:'')+(s.total?' / 生存 '+s.alive+'/'+s.total:'');
+    var head=(s.phase||'')+(s.map?'  |  '+s.map:'')+(s.total?'  |  生存 '+s.alive+' / '+s.total:'');
     document.getElementById('head').textContent=head||'TOH-hamo';
     var h='';
     (s.players||[]).forEach(function(p){
-      h+='<div class=""p'+(p.dead?' dead':'')+'""><span class=""dot"" style=""background:'+esc(p.color)+'""></span><span>'+esc(p.name)+'</span>'
-        +(p.role?'<span class=""role"" style=""color:'+esc(p.roleColor)+'"">'+esc(p.role)+'</span>':'')
-        +(p.tasks?'<span class=""t"">'+esc(p.tasks)+'</span>':'')+'</div>';
+      var d=p.dead?' dead':'';
+      var parts=(p.tasks||'').split('/');
+      var done=parts.length==2&&parts[0]===parts[1];
+      h+='<span class=""dot'+d+'"" style=""background:'+esc(p.color)+'""></span>'
+        +'<span class=""name'+d+'"">'+esc(p.name)+(p.dead?'<span class=""tag"">死亡</span>':'')+'</span>'
+        +(p.role?'<span class=""role'+d+'"" style=""background:'+esc(p.roleColor)+';color:'+ink(p.roleColor)+'"">'+esc(p.role)+'</span>':'<span></span>')
+        +'<span class=""t'+(done?' done':'')+d+'"">'+esc(p.tasks||'')+'</span>';
     });
     document.getElementById('list').innerHTML=h;
   }catch(e){}

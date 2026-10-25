@@ -157,7 +157,8 @@ public sealed class Experiencer : RoleBase, IImpostor
     }
     public override bool CancelReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target, ref DontReportreson reportreson)
     {
-        if (CantReportPlayers.Contains(target.PlayerId))
+        // 緊急会議ボタンの時は死体が無い(target が null)。以前はここで落ちて、会議もキルも止まっていた
+        if (target != null && CantReportPlayers.Contains(target.PlayerId))
         {
             reportreson = DontReportreson.Impostor;
             return true;

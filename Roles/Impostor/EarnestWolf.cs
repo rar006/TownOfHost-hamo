@@ -89,6 +89,9 @@ public sealed class EarnestWolf : RoleBase, IImpostor, IUsePhantomButton
             if (info.IsCanKilling is false) return false;
             CustomRoleManager.CheckMurderInfos[info.AppearanceKiller.PlayerId] = info;
             dummykiller.RpcMurderPlayer(target);
+            // キルのモーションを出さない時は相手が自分をキルした形になるが、記録上は一途な狼がキルしたことにする
+            // (以前は「本当のキル者」まで相手自身になり、自分で自分を殺したように見えていた)
+            if (dummykiller != killer) target.SetRealKiller(killer);
             OverKillMode = OptionOverKillCanCount.GetBool() is false;
             OverKillList.Add(target.PlayerId);
 

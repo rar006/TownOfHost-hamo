@@ -23,8 +23,43 @@ namespace TownOfHost
     {
 
         private static float _timer = 1f;
+        private static readonly System.Collections.Generic.Dictionary<int, (int Sig, float Next)> _layoutCache = new();
+        public static void ForceRelayout()
+        {
+            _layoutCache.Clear();
+            _timer = 1f;
+        }
+
+        private static int LayoutSignature()
+        {
+            unchecked
+            {
+                var h = (int)NowRoleTab;
+                h = h * 31 + (int)Options.CurrentGameMode;
+                h = h * 31 + OptionItem.CurrentPreset;
+                h = h * 31 + (AmongUsClient.Instance.AmHost ? 1 : 0);
+                h = h * 31 + (ActiveOnlyMode ? 1 : 0);
+                h = h * 31 + RoleGojuon.StateHash;
+                try { h = h * 31 + Main.NormalOptions.MapId; } catch { }
+                try { if (ModSettingsTab != null) h = h * 31 + Mathf.RoundToInt(ModSettingsTab.scrollBar.Inner.localPosition.y * 20f); } catch { }
+                foreach (var o in OptionItem.AllOptions)
+                {
+                    h = h * 31 + o.GetValue();
+                    if (o.OptionBehaviour is null) h += 7;
+                    if (o.OptionHedder is null) h += 3;
+                }
+                return h;
+            }
+        }
 
         public static void Postfix(GameOptionsMenu __instance)
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            Run(__instance);
+            if (sw.ElapsedMilliseconds >= 25) Logger.Info($"{__instance?.name} の並べ直し: {sw.ElapsedMilliseconds}ms", "SettingsPerf");
+        }
+
+        private static void Run(GameOptionsMenu __instance)
 
         {
 
@@ -42,6 +77,7 @@ namespace TownOfHost
             if (_timer < 0.1f) return;
 
             _timer = 0f;
+            try { PrisetNamechengePatch.Refresh(); } catch { }
 
 
 
@@ -124,7 +160,9 @@ namespace TownOfHost
 
 
                     // チャットを開いている時は、検索欄なども隠す(いちばん手前に描いているので、チャットの文字の上に重なっていた)
-                    var chatOpenNow = (HudManager.Instance?.Chat != null && (HudManager.Instance.Chat.IsOpenOrOpening || (HudManager.Instance.Chat.chatScreen != null && HudManager.Instance.Chat.chatScreen.activeInHierarchy))) || ChatNotificationInFront.Apply();
+                    // 閉じている時に出る通知は、通知だけをいちばん手前に出し、ほかのボタンは隠さない(通知のたびにUIが消えていた)
+                    ChatNotificationInFront.Apply();
+                    var chatOpenNow = HudManager.Instance?.Chat != null && (HudManager.Instance.Chat.IsOpenOrOpening || (HudManager.Instance.Chat.chatScreen != null && HudManager.Instance.Chat.chatScreen.activeInHierarchy));
                     searchtext.gameObject.SetActive(active && !chatOpenNow);
                     prisettext.gameObject.SetActive(active && !chatOpenNow && GameSettingMenuStartPatch.PresetNameEditorOpen);
                     search.gameObject.SetActive(active && !chatOpenNow);
@@ -141,8 +179,6 @@ namespace TownOfHost
                     // それらが開いている間はこの2つのボタンだけ追加で隠すようにする。
 
                     var chatOpen = (HudManager.Instance?.Chat != null && (HudManager.Instance.Chat.IsOpenOrOpening || (HudManager.Instance.Chat.chatScreen != null && HudManager.Instance.Chat.chatScreen.activeInHierarchy))); // 開く動きが終わった後も、チャット画面が出ていれば開いている扱い
-                    // チャットを閉じている時に上に出る「誰が何を打ったか」の通知は、いちばん手前に出して、上の段のボタン・検索欄は隠す
-                    if (ChatNotificationInFront.Apply()) chatOpen = true;
 
                     var taskPanelOpen = HudManager.Instance?.TaskPanel?.open ?? false;
 
@@ -218,6 +254,14 @@ namespace TownOfHost
 
 
 
+            // 並べ直しは設定の数だけ重くなるので、表示に関わるもの(値・スクロールなど)が変わった時だけする(念のため 3 秒ごとにはする)
+            if (!ShowFilter.IsShowFilter)
+            {
+                var menuId = __instance.GetInstanceID();
+                var sig = LayoutSignature();
+                if (_layoutCache.TryGetValue(menuId, out var last) && last.Sig == sig && Time.time < last.Next) return;
+                _layoutCache[menuId] = (sig, Time.time + 3f);
+            }
             if (NowRoleTab is not CustomRoles.NotAssigned)
 
             {
@@ -646,6 +690,14 @@ namespace TownOfHost
 
 
 
+                var placed = new System.Collections.Generic.HashSet<System.IntPtr>();
+
+                if (scOptions.TryGetValue((TabGroup)tab, out var placedList) && placedList != null)
+
+                    for (var pi = 0; pi < placedList.Count; pi++)
+
+                        if (placedList[pi] != null) placed.Add(placedList[pi].Pointer);
+
                 foreach (var option in OptionItem.AllOptions)
 
                 {
@@ -766,13 +818,15 @@ namespace TownOfHost
 
                         }
 
-                        if (!scOptions[option.Tab].Contains(p.OptionBehaviour))
+                        if (!placed.Contains(p.OptionBehaviour.Pointer))
 
                         {
 
                             p.OptionBehaviour.transform.parent = list[option.Tab].transform;
 
                             scOptions[option.Tab].Add(p.OptionBehaviour);
+
+                            placed.Add(p.OptionBehaviour.Pointer);
 
                             crOptions[option.CustomRole].Remove(p.OptionBehaviour);
 
@@ -784,13 +838,15 @@ namespace TownOfHost
 
                     {
 
-                        if (!scOptions[option.Tab].Contains(option.OptionBehaviour) && option.Name == "Maximum")
+                        if (option.Name == "Maximum" && !placed.Contains(option.OptionBehaviour.Pointer))
 
                         {
 
                             option.OptionBehaviour.transform.parent = list[option.Tab].transform;
 
                             scOptions[option.Tab].Add(option.OptionBehaviour);
+
+                            placed.Add(option.OptionBehaviour.Pointer);
 
                             crOptions[option.ParentRole].Remove(option.OptionBehaviour);
 
@@ -1091,14 +1147,29 @@ namespace TownOfHost
     {
 
         private static float _nextVanillaHideAt;
+        private static int _lastVanillaHideState = -1;
+        private static int _pendingVanillaHideState = -1;
+        private static float _pendingVanillaHideSince;
         private static readonly System.Collections.Generic.HashSet<int> _modBehaviourIds = new();
 
         private static void HideVanillaRowsInModTab()
         {
             var tab = GameSettingMenuStartPatch.ModSettingsTab;
             if (tab == null || !tab.gameObject.activeInHierarchy) return;
-            if (Time.time < _nextVanillaHideAt) return;
-            _nextVanillaHideAt = Time.time + 0.5f;
+            // 今までに開いたタブの全部を毎回調べていて、タブを開くほど重くなっていた。
+            // 設定の部品が増えた時・役職のタブを変えた時だけ調べる(念のため 30 秒ごとにはする。全部を調べるので、短いと数秒ごとにカクついていた)
+            var count = 0;
+            foreach (var o in OptionItem.AllOptions) if (o?.OptionBehaviour is not null) count++;
+            var state = count * 397 + (int)NowRoleTab;
+            if (state != _pendingVanillaHideState)
+            {
+                _pendingVanillaHideState = state;
+                _pendingVanillaHideSince = Time.time;
+                return;
+            }
+            if (state == _lastVanillaHideState ? Time.time < _nextVanillaHideAt : Time.time - _pendingVanillaHideSince < 0.5f) return;
+            _lastVanillaHideState = state;
+            _nextVanillaHideAt = Time.time + 30f;
             _modBehaviourIds.Clear();
             foreach (var o in OptionItem.AllOptions)
                 if (o?.OptionBehaviour != null) _modBehaviourIds.Add(o.OptionBehaviour.GetInstanceID());

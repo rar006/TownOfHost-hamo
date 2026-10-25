@@ -54,6 +54,7 @@ public sealed class Sniper : RoleBase, IImpostor
 
     public override void OnDestroy()
     {
+        RemoveRifle();
         Snipers.Clear();
     }
     static OptionItem SniperBulletCount;
@@ -83,6 +84,8 @@ public sealed class Sniper : RoleBase, IImpostor
     List<byte> ShotNotify = new();
     bool IsAim;
     float AimTime;
+    // 構えている間、プレイヤーの前に出すスナイパー(銃)のダミー
+    SniperRifle Rifle;
     float ShowArrowTime;
 
     static HashSet<Sniper> Snipers = new();
@@ -240,6 +243,7 @@ public sealed class Sniper : RoleBase, IImpostor
     {
         var shapeshifting = Player.PlayerId != target.PlayerId;
 
+        if (!shapeshifting) RemoveRifle();
         if (BulletCount <= 0) return;
 
         //弾が残ってたら
@@ -254,6 +258,11 @@ public sealed class Sniper : RoleBase, IImpostor
             LastPosition = Player.transform.position;
             IsAim = true;
             AimTime = 0f;
+            if (AmongUsClient.Instance.AmHost)
+            {
+                RemoveRifle();
+                Rifle = new SniperRifle(Player, SnipeBasePosition);
+            }
 
             return;
         }
@@ -338,7 +347,9 @@ public sealed class Sniper : RoleBase, IImpostor
     }
     public override void OnFixedUpdate(PlayerControl player)
     {
+        if (Rifle != null && (!Player.IsAlive() || !IsAim || GameStates.CalledMeeting || GameStates.IsMeeting)) RemoveRifle();
         if (!Player.IsAlive()) return;
+        Rifle?.Follow();
 
         if (ShowArrowTime > 0 && !GameStates.CalledMeeting)
         {
@@ -377,8 +388,15 @@ public sealed class Sniper : RoleBase, IImpostor
             UtilsNotifyRoles.NotifyRoles(SpecifySeer: Player);
         }
     }
+    void RemoveRifle()
+    {
+        if (Rifle == null) return;
+        Rifle.Remove();
+        Rifle = null;
+    }
     public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
     {
+        RemoveRifle();
         MeetingReset = true;
         foreach (var pc in PlayerCatch.AllPlayerControls)
             GetArrow.Remove(pc.PlayerId, SnipeBasePosition);
@@ -443,4 +461,181 @@ public sealed class Sniper : RoleBase, IImpostor
         achievements.Add(1, l1);
         achievements.Add(2, l2);
     }
+}
+// スナイパーが構えている間、プレイヤーの前に出す銃。撃つ向き(構えた場所から今の場所への向き)に合わせて、銃を回す。
+// 銃は構えた場所に置いたままにする。銃は「本体」と「銃身」の 2 本の棒(TextBar)でできていて、どの角度でもまっすぐ回る。
+// ふちの無いフォントが見つからない時は、今までの文字の絵(8 方向)で出す。
+public sealed class SniperRifle
+{
+    private const char BodyChar = '-';
+    private const char BarrelChar = '\u2014';
+    private const float BodyThickness = 0.26f;
+    private const float BarrelThickness = 0.1f;
+    // 体の真ん中から、銃の根元までの距離
+    private const float Grip = 0.25f;
+    private const string Color = "#2E2E2E";
+
+    private readonly PlayerControl owner;
+    private readonly Vector3 basePos;
+    private readonly SniperRiflePart body;
+    private readonly SniperRiflePart barrel;
+    private float shownAngle = float.NaN;
+    private int sector = -1;
+    private float nextMoveAt;
+    private bool removed;
+
+    public SniperRifle(PlayerControl owner, Vector3 basePos)
+    {
+        this.owner = owner;
+        this.basePos = basePos;
+        var start = (Vector2)owner.transform.position;
+        body = new SniperRiflePart(start, this);
+        barrel = new SniperRiflePart(start, this);
+    }
+
+    // 撃つ向き(まだ動いていない時は、体の向き)
+    private Vector2 Aim()
+    {
+        var d = (Vector2)(owner.transform.position - basePos);
+        if (d.magnitude < 0.1f) return owner.cosmetics.FlipX ? Vector2.left : Vector2.right;
+        return d.normalized;
+    }
+
+    public void Follow()
+    {
+        if (removed || !AmongUsClient.Instance.AmHost) return;
+        if (!body.Ready || !barrel.Ready) return;
+        var aim = Aim();
+        var angle = Mathf.Atan2(aim.y, aim.x) * Mathf.Rad2Deg;
+        // 銃は、構えた場所に置いたまま、向きだけ変える
+        var root = (Vector2)basePos + aim * Grip;
+        if (!TextBar.Ready || !TextBar.Has(BodyChar))
+        {
+            FollowOld(aim, angle, root);
+            return;
+        }
+        // 向きが 3 度以上変わった時だけ、名前(銃の形)を送り直す
+        var turned = !(Mathf.Abs(Mathf.DeltaAngle(shownAngle, angle)) < 3f);
+        if (turned) shownAngle = angle;
+        var barrelChar = TextBar.Has(BarrelChar) ? BarrelChar : BodyChar;
+        var bodyName = TextBar.Build(BodyChar, BodyThickness, shownAngle, Color, out var bodyLength, out var bodyOffset);
+        var barrelName = TextBar.Build(barrelChar, BarrelThickness, shownAngle, Color, out var barrelLength, out var barrelOffset);
+        if (turned)
+        {
+            body.Show(bodyName);
+            barrel.Show(barrelName);
+        }
+        if (Time.time < nextMoveAt && !turned) return;
+        nextMoveAt = Time.time + 0.1f;
+        var dir = new Vector2(Mathf.Cos(shownAngle * Mathf.Deg2Rad), Mathf.Sin(shownAngle * Mathf.Deg2Rad));
+        body.Move(root + dir * (bodyLength * 0.5f) - bodyOffset);
+        barrel.Move(root + dir * (bodyLength * 0.8f + barrelLength * 0.5f) - barrelOffset);
+    }
+
+    // ふちの無いフォントが無い時の、今までの見た目(8 方向の文字の絵)
+    private void FollowOld(Vector2 aim, float angle, Vector2 root)
+    {
+        var index = Mathf.RoundToInt(angle / 45f);
+        var sec = ((index % 8) + 8) % 8;
+        if (Time.time >= nextMoveAt)
+        {
+            nextMoveAt = Time.time + 0.1f;
+            body.Move(root + aim * 0.65f - new Vector2(0f, 0.6f));
+        }
+        if (sec == sector) return;
+        sector = sec;
+        body.Show(OldArt(sec));
+        barrel.Show("");
+    }
+
+    // 0:→ 1:↗ 2:↑ 3:↖ 4:← 5:↙ 6:↓ 7:↘
+    private static string OldArt(int sec)
+    {
+        const string c = "<#3a3a3a>";
+        var art = sec switch
+        {
+            0 => "︻デ═一",
+            4 => "一═デ︻",
+            2 => "┃\n┃\n╋\n█",
+            6 => "█\n╋\n┃\n┃",
+            1 => "<space=2.4em>／\n<space=1.2em>／\n■",
+            3 => "＼<space=2.4em>\n＼<space=1.2em>\n■",
+            7 => "■\n<space=1.2em>＼\n<space=2.4em>＼",
+            _ => "■\n／<space=1.2em>\n／<space=2.4em>",
+        };
+        return $"<size=250%>{c}{art}</color></size>";
+    }
+
+    public void Remove()
+    {
+        if (removed) return;
+        removed = true;
+        body.Remove();
+        barrel.Remove();
+    }
+}
+
+// 銃の棒 1 本ぶんのダミー
+public sealed class SniperRiflePart : CustomNetObject
+{
+    private readonly SniperRifle rifle;
+    private Vector2 wanted;
+    private string shownName = "";
+    private bool removed;
+
+    public bool Ready { get; private set; }
+
+    public SniperRiflePart(Vector2 pos, SniperRifle rifle)
+    {
+        this.rifle = rifle;
+        wanted = pos;
+        CreateNetObject(pos);
+    }
+
+    protected override void OnCreated()
+    {
+        if (removed) { Despawn(); return; }
+        SetAppearance(colorId: 15, skinId: "", hatId: "", petId: "", visorId: "");
+        TextBar.Measure(PlayerControl, '-', '\u2014');
+        SetName("");
+        Ready = true;
+        _ = new LateTask(HideBody, 0.3f, "SniperRiflePart.HideBody", true);
+    }
+
+    // ホストの画面では、ダミーの体が見えてしまうので、名前の文字以外を消す
+    private void HideBody()
+    {
+        if (PlayerControl == null) return;
+        try
+        {
+            foreach (var r in PlayerControl.GetComponentsInChildren<SpriteRenderer>(true)) r.enabled = false;
+            PlayerControl.cosmetics.colorBlindText.color = UnityEngine.Color.clear;
+        }
+        catch { }
+    }
+
+    public void Show(string name)
+    {
+        if (removed || !Ready || name == shownName) return;
+        shownName = name;
+        SetName(name);
+        HideBody();
+    }
+
+    public void Move(Vector2 pos)
+    {
+        if (removed || !Ready) return;
+        if (Vector2.Distance(wanted, pos) < 0.03f && Vector2.Distance(Position, pos) < 0.03f) return;
+        wanted = pos;
+        SnapToPosition(pos);
+    }
+
+    public void Remove()
+    {
+        if (removed) return;
+        removed = true;
+        if (PlayerControl != null) Despawn();
+    }
+
+    public override void OnMeeting() => rifle.Remove();
 }

@@ -76,6 +76,14 @@ public sealed class RaccoonChild : RoleBase, IKiller, IRoomTasker
 
     public bool CanUseSabotageButton() => false;
 
+    // 会議の画面が出てからだと「会議中のキル」として弾かれるので、通報された時点(会議に入る前)にキルする
+    public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
+    {
+        if (!AmongUsClient.Instance.AmHost || GrabbedTargetId == byte.MaxValue || !RaccoonParent.ChildKillOnMeetingIfGrabbing) return;
+        var grabbed = GrabbedTargetId.GetPlayerControl();
+        if (grabbed == null || !grabbed.IsAlive() || !Player.IsAlive()) return;
+        CustomRoleManager.OnCheckMurder(Player, grabbed, grabbed, grabbed, true, false, 1, CustomDeathReason.Kill);
+    }
     public override void OnStartMeeting()
     {
         if (GrabbedTargetId != byte.MaxValue && RaccoonParent.ChildKillOnMeetingIfGrabbing)

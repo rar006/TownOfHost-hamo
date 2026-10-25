@@ -607,7 +607,13 @@ namespace TownOfHost
                 if (Options.firstturnmeeting)
                 {
                     _ = new LateTask(() =>
+<<<<<<< HEAD
                         ReportDeadBodyPatch.ExReportDeadBody(PlayerControl.LocalPlayer, PlayerControl.LocalPlayer.Data, false, "Firstmeetinginfo", "#23dbc0"), 0.7f + Main.LagTime, "", true);
+=======
+
+                        FirstTurnMeeting.StartWhenSpawned(0f), 0.7f + Main.LagTime, "", true);
+
+>>>>>>> 531b99b057f3a9e5f154672def1720b9c5b7e3fd
                 }
                 else
                 {
@@ -659,4 +665,36 @@ namespace TownOfHost
             Logger.Info("OnDestroy", "IntroCutscene");
         }
     }
+<<<<<<< HEAD
 }
+=======
+
+}
+
+// 1ターン目の会議: エアシップで湧く場所を選んでいる人がいる間に会議を始めると、その人たち(と全員)の画面が暗転したままになるので、
+// 生きている人が全員湧き終わるまで待ってから始める(待ちすぎないよう、最大 MaxWait 秒)
+namespace TownOfHost
+{
+static class FirstTurnMeeting
+{
+    private const float Step = 0.25f;
+    private const float MaxWait = 8f;
+
+    public static void StartWhenSpawned(float waited)
+    {
+        if (!AmongUsClient.Instance.AmHost || GameStates.IsLobby || GameStates.IsMeeting || GameStates.CalledMeeting) return;
+        var notSpawned = PlayerCatch.AllAlivePlayerControls.Count(pc => pc != null && !pc.GetPlayerState().HasSpawned);
+        if (notSpawned > 0 && waited < MaxWait)
+        {
+            _ = new LateTask(() => StartWhenSpawned(waited + Step), Step, "FirstTurnMeeting.Wait", true);
+            return;
+        }
+        if (notSpawned > 0) Logger.Warn($"湧いていない人が{notSpawned}人いますが、{MaxWait}秒待ったので1ターン目の会議を始めます", "FirstTurnMeeting");
+        else if (waited > 0f) Logger.Info($"全員が湧くのを{waited:0.00}秒待ってから1ターン目の会議を始めます", "FirstTurnMeeting");
+        // 湧いた直後のテレポートが届くまで少しだけ待つ
+        _ = new LateTask(() => ReportDeadBodyPatch.ExReportDeadBody(PlayerControl.LocalPlayer, PlayerControl.LocalPlayer.Data, false, "Firstmeetinginfo", "#23dbc0"),
+            waited > 0f ? 0.5f : 0f, "FirstTurnMeeting", true);
+    }
+}
+}
+>>>>>>> 531b99b057f3a9e5f154672def1720b9c5b7e3fd

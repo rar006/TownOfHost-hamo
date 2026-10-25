@@ -610,7 +610,9 @@ public static class CustomRoleManager
 
             CheckMurderInfos[appearanceKiller.PlayerId] = info;
 
-            appearanceKiller.RpcMurderPlayer(appearanceTarget);
+            // 自分で死んだ見た目でも、本当のキル役がいる時は、死んだ本人には自分に殺されたように見せない
+            if (!(info.IsFakeSuicide && !info.IsSuicide && appearanceTarget.TryRpcMurderShowRealKiller(attemptKiller)))
+                appearanceKiller.RpcMurderPlayer(appearanceTarget);
 
 
 
@@ -2017,6 +2019,7 @@ public enum CustomRoles
     NiceHacker = 585,
     Romeo = 586,
     Juliet = 587,
+    Nova = 588,
     // Sub-role after 1000←今後の拡張のため広げます。
     //NotAssigned = 500,
     NotAssigned = 1000,

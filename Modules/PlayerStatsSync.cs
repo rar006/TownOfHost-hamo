@@ -66,7 +66,7 @@ public static class PlayerStatsSync
         firstTimerFcs.Clear();
         try
         {
-            if (RecordEnabled?.GetBool() != true || AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
+            if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
             if (!GameModeManager.IsStandardClass() || CustomWinnerHolder.WinnerTeam is CustomWinner.Draw) return;
             var winners = CustomWinnerHolder.WinnerIds ?? new HashSet<byte>();
             var players = new List<object>();
@@ -105,7 +105,7 @@ public static class PlayerStatsSync
     // ===== /me =====
     public static bool TryHandle(string text, PlayerControl who)
     {
-        if (RecordEnabled?.GetBool() != true || who == null || string.IsNullOrWhiteSpace(text)) return false;
+        if (who == null || string.IsNullOrWhiteSpace(text)) return false;
         var t = text.Trim().ToLowerInvariant();
         if (t != "/me" && t != "/cmd me") return false;
         if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return false;

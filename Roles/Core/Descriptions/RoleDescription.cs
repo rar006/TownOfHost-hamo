@@ -97,7 +97,7 @@ public abstract class RoleDescription
                         sb.Append($"┃ {rule}{Options.MadmateRevengeCrewmate.GetName()}: {Options.MadmateRevengeCrewmate.GetTextString()}\n");
                         sb.Append($"┃ {ruleFooter}{Options.MadmateRevengeNeutral.GetName()}: {Options.MadmateRevengeNeutral.GetTextString()}\n");
                     }
-                    if (Options.MadCanSeeImpostor.GetBool())
+                    if (Options.MadCanSeeImpostor.GetBool() && RoleInfo.RoleName is not CustomRoles.MadKind)
                         sb.Append($"{rule}{Options.MadCanSeeImpostor.GetName()}: {Options.MadCanSeeImpostor.GetTextString()}\n");
                     sb.Append($"{rule}{Options.MadmateVentCooldown.GetName()}: {Options.MadmateVentCooldown.GetTextString()}\n");
                     sb.Append($"{rule}{Options.MadmateVentMaxTime.GetName()}: {Options.MadmateVentMaxTime.GetTextString()}\n");

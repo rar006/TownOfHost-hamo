@@ -2041,6 +2041,7 @@ namespace TownOfHost
 
                 case From.TownOfHost_hamo: Fromtext = ""; break;
                 case From.TownOfHost_Temp: Fromtext += "<#b4b4b4>TownOfHost_Temp</color>"; break;
+                case From.UchuAddon: Fromtext += "<#7b68ee>UchuAddon</color>"; break;
 
                 //case From.TownOfHost_hamo: Fromtext += $"<#fb85ff>TownOfHost_hamo</color>"; break;
 

@@ -25,8 +25,17 @@ public static class StreamCommentFrame
     private static TextMeshPro text;
     private static TextMeshPro header;
     private static TextMeshPro button;
+    private static TextMeshPro lockButton;
+    // ロビーのボタンや部屋の情報の枠より手前に出す
+    private const int FrontOrder = 500;
+    private const float FrontZ = -150f;
     private static TextMeshPro grip;
     private static SpriteRenderer background;
+    private static Modules.UiSkin.Panel panel;
+    // 配信の上に重ねるので、ほかの枠より少し透かす
+    private static readonly Color BackgroundColor = new(0.035f, 0.05f, 0.085f, 0.62f);
+    private const string LiveMark = "<color=#ff4d4d>●</color> ";
+    private static string HeaderTitle => LiveMark + Modules.UiSkin.Title("YouTube") + $" <size=75%><color={Modules.UiSkin.DimHex}>LIVE CHAT</color></size>";
     private static AspectPosition aspect;
     private static int shownVersion = -1;
     private static int shownVoteVersion = -1;
@@ -37,6 +46,7 @@ public static class StreamCommentFrame
     private enum Mode { None, Drag, Resize }
     private static Mode mode;
     private static bool pressedButton;
+    private static bool pressedLock;
     private static Vector3 lastMouse;
 
     private static float W => Main.StreamCommentMinimized.Value ? MinimizedWidth : Mathf.Clamp(Main.StreamCommentWidth.Value, MinWidth, MaxWidth);
@@ -64,7 +74,7 @@ public static class StreamCommentFrame
             {
                 // 最小化中は、新しいコメントが来たらタイトルに印を出すだけ
                 var hasNew = StreamerInfo.RecentCommentsVersion != minimizedAtVersion;
-                header.text = hasNew ? "<b>YouTube</b> <color=#ffd36e>● 新着</color>" : "<b>YouTube</b>";
+                header.text = hasNew ? LiveMark + Modules.UiSkin.Title("YouTube") + " <color=#ffd36e>● 新着</color>" : HeaderTitle;
                 return;
             }
             var voteOn = Modules.YouTubeMapVote.IsOn;
@@ -102,29 +112,30 @@ public static class StreamCommentFrame
         // 画面の左下に固定する(画面の縦横比が変わっても位置がずれないように)
         aspect = text.gameObject.AddComponent<AspectPosition>();
         aspect.Alignment = AspectPosition.EdgeAlignments.LeftBottom;
-        aspect.DistanceFromEdge = new Vector3(Main.StreamCommentPosX.Value, Main.StreamCommentPosY.Value, -20f);
+        aspect.DistanceFromEdge = new Vector3(Main.StreamCommentPosX.Value, Main.StreamCommentPosY.Value, FrontZ);
         aspect.AdjustPosition();
 
-        // 半透明の黒い背景
-        var tex = new Texture2D(1, 1);
-        tex.SetPixel(0, 0, Color.white);
-        tex.Apply();
-        var bgObj = new GameObject("StreamCommentFrameBg");
-        bgObj.layer = text.gameObject.layer;
-        bgObj.transform.SetParent(text.transform, false);
-        background = bgObj.AddComponent<SpriteRenderer>();
-        background.sprite = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0f, 0f), 1f);
-        background.color = new Color(0f, 0f, 0f, 0.45f);
+        // 角の丸い、半透明の暗い枠(ほかの枠と同じ見た目)
+        panel = new Modules.UiSkin.Panel("StreamCommentFrame", text.transform, BackgroundColor);
+        background = panel.Background;
         var textRenderer = text.GetComponent<Renderer>();
-        if (textRenderer != null) background.sortingOrder = textRenderer.sortingOrder - 1;
+        if (textRenderer != null) panel.SetOrder(textRenderer.sortingOrder - 3);
 
         header = CreateText("StreamCommentHeader", hud, text.transform, 1.3f, TextAlignmentOptions.MidlineLeft);
-        header.text = "<b>YouTube</b>";
+        header.text = HeaderTitle;
         button = CreateText("StreamCommentMinButton", hud, text.transform, 1.8f, TextAlignmentOptions.Center);
         grip = CreateText("StreamCommentGrip", hud, text.transform, 1.3f, TextAlignmentOptions.BottomRight);
-        grip.text = "<color=#bbbbbb>◢</color>";
+        grip.text = $"<color={Modules.UiSkin.AccentHex}99>◢</color>";
+        lockButton = CreateText("StreamCommentLockButton", hud, text.transform, 1.1f, TextAlignmentOptions.Center);
+        // 全部の部品を、ほかの UI より手前に描く(重なり方は枠の中で今まで通り)
+        foreach (var r in text.GetComponentsInChildren<Renderer>(true))
+            if (r != null) r.sortingOrder += FrontOrder;
         Layout();
     }
+
+    // 「固定」ボタンの場所(最小化ボタンの左)
+    private const float LockWidth = 0.5f;
+    private static bool InLock(Vector2 p, float w, float h) => InRect(p, w - ButtonSize - LockWidth - 0.08f, h - ButtonSize - 0.05f, LockWidth + 0.05f, ButtonSize + 0.05f);
 
     private static void Layout()
     {
@@ -132,19 +143,24 @@ public static class StreamCommentFrame
         var w = W;
         var h = H;
         var minimized = Main.StreamCommentMinimized.Value;
-        background.transform.localPosition = new Vector3(-PadX, -PadY, 0.1f);
-        background.transform.localScale = new Vector3(w, h, 1f);
+        panel.Layout(-PadX, -PadY, w, h, HeaderHeight);
         // コメント本文はタイトルの帯の下に入れる
         text.rectTransform.sizeDelta = new Vector2(w - 0.2f, Mathf.Max(0.1f, h - HeaderHeight - 0.15f));
         if (minimized) text.text = "";
         var top = h - PadY; // 背景の上の端(文字の位置から見た高さ)
-        header.rectTransform.sizeDelta = new Vector2(w - ButtonSize - 0.2f, HeaderHeight);
-        header.transform.localPosition = new Vector3(0f, top - HeaderHeight, -0.01f);
-        if (!minimized) header.text = "<b>YouTube</b>";
+        // 帯の左の印の分だけ、見出しを右へずらす
+        header.rectTransform.sizeDelta = new Vector2(w - ButtonSize - LockWidth - 0.3f, HeaderHeight);
+        header.transform.localPosition = new Vector3(0.08f, top - HeaderHeight, -0.01f);
+        if (!minimized) header.text = HeaderTitle;
         button.rectTransform.sizeDelta = new Vector2(ButtonSize, ButtonSize);
         button.transform.localPosition = new Vector3(w - PadX - ButtonSize, top - ButtonSize, -0.01f);
-        button.text = minimized ? "<b>＋</b>" : "<b>－</b>";
-        grip.gameObject.SetActive(!minimized);
+        button.text = $"<b><color={Modules.UiSkin.ButtonHex}>{(minimized ? "＋" : "－")}</color></b>";
+        lockButton.rectTransform.sizeDelta = new Vector2(LockWidth, ButtonSize);
+        lockButton.transform.localPosition = new Vector3(w - PadX - ButtonSize - LockWidth - 0.03f, top - ButtonSize, -0.01f);
+        lockButton.text = Main.StreamCommentLocked.Value
+            ? $"<b><color=#ffd36e>固定中</color></b>"
+            : $"<color={Modules.UiSkin.DimHex}>固定</color>";
+        grip.gameObject.SetActive(!minimized && !Main.StreamCommentLocked.Value);
         grip.rectTransform.sizeDelta = new Vector2(GripSize, GripSize);
         grip.transform.localPosition = new Vector3(w - PadX - GripSize, -PadY, -0.01f);
         shownVersion = -1; // 件数が変わるので書き直す
@@ -165,13 +181,16 @@ public static class StreamCommentFrame
         var mouse = cam.ScreenToWorldPoint(Input.mousePosition);
         var w = W;
         var h = H;
-        if (mode == Mode.None && !pressedButton)
+        if (mode == Mode.None && !pressedButton && !pressedLock)
         {
             if (!Input.GetMouseButtonDown(0)) return;
             var p = ToFrame(mouse);
             if (!InRect(p, 0f, 0f, w, h)) return;
             lastMouse = mouse;
             if (InRect(p, w - ButtonSize - 0.05f, h - ButtonSize - 0.05f, ButtonSize + 0.05f, ButtonSize + 0.05f)) { pressedButton = true; return; }
+            if (InLock(p, w, h)) { pressedLock = true; return; }
+            // 固定中は、動かしたり大きさを変えたりしない
+            if (Main.StreamCommentLocked.Value) return;
             mode = !Main.StreamCommentMinimized.Value && InRect(p, w - GripSize - 0.05f, 0f, GripSize + 0.05f, GripSize + 0.05f) ? Mode.Resize : Mode.Drag;
             return;
         }
@@ -181,6 +200,17 @@ public static class StreamCommentFrame
             pressedButton = false;
             // 押したまま枠の外に出て離した時は何もしない
             if (InRect(ToFrame(mouse), w - ButtonSize - 0.05f, h - ButtonSize - 0.05f, ButtonSize + 0.05f, ButtonSize + 0.05f)) ToggleMinimize();
+            return;
+        }
+        if (pressedLock)
+        {
+            if (Input.GetMouseButton(0)) return;
+            pressedLock = false;
+            if (InLock(ToFrame(mouse), w, h))
+            {
+                Main.StreamCommentLocked.Value = !Main.StreamCommentLocked.Value;
+                Layout();
+            }
             return;
         }
         var screenH = cam.orthographicSize * 2f;
@@ -240,7 +270,7 @@ public static class StreamCommentFrame
         Main.StreamCommentMinimized.Value = false;
         if (aspect != null)
         {
-            aspect.DistanceFromEdge = new Vector3(DefaultX, DefaultY, -20f);
+            aspect.DistanceFromEdge = new Vector3(DefaultX, DefaultY, FrontZ);
             aspect.AdjustPosition();
         }
         Layout();
@@ -260,7 +290,7 @@ public static class StreamCommentFrame
             if (sb.Length > 0) sb.Append(lf);
             var t = Clean(body);
             if (t.Length > MaxTextLength) t = t.Substring(0, MaxTextLength) + "…";
-            sb.Append("<color=#ffd36e>").Append(Clean(name)).Append("</color>: ").Append(t);
+            sb.Append("<color=#8fe3ff>").Append(Clean(name)).Append($"</color><color={Modules.UiSkin.DimHex}> : </color>").Append(t);
         }
         return sb.ToString();
     }

@@ -46,6 +46,17 @@ public static class NetworkSafety
     private static readonly Queue<float> teleportTimes = new();
     private const float TeleportWindow = 6f;
     private const int TeleportMax = 260; // サーバーの境目(約330本/6秒)より余裕を持たせる
+    public static int TeleportLimit => TeleportMax;
+    // 直近6秒に送ったテレポートの本数(通信モニター用)
+    public static int RecentTeleports
+    {
+        get
+        {
+            var now = Time.realtimeSinceStartup;
+            while (teleportTimes.Count > 0 && now - teleportTimes.Peek() > TeleportWindow) teleportTimes.Dequeue();
+            return teleportTimes.Count;
+        }
+    }
     private static float lastTeleportWarnAt = -99f;
 
     public static bool AllowTeleport()
@@ -76,6 +87,7 @@ public static class NetworkSafety
         {
             // 先に別の処理(ClientPatch)が分けて送った時は、ここで送り直さない(同じ通信を2回送っていた)
             if (!__runOriginal) return false;
+            if (!splitting && msg != null) NetMonitor.CountSend(msg.Length);
             try
             {
                 if (!splitting && msg != null && ShouldFilterForNonHost())

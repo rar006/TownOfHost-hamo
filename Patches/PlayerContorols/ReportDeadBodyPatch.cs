@@ -46,7 +46,30 @@ namespace TownOfHost
 
         //public static Dictionary<byte, Vector2> Pos = new();
 
-        public static bool Prefix(PlayerControl __instance, [HarmonyArgument(0)] NetworkedPlayerInfo target)
+                // 1つの役職の確認でエラーが起きても、会議の判定ごと止まらないようにする
+
+                // (Experiencer が緊急会議で落ちて、「会議中」のまま戻らず、キルやサボタージュまで止まっていた)
+
+                private static bool SafeCancelReport(RoleBase role, PlayerControl repoter, NetworkedPlayerInfo target, ref DontReportreson reason)
+
+                {
+
+                    try { return role.CancelReportDeadBody(repoter, target, ref reason); }
+
+                    catch (System.Exception e)
+
+                    {
+
+                        Logger.Warn($"{role}の会議の確認でエラー(この役職の確認は飛ばします): {e.Message}", "ReportDeadBody");
+
+                        return false;
+
+                    }
+
+                }
+
+
+public static bool Prefix(PlayerControl __instance, [HarmonyArgument(0)] NetworkedPlayerInfo target)
         {
             // 参加者専用MODはHELP・カスタムボタンの表示だけを担い、
             // 通報・緊急会議・会議開始の判定は通常Among Usへ委ねる。
@@ -86,6 +109,13 @@ namespace TownOfHost
 
 
 
+            // ケイドロは会議を開かない(会議ボタンを押せて、会議で鬼を吊ると MOD なしの参加者が暗転していた)
+            if (Kedoro.IsActive)
+            {
+                GameStates.CalledMeeting = false;
+                Logger.Info($"{__instance.name} : ケイドロ中は会議を開けません", "ReportDeadBody");
+                return false;
+            }
             if (Options.CurrentGameMode is CustomGameMode.HideAndSeek or CustomGameMode.TaskBattle or CustomGameMode.MurderMystery || Options.IsStandardHAS)
 
             {
@@ -357,7 +387,7 @@ namespace TownOfHost
 
                 {
 
-                    if (role.CancelReportDeadBody(repoter, target, ref reason))
+                    if (SafeCancelReport(role, repoter, target, ref reason))
 
                     {
 
@@ -547,7 +577,7 @@ namespace TownOfHost
 
             {
 
-                if (role.CancelReportDeadBody(repoter, target, ref reason))
+                if (SafeCancelReport(role, repoter, target, ref reason))
 
                 {
 

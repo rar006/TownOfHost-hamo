@@ -23,6 +23,9 @@ public sealed class Turncoat : RoleBase, IKiller
             "Tu",
             "#371a1a",
             (7, 1),
+            // シェイプシフター(インポスター側の役職)として動くので、本物のインポスターが仲間に見えないようにする。
+            // (付いていないと、シェイプシフトの画面などでインポスターが分かってしまっていた)
+            isDesyncImpostor: true,
             from: From.TownOfHost_K
         );
     public Turncoat(PlayerControl player)

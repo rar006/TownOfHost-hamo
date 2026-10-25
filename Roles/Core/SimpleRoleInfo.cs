@@ -32,7 +32,8 @@ public enum From
     RevolutionaryHostRoles,
     Love_Couple_Mod,
     TownOfHost_hamo,
-    TownOfHost_Temp
+    TownOfHost_Temp,
+    UchuAddon
 }
 public class SimpleRoleInfo
 {

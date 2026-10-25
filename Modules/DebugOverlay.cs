@@ -21,6 +21,8 @@ public sealed class DebugWindow
     private const float MinWidth = 2.4f, MaxWidth = 10f;
     private const float MinHeight = 0.9f, MaxHeight = 6.5f;
     private const int BaseOrder = 600;
+    // 「前」を押した枠は、ロビーのボタンや部屋の情報などより手前に出す
+    private const int FrontOrder = 1500;
 
     // 重なっている時に、いちばん手前の枠だけがクリックを受け取るための印
     public static bool ClickTaken;
@@ -39,8 +41,7 @@ public sealed class DebugWindow
     private TextMeshPro header;
     private TextMeshPro grip;
     private readonly List<(string id, TextMeshPro t, float x)> buttonTexts = new();
-    private SpriteRenderer background;
-    private SpriteRenderer headerBar;
+    private UiSkin.Panel panel;
     private AspectPosition aspect;
     private enum Mode { None, Drag, Resize }
     private Mode mode;
@@ -48,6 +49,8 @@ public sealed class DebugWindow
     private Vector3 lastMouse;
     private float posX, posY, width, height;
     private bool minimized;
+    private bool locked;
+    private bool front;
     private bool loaded;
     private int appliedFocus = -1;
 
@@ -57,6 +60,14 @@ public sealed class DebugWindow
         Title = title;
         defX = x; defY = y; defW = w; defH = h;
         extraButtons.AddRange(buttons);
+    }
+
+    // 帯に「固」(動かせないようにする)と「前」(いちばん手前に出す)のボタンを付ける
+    public DebugWindow WithLockAndFront()
+    {
+        extraButtons.Add(("lock", "固"));
+        extraButtons.Add(("front", "前"));
+        return this;
     }
 
     public bool IsShown => root != null && root.activeSelf;
@@ -101,6 +112,7 @@ public sealed class DebugWindow
 
     private void Build(HudManager hud)
     {
+        buttonTexts.Clear();
         root = new GameObject("DebugWindow_" + Key);
         root.layer = LayerMask.NameToLayer("UI");
         root.transform.SetParent(hud.transform, false);
@@ -109,12 +121,7 @@ public sealed class DebugWindow
         aspect.DistanceFromEdge = new Vector3(posX, posY, -25f);
         aspect.AdjustPosition();
 
-        var tex = new Texture2D(1, 1);
-        tex.SetPixel(0, 0, Color.white);
-        tex.Apply();
-        var sprite = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0f, 0f), 1f);
-        background = MakeRect("Bg", sprite, new Color(0.03f, 0.03f, 0.07f, 0.72f), 0.1f);
-        headerBar = MakeRect("Bar", sprite, new Color(0.55f, 0.2f, 0.42f, 0.9f), 0.05f);
+        panel = new UiSkin.Panel("DebugWindow_" + Key, root.transform, UiSkin.PanelColor);
 
         text = CreateText("DebugWindowBody_" + Key, hud, 1.15f, TextAlignmentOptions.TopLeft);
         text.overflowMode = TextOverflowModes.Truncate;
@@ -123,21 +130,9 @@ public sealed class DebugWindow
             buttonTexts.Add((id, CreateText("DebugWindowBtn_" + Key + id, hud, 1.35f, TextAlignmentOptions.Center), 0f));
         buttonTexts.Add(("min", CreateText("DebugWindowMin_" + Key, hud, 1.8f, TextAlignmentOptions.Center), 0f));
         grip = CreateText("DebugWindowGrip_" + Key, hud, 1.3f, TextAlignmentOptions.BottomRight);
-        grip.text = "<color=#bbbbbb>◢</color>";
+        grip.text = $"<color={UiSkin.AccentHex}99>◢</color>";
         Layout();
         ApplyFocusOrder();
-    }
-
-    private SpriteRenderer MakeRect(string name, Sprite sprite, Color color, float z)
-    {
-        var go = new GameObject("DebugWindow" + name + "_" + Key);
-        go.layer = root.layer;
-        go.transform.SetParent(root.transform, false);
-        go.transform.localPosition = new Vector3(0f, 0f, z);
-        var sr = go.AddComponent<SpriteRenderer>();
-        sr.sprite = sprite;
-        sr.color = color;
-        return sr;
     }
 
     // 最後に触った枠ほど手前に描く
@@ -145,12 +140,11 @@ public sealed class DebugWindow
     {
         if (root == null || appliedFocus == Focus) return;
         appliedFocus = Focus;
-        var baseOrder = BaseOrder + Focus * 10;
-        background.sortingOrder = baseOrder;
-        headerBar.sortingOrder = baseOrder + 1;
-        foreach (var r in root.GetComponentsInChildren<TextMeshPro>(true)) r.sortingOrder = baseOrder + 2;
+        var baseOrder = (front ? FrontOrder : BaseOrder) + Focus * 10;
+        panel.SetOrder(baseOrder);
+        foreach (var r in root.GetComponentsInChildren<TextMeshPro>(true)) r.sortingOrder = baseOrder + 3;
         var p = aspect.DistanceFromEdge;
-        aspect.DistanceFromEdge = new Vector3(p.x, p.y, -25f - Mathf.Min(Focus, 50) * 0.2f);
+        aspect.DistanceFromEdge = new Vector3(p.x, p.y, (front ? -150f : -25f) - Mathf.Min(Focus, 50) * 0.2f);
         aspect.AdjustPosition();
     }
 
@@ -159,16 +153,14 @@ public sealed class DebugWindow
         if (root == null) return;
         var w = W;
         var h = H;
-        background.transform.localPosition = new Vector3(0f, 0f, 0.1f);
-        background.transform.localScale = new Vector3(w, h, 1f);
-        headerBar.transform.localPosition = new Vector3(0f, h - HeaderHeight, 0.05f);
-        headerBar.transform.localScale = new Vector3(w, HeaderHeight, 1f);
+        panel.Layout(0f, 0f, w, h, HeaderHeight);
         // 本文は帯の下の左上から
         text.rectTransform.sizeDelta = new Vector2(Mathf.Max(0.1f, w - PadX * 2), Mathf.Max(0.1f, h - HeaderHeight - PadY * 2));
         text.transform.localPosition = new Vector3(PadX, PadY, -0.01f);
-        header.rectTransform.sizeDelta = new Vector2(Mathf.Max(0.1f, w - ButtonSize * buttonTexts.Count - PadX * 2), HeaderHeight);
-        header.transform.localPosition = new Vector3(PadX, h - HeaderHeight, -0.01f);
-        header.text = $"<b>{Title}</b>";
+        // 帯の左の印の分だけ、見出しを右へずらす
+        header.rectTransform.sizeDelta = new Vector2(Mathf.Max(0.1f, w - ButtonSize * buttonTexts.Count - PadX * 2 - 0.08f), HeaderHeight);
+        header.transform.localPosition = new Vector3(PadX + 0.08f, h - HeaderHeight, -0.01f);
+        header.text = UiSkin.Title(Title);
         // 帯の右側に、右から「－」→ ほかのボタンの順で並べる
         for (var i = 0; i < buttonTexts.Count; i++)
         {
@@ -178,7 +170,7 @@ public sealed class DebugWindow
             t.transform.localPosition = new Vector3(x, h - ButtonSize, -0.01f);
             buttonTexts[i] = (id, t, x);
         }
-        grip.gameObject.SetActive(!minimized);
+        grip.gameObject.SetActive(!minimized && !locked);
         grip.rectTransform.sizeDelta = new Vector2(GripSize, GripSize);
         grip.transform.localPosition = new Vector3(w - GripSize, 0f, -0.01f);
     }
@@ -187,9 +179,10 @@ public sealed class DebugWindow
     {
         foreach (var (id, t, _) in buttonTexts)
         {
-            if (id == "min") { t.text = minimized ? "<b>＋</b>" : "<b>－</b>"; continue; }
+            if (id == "min") { t.text = $"<b><color={UiSkin.ButtonHex}>{(minimized ? "＋" : "－")}</color></b>"; continue; }
             var label = extraButtons.FirstOrDefault(b => b.id == id).label;
-            t.text = IsButtonOn(id) ? $"<b><color=#ffd36e>{label}</color></b>" : $"<b><color=#cccccc>{label}</color></b>";
+            var on = id == "lock" ? locked : id == "front" ? front : IsButtonOn(id);
+            t.text = on ? $"<b><color={UiSkin.AccentHex}>{label}</color></b>" : $"<b><color=#5d6b7d>{label}</color></b>";
         }
     }
 
@@ -227,6 +220,8 @@ public sealed class DebugWindow
             lastMouse = mouse;
             var b = ButtonAt(p, h);
             if (b != null) { pressedButton = b; return; }
+            // 固定中は、動かしたり大きさを変えたりしない
+            if (locked) return;
             mode = !minimized && InRect(p, w - GripSize - 0.05f, 0f, GripSize + 0.05f, GripSize + 0.05f) ? Mode.Resize : Mode.Drag;
             return;
         }
@@ -238,6 +233,8 @@ public sealed class DebugWindow
             // 押したままボタンの外で離した時は何もしない
             if (ButtonAt(ToFrame(mouse), h) != b) return;
             if (b == "min") ToggleMinimize();
+            else if (b == "lock") { locked = !locked; Layout(); Save(); }
+            else if (b == "front") { front = !front; appliedFocus = -1; ApplyFocusOrder(); Save(); }
             else OnButton(b);
             return;
         }
@@ -300,6 +297,8 @@ public sealed class DebugWindow
             width = PlayerPrefs.GetFloat($"TOH_DW_{Key}_W", defW);
             height = PlayerPrefs.GetFloat($"TOH_DW_{Key}_H", defH);
             minimized = PlayerPrefs.GetInt($"TOH_DW_{Key}_Min", 0) == 1;
+            locked = PlayerPrefs.GetInt($"TOH_DW_{Key}_Lock", 0) == 1;
+            front = PlayerPrefs.GetInt($"TOH_DW_{Key}_Front", 0) == 1;
         }
         catch { }
     }
@@ -313,6 +312,8 @@ public sealed class DebugWindow
             PlayerPrefs.SetFloat($"TOH_DW_{Key}_W", width);
             PlayerPrefs.SetFloat($"TOH_DW_{Key}_H", height);
             PlayerPrefs.SetInt($"TOH_DW_{Key}_Min", minimized ? 1 : 0);
+            PlayerPrefs.SetInt($"TOH_DW_{Key}_Lock", locked ? 1 : 0);
+            PlayerPrefs.SetInt($"TOH_DW_{Key}_Front", front ? 1 : 0);
             PlayerPrefs.Save();
         }
         catch { }
@@ -324,9 +325,9 @@ public sealed class DebugWindow
 // 「デバッグ」枠の帯のボタン: [P] プレイヤー一覧の枠 / [D] 全員の位置の枠 / [L] ログをゲーム内にも出す
 public static class DebugOverlay
 {
-    private static readonly DebugWindow main = new("Main", "☆デバッグ☆", 0.35f, 3.0f, 4.6f, 2.1f, ("P", "P"), ("D", "D"), ("L", "L"));
-    private static readonly DebugWindow players = new("Players", "プレイヤー", 0.35f, 5.3f, 7.2f, 3.4f);
-    private static readonly DebugWindow positions = new("Pos", "全員の位置", 3.2f, 0.25f, 6.4f, 1.8f);
+    private static readonly DebugWindow main = new("Main", $"DEBUG <size=75%><color={UiSkin.DimHex}>デバッグ</color></size>", 0.35f, 3.0f, 4.6f, 2.1f, ("P", "P"), ("D", "D"), ("L", "L"));
+    private static readonly DebugWindow players = new("Players", $"PLAYERS <size=75%><color={UiSkin.DimHex}>プレイヤー</color></size>", 0.35f, 5.3f, 7.2f, 3.4f);
+    private static readonly DebugWindow positions = new("Pos", $"POSITIONS <size=75%><color={UiSkin.DimHex}>全員の位置</color></size>", 3.2f, 0.25f, 6.4f, 1.8f);
 
     private static bool visible = true;
     private static bool loaded;
@@ -369,7 +370,8 @@ public static class DebugOverlay
             try { visible = PlayerPrefs.GetInt("TOH_DW_Visible", 1) == 1; } catch { }
         }
         smoothDelta += (Time.unscaledDeltaTime - smoothDelta) * 0.1f;
-        if (Input.GetKeyDown(KeyCode.F3))
+        // Shift+F3 は通信モニター(NetMonitor)の切り替え
+        if (Input.GetKeyDown(KeyCode.F3) && !Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
         {
             if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) ToggleDebugMode();
             else

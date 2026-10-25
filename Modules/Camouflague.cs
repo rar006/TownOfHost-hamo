@@ -73,6 +73,11 @@ namespace TownOfHost
                 }
             }
         }
+        static void LocalSet(System.Action action)
+        {
+            try { action(); }
+            catch (System.Exception ex) { Logger.Warn($"ローカルの見た目変更に失敗: {ex.Message}", "Camouflage"); }
+        }
         public static List<byte> ventplayr = new();
         public static void RpcSetSkin(PlayerControl target, bool ForceRevert = false, bool RevertToDefault = false, bool? force = false, PlayerControl seer = null)
         {
@@ -126,26 +131,26 @@ namespace TownOfHost
 
             if (seer is not null)
             {
-                target.SetColor(newOutfit.ColorId);
+                LocalSet(() => target.SetColor(newOutfit.ColorId));
                 sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetColor)
                     .Write(target.Data.NetId)
                     .Write(newOutfit.ColorId)
                     .EndRpc();
 
 
-                target.SetHat(newOutfit.HatId, newOutfit.ColorId);
+                LocalSet(() => target.SetHat(newOutfit.HatId, newOutfit.ColorId));
                 sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetHatStr)
                     .Write(newOutfit.HatId)
                     .Write(target.GetNextRpcSequenceId(RpcCalls.SetHatStr))
                     .EndRpc();
 
-                target.SetSkin(newOutfit.SkinId, newOutfit.ColorId);
+                LocalSet(() => target.SetSkin(newOutfit.SkinId, newOutfit.ColorId));
                 sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetSkinStr)
                     .Write(newOutfit.SkinId)
                     .Write(target.GetNextRpcSequenceId(RpcCalls.SetSkinStr))
                     .EndRpc();
 
-                target.SetVisor(newOutfit.VisorId, newOutfit.ColorId);
+                LocalSet(() => target.SetVisor(newOutfit.VisorId, newOutfit.ColorId));
                 sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetVisorStr)
                     .Write(newOutfit.VisorId)
                     .Write(target.GetNextRpcSequenceId(RpcCalls.SetVisorStr))
@@ -153,26 +158,26 @@ namespace TownOfHost
             }
             else
             {
-                target.SetColor(newOutfit.ColorId);
+                LocalSet(() => target.SetColor(newOutfit.ColorId));
                 sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetColor, seer.GetClientId())
                     .Write(target.Data.NetId)
                     .Write(newOutfit.ColorId)
                     .EndRpc();
 
 
-                target.SetHat(newOutfit.HatId, newOutfit.ColorId);
+                LocalSet(() => target.SetHat(newOutfit.HatId, newOutfit.ColorId));
                 sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetHatStr, seer.GetClientId())
                     .Write(newOutfit.HatId)
                     .Write(target.GetNextRpcSequenceId(RpcCalls.SetHatStr))
                     .EndRpc();
 
-                target.SetSkin(newOutfit.SkinId, newOutfit.ColorId);
+                LocalSet(() => target.SetSkin(newOutfit.SkinId, newOutfit.ColorId));
                 sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetSkinStr, seer.GetClientId())
                     .Write(newOutfit.SkinId)
                     .Write(target.GetNextRpcSequenceId(RpcCalls.SetSkinStr))
                     .EndRpc();
 
-                target.SetVisor(newOutfit.VisorId, newOutfit.ColorId);
+                LocalSet(() => target.SetVisor(newOutfit.VisorId, newOutfit.ColorId));
                 sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetVisorStr, seer.GetClientId())
                     .Write(newOutfit.VisorId)
                     .Write(target.GetNextRpcSequenceId(RpcCalls.SetVisorStr))

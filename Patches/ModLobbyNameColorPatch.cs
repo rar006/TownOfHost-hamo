@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using HarmonyLib;
 
 namespace TownOfHost.Patches;
@@ -9,6 +10,8 @@ public static class ModLobbyNameColorPatch
 {
     private const string ColorOpen = "<#FFB7D5>";
     private const string ColorClose = "</color>";
+    // 色を付けた人。付けていない人の名前は、ロビー外で毎フレーム読まなくてよい
+    private static readonly HashSet<byte> tagged = new();
 
     [HarmonyPostfix]
     public static void Postfix(PlayerControl __instance)
@@ -18,11 +21,14 @@ public static class ModLobbyNameColorPatch
 
         try
         {
-            var text = __instance.cosmetics.nameText.text ?? string.Empty;
             bool isModdedPlayer = Main.playerVersion.ContainsKey(__instance.PlayerId);
+            var wantTag = GameStates.IsLobby && isModdedPlayer;
+            if (!wantTag && !tagged.Contains(__instance.PlayerId)) return;
+            var text = __instance.cosmetics.nameText.text ?? string.Empty;
 
-            if (GameStates.IsLobby && isModdedPlayer)
+            if (wantTag)
             {
+                tagged.Add(__instance.PlayerId);
                 // 参加者専用モードではFixedUpdatePatchが早期returnするため、独立した最終Postfixで表示文字列を着色する。
                 if (!text.StartsWith(ColorOpen, StringComparison.OrdinalIgnoreCase))
                     __instance.cosmetics.nameText.text = $"{ColorOpen}{text}{ColorClose}";
@@ -32,7 +38,9 @@ public static class ModLobbyNameColorPatch
             {
                 // ロビー外、またはMOD判定が外れたときは、このパッチ自身が付けた外側タグだけを取り除く。
                 __instance.cosmetics.nameText.text = text.Substring(ColorOpen.Length, text.Length - ColorOpen.Length - ColorClose.Length);
+                tagged.Remove(__instance.PlayerId);
             }
+            else tagged.Remove(__instance.PlayerId);
         }
         catch (Exception ex)
         {

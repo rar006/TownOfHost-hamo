@@ -559,13 +559,20 @@ namespace TownOfHost
 
                     }
 
+                    // ロビーで、キャラが出る前に通信のエラーで抜けた時も、参加する側の失敗なのでエラーにしない
+                    // (入り直せば普通に入れるのに「ロビーを作り直してください」と出ていた)
+                    else if (reason is DisconnectReasons.Error && AmongUsClient.Instance.GameState is not InnerNetClient.GameStates.Started)
+                    {
+                        Logger.Info($"参加直後に通信エラーで退出: {data?.PlayerName ?? "('ω')"}", nameof(OnPlayerLeftPatch));
+                    }
+
                     else
 
                     {
 
-                        isFailure = true;
+                        // 何人も同時に抜けた時などに起きる。死亡扱い・暗転対策への反映ができれば、エラーにはしない
 
-                        SetDisconnect(data);
+                        isFailure = !SetDisconnect(data);
 
                         Logger.Warn("退出者のPlayerControlがnull", nameof(OnPlayerLeftPatch));
 
@@ -577,9 +584,9 @@ namespace TownOfHost
 
                 {
 
-                    isFailure = true;
+                    // 何人も同時に抜けた時などに起きる。死亡扱い・暗転対策への反映ができれば、エラーにはしない
 
-                    SetDisconnect(data);
+                    isFailure = !SetDisconnect(data);
 
                     Logger.Warn("退出者のPlayerInfoがnull", nameof(OnPlayerLeftPatch));
 
@@ -691,28 +698,38 @@ namespace TownOfHost
 
 
 
-            void SetDisconnect(ClientData data)
-
+            // キャラ(PlayerControl)が無いまま抜けた人の後始末。できたら true
+            bool SetDisconnect(ClientData data)
             {
-
-                if (data == null) return;
-
+                if (data == null) return false;
                 var info = GameData.Instance.AllPlayers.ToArray().Where(info => info.Puid == data.ProductUserId).FirstOrDefault();
-
-                if (info == null) return;
-
-
-
+                if (info == null) return false;
                 if (GameStates.Intro || GameStates.IsInGame)
-
                 {
-
                     SelectRolesPatch.Disconnected.Add(info.PlayerId);
-
                 }
-
                 StreamerInfo.LeftPlayer(info);
-
+                // 試合中なら、キャラがある時と同じように死亡扱いにして、暗転対策にも伝える
+                // (以前はここが抜けていて、生きている扱いのまま次の会議に進み、残った人の画面が暗転していた)
+                if (GameStates.IsInGame)
+                {
+                    var state = PlayerState.GetByPlayerId(info.PlayerId);
+                    if (state != null)
+                    {
+                        if (state.DeathReason == CustomDeathReason.etc)
+                        {
+                            state.DeathReason = CustomDeathReason.Disconnected;
+                            UtilsGameLog.AddGameLog("Disconnected", info.PlayerName + GetString("DeathReason.Disconnected"));
+                        }
+                        state.SetDead();
+                    }
+                    info.Disconnected = true;
+                    AntiBlackout.OnDisconnect(info);
+                    ChatManager.OnDisconnectOrDeadPlayer(info.PlayerId);
+                    UtilsNotifyRoles.NotifyRoles(NoCache: true);
+                    Logger.Info($"キャラの無い切断を処理しました: {info.PlayerName}", nameof(OnPlayerLeftPatch));
+                }
+                return true;
             }
 
         }

@@ -91,7 +91,50 @@ public class CustomNetObject
         catch { }
     }
 
+    // 見た目と名前は、ホストの見た目を一瞬だけ書きかえて、ダミーをそれに変身させて送る。
+    // 名前の変更(SetName)で送ると、MOD を入れていない人の画面ではダミーのプレイヤー情報が無いので待ち続け、
+    // 30 秒で時間切れになって、その人がゲームから落ちていた
+    private int appearanceColor = -1; // -1 の間は、ホストの今の見た目のまま
+    private string appearanceSkin = "", appearanceHat = "", appearancePet = "", appearanceVisor = "";
+    private string shownName = "";
+
     protected void SetAppearance(int colorId, string skinId = "", string hatId = "", string petId = "", string visorId = "")
+    {
+        appearanceColor = colorId;
+        appearanceSkin = skinId ?? "";
+        appearanceHat = hatId ?? "";
+        appearancePet = petId ?? "";
+        appearanceVisor = visorId ?? "";
+        SendOutfit("CNO.SetAppearance");
+    }
+
+    // 色だけ変える(ダミーに RpcSetColor を使うと、名前と同じく MOD の無い人が 30 秒後に落ちるので、こちらに回す)
+    public void SetColor(int colorId)
+    {
+        if (appearanceColor < 0)
+        {
+            appearanceSkin = appearanceHat = appearancePet = appearanceVisor = "";
+        }
+        appearanceColor = colorId;
+        SendOutfit("CNO.SetColor");
+    }
+
+    public static CustomNetObject Find(PlayerControl pc)
+    {
+        if (pc == null || !pc.notRealPlayer) return null;
+        foreach (var o in AllObjects) if (o?.PlayerControl == pc) return o;
+        return null;
+    }
+
+    public void SetNameFromRpc(string name) => SetName(name);
+
+    protected void SetName(string name)
+    {
+        shownName = name ?? "";
+        SendOutfit("CNO.SetName");
+    }
+
+    private void SendOutfit(string label)
     {
         if (PlayerControl == null) return;
 
@@ -104,16 +147,19 @@ public class CustomNetObject
         string origPet = outfit.PetId;
         string origVisor = outfit.VisorId;
 
-        var sender = CustomRpcSender.Create("CNO.SetAppearance", SendOption.Reliable);
+        var sender = CustomRpcSender.Create(label, SendOption.Reliable);
         MessageWriter writer = sender.stream;
         sender.StartMessage();
 
-        outfit.PlayerName = origName;
-        outfit.ColorId = colorId;
-        outfit.HatId = hatId ?? "";
-        outfit.SkinId = skinId ?? "";
-        outfit.PetId = petId ?? "";
-        outfit.VisorId = visorId ?? "";
+        outfit.PlayerName = shownName;
+        if (appearanceColor >= 0)
+        {
+            outfit.ColorId = appearanceColor;
+            outfit.HatId = appearanceHat;
+            outfit.SkinId = appearanceSkin;
+            outfit.PetId = appearancePet;
+            outfit.VisorId = appearanceVisor;
+        }
 
         writer.StartMessage(1);
         writer.WritePacked(PlayerControl.LocalPlayer.Data.NetId);
@@ -121,7 +167,7 @@ public class CustomNetObject
         writer.EndMessage();
 
         try { capturedPC.Shapeshift(PlayerControl.LocalPlayer, false); }
-        catch (Exception e) { Logger.Error(e.ToString(), "CNO.SetAppearance.Shapeshift"); }
+        catch (Exception e) { Logger.Error(e.ToString(), "CNO.SendOutfit.Shapeshift"); }
 
         sender.StartRpc(capturedPC.NetId, RpcCalls.Shapeshift)
             .WriteNetObject(PlayerControl.LocalPlayer)
@@ -142,21 +188,9 @@ public class CustomNetObject
 
         sender.EndMessage();
         sender.SendMessage();
-    }
 
-    protected void SetName(string name)
-    {
-        if (PlayerControl == null) return;
-
-        if (PlayerControl.cosmetics?.nameText != null)
-            PlayerControl.cosmetics.nameText.text = name;
-
-        MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(
-            PlayerControl.NetId, (byte)RpcCalls.SetName, SendOption.Reliable);
-        writer.Write(PlayerControl.Data.NetId);
-        writer.Write(name);
-        writer.Write(false);
-        AmongUsClient.Instance.FinishRpcImmediately(writer);
+        if (capturedPC.cosmetics?.nameText != null)
+            capturedPC.cosmetics.nameText.text = shownName;
     }
 
     protected void SnapToPosition(Vector2 position)
@@ -167,6 +201,8 @@ public class CustomNetObject
         try { PlayerControl.NetTransform.SnapTo(position); }
         catch { }
 
+        // テレポートは本数を数えられていて、多すぎるとサーバーにキックされるので、超えそうな時は送らない
+        if (!NetworkSafety.AllowTeleport()) return;
         ushort sid = (ushort)(PlayerControl.NetTransform.lastSequenceId + 100U);
         MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(
             PlayerControl.NetTransform.NetId, (byte)RpcCalls.SnapTo, SendOption.Reliable);
@@ -184,9 +220,18 @@ public class CustomNetObject
         ProcessQueue();
     }
 
+    private static bool retryScheduled;
     private static void ProcessQueue()
     {
         if (IsSpawning || SpawnQueue.Count == 0) return;
+        // 会議が始まる時・会議中にダミーを作ると、会議の画面へ移れずに暗転する人が出ることがあるので、会議が終わるまで待つ
+        if (GameStates.IsMeeting || GameStates.CalledMeeting)
+        {
+            if (retryScheduled) return;
+            retryScheduled = true;
+            _ = new LateTask(() => { retryScheduled = false; ProcessQueue(); }, 0.5f, "CNO.WaitMeeting", true);
+            return;
+        }
         IsSpawning = true;
         var action = SpawnQueue.Dequeue();
         try
@@ -376,4 +421,29 @@ public class CustomNetObject
 public interface IKillableDummy
 {
     void OnKilled(PlayerControl killer);
+}
+
+// ダミーに RpcSetColor / RpcSetName を使うと、MOD を入れていない人の画面ではダミーのプレイヤー情報が無いので待ち続け、
+// 30 秒で時間切れになってゲームから落ちる。ダミーの時は、変身で見た目を送る方法に回す
+[HarmonyLib.HarmonyPatch(typeof(PlayerControl))]
+static class CustomNetObjectRpcGuard
+{
+    [HarmonyLib.HarmonyPatch(nameof(PlayerControl.RpcSetColor)), HarmonyLib.HarmonyPrefix]
+    static bool SetColor(PlayerControl __instance, [HarmonyLib.HarmonyArgument(0)] byte bodyColor)
+    {
+        var cno = CustomNetObject.Find(__instance);
+        if (cno == null) return true;
+        try { __instance.RawSetColor(bodyColor); } catch { }
+        cno.SetColor(bodyColor);
+        return false;
+    }
+
+    [HarmonyLib.HarmonyPatch(nameof(PlayerControl.RpcSetName)), HarmonyLib.HarmonyPrefix]
+    static bool SetName(PlayerControl __instance, [HarmonyLib.HarmonyArgument(0)] string name)
+    {
+        var cno = CustomNetObject.Find(__instance);
+        if (cno == null) return true;
+        cno.SetNameFromRpc(name);
+        return false;
+    }
 }

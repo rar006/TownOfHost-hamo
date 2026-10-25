@@ -199,7 +199,8 @@ namespace TownOfHost
 
                             {
 
-                                if (!GameStates.CalledMeeting && !AntiBlackout.IsSet)
+                                // 0.2秒の間に試合が終わっていたら何もしない(勝利画面用の役職を上書きして、負けた人に勝利画面が出ていた)
+                                if (!GameStates.CalledMeeting && !AntiBlackout.IsSet && CustomWinnerHolder.WinnerTeam == CustomWinner.Default && GameStates.InGame)
 
                                 {
 

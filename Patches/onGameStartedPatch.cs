@@ -595,7 +595,8 @@ namespace TownOfHost
 
                             continue;
 
-                        if (pc.isDummy && DebugModeManager.DummyAssignRole.GetBool() is false)
+                        // AI が動かすダミーには、ふつうに役職を配る
+                        if (pc.isDummy && DebugModeManager.DummyAssignRole.GetBool() is false && !Modules.AiPlayer.AiPlayers.IsAi(pc))
 
                         {
 

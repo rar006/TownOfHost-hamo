@@ -154,6 +154,14 @@ public sealed class MadParasite : RoleBase
             transformProcessed = true;
             return;
         }
+        // 最後の1人のインポスターは変化させない(インポスターが0人になってその場で試合が終わり、MOD なしの参加者が暗転していた)
+        if (killer.GetCustomRole().IsImpostor()
+            && System.Linq.Enumerable.Count(PlayerCatch.AllAlivePlayerControls, pc => pc != killer && pc.GetCustomRole().IsImpostor()) == 0)
+        {
+            Logger.Info($"MadParasite: 最後のインポスター({killer.name})なので変化をスキップしました", "MadParasite");
+            transformProcessed = true;
+            return;
+        }
 
         transformProcessed = true;
         alreadyTransformed.Add(killer.PlayerId);
