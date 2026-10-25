@@ -21,10 +21,6 @@ public sealed class HateKiller : RoleBase, IImpostor
             "htk",
             "#ff1919",
             (3, 7),
-            assignInfo: new RoleAssignInfo(CustomRoles.HateKiller, CustomRoleTypes.Impostor)
-            {
-                AssignCountRule = new(1, 1, 1)
-            },
             from: From.TownOfHost_Pko
         );
     public HateKiller(PlayerControl player) : base(RoleInfo, player)
@@ -110,14 +106,14 @@ public sealed class HateKiller : RoleBase, IImpostor
     /// <summary>
     /// インポスターがヘイトキラーに投票した数を増やす(自投票除く)
     /// </summary>
-    public static void AddImpVote()
+    public void AddImpVote()
     {
         ++ImpostorVotes;
     }
     /// <summary>
     /// ヘイトキラーが自投票した数を増やす
     /// </summary>
-    public static void AddSelfVote()
+    public void AddSelfVote()
     {
         ++selfvote;
     }

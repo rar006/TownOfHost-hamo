@@ -343,14 +343,14 @@ public class MeetingVoteManager
             if (voter.Is(CustomRoleTypes.Impostor) && !voter.Is(CustomRoles.HateKiller))
             {
                 var VotedFor = PlayerCatch.GetPlayerById(vote.VotedFor);
-                if (VotedFor.Is(CustomRoles.HateKiller))
+                if (VotedFor.GetRoleClass() is HateKiller htk)
                 {
-                    HateKiller.AddImpVote();
+                    htk.AddImpVote();
                 }
             }
-            if (vote.VotedFor == voter.PlayerId && voter.Is(CustomRoles.HateKiller))
+            if (vote.VotedFor == voter.PlayerId && voter.GetRoleClass() is HateKiller hate)
             {
-                HateKiller.AddSelfVote();
+                hate.AddSelfVote();
             }
             if (vote.NumVotes is not 0)
             {
