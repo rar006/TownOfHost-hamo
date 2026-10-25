@@ -114,14 +114,10 @@ public sealed class EvilTeller : RoleBase, IImpostor, IUsePhantomButton, ISelfVo
         var target = Player.GetKillTarget(true);
         if (target == null) { ResetCooldown = false; return; }
         if (target.IsTeammate(Player)) { ResetCooldown = false; return; }
-        if (target.Is(CustomRoles.Madpsycho))
+        if (target.GetRoleClass() is MadPsycho ms)
         {
-            if (Madpsycho.CanPsycho)
-            {
-                PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = Madpsycho.deathReasons[Madpsycho.OptionDeathReason.GetValue()];
-                target.RpcMurderPlayer(Player);
-                return;
-            }
+            ms.Psycho(Player, 1);
+            return;
         }
         if (seentarget.ContainsKey(target.PlayerId) || TargetInfo != null) { ResetCooldown = false; return; }
 
@@ -272,10 +268,9 @@ public sealed class EvilTeller : RoleBase, IImpostor, IUsePhantomButton, ISelfVo
         var target = PlayerCatch.GetPlayerById(targetId);
         if (target == null || !target.IsAlive() || target == Player) return;
         if (target.IsTeammate(Player) || seentarget.ContainsKey(targetId)) return;
-        if (target.Is(CustomRoles.Madpsycho) && Madpsycho.CanPsycho)
+        if (target.GetRoleClass() is MadPsycho ms)
         {
-            PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = Madpsycho.deathReasons[Madpsycho.OptionDeathReason.GetValue()];
-            target.RpcMurderPlayer(Player);
+            ms.Psycho(Player, 1, true);
             return;
         }
         var role = target.GetCustomRole();

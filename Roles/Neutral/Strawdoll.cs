@@ -132,14 +132,10 @@ public sealed class Strawdoll : RoleBase, IKiller, IUsePhantomButton
     {
         info.DoKill = false;
         var (killer, target) = info.AttemptTuple;
-        if (target.Is(CustomRoles.Madpsycho))
+        if (target.GetRoleClass() is MadPsycho ms)
         {
-            if (Madpsycho.CanPsycho)
-            {
-                PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = Madpsycho.deathReasons[Madpsycho.OptionDeathReason.GetValue()];
-                target.RpcMurderPlayer(Player);
-                return;
-            }
+            ms.Psycho(Player, 1);
+            return;
         }
         if (Target == null)
         {

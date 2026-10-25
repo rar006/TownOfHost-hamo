@@ -181,14 +181,11 @@ public sealed class PlagueDoctor : RoleBase, IKiller
         info.DoKill = false;
         if (InfectCount > 0)
         {
-            if (target.Is(CustomRoles.Madpsycho))
+            if (target.GetRoleClass() is MadPsycho ms)
             {
-                if (Madpsycho.CanPsycho)
-                {
-                    PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = Madpsycho.deathReasons[Madpsycho.OptionDeathReason.GetValue()];
-                    target.RpcMurderPlayer(Player);
-                    return;
-                }
+                info.DoKill = false;
+                ms.Psycho(Player, 1);
+                return;
             }
             InfectCount--;
             killer.RpcProtectedMurderPlayer(target);

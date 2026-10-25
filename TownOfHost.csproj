@@ -32,7 +32,7 @@
 
 		<AssemblyName>TownOfHost-hamo</AssemblyName>
 
-		<NoWarn>MSB3246;CS0162;CS0169;CS0184;CS0649;CS0414;GI001,IDE0017,IDE0090;RCS1102;RCS1155;RCS1075</NoWarn>
+		<NoWarn>MSB3246;CS0162;CS0169;CS0184;CS0649;CS0414;GI001,IDE0017,IDE0090;RCS1102;RCS1155;RCS1075;RCS1139</NoWarn>
 
 		<!-- Among Usのフォルダ。優先順位: ①ビルド時の -p:AmongUs="..." ②環境変数 AMONGUS_PATH ③AmongUsPath.props ④下の自動検出 -->
 		<AmongUs Condition="'$(AmongUs)' == '' And '$(AMONGUS_PATH)' != ''">$(AMONGUS_PATH)</AmongUs>

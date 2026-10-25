@@ -148,16 +148,12 @@ public sealed class Arsonist : RoleBase, IKiller, IUsePhantomButton
     public void OnCheckMurderAsKiller(MurderInfo info)
     {
         var (killer, target) = info.AttemptTuple;
-        if (target.Is(CustomRoles.Madpsycho))
-        {
-            info.DoKill = false;
+        info.DoKill = false;
 
-            if (Madpsycho.CanPsycho)
-            {
-                PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = Madpsycho.deathReasons[Madpsycho.OptionDeathReason.GetValue()];
-                target.RpcMurderPlayer(Player);
-                return;
-            }
+        if (target.GetRoleClass() is MadPsycho ms)
+        {
+            ms.Psycho(Player, 1);
+            return;
         }
         Logger.Info("Arsonist start douse", "OnCheckMurderAsKiller");
         killer.SetKillCooldown(DouseTime);
@@ -167,7 +163,6 @@ public sealed class Arsonist : RoleBase, IKiller, IUsePhantomButton
             UtilsNotifyRoles.NotifyRoles(SpecifySeer: killer);
             SendRPC(RPC_type.SetCurrentDousingTarget, target.PlayerId);
         }
-        info.DoKill = false;
     }
     public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
     {

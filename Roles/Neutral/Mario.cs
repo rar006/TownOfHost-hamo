@@ -1,4 +1,4 @@
-﻿using AmongUs.GameOptions;
+using AmongUs.GameOptions;
 using Hazel;
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
@@ -13,7 +13,6 @@ public sealed class Mario : RoleBase, IKiller, IUsePhantomButton
             typeof(Mario),
             player => new Mario(player),
             CustomRoles.Mario,
-            //ベントクール2秒未満にできない制限突破するため。
             () => OptionVentCooldown.GetFloat() < 2f ? RoleTypes.Phantom : RoleTypes.Engineer,
             CustomRoleTypes.Neutral,
             552900,
@@ -22,10 +21,7 @@ public sealed class Mario : RoleBase, IKiller, IUsePhantomButton
             "#ff6201",
             (5, 7),
             from: From.TownOfHost_Enhanced,
-            Desc: () =>
-            {
-                return string.Format(GetString("MarioDesc"), OptionWinVentCount.GetInt());
-            }
+            Desc: () => string.Format(GetString("MarioDesc"), OptionWinVentCount.GetInt())
         );
 
     public Mario(PlayerControl player)
@@ -48,10 +44,8 @@ public sealed class Mario : RoleBase, IKiller, IUsePhantomButton
     private static void SetupOptionItem()
     {
         SoloWinOption.Create(RoleInfo, 9, defo: 15);
-
         OptionVentCooldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.MarioVentCooldown, new(0f, 180f, 0.5f), 2f, false)
             .SetValueFormat(OptionFormat.Seconds);
-
         OptionWinVentCount = IntegerOptionItem.Create(RoleInfo, 11, OptionName.MarioVentCount, new(1, 999, 1), 30, false)
             .SetValueFormat(OptionFormat.Times);
     }
@@ -60,8 +54,9 @@ public sealed class Mario : RoleBase, IKiller, IUsePhantomButton
         opt.SetVision(false);
         AURoleOptions.EngineerCooldown = OptionVentCooldown.GetFloat();
         AURoleOptions.EngineerInVentMaxTime = 0.1f;
-        AURoleOptions.PhantomCooldown = VentCooldownTimer ?? 0f; // ベントを使った直後は空(null)。空のまま読むとエラーで、この人のゲーム設定が送られなかった
+        AURoleOptions.PhantomCooldown = VentCooldownTimer ?? 0f;
     }
+    float IKiller.CalculateKillCooldown() => 999f;
     bool IKiller.CanUseSabotageButton() => false;
     bool IKiller.CanUseImpostorVentButton() => true;
     bool IKiller.CanUseKillButton() => false;
@@ -86,7 +81,7 @@ public sealed class Mario : RoleBase, IKiller, IUsePhantomButton
         SendRPC();
         if (Count <= 0)
         {
-            ForceSoloWin();
+            Win();
         }
         _ = new LateTask(() => Player.MyPhysics.RpcBootFromVent(ventId), 0.9f, "", true);
         VentCooldownTimer = null;
@@ -98,7 +93,7 @@ public sealed class Mario : RoleBase, IKiller, IUsePhantomButton
         var progress = Utils.ColorString(RoleInfo.RoleColor, $"({Count})");
         return progress;
     }
-    private void ForceSoloWin()
+    private void Win()
     {
         if (CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Mario, Player.PlayerId))
         {

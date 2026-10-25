@@ -122,7 +122,6 @@ namespace TownOfHost.Roles.Neutral
 
         byte targetId;
 
-        bool targetCankill;
 
         bool targetDied;
         public override void ApplyGameOptions(IGameOptions opt)
@@ -168,31 +167,20 @@ namespace TownOfHost.Roles.Neutral
             float sqrDistance = difference.sqrMagnitude;
             float checkRadius = 5f;
             var target = KillWaitPlayer;
-            if (target.PlayerId == Player.PlayerId)
+            if (target.PlayerId == Player.PlayerId || !Player.IsAlive())
             {
                 targeted = false;
                 KillWaitPlayer = null;
                 return;
             }
             if (sqrDistance <= checkRadius * checkRadius)
-            {
-                if (!AmongUsClient.Instance.AmHost) return; 
-                Player.RpcSnapToForced(target.transform.position);
-                if (!targetCankill)
+            {   
+                if (!AmongUsClient.Instance.AmHost) return;             
+                if (CustomRoleManager.OnCheckMurder(Player, target, target, target, true, false, 2, CustomDeathReason.Kill))
                 {
-                    if (CustomRoleManager.OnCheckMurder(Player, Player, Player, Player, true, false, 2, CustomDeathReason.Suicide))
-                    {
-                        Player.SetRealKiller(Player);
-                        UtilsNotifyRoles.NotifyRoles(SpecifySeer: Player);
-                    }
-                }
-                else
-                {
-                    if (CustomRoleManager.OnCheckMurder(Player, target, target, target, true, false, 2, CustomDeathReason.Kill))
-                    {
-                        target.SetRealKiller(Player);
-                        UtilsNotifyRoles.NotifyRoles(SpecifySeer: Player);
-                    }
+                    Player.RpcSnapToForced(target.transform.position);
+                    RPC.PlaySoundRPC(Player.PlayerId, Sounds.KillSound);
+                    UtilsNotifyRoles.NotifyRoles(SpecifySeer: Player);
                 }
                 KillWaitPlayer = null;
                 target = null;
@@ -295,14 +283,6 @@ namespace TownOfHost.Roles.Neutral
                     KillWaitPlayer = target;
                     targeted = true;
                     targetId = target.PlayerId;
-                    if (target.Is(CustomRoles.King) || target.Is(CustomRoles.Autocrat))
-                    {
-                        targetCankill = false;
-                    }
-                    else
-                    {
-                        targetCankill = true;
-                    }
                     targetDied = false;
 
                 }
@@ -343,7 +323,6 @@ namespace TownOfHost.Roles.Neutral
         {
             RemoveEffect(Player.PlayerId);
             targetId = 255;
-            targetCankill = true;
             targeted = false;
             KillWaitPlayer = null;
         }

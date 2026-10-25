@@ -4138,9 +4138,9 @@
 "Judge","Judge","ジャッジ"
 "JudgeInfo","Control the meeting.","会議を支配しよう"
 "JudgeInfoLong","Control the vote.","投票を支配しよう"
-"Madpsycho","Mad Psycho","マッドサイコ"
-"MadpsychoInfo","*","僕にかかわった人はみんな死んでいくんだ。"
-"MadpsychoInfoLong","","クルーだがインポスターの味方をする。キルされたとき、そのキルを無効化して相手をキルする。(ガードレベル1を貫通できるキルを除く)\nまた会議ターン中に能力を自身に使われた場合使用した人を即座にキルする。\nタスクターン中に能力を使われた場合(アーソニストの塗り、ジャッカルのサイドキックなど)もその能力を無効化してキルする。"
+"MadPsycho","Mad Psycho","マッドサイコ"
+"MadPsychoInfo","*","僕にかかわった人はみんな死んでいくんだ。"
+"MadPsychoInfoLong","","クルーだがインポスターの味方をする。キルされたとき、そのキルを無効化して相手をキルする。(ガードレベル1を貫通できるキルを除く)\nまた会議ターン中に能力を自身に使われた場合使用した人を即座にキルする。\nタスクターン中に能力を使われた場合(アーソニストの塗り、ジャッカルのサイドキックなど)もその能力を無効化してキルする。"
 "psychoDeathReason","","キル反射時の死因"
 "Hunter","Hunter","狩人"
 "HunterInfo","Kill in the Dark","闇の中で殺戮せよ"
@@ -6683,3 +6683,4 @@
 "RomeoWinDeathType","Death Types That Win","ロミオとジュリエット勝利条件を満たす死亡方法"
 "RomeoWinByKill","Kill","キル"
 "RomeoWinByExile","Exile","追放"
+Ventoman,Ventman,ベントマン

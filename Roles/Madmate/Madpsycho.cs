@@ -1,48 +1,57 @@
 using System.Linq;
 using AmongUs.GameOptions;
-
-using TownOfHost.Modules;
 using TownOfHost.Roles.Core;
-using TownOfHost.Roles.Core.Interfaces;
-using TownOfHost.Roles.Crewmate;
-using TownOfHost.Roles.Impostor;
-using TownOfHost.Roles.Neutral;
-using static UnityEngine.GraphicsBuffer;
 
 namespace TownOfHost.Roles.Madmate;
 
-public sealed class Madpsycho : RoleBase
+public sealed class MadPsycho : RoleBase
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
-            typeof(Madpsycho),
-            player => new Madpsycho(player),
-            CustomRoles.Madpsycho,
+            typeof(MadPsycho),
+            player => new MadPsycho(player),
+            CustomRoles.MadPsycho,
             () => OptionCanVent.GetBool() ? RoleTypes.Engineer : RoleTypes.Crewmate,
             CustomRoleTypes.Madmate,
-            22800,
+            20200,
             SetupOptionItems,
             "mps",
-            OptionSort: (2, 3),
-            introSound: () => GetIntroSound(RoleTypes.Shapeshifter),
-                assignInfo: new RoleAssignInfo(CustomRoles.Madpsycho, CustomRoleTypes.Madmate)
-                {
-                    AssignCountRule = new(1, 1, 1)
-                }
+            OptionSort: (2, 3)
         );
 
-    public Madpsycho(PlayerControl player)
+    public MadPsycho(PlayerControl player)
         : base(
             RoleInfo,
-            player
+            player,
+            () => HasTask.ForRecompute
         )
     {
-        CanPsycho = false;
     }
+
     private static OptionItem OptionCanVent;
     public static OptionItem OptionDeathReason;
-    public static bool CanPsycho;
     public static OptionItem OptionTaskTrigger;
+
+    public bool CanPsycho()
+    {
+        return MyTaskState.HasCompletedEnoughCountOfTasks(OptionTaskTrigger.GetInt());
+    }
+
+    public static MadPsycho Instance { get; private set; }
+
+    public override void Add()
+    {
+        Instance = this;
+    }
+
+    public override void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+    enum OptionName
+    {
+        psychoDeathReason
+    }
     private static void SetupOptionItems()
     {
         var cRolesString = deathReasons.Select(x => x.ToString()).ToArray();
@@ -51,40 +60,37 @@ public sealed class Madpsycho : RoleBase
         OptionTaskTrigger = IntegerOptionItem.Create(RoleInfo, 11, GeneralOption.TaskTrigger, new(0, 99, 1), 1, false).SetValueFormat(OptionFormat.Pieces);
         OverrideTasksData.Create(RoleInfo, 20);
     }
+
     public static readonly CustomDeathReason[] deathReasons =
-{
-        CustomDeathReason.Kill,CustomDeathReason.Counter    };
-    private enum OptionName
     {
-        psychoDeathReason
+        CustomDeathReason.Kill, CustomDeathReason.Counter
+    };
+    public new void OnCheckMurderAsTarget(MurderInfo info)
+    {
+        info.GuardPower = 1;
+        Psycho(info.AttemptKiller, info.KillPower);
     }
-    public override bool OnCompleteTask(uint taskid)
+    public void Psycho(PlayerControl killer, int power, bool meeting = false)
     {
-        if (MyTaskState.HasCompletedEnoughCountOfTasks(OptionTaskTrigger.GetInt()))
+        if (power >= 2) return;
+        if (!CanPsycho()) return;
+        if (meeting)
         {
-            CanPsycho = true;
-        }
-        return true;
-    }
-    public override bool OnCheckMurderAsTarget(MurderInfo info)
-    {
-        var killer = info.AttemptKiller;
-        if (info.KillPower >= 2) return true;
-        /*if (killer.Is(CustomRoles.SheriffHadouHo) && SheriffHadouHo.Charging)
-        {
-            return true;
-        }*/
-        if (killer.GetRoleClass() is HadouHo hadouHo && hadouHo.IsCharging)
-        {
-            return true;
-        }
-        if (killer.GetRoleClass() is JackalHadouHo jackalHadouHo && jackalHadouHo.IsCharging)
-        {
-            return true;
+            string send = "";
+            foreach (var spl in PlayerCatch.AllPlayerControls.Where(pc => !pc.IsAlive()))
+            {
+                if (!spl.IsAlive())
+                {
+                    send = string.Format(GetString("Rpsych"), UtilsName.GetPlayerColor(Player, true), UtilsName.GetPlayerColor(killer, true));
+                }
+                else
+                {
+                    send = string.Format(GetString("RMeetingKill"), UtilsName.GetPlayerColor(Player, true), UtilsName.GetPlayerColor(Player, true));
+                }
+                Utils.SendMessage(send, spl.PlayerId, GetString("RMSKillTitle"));
+            }
         }
         PlayerState.GetByPlayerId(killer.PlayerId).DeathReason = deathReasons[OptionDeathReason.GetValue()];
-        info.KillPower = 10;
-        Player.RpcMurderPlayer(killer);
-        return false;
+        CustomRoleManager.OnCheckMurder(Player, killer, Player, killer, Killpower: 10);
     }
 }

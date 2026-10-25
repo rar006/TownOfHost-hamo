@@ -51,8 +51,7 @@ public sealed class Trapper : RoleBase
     }
     public override void OnMurderPlayerAsTarget(MurderInfo info)
     {
-        if (!Awakened) return;
-        if (info.IsSuicide) return;
+        if (!Awakened || info.IsSuicide) return;
 
         var killer = info.AttemptKiller;
         var tmpSpeed = Main.AllPlayerSpeed[killer.PlayerId];
@@ -75,9 +74,8 @@ public sealed class Trapper : RoleBase
     {
         if (MyTaskState.HasCompletedEnoughCountOfTasks(AwakeningTask.GetInt()))
         {
-            if (Awakened == false)
-                if (!Utils.RoleSendList.Contains(Player.PlayerId))
-                    Utils.RoleSendList.Add(Player.PlayerId);
+            if (Awakened == false && !Utils.RoleSendList.Contains(Player.PlayerId))
+                Utils.RoleSendList.Add(Player.PlayerId);
             Awakened = true;
         }
         return true;

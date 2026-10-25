@@ -17,7 +17,7 @@ public sealed class Ventoman : RoleBase
             SetupOptionItem,
             "vma",
             "#FF4500",
-from: From.TownOfHost_K
+            from: From.TownOfHost_K
         );
     public Ventoman(PlayerControl player)
     : base(

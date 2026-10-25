@@ -142,13 +142,18 @@ public sealed class Experiencer : RoleBase, IImpostor
         var (killer, target) = info.AttemptTuple;
         if (!Is(killer)) return;
 
-        Point = Point + KillPoint;
+        Point += KillPoint;
         RPC.PlaySoundRPC(killer.PlayerId, Sounds.TaskComplete);
         if (NoReport)
         {
             CantReportPlayers.Add(target.PlayerId);
         }
         SendRPC();
+    } 
+    public override bool OnCompleteTask(uint taskid)
+    {
+        Point += TaskPoint;
+        return true;
     }
     public override bool CancelReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target, ref DontReportreson reportreson)
     {

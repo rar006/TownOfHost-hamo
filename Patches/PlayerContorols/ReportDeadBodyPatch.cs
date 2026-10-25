@@ -46,7 +46,7 @@ namespace TownOfHost
 
         //public static Dictionary<byte, Vector2> Pos = new();
 
-                public static bool Prefix(PlayerControl __instance, [HarmonyArgument(0)] NetworkedPlayerInfo target)
+        public static bool Prefix(PlayerControl __instance, [HarmonyArgument(0)] NetworkedPlayerInfo target)
         {
             // 参加者専用MODはHELP・カスタムボタンの表示だけを担い、
             // 通報・緊急会議・会議開始の判定は通常Among Usへ委ねる。

@@ -35,6 +35,7 @@ using TownOfHost.Roles.Vanilla;
 using TownOfHost.Roles.AddOns.Neutral;
 
 using TownOfHost.Roles.AddOns.Impostor;
+using TownOfHost.Roles.Madmate;
 
 
 
@@ -349,7 +350,10 @@ public static class CustomRoleManager
 
             }
 
-
+            if (info.DoKill && info.AttemptTarget.GetRoleClass() is MadPsycho mp && info.KillPower < 2)
+            {
+                mp.OnCheckMurderAsTarget(info);
+            }
 
             /* キル可能かのチェック */
 
@@ -1807,7 +1811,7 @@ public enum CustomRoles
     MadHacker,
     MadSheriff,
     MadWare,
-    Madpsycho,
+    MadPsycho,
     Hyde,
     //DEBUG only Madmate
     //Crewmate(Vanilla)

@@ -23,9 +23,8 @@ public sealed class RaccoonParent : RoleBase, IKiller, IRoomTasker, IUsePhantomB
             SetupOptionItem,
             "racp",
             "#a0785a",
-            OptionSort: (7, 2),
-            // ファントム基盤のまま、手動照準では全陣営を対象にできるようにする。
-            isDesyncImpostor: true,
+            (7, 2),
+            true,
             from: From.TownOfHost_hamo
         );
 
@@ -53,8 +52,6 @@ public sealed class RaccoonParent : RoleBase, IKiller, IRoomTasker, IUsePhantomB
 
         static void SetupOptionItem()
     {
-        // CustomWinner.RaccoonParentの勝利優先度データを登録する。
-        // 未登録だと勝利時に「RaccoonParent is no Data」となり、ゲーム終了へ進めない。
         SoloWinOption.Create(RoleInfo, 9, defo: 1);
 
         OptionKillOnMeetingIfGrabbing = BooleanOptionItem.Create(RoleInfo, 10, OptionName.RaccoonParentKillOnMeetingIfGrabbing, false, false);
@@ -63,7 +60,6 @@ public sealed class RaccoonParent : RoleBase, IKiller, IRoomTasker, IUsePhantomB
         OptionMakeChildCooldown = FloatOptionItem.Create(RoleInfo, 12, OptionName.RaccoonParentMakeChildCooldown, new(0f, 180f, 0.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
 
-        // アライグマの子は親が作る子役職のため、設定は親役職内の見出しへまとめる。
         OptionRaccoonChildSection = ObjectOptionitem.Create(RoleInfo.ConfigId + 13, "RaccoonChildSettings", true, null, RoleInfo.Tab)
             .SetOptionName(() => "【アライグマの子設定】")
             .SetParent(Options.CustomRoleSpawnChances[CustomRoles.RaccoonParent])

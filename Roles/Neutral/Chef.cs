@@ -87,16 +87,11 @@ public sealed class Chef : RoleBase, IKiller, IAdditionalWinner
     public void OnCheckMurderAsKiller(MurderInfo info)
     {
         var (killer, target) = info.AttemptTuple;
-        if (target.Is(CustomRoles.Madpsycho))
+        if (target.GetRoleClass() is MadPsycho ms)
         {
             info.DoKill = false;
-
-            if (Madpsycho.CanPsycho)
-            {
-                PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = Madpsycho.deathReasons[Madpsycho.OptionDeathReason.GetValue()];
-                target.RpcMurderPlayer(Player);
-                return;
-            }
+            ms.Psycho(Player, 1);
+            return;
         }
         if (ChefTarget.Contains(target.PlayerId))
         {

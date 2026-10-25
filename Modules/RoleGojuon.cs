@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TownOfHost.Roles.Core;
@@ -424,7 +424,7 @@ public static class RoleGojuon
         ["MadKaiser"] = (6, "まつとかいさ"),
         ["MadCount"] = (6, "まつとかうんと"),
         ["MadGuardian"] = (6, "まつとかていあん"),
-        ["Madpsycho"] = (6, "まつとさいこ"),
+        ["MadPsycho"] = (6, "まつとさいこ"),
         ["MadJester"] = (6, "まつとしえすた"),
         ["MadSheriff"] = (6, "まつとしえりふ"),
         ["MadScream"] = (6, "まつとすくりむ"),
