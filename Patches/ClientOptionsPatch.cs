@@ -71,6 +71,7 @@ namespace TownOfHost
 
 
         private static ClientActionItem ShowRoomTimer;
+        private static ClientActionItem CustomStartLoading;
 
         private static ClientActionItem ShowPlayerCount;
 
@@ -293,6 +294,11 @@ namespace TownOfHost
                 ExpandRoleHeaders = ClientOptionItem.Create("ExpandRoleHeaders", Main.ExpandRoleHeaders, __instance,
                     () => RoleGojuon.SetAllCollapsed(!Main.ExpandRoleHeaders.Value), page: 1);
             }
+            // 2ページ目: ゲーム開始後の読み込みを TOH-hamo のロード画面にするか(OFFでふつうのバー)
+            if (CustomStartLoading == null || CustomStartLoading.ToggleButton == null)
+            {
+                CustomStartLoading = ClientOptionItem.Create("CustomStartLoading", Main.CustomStartLoading, __instance, page: 1);
+            }
             // ロビーでは表示しない
             if (ExpandRoleHeaders?.ToggleButton != null) ExpandRoleHeaders.ToggleButton.gameObject.SetActive(!GameStates.IsLobby);
             // YouTubeのコメント枠の設定は、メインメニューの「Stream」と、ゲーム設定のOTHER2に移した
@@ -466,6 +472,7 @@ namespace TownOfHost
             UseWebHook = Yomiage = CustomName = CustomSprite = HideSomeFriendCodes = null;
             ViewPingDetails = DebugChatopen = DebugSendAmout = DebugTours = ShowDistance = null;
             FpsLimitRemoval = AutoSaveScreenShot = PreloadMapAssets = ShowPresetInWebhook = null;
+            CustomStartLoading = null;
             AutoRehost = EnableDiscordRichPresence = ShowRoomTimer = ShowPlayerCount = ShowRoomCode = ExpandRoleHeaders = null;
             ModUnloaderScreen.ForgetPopup();
             SoundSettingsScreen.ForgetPopup();

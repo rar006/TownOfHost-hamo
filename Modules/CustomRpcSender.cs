@@ -133,6 +133,8 @@ namespace TownOfHost
             uint targetNetId,
             byte callId)
         {
+            // ホスト以外は MOD 独自の RPC を送らない(この送信はまとめて捨てる)
+            if (TownOfHost.Modules.NonHostRpcGuard.Block(callId)) blockedForNonHost = true;
             if (currentState != State.InRootMessage)
             {
                 string errorMsg = $"RPCを開始しようとしましたが、StateがInRootMessageではありません (in: \"{name}\")";
@@ -205,8 +207,16 @@ namespace TownOfHost
 
             return this;
         }
+        private bool blockedForNonHost;
         public void SendMessage()
         {
+            if (blockedForNonHost)
+            {
+                currentState = State.Finished;
+                Logger.Info($"\"{name}\" はホスト以外なので送りません", "CustomRpcSender");
+                stream.Recycle();
+                return;
+            }
             // チャット送信(名前を一時的に変えて戻す)で、未導入の人に見せていた二つ名付きの名前が消えるので、送り直してもらう
             if (name == "MessagesToSend") TitleSystem.InvalidateVanillaNames();
             if (currentState == State.InRootMessage) this.EndMessage();

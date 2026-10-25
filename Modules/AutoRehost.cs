@@ -424,6 +424,15 @@ public static class AutoRehost
 
     /// </summary>
 
+    // 配信のコメントで参加希望を書いた人が、満員で入れない時の立て直し(HopeFullWatch)
+    public static void TriggerHopeRehost()
+    {
+        if (_pending) return;
+        var c = AmongUsClient.Instance;
+        if (c == null || !c.AmHost) return;
+        TriggerRehostNow(c, "Hope-full auto-rehost triggered (room is full while viewers are waiting).", resetGameCount: false);
+    }
+
     public static void TriggerTimedRehost()
 
     {

@@ -940,6 +940,8 @@ namespace TownOfHost
 
            var currentRole = player.Data.Role.Role;
 
+            // もう死んでいる人には、キルのモーションを出さない(ホストが死んでいる時に、ホストの画面へキルのモーションが出ていた)
+            if (!player.Data.IsDead && player.IsAlive())
             {//道連れ、マジシャン等で死んでいないのにIsDeadを変更する場合はモーションを入れる。
 
                 if (player.PlayerId == PlayerControl.LocalPlayer.PlayerId)
@@ -1002,6 +1004,35 @@ namespace TownOfHost
 
             killer.RpcMurderPlayer(target, true);
 
+        }
+
+        // 自分で死んだ見た目のキル(ヴァンパイアの噛みつきなど)でも、死んだ本人の画面にだけは本当のキル役を映す。
+        // 本人以外には今までどおり「自分で死んだ」形で送る(キル役がその場へ飛んで見えないように)。
+        // 本当のキル役を映せない時は false を返すので、いつもどおりに送る
+        public static bool TryRpcMurderShowRealKiller(this PlayerControl target, PlayerControl realKiller)
+        {
+            if (target == null || realKiller == null || realKiller == target) return false;
+            if (target.AmOwner || target.notRealPlayer || realKiller.notRealPlayer) return false;
+            if (!realKiller.IsAlive() || realKiller.inVent) return false;
+            var victimClient = target.GetClientId();
+            if (victimClient == -1) return false;
+
+            if (AmongUsClient.Instance.AmClient) target.MurderPlayer(target, SuccessFlags);
+            foreach (var pc in PlayerCatch.AllPlayerControls)
+            {
+                if (pc == null || pc.AmOwner || pc.notRealPlayer || pc.PlayerId == target.PlayerId) continue;
+                var clientId = pc.GetClientId();
+                if (clientId == -1) continue;
+                var w = AmongUsClient.Instance.StartRpcImmediately(target.NetId, (byte)RpcCalls.MurderPlayer, SendOption.Reliable, clientId);
+                w.WriteNetObject(target);
+                w.Write((int)SuccessFlags);
+                AmongUsClient.Instance.FinishRpcImmediately(w);
+            }
+            var v = AmongUsClient.Instance.StartRpcImmediately(realKiller.NetId, (byte)RpcCalls.MurderPlayer, SendOption.Reliable, victimClient);
+            v.WriteNetObject(target);
+            v.Write((int)SuccessFlags);
+            AmongUsClient.Instance.FinishRpcImmediately(v);
+            return true;
         }
 
         public static void RpcMurderPlayerV2(this PlayerControl killer, PlayerControl target)

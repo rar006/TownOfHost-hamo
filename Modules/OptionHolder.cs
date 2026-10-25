@@ -1404,7 +1404,7 @@ namespace TownOfHost
         // リストラした役職(コードは残すが、設定にも配役にも出さない)
         public static bool IsRetiredRole(CustomRoles role) => role is CustomRoles.Eater;
         // スタンド・アライグマの子などは、親の役職が作る役職。設定で出現率が残っていると、親がいないのに配られていた
-        public static bool IsDerivedRole(CustomRoles role) => role is CustomRoles.Stand or CustomRoles.RaccoonChild or CustomRoles.PoisonedBakery or CustomRoles.Tama or CustomRoles.Shikigami or CustomRoles.Pursuer or CustomRoles.Gang;
+        public static bool IsDerivedRole(CustomRoles role) => role is CustomRoles.Stand or CustomRoles.RaccoonChild or CustomRoles.BlackMadMate or CustomRoles.MadProxy or CustomRoles.PoisonedBakery or CustomRoles.Tama or CustomRoles.Shikigami or CustomRoles.Pursuer or CustomRoles.Gang;
 
         public static int GetRoleChance(CustomRoles role)
 
@@ -1422,6 +1422,9 @@ namespace TownOfHost
 
             {
 
+                // 設定画面で隠している役職(親の役職から作られる役職・2人1組の片方など)は、単独では配らない
+                // (「全役職○%」などで値が入ると、画面に出ていない役職が配られていた)
+                if (option.IsHidden) return 0;
                 if (option.GetBool())
 
                     return option.GetInt();
@@ -2853,6 +2856,8 @@ namespace TownOfHost
 
             // プリセット対象外
 
+            // AIがゲームをプレイする(OTHER の一番上)
+            Modules.AiPlayer.AiPlayers.SetupOptions();
             HideGameSettings = BooleanOptionItem.Create(1_000_002, "HideGameSettings", false, TabGroup.Other, true)
 
                 .SetHeader(true)
@@ -3215,6 +3220,18 @@ namespace TownOfHost
                 .SetParent(youtubeHeader).SetColorcode("#ff8080")
                 .SetOptionName(() => "コメントで参加希望した人だけ入れる")
                 .SetTooltip(() => "ONにすると、配信のコメントで参加希望を書いた人(メインメニューのStreamで決めた言葉)だけが部屋に入れます。");
+            Modules.HopeFullWatch.Warn = BooleanOptionItem.Create(1_400_165, "HopeFullWarn", false, TabGroup.Other2, true)
+                .SetParent(youtubeHeader).SetColorcode("#ff8080")
+                .SetOptionName(() => "満員で参加希望の人が入れない時に知らせる")
+                .SetTooltip(() => "コメントで参加希望を書いた人がまだ入れていないのに、部屋が満員の時に、ホストに知らせます。");
+            Modules.HopeFullWatch.Threshold = IntegerOptionItem.Create(1_400_166, "HopeFullThreshold", new(4, 15, 1), 15, TabGroup.Other2, true)
+                .SetParent(Modules.HopeFullWatch.Warn).SetColorcode("#ff8080")
+                .SetValueFormat(OptionFormat.Players)
+                .SetOptionName(() => "満員とみなす人数");
+            Modules.HopeFullWatch.AutoRehost = BooleanOptionItem.Create(1_400_167, "HopeFullAutoRehost", false, TabGroup.Other2, true)
+                .SetParent(Modules.HopeFullWatch.Warn).SetColorcode("#ff8080")
+                .SetOptionName(() => "満員の時に部屋を自動で立て直す")
+                .SetTooltip(() => "ONにすると、満員で参加希望の人が入れない時、全員にお知らせしてから30秒後に部屋を立て直します。\n30秒の間に満員でなくなったらやめます。");
 
             // ===== 便利機能(ホスト用・どれも最初はOFF) =====
             var extraHeader = ObjectOptionitem.Create(1_400_170, "ExtraFeatures", true, null, TabGroup.Other2)
@@ -3243,7 +3260,7 @@ namespace TownOfHost
                 .SetTooltip(() => "会議中にホストが送ったデータの種類と宛先を BepInEx/TOHhamo_Logs/MeetingSend.log に記録します。");
             Modules.RoleWinStats.Enabled = BooleanOptionItem.Create(1_400_177, "RoleWinStats", false, TabGroup.Other2, true)
                 .SetParent(extraHeader).SetColorcode("#7fd8ff")
-                .SetOptionName(() => "役職の勝率を記録する(/stats で表示)");
+                .SetOptionName(() => "役職の勝率を記録する(/stats で表示)").SetHidden(true); // 要望により常にONで、設定には出さない
             Modules.RoleRepeatAvoid.Enabled = BooleanOptionItem.Create(1_400_178, "RoleRepeatAvoid", false, TabGroup.Other2, true)
                 .SetParent(extraHeader).SetColorcode("#7fd8ff")
                 .SetOptionName(() => "同じ役職が続かないようにする")
@@ -3256,7 +3273,7 @@ namespace TownOfHost
                 .SetOptionName(() => "入ってきた人に部屋のルールを送る(/set rule)");
             Modules.PlayerStatsSync.RecordEnabled = BooleanOptionItem.Create(1_400_181, "PlayerStatsRecord", false, TabGroup.Other2, true)
                 .SetParent(extraHeader).SetColorcode("#7fd8ff")
-                .SetOptionName(() => "自分の戦績をサーバーに記録する(/me で表示)");
+                .SetOptionName(() => "自分の戦績をサーバーに記録する(/me で表示)").SetHidden(true); // 要望により常にONで、設定には出さない
             Modules.PlayerStatsSync.FirstTimerEnabled = BooleanOptionItem.Create(1_400_182, "FirstTimerMark", false, TabGroup.Other2, true)
                 .SetParent(extraHeader).SetColorcode("#7fd8ff")
                 .SetOptionName(() => "初めての人にマークを付ける")

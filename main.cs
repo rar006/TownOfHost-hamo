@@ -132,11 +132,11 @@ namespace TownOfHost
         public static bool IsNonHostClient =>
             AmongUsClient.Instance != null && !AmongUsClient.Instance.AmHost;
 
-        public const string BepInExPluginVersion = "4.00.40.00";
+        public const string BepInExPluginVersion = "4.00.40.02";
 
-        public const string PluginVersion = "4.00.40.00";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
+        public const string PluginVersion = "4.00.40.02";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
 
-        public const string PluginShowVersion = "4.40.00α";
+        public const string PluginShowVersion = "4.40.02α";
 
         public const string ModVersion = ".35.14";//リリースver用バージョン変更dc9b79
 
@@ -231,6 +231,7 @@ namespace TownOfHost
         public static ConfigEntry<bool> EnableDiscordRichPresence { get; private set; }
 
         public static ConfigEntry<bool> ShowRoomTimer { get; private set; }
+        public static ConfigEntry<bool> CustomStartLoading { get; private set; }
 
         public static ConfigEntry<bool> ShowPlayerCount { get; private set; }
 
@@ -300,6 +301,7 @@ namespace TownOfHost
         public static ConfigEntry<float> StreamCommentWidth { get; private set; }
         public static ConfigEntry<float> StreamCommentHeight { get; private set; }
         public static ConfigEntry<bool> StreamCommentMinimized { get; private set; }
+        public static ConfigEntry<bool> StreamCommentLocked { get; private set; }
         public static ConfigEntry<string> StreamURLConfig { get; private set; }
         public static ConfigEntry<bool> ObsOverlay { get; private set; }
         public static ConfigEntry<int> ObsShowRoles { get; private set; }
@@ -486,6 +488,7 @@ namespace TownOfHost
 
 
             ShowRoomTimer = Config.Bind("Client Options", "Show Room Timer", false);
+            CustomStartLoading = Config.Bind("Client Options", "Custom Start Loading", true);
 
             ShowPlayerCount = Config.Bind("Client Options", "Show Player Count", false);
 
@@ -515,6 +518,7 @@ namespace TownOfHost
             StreamCommentWidth = Config.Bind("StreamMenu", "CommentWidth", 3.6f);
             StreamCommentHeight = Config.Bind("StreamMenu", "CommentHeight", 2.3f);
             StreamCommentMinimized = Config.Bind("StreamMenu", "CommentMinimized", false);
+            StreamCommentLocked = Config.Bind("StreamMenu", "CommentLocked", false);
             StreamURLConfig = Config.Bind("StreamMenu", "StreamURL", "");
             ObsOverlay = Config.Bind("StreamMenu", "ObsOverlay", false);
             ObsShowRoles = Config.Bind("StreamMenu", "ObsShowRoles", 1);

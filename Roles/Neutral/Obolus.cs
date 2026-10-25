@@ -202,6 +202,13 @@ public sealed class Obolus : RoleBase, ILNKiller, IAdditionalWinner
         KilledOnThisTurn = false;
         SendRPC();
     }
-    public override string GetProgressText(bool comms = false, bool gamelog = false) => Utils.ColorString(KillCount > 0 ? Color.yellow : Color.gray, $"({KillCount})");
+    public override string GetProgressText(bool comms = false, bool gamelog = false)
+    {
+        var text = Utils.ColorString(KillCount > 0 ? Color.yellow : Color.gray, $"({KillCount})");
+        // キルを封印している間は、あと何日でキルできるかを出す(出ていないと、なぜキルできないのか分からなかった)
+        var lockLeft = OptionKillLockTurn.GetInt() - Daycount + 1;
+        if (lockLeft > 0) text += Utils.ColorString(Color.gray, $" 封印 あと{lockLeft}日");
+        return text;
+    }
     public bool CheckWin(ref CustomRoles winnerRole) => OptionAddWin.GetBool() && WinFlag;
 }

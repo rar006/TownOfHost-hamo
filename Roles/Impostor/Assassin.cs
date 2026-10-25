@@ -160,7 +160,11 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
     }
     public override void OnFixedUpdate(PlayerControl player)
     {
-        if (NowState is not AssassinMeeting.WaitMeeting || player.IsAlive() || player == null || GameStates.IsMeeting || CustomWinnerHolder.WinnerTeam is not CustomWinner.Default)
+        // 会議中に推測などで死んだ時は、追放画面が終わってタスクに戻るまで待つ。
+        // (会議が終わった瞬間に開くと、前の会議の後片付けとアサシン会議の準備が重なって、試合が終わらず暗転していた)
+        if (NowState is not AssassinMeeting.WaitMeeting || player.IsAlive() || player == null || GameStates.IsMeeting
+            || GameStates.CalledMeeting || GameStates.ExiledAnimate || !GameStates.IsInTask
+            || CustomWinnerHolder.WinnerTeam is not CustomWinner.Default)
         {
             AddRole?.OnFixedUpdate(player);
             return;

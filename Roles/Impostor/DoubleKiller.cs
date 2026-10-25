@@ -80,12 +80,44 @@ public sealed class DoubleKiller : RoleBase, IImpostor, IUsePhantomButton
     public override void ApplyGameOptions(IGameOptions opt)
     {
         if (usedPhantomCount < OptionPhantomUsageCount.GetInt())
-            AURoleOptions.PhantomCooldown = PhantomCooldown;
+            AURoleOptions.PhantomCooldown = cooldownOverride > 0f ? cooldownOverride : PhantomCooldown;
+    }
+    // 2つ目のキルボタン(ファントム)のクールは、ゲーム側ではベントの中でも減ってしまうので、
+    // ベントにいた時間だけ、出た時に戻す(キルクールと同じく、ベントの中では減らない)
+    float abilityReadyAt = -1f;
+    float ventEnteredAt = -1f;
+    float cooldownOverride;
+    public override void AfterMeetingTasks() => abilityReadyAt = Time.time + PhantomCooldown;
+    void KeepCooldownInVent()
+    {
+        if (!GameStates.IsInTask || !Player.IsAlive() || usedPhantomCount >= OptionPhantomUsageCount.GetInt()) return;
+        if (abilityReadyAt < 0f) abilityReadyAt = Time.time + PhantomCooldown;
+        if (Player.inVent)
+        {
+            if (ventEnteredAt < 0f) ventEnteredAt = Time.time;
+            return;
+        }
+        if (ventEnteredAt < 0f) return;
+        var entered = ventEnteredAt;
+        ventEnteredAt = -1f;
+        // 入った時にもう溜まっていたなら、何もしない
+        if (abilityReadyAt <= entered) return;
+        abilityReadyAt += Time.time - entered;
+        var left = abilityReadyAt - Time.time;
+        if (left <= 0.5f) return;
+        cooldownOverride = left;
+        Player.RpcResetAbilityCooldown(Sync: true);
+        _ = new LateTask(() =>
+        {
+            cooldownOverride = 0f;
+            if (Player != null && Player.IsAlive()) Player.SyncSettings();
+        }, 1f, "DoubleKillerVentCooldown", true);
     }
 
     public override void OnFixedUpdate(PlayerControl player)
     {
         if (!AmongUsClient.Instance.AmHost) return;
+        if (player == Player) KeepCooldownInVent();
         if (!CanSubkill) //サブキルが押せないバグがあったのでこれで様子見かな。
         {
             if (PhantomCooldown < 1f) //キルク1未満でも一秒待たない。
@@ -140,6 +172,7 @@ public sealed class DoubleKiller : RoleBase, IImpostor, IUsePhantomButton
             {
                 RPC.PlaySoundRPC(Player.PlayerId, Sounds.KillSound);
                 Player.RpcResetAbilityCooldown(Sync: true);
+                abilityReadyAt = Time.time + PhantomCooldown;
             }
         }
         if (PhantomCooldown < 1f) //キルク1未満でも一秒待たない。

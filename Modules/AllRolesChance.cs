@@ -31,7 +31,7 @@ public static class AllRolesChance
         {
             try
             {
-                if (option == null || role is CustomRoles.NotAssigned) continue;
+                if (option == null || role is CustomRoles.NotAssigned || option.IsHidden || Options.IsRetiredRole(role) || Options.IsDerivedRole(role)) continue; // 隠している役職・リストラした役職・派生役職には触らない
                 var index = option.Rule.GetNearestIndex(rand.Next(0, 11) * 10);
                 if (option.CurrentValue == index) continue;
                 option.SetValue(index, false, false);
@@ -62,7 +62,7 @@ public static class AllRolesChance
         {
             try
             {
-                if (option == null || role is CustomRoles.NotAssigned) continue;
+                if (option == null || role is CustomRoles.NotAssigned || option.IsHidden || Options.IsRetiredRole(role) || Options.IsDerivedRole(role)) continue; // 隠している役職・リストラした役職・派生役職には触らない
                 var index = option.Rule.GetNearestIndex(Percent);
                 if (option.CurrentValue == index) continue;
                 option.SetValue(index, false, false); // 保存と同期は最後にまとめて

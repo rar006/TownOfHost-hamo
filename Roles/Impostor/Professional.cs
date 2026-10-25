@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using AmongUs.GameOptions;
 
 using TownOfHost.Roles.Core;
@@ -59,6 +60,8 @@ public sealed class Professional : RoleBase, IImpostor, IKiller, IUsePhantomButt
         opt.SetFloat(FloatOptionNames.KillCooldown, OptionNormalKillCooldown.GetFloat());
     }
 
+    private readonly HashSet<byte> specialTargets = new();
+
     public float CalculateKillCooldown() => OptionNormalKillCooldown.GetFloat();
     public bool CanUseSabotageButton() => true;
     public bool CanUseImpostorVentButton() => true;
@@ -70,7 +73,8 @@ public sealed class Professional : RoleBase, IImpostor, IKiller, IUsePhantomButt
     {
         // 通常キルの死体は必ず通報可能にする。ゲーム開始時の初期値や過去の特殊キルで
         // 通報禁止フラグが残っていても、通常キル対象についてはここで解除する。
-        if (info.AttemptTarget != null && ReportDeadBodyPatch.IgnoreBodyids != null)
+        // ただし、特殊キルの相手(通報できない時間の途中)は解除しない
+        if (info.AttemptTarget != null && ReportDeadBodyPatch.IgnoreBodyids != null && !specialTargets.Contains(info.AttemptTarget.PlayerId))
             ReportDeadBodyPatch.IgnoreBodyids[info.AttemptTarget.PlayerId] = false;
 
         // DoKill はデフォルトのまま true とし、通常のキル処理を通す。
@@ -90,39 +94,37 @@ public sealed class Professional : RoleBase, IImpostor, IKiller, IUsePhantomButt
         ResetCooldown = true;
 
         var victimId = target.PlayerId;
-        // 通常キル用フックが通報禁止を解除しても、特殊キルでは直後に必ず再設定する。
+        // 特殊キルの死体は、設定の秒数がたつまで誰も通報できない。
+        // 前はキルの 0.15 秒後に、相手がもう死んでいる時だけ通報禁止をかけ直していたので、
+        // キルが少し遅れると通報禁止がかからず、すぐ通報できていた
+        specialTargets.Add(victimId);
         if (ReportDeadBodyPatch.IgnoreBodyids != null)
             ReportDeadBodyPatch.IgnoreBodyids[victimId] = true;
 
         if (!CustomRoleManager.OnCheckMurder(Player, target, target, target, true, false, 1, CustomDeathReason.Kill))
         {
+            specialTargets.Remove(victimId);
             if (ReportDeadBodyPatch.IgnoreBodyids != null)
                 ReportDeadBodyPatch.IgnoreBodyids[victimId] = false;
             ResetCooldown = false;
             return;
         }
+        if (ReportDeadBodyPatch.IgnoreBodyids != null)
+            ReportDeadBodyPatch.IgnoreBodyids[victimId] = true;
 
         var reportSeconds = OptionAutoReportSeconds.GetFloat();
-        // OnCheckMurder内の通常キルフックが後から実行される構成でも、キル確定後に
-        // 通報禁止を再適用する。これにより透明ボタンの特殊キルだけが通報不可になる。
         _ = new LateTask(() =>
         {
+            specialTargets.Remove(victimId);
+            if (ReportDeadBodyPatch.IgnoreBodyids != null && ReportDeadBodyPatch.IgnoreBodyids.ContainsKey(victimId))
+                ReportDeadBodyPatch.IgnoreBodyids[victimId] = false;
+
+            // 設定秒数後、被害者自身が死体を通報したことにする(証拠が残る)。
             var victim = victimId.GetPlayerControl();
-            if (victim == null || victim.IsAlive()) return;
-            if (ReportDeadBodyPatch.IgnoreBodyids != null)
-                ReportDeadBodyPatch.IgnoreBodyids[victimId] = true;
-
-            _ = new LateTask(() =>
-            {
-                if (ReportDeadBodyPatch.IgnoreBodyids != null && ReportDeadBodyPatch.IgnoreBodyids.ContainsKey(victimId))
-                    ReportDeadBodyPatch.IgnoreBodyids[victimId] = false;
-
-                // 設定秒数後、被害者自身が死体を通報したことにする(証拠が残る)。
-                var victimInfo = PlayerCatch.GetPlayerInfoById(victimId);
-                if (victim != null && victimInfo != null && GameStates.IsInTask)
-                    victim.ReportDeadBody(victimInfo);
-            }, reportSeconds, "Professional.AutoReport", true);
-        }, 0.15f, "Professional.ApplyBodyBlock", true);
+            var victimInfo = PlayerCatch.GetPlayerInfoById(victimId);
+            if (victim != null && !victim.IsAlive() && victimInfo != null && GameStates.IsInTask)
+                victim.ReportDeadBody(victimInfo);
+        }, reportSeconds, "Professional.AutoReport", true);
 
         // 特殊キル後も通常キルボタン側は「通常キルのクールダウン」設定で同期する。
         Player.SetKillCooldown(OptionNormalKillCooldown.GetFloat(), delay: true);

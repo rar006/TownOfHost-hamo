@@ -32,7 +32,21 @@ public static class MeetingTimeAnnounce
             // 最初から30秒より短い時などは、もう過ぎた区切りを飛ばす
             while (nextMarkIndex < Marks.Length && remaining <= Marks[nextMarkIndex] - 1) nextMarkIndex++;
             if (nextMarkIndex >= Marks.Length || remaining > Marks[nextMarkIndex]) return;
-            Utils.SendMessage($"投票の残り時間はあと{Marks[nextMarkIndex]}秒です。", byte.MaxValue, "<#ffd36e>【残り時間】</color>");
+            var text = $"投票の残り時間はあと{Marks[nextMarkIndex]}秒です。";
+            const string title = "<#ffd36e>【残り時間】</color>";
+            // 次に湧く場所が見られる設定の時は、名前の横だと字が小さすぎるので、その人にだけ場所も一緒に送る
+            if (Options.CanSeeNextRandomSpawn.GetBool() && RandomSpawn.SpawnMap.NextSpornName.Count > 0)
+            {
+                foreach (var pc in PlayerCatch.AllPlayerControls)
+                {
+                    if (pc == null) continue;
+                    var personal = pc.IsAlive() && RandomSpawn.SpawnMap.NextSpornName.TryGetValue(pc.PlayerId, out var room) && !string.IsNullOrEmpty(room)
+                        ? $"{text}\n<#9ae3bd>次に湧く場所: {room}</color>"
+                        : text;
+                    Utils.SendMessage(personal, pc.PlayerId, title);
+                }
+            }
+            else Utils.SendMessage(text, byte.MaxValue, title);
             nextMarkIndex++;
         }
         catch (System.Exception e)

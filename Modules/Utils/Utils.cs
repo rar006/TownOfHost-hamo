@@ -2119,122 +2119,65 @@ namespace TownOfHost
 
         #region Remove
 
-        public static string RemoveHtmlTags(this string str) => Regex.Replace(str, "<[^>]*?>", "");
-
+        // タグを消す処理は、名前の表示やログなどでとても多く呼ばれるので、正規表現を作り直さずに使い回す
+        // (タグが無い文字列は、そのまま返す)
+        static readonly Regex HtmlTagRegex = new("<[^>]*?>", RegexOptions.Compiled);
+        static readonly Regex ColorTagRegex = new("</?color(=#[0-9a-fA-F]*)?>", RegexOptions.Compiled);
+        static readonly Regex HexColorTagRegex = new("<#[^>]*?>", RegexOptions.Compiled);
+        static readonly Regex SizeTagRegex = new("</?size[^>]*?>", RegexOptions.Compiled);
+        public static string RemoveHtmlTags(this string str) => str.IndexOf('<') < 0 ? str : HtmlTagRegex.Replace(str, "");
         public static string RemoveColorTags(this string str)
-
         {
-
-            var removecolor = Regex.Replace(str, "</?color(=#[0-9a-fA-F]*)?>", "");
-
-            removecolor = Regex.Replace(removecolor, "<#[^>]*?>", "");
-
+            if (str.IndexOf('<') < 0) return str;
+            var removecolor = ColorTagRegex.Replace(str, "");
+            removecolor = HexColorTagRegex.Replace(removecolor, "");
             return removecolor;
-
         }
-
-        public static string RemoveSizeTags(this string str) => Regex.Replace(str, "</?size[^>]*?>", "");
-
-        public static string RemoveGiveAddon(this string str) => Regex.Replace(str, "を付与する", "");
-
-        public static string RemoveSN(this string str) => Regex.Replace(str, "\n", "");
-
-        public static string Changebr(this string str, bool nokosu) => Regex.Replace(str, "\n", $"{(nokosu ? "<br>\n" : "<br>")}");
-
-        public static string RemoveaAlign(this string str) => Regex.Replace(str, "align", "");
-
-        public static string RemoveDeltext(this string str, string del, string set = "") => Regex.Replace(str, del, set);
-
-        public static string RemoveText(this string str, bool Update = false)
-
+        public static string RemoveSizeTags(this string str) => str.IndexOf('<') < 0 ? str : SizeTagRegex.Replace(str, "");
+        public static string RemoveGiveAddon(this string str) => str.Replace("を付与する", "");
+        public static string RemoveSN(this string str) => str.Replace("\n", "");
+        public static string Changebr(this string str, bool nokosu) => str.Replace("\n", nokosu ? "<br>\n" : "<br>");
+        public static string RemoveaAlign(this string str) => str.Replace("align", "");
+        // 正規表現の記号を含まない時は、ただの置き換えで済ませる(同じ結果になる)
+        public static string RemoveDeltext(this string str, string del, string set = "")
         {
-
-            bool Skip = false;
-
-            string returns = "";
-
-            if (Update)
-
-            {
-
-                for (var i = 0; i < str.Length; i++)
-
-                {
-
-                    string text = "";
-
-                    text = str.Substring(i, 1);
-
-                    if (text == Regex.Replace(text, "[0-9]", "")) continue;
-
-                    returns += text;
-
-                }
-
-                return returns;
-
-            }
-
-            for (var i = 0; i < str.Length; i++)
-
-            {
-
-                string text = "";
-
-                text = str.Substring(i, 1);
-
-
-
-                {
-
-                    if (text == "<")
-
-                        Skip = true;
-
-                    if (text == ">")
-
-                    {
-
-                        returns += ">";
-
-                        Skip = false;
-
-                    }
-
-
-
-                    if (Skip)
-
-                        returns += text;
-
-                    else
-
-                        if (text != ">")
-
-                        {
-
-                            if (text == "\n")
-
-                                returns += "\n ";
-
-                            else if (text == "\r")
-
-                                returns += "\r";
-
-                            else
-
-                                returns += " ";
-
-                        }
-
-                }
-
-            }
-
-            return returns;
-
+            if (del.Length > 0 && del.IndexOfAny(RegexMeta) < 0 && set.IndexOf('$') < 0) return str.Replace(del, set);
+            return Regex.Replace(str, del, set);
         }
-
+        static readonly char[] RegexMeta = { '\\', '.', '$', '^', '{', '[', '(', '|', ')', '*', '+', '?', '#' };
+        public static string RemoveText(this string str, bool Update = false)
+        {
+            var returns = new StringBuilder(str.Length + 8);
+            if (Update)
+            {
+                foreach (var c in str)
+                    if (c is >= '0' and <= '9') returns.Append(c);
+                return returns.ToString();
+            }
+            bool Skip = false;
+            foreach (var c in str)
+            {
+                if (c == '<')
+                    Skip = true;
+                if (c == '>')
+                {
+                    returns.Append('>');
+                    Skip = false;
+                }
+                if (Skip)
+                    returns.Append(c);
+                else if (c != '>')
+                {
+                    if (c == '\n')
+                        returns.Append("\n ");
+                    else if (c == '\r')
+                        returns.Append('\r');
+                    else
+                        returns.Append(' ');
+                }
+            }
+            return returns.ToString();
+        }
         static string[] Systemmark =
 
         ["★", "◎", "【=", "▽", "Φ", "♥", "∈", "Ψ"];

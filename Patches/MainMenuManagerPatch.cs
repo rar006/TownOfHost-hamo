@@ -43,6 +43,7 @@ namespace TownOfHost
         private static SimpleButton StatisticsButton;
 
         private static GameObject Statistics_ScrollStuff;
+        internal static GameObject StatisticsPanel => Statistics_ScrollStuff;
 
         public static SimpleButton UpdateButton { get; private set; }
 

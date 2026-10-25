@@ -657,6 +657,9 @@ public static partial class TitleSystem
     // =====================================================================
     //  表示(名前の上)
     // =====================================================================
+    private const float TagInterval = 0.2f;
+    private static readonly Dictionary<byte, float> nextTagAt = new();
+
     internal static void UpdateNameTag(PlayerControl pc)
     {
         try
@@ -670,6 +673,10 @@ public static partial class TitleSystem
             }
             if (!Enabled) return;
             if (pc.AmOwner) { DrainMainQueue(); LobbyTick(); }
+            // 名前の上の表示は毎フレーム作り直さなくてよいので、1人ごとに少し間をあける(見た目は同じ)
+            var now = Time.unscaledTime;
+            if (nextTagAt.TryGetValue(pc.PlayerId, out var at) && now < at) return;
+            nextTagAt[pc.PlayerId] = now + TagInterval;
             var nameText = pc.cosmetics?.nameText;
             if (nameText == null) return;
 

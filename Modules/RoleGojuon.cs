@@ -12,21 +12,37 @@ public static class RoleGojuon
 
     public static readonly string[] RowNames =
     {
-        "あ行", "か行", "さ行", "た行", "な行", "は行", "ま行", "や行", "ら行", "わ行", "その他", "NEW",
+        "あ行", "か行", "さ行", "た行", "な行", "は行", "ま行", "や行", "ら行", "わ行", "その他", "NEW", "ネタ役職",
     };
     private static readonly string[] RowColors =
     {
-        "#ff8a80", "#ffb74d", "#fff176", "#aed581", "#4db6ac", "#4fc3f7", "#7986cb", "#ba68c8", "#f06292", "#a1887f", "#b0bec5", "#ffd54f",
+        "#ff8a80", "#ffb74d", "#fff176", "#aed581", "#4db6ac", "#4fc3f7", "#7986cb", "#ba68c8", "#f06292", "#a1887f", "#b0bec5", "#ffd54f", "#ff7ce0",
     };
     public const int OtherRow = 10;
     public const int NewRow = 11;
+    // ネタ役職: どの陣営でも、五十音の行やNEWには入れず、いちばん最後の「ネタ役職」見出しにまとめる
+    public const int JokeRow = 12;
+    private static readonly HashSet<CustomRoles> JokeRoles = new()
+    {
+        CustomRoles.Nova,
+    };
+    public static bool IsJoke(CustomRoles role) => JokeRoles.Contains(role);
 
     // ===== 見出しの開閉(この端末の画面だけの状態。設定の同期には関係しない) =====
     private static readonly Dictionary<CustomRoles, int> RoleHeader = new();
     private static readonly Dictionary<int, List<CustomRoles>> HeaderRoles = new();
     private static readonly HashSet<int> Collapsed = new();
+    public static int StateHash
+    {
+        get
+        {
+            var h = Collapsed.Count;
+            foreach (var id in Collapsed) h = unchecked(h + id * 7919);
+            return h;
+        }
+    }
 
-    public static bool IsNewRow(CustomRoles role) => role.IsNewRole();
+    public static bool IsNewRow(CustomRoles role) => role.IsNewRole() && !IsJoke(role);
 
     public static bool IsRowHeader(int optionId) => HeaderRoles.ContainsKey(optionId);
 
@@ -76,6 +92,17 @@ public static class RoleGojuon
     private static readonly Dictionary<string, (int Row, string Key)> Table = new()
     {
         ["VillainWolf"] = (0, "あくやくのおおかみ"),
+        ["Administer"] = (0, "あとみにすた"),
+        ["Experiencer"] = (0, "えくすへりんさ"),
+        ["Obolus"] = (0, "おほるす"),
+        ["Coroner"] = (1, "けんしかん"),
+        ["Greedier"] = (1, "くりていあ"),
+        ["Locksmith"] = (1, "かきし"),
+        ["DarkHide"] = (3, "たくはいと"),
+        ["NiceHacker"] = (4, "ないすはつか"),
+        ["Framer"] = (5, "ふれま"),
+        ["StepBomber"] = (5, "ほはくま"),
+        ["MadKind"] = (6, "まつとかいんと"),
         ["Assassin"] = (0, "あさしん"),
         ["AsistingAngel"] = (0, "あしすていんくえんしえる"),
         ["Astel"] = (0, "あすてる"),
@@ -492,7 +519,7 @@ public static class RoleGojuon
     };
 
     public static int GetRow(CustomRoles role)
-        => Table.TryGetValue(role.ToString(), out var v) ? v.Row : OtherRow;
+        => IsJoke(role) ? JokeRow : Table.TryGetValue(role.ToString(), out var v) ? v.Row : OtherRow;
 
     private static string GetKey(CustomRoles role)
         => Table.TryGetValue(role.ToString(), out var v) ? v.Key : role.ToString();
@@ -551,14 +578,14 @@ public static class RoleGojuon
         var list = items.ToList();
         IEnumerable<(CustomRoles Role, System.Action Setup)> Sort(IEnumerable<(CustomRoles Role, System.Action Setup)> src)
             => src.OrderBy(x => GetRow(x.Role)).ThenBy(x => GetKey(x.Role), StringComparer.Ordinal);
-        var news = Sort(list.Where(x => x.Role.IsNewRole())).ToList();
+        var news = Sort(list.Where(x => IsNewRow(x.Role))).ToList();
         if (news.Count > 0)
         {
             var header = CreateGroupHeader(tab, groupKey, NewRow);
             foreach (var x in news) { AddRoleToHeader(header, x.Role); x.Setup(); }
         }
         int lastRow = -1, rowHeader = -1;
-        foreach (var x in Sort(list.Where(x => !x.Role.IsNewRole())))
+        foreach (var x in Sort(list.Where(x => !IsNewRow(x.Role))))
         {
             var row = GetRow(x.Role);
             if (row != lastRow) { lastRow = row; rowHeader = CreateGroupHeader(tab, groupKey, row); }

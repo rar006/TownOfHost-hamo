@@ -913,6 +913,7 @@ namespace TownOfHost
         {
 
             __instance.timeSinceLastMessage = 3f;
+            if (AmongUsClient.Instance != null && AmongUsClient.Instance.AmHost) ChatUpdatePatch.LastHostChatAt = Time.realtimeSinceStartup;
 
             if (ChatManager.IsForceSend) return false;
 
@@ -6778,6 +6779,20 @@ namespace TownOfHost
 
         public static bool BlockSendName = false;
         private static float systemTimer = 99f;
+        // ホスト自身が最後にチャットを送った時刻と、最後にシステムメッセージを送った時刻
+        public static float LastHostChatAt = -99f;
+        private static float lastSystemSendAt = -99f;
+        private const float HostChatInterval = 1.5f;
+        private const float AfterSystemMessage = 0.5f;
+        // システムメッセージを送ると、ゲーム本体の「少し待って」(3秒)でホストがしばらくチャットできなかった。
+        // サーバーに引っかからない間隔(自分の前のチャットから1.5秒・システムメッセージから0.5秒)が空いていれば送れるようにする
+        public static void Prefix(ChatController __instance)
+        {
+            if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost || __instance == null) return;
+            var now = Time.realtimeSinceStartup;
+            if (now - LastHostChatAt < HostChatInterval || now - lastSystemSendAt < AfterSystemMessage) return;
+            if (__instance.timeSinceLastMessage < 3f) __instance.timeSinceLastMessage = 3f;
+        }
 
         public static void Postfix(ChatController __instance)
 
@@ -6800,6 +6815,7 @@ namespace TownOfHost
             if (!AmongUsClient.Instance.AmHost || Main.MessagesToSend.Count < 1 || (timer > systemTimer)) return;
             if (DoBlockChat) return;
             if (50 <= Main.MegCount) return;
+            lastSystemSendAt = Time.realtimeSinceStartup;
             var hostChatTimer = __instance.timeSinceLastMessage;
             __instance.timeSinceLastMessage = systemTimer;
             try

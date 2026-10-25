@@ -233,7 +233,7 @@ namespace TownOfHost
 
             {
 
-                PlayerCatch.AllPlayerControls.Do(pc => Camouflage.RpcSetSkin(pc, ForceRevert: true, RevertToDefault: true));
+                PlayerCatch.AllPlayerControls.Do(pc => { try { Camouflage.RpcSetSkin(pc, ForceRevert: true, RevertToDefault: true); } catch (System.Exception ex) { Logger.Error($"見た目戻しに失敗: {ex}", "GameEndChecker"); } });
 
 
 

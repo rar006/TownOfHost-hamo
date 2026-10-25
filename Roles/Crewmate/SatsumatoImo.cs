@@ -38,6 +38,8 @@ public static class SatsumatoImo
 
     public static bool CanSeeImpostorNameColor(CustomRoles role)
     {
+        // マッドカインドはタスクを終えるとクルーとして勝てるので、インポスターが分かるとクルーに教えられてしまう。設定に関係なく見えないようにする
+        if (role is CustomRoles.MadKind) return false;
         if (role is CustomRoles.SatsumatoImoM)
         {
             return OptionCanSeeImpostor?.GetBool() ?? false;
