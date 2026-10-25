@@ -31,11 +31,7 @@ namespace TownOfHost.Roles.Neutral
                     "#cd853f",
                     (1, 5),
                     true,
-                    countType: CountTypes.Hunter,
-                     assignInfo: new RoleAssignInfo(CustomRoles.Hunter, CustomRoleTypes.Neutral)
-                    {
-                        AssignCountRule = new(1, 1, 1)
-                    }
+                    countType: CountTypes.Hunter
                 );
         public Hunter(PlayerControl player)
         : base(
@@ -72,7 +68,7 @@ namespace TownOfHost.Roles.Neutral
         public static bool CanUseSabotage;
 
         bool targeted;
-        public static bool PublicRoleColor;
+        public bool PublicRoleColor;
 
         PlayerControl KillWaitPlayer;
         public static OptionItem OptionchangeColorTime;
@@ -255,23 +251,7 @@ namespace TownOfHost.Roles.Neutral
             savedSpeeds.Remove(playerId);
         }
         public static bool KnowTargetRoleColor(PlayerControl target, bool isMeeting)
-        {
-            if (!isMeeting && target.Is(CustomRoles.Hunter))
-            {
-                if (PublicRoleColor)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                return false;
-            }
-        }
+            => !isMeeting && target.GetRoleClass() is Hunter hunter && hunter.PublicRoleColor;
 
         public override bool CheckShapeshift(PlayerControl target, ref bool animate)
         {

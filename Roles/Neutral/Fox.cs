@@ -274,7 +274,7 @@ public sealed class Fox : RoleBase, ISystemTypeUpdateHook, IRoomTasker
     }
     public bool FoxCheckWin(ref GameOverReason reason)
     {
-        if (Player.IsAlive() is false) return false;
+        if (!Player.IsAlive()) return false;
 
         if (reason is GameOverReason.CrewmatesByTask && CustomWinnerHolder.WinnerTeam is CustomWinner.Crewmate)
         {
