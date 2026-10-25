@@ -98,9 +98,10 @@ public sealed class CurseMaker : RoleBase, IKiller, IUsePhantomButton
     {
         fall = false;
         var (killer, target) = info.AttemptTuple;
+        info.DoKill = false;
+
         if (target.GetRoleClass() is MadPsycho ms)
         {
-            info.DoKill = false;
             ms.Psycho(Player, 1);
             return;
         }

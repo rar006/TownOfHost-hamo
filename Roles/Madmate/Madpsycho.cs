@@ -13,7 +13,7 @@ public sealed class MadPsycho : RoleBase
             CustomRoles.MadPsycho,
             () => OptionCanVent.GetBool() ? RoleTypes.Engineer : RoleTypes.Crewmate,
             CustomRoleTypes.Madmate,
-            21500,
+            215000,
             SetupOptionItems,
             "mps",
             OptionSort: (2, 3)
