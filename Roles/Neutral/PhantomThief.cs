@@ -123,7 +123,6 @@ public sealed class PhantomThief : RoleBase, IKiller, IKillFlashSeeable, IRoomTa
         if (targetId != byte.MaxValue) return;
         if (target.GetRoleClass() is MadPsycho ms)
         {
-            info.DoKill = false;
             ms.Psycho(Player, 1);
             return;
         }

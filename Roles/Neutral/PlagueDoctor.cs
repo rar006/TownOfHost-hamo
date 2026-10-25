@@ -183,7 +183,6 @@ public sealed class PlagueDoctor : RoleBase, IKiller
         {
             if (target.GetRoleClass() is MadPsycho ms)
             {
-                info.DoKill = false;
                 ms.Psycho(Player, 1);
                 return;
             }

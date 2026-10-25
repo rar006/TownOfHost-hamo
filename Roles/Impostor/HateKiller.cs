@@ -72,10 +72,8 @@ public sealed class HateKiller : RoleBase, IImpostor
 
     public override bool VotingResults(ref NetworkedPlayerInfo Exiled, ref bool IsTie, Dictionary<byte, int> vote, byte[] mostVotedPlayers, bool ClearAndExile)
     {
-        if (!Player.IsAlive())
-        {
-            return true;
-        }
+        if (!Player.IsAlive()) return true;
+
         vote.TryGetValue(Player.PlayerId, out var count);
         if (!OptionCountImpostorVotes.GetBool())
         {
@@ -85,16 +83,15 @@ public sealed class HateKiller : RoleBase, IImpostor
         {
             count = count - selfvote;
         }
+
+        if (count <= 0) return true;
+
         float Decrease = count * OptionDecreaseKillCool.GetFloat();
         currentKillCooldown = OptionKillCooldown.GetFloat() - Decrease;
-        if (currentKillCooldown < MinimumKillCooldown)
-        {
-            currentKillCooldown = MinimumKillCooldown;
-        }
-        if (currentKillCooldown < 0.1f)
-        {
-            currentKillCooldown = 0.1f;
-        }
+
+        if (currentKillCooldown < MinimumKillCooldown) currentKillCooldown = MinimumKillCooldown;
+        if (currentKillCooldown < 0.1f) currentKillCooldown = 0.1f;
+
         return true;
     }
     public override void AfterMeetingTasks()

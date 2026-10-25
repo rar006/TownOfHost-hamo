@@ -150,7 +150,6 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
         info.DoKill = false;
         if (target.GetRoleClass() is MadPsycho ms)
         {
-            info.DoKill = false;
             ms.Psycho(Player, 1);
             return;
         }
