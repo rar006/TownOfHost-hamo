@@ -78,6 +78,9 @@ public sealed class Professional : RoleBase, IImpostor, IKiller, IUsePhantomButt
 
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
+        AdjustKillCooldown = true;
+        ResetCooldown = false;
+
         if (!Player.IsAlive()) return;
 
         var target = Player.GetKillTarget(true);
