@@ -343,7 +343,7 @@ public sealed class PavlovOwner : RoleBase, IKiller, IAdditionalWinner, ISchrodi
     }
 }
 
-public sealed class PavlovDogImprint : PavlovDogBase
+/*public sealed class PavlovDogImprint : PavlovDogBase
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
@@ -376,7 +376,7 @@ public sealed class PavlovDogImprint : PavlovDogBase
     {
         PavlovDog.HideRoleOptions(CustomRoles.PavlovDogImprint);
     }
-}
+}*/
 
 public abstract class PavlovDogBase : RoleBase, IKiller, IAdditionalWinner, ISchrodingerCatOwner
 {
