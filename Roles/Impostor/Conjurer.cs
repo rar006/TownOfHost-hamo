@@ -179,20 +179,14 @@ public sealed class Conjurer : RoleBase, IImpostor, IUsePhantomButton
             if (!CanKillImpostor && pc.GetCustomRole().IsImpostor()) continue;
             if (!PointInPolygon(pc.GetTruePosition(), poly)) continue;
 
-            pc.SetRealKiller(Player);
-            var state = PlayerState.GetByPlayerId(pc.PlayerId);
-            state.DeathReason = CustomDeathReason.MagicC;
-            state.SetDead();
-            pc.RpcMurderPlayerV2(pc);
-            kills++;
+            if (CustomRoleManager.OnCheckMurder(Player, pc, pc, pc, Killpower: 3, deathReason: CustomDeathReason.MagicC)) kills++;
         }
-        if (kills is not 0)
-            RPC.PlaySoundRPC(Player.PlayerId, Sounds.KillSound);
+        //if (kills is not 0)
+        //    RPC.PlaySoundRPC(Player.PlayerId, Sounds.KillSound);
 
         beaconPositions.Clear();
         ClearBeacons();
 
-        // ↓追加
         foreach (var dummy in beaconDummies)
             try { dummy?.Despawn(); } catch { }
         beaconDummies.Clear();
