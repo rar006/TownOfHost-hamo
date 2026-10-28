@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using System.Collections.Generic;
 
@@ -3972,8 +3972,7 @@ namespace TownOfHost
         public static OptionItem SetupRoleOptions(int id, TabGroup tab, CustomRoles role, IntegerValueRule assignCountRule = null, CustomGameMode customGameMode = CustomGameMode.Standard, string fromtext = "", CombinationRoles combination = CombinationRoles.None, int defo = -1)
 
         {
-
-            if ((role is CustomRoles.Phantom) || (combination != CombinationRoles.None && Combinations.Contains(combination))) return null;
+            if (/*(role is CustomRoles.Phantom) || */(combination != CombinationRoles.None && Combinations.Contains(combination))) return null;
 
             if (role.IsVanilla())
 
@@ -3987,7 +3986,7 @@ namespace TownOfHost
 
                     case CustomRoles.Shapeshifter: id = 30; break;
 
-                    case CustomRoles.Phantom: id = 40; break;
+                    case CustomRoles.Phantom: id = 23200; break;
 
                     case CustomRoles.Viper: id = 23050; break;
 

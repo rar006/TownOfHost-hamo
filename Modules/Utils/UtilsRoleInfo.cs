@@ -1,4 +1,4 @@
-﻿using static TownOfHost.Utils;
+using static TownOfHost.Utils;
 
 using static TownOfHost.Translator;
 
@@ -747,7 +747,7 @@ namespace TownOfHost
 
                 "ノーティファー" or "のーてぃふぁー" or "ノーティ" or "のーてぃ" => GetString("Notifier"),
 
-                "記憶喪失者" or "きおくそうしつしゃ" or "記憶喪失" or "きおくそうしつ" or "偽シェリフ" or "にせシェリフ" or "にせしぇりふ" or "偽狼少年" or "にせ狼少年" => GetString("Amnesia"),
+                "記憶喪失者" or "きおくそうしつしゃ" or "記憶喪失" or "きおくそうしつ" or "偽シェリフ" or "にせシェリフ" or "にせしぇりふ" or "偽狼少年" or "にせ狼少年" => GetString("Amnesiac"),
 
                 "ボーダーキラー" or "ぼーだーきらー" or "ボダキラ" or "ぼだきら" => GetString("BorderKiller"),
 

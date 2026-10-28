@@ -4,7 +4,7 @@ using UnityEngine;
 namespace TownOfHost.Roles.Core.Interfaces;
 
 /// <summary>
-///ワンクリックファントムボタンを使う役職
+/// ワンクリックファントムボタンを使う役職
 /// <summary>
 public interface IUsePhantomButton
 {

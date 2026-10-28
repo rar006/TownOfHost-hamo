@@ -4,6 +4,7 @@ using AmongUs.GameOptions;
 
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
+using TownOfHost.Roles.Vanilla;
 
 namespace TownOfHost.Patches;
 
@@ -43,6 +44,38 @@ public static class SabotageButtonRefreshPatch
 [HarmonyPatch(typeof(AbilityButton), nameof(AbilityButton.DoClick))]
 public static class AbilityButtonDoClickPatch
 {
+    public static void HandlePhantomClick(PlayerControl player, IUsePhantomButton pb, RoleBase roleclass)
+    {
+        bool AdjustKillCooldown = true;
+        bool? ResetCooldown = true;
+
+        if (roleclass is Phantom)
+        {
+            pb.OnClick(ref AdjustKillCooldown, ref ResetCooldown);
+        }
+        else
+        {
+            pb.CheckOnClick(ref AdjustKillCooldown, ref ResetCooldown);
+        }
+
+        float cooldown = IUsePhantomButton.GetRemainingKillCooldown(player);
+        if (pb.SyncAbilityCooldownWithKillCooldown)
+            pb.SetSyncedAbilityCooldown(cooldown);
+
+        if (AdjustKillCooldown)
+        {
+            Main.AllPlayerKillCooldown[player.PlayerId] = cooldown;
+            IUsePhantomButton.IPPlayerKillCooldown[player.PlayerId] = 0f;
+            player.SetKillTimer(cooldown);
+            player.SyncSettings();
+        }
+
+        if (ResetCooldown == true)
+        {
+            if (player.AmOwner) player.Data.Role.SetCooldown();
+            else player.RpcResetAbilityCooldown();
+        }
+    }
     public static bool Prefix(AbilityButton __instance)
     {
         // 参加者専用MODでは、カスタム役職能力を自分で発動・同期せず、ボタンはバニラの動きのままにする(ホストが判定する)。
@@ -59,7 +92,7 @@ public static class AbilityButtonDoClickPatch
         // なっていた。ワンクリック自殺ボタンという性質上クールダウンの概念自体
         // そぐわないため、共通ガードより先に判定し、生存確認のみで即座に処理する。
         if (!AmongUsClient.Instance.AmHost) return true;
-        if (player.GetRoleClass() is TownOfHost.Roles.Impostor.Infect infectEarly)
+        if (player.GetRoleClass() is Roles.Impostor.Infect infectEarly)
         {
             if (player.IsAlive())
             {
@@ -76,12 +109,14 @@ public static class AbilityButtonDoClickPatch
         var roleInfo = role.GetRoleInfo();
         var roleclass = player.GetRoleClass();
 
+        var oc = roleclass is IUsePhantomButton up && up.UseOneclickButton;
+
         if (role.GetRoleTypes() is RoleTypes.Scientist)
         {
             CloseVitals.Ability = true;
             return true;
         }
-        if (roleclass is IUsePhantomButton pb && pb.UseOneclickButton)
+        if (roleclass is IUsePhantomButton pb && (pb.UseOneclickButton || roleclass is Phantom ph))
         {
             //Shと違い、クリックしたときクールが発生しないことがあるため、
             //クリックしたってのを最低限可視化させる。
@@ -93,10 +128,27 @@ public static class AbilityButtonDoClickPatch
             //非クライアントの場合、役職調整の影響でキルクール弄らないとキルクールが正常の値にならないが、
             //クライアントの場合、別に役職変えてファントム状態解除をしなくていいので関係ない関数になる★
 
-            bool AdjustKillCooldown = true;
+            if (roleclass is Phantom || roleclass is IUsePhantomButton)
+            {
+                __instance.OverrideColor(Palette.DisabledGrey);
+                _ = new LateTask(() => __instance.OverrideColor(Palette.EnabledColor), 0.07f, "", true);
+
+                HandlePhantomClick(player, pb, roleclass);
+
+                return !pb.UseOneclickButton;
+            }
+
+            /*bool AdjustKillCooldown = true;
             bool? ResetCooldown = true;
 
-            pb.CheckOnClick(ref AdjustKillCooldown, ref ResetCooldown);
+            if (roleclass is Phantom)
+            {
+                pb.OnClick(ref AdjustKillCooldown, ref ResetCooldown);
+            }
+            else
+            {
+                pb.CheckOnClick(ref AdjustKillCooldown, ref ResetCooldown);
+            }
 
             float cooldown = IUsePhantomButton.GetRemainingKillCooldown(player);
             if (pb.SyncAbilityCooldownWithKillCooldown)
@@ -113,12 +165,11 @@ public static class AbilityButtonDoClickPatch
             if (ResetCooldown == true)
             {
                 player.Data.Role.SetCooldown();
-            }
+            }*/
 
-            return false;
+            return /*!pb.UseOneclickButton*/ true;
         }
-        else
-        if (roleInfo?.IsDesyncImpostor == true && roleInfo.BaseRoleType.Invoke() == RoleTypes.Shapeshifter)
+        else if (roleInfo?.IsDesyncImpostor == true && roleInfo.BaseRoleType.Invoke() == RoleTypes.Shapeshifter)
         {
             if (!(roleclass?.CanUseAbilityButton() ?? false)) return false;
             foreach (var pc in PlayerCatch.AllPlayerControls)
@@ -132,8 +183,7 @@ public static class AbilityButtonDoClickPatch
             }
             return true;
         }
-        else
-        if (roleInfo?.IsDesyncImpostor == true && roleInfo?.BaseRoleType.Invoke() == RoleTypes.Phantom)
+        else if (roleInfo?.IsDesyncImpostor == true && roleInfo?.BaseRoleType.Invoke() == RoleTypes.Phantom && !oc)
         {
             if (!(roleclass?.CanUseAbilityButton() ?? false)) return false;
             foreach (var pc in PlayerCatch.AllPlayerControls)

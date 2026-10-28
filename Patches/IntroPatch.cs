@@ -659,9 +659,6 @@ namespace TownOfHost
             Logger.Info("OnDestroy", "IntroCutscene");
         }
     }
-<<<<<<< HEAD
-}
-=======
 
 }
 
@@ -691,4 +688,3 @@ static class FirstTurnMeeting
     }
 }
 }
->>>>>>> 531b99b057f3a9e5f154672def1720b9c5b7e3fd

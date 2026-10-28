@@ -285,14 +285,15 @@ public class SimpleRoleInfo
                 roleName = CustomRoles.Phantom;
                 customRoleType = CustomRoleTypes.Impostor;
                 countType = CountTypes.Impostor;
-                configId = 40;
+                configId = 23200;
+                OptionSort = (0, 2);
                 break;
             case RoleTypes.Viper:
                 roleName = CustomRoles.Viper;
                 customRoleType = CustomRoleTypes.Impostor;
                 countType = CountTypes.Impostor;
                 configId = 23050;
-                OptionSort = (0, 2);
+                OptionSort = (0, 3);
                 break;
             default:
                 roleName = CustomRoles.Crewmate;

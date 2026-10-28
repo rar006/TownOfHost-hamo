@@ -6705,3 +6705,7 @@ Ventoman,Ventman,ベントマン
 "NovaBeamSize","Beam Size","ビームのサイズ"
 "NovaChargeTime","Charge Time","チャージ時間"
 "NovaFireDelay","Fire Delay","発射までの待ち時間"
+"PhantomCanSeeNakama","","相方からは見える"
+"PhantomCanKillInvis","","透明化中はキルできる"
+"PhantomDescNakama","","<u>透明化中も味方のインポスター(マッドメイト除く)は視認できる。</u>"
+"PhantomCantKill","","<u>透明化中はキルできない。</u>"
