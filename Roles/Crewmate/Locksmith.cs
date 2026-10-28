@@ -69,16 +69,16 @@ public sealed class Locksmith : RoleBase
     private static void SetupOptionItem()
     {
         OptionCount = IntegerOptionItem.Create(
-            RoleInfo, 1310, OptionName.OptionCount,
+            RoleInfo, 10, OptionName.OptionCount,
             new(0, 5, 1), 2, false)
             .SetZeroNotation(OptionZeroNotation.Infinity);
 
         OptionCooldown = IntegerOptionItem.Create(
-            RoleInfo, 1311, OptionName.Cooldown,
+            RoleInfo, 11, OptionName.Cooldown,
             new(0, 180, 1), 30, false);
 
         OptionCanOpenDoor = BooleanOptionItem.Create(
-            RoleInfo, 1312, OptionName.LocksmithCanOpenDoor,
+            RoleInfo, 12, OptionName.LocksmithCanOpenDoor,
             true, false);
     }
 
@@ -145,39 +145,37 @@ public sealed class Locksmith : RoleBase
         return false;
     }
 
-    public static bool OnEnterVentOthersHook(
-        PlayerPhysics physics, int ventId)
+    public static bool OnEnterVentOthersHook(PlayerPhysics physics, int ventId)
     {
         if (SealedVentsStatic.Contains(ventId))
         {
-            if (physics != null && physics.myPlayer != null)
+            if (physics != null && physics.myPlayer != null && physics.myPlayer.inVent)
             {
                 physics.RpcBootFromVent(ventId);
-                physics.myPlayer.inVent = false;
 
-                if (physics.myPlayer.NetTransform != null)
+                /*if (physics.myPlayer.NetTransform != null)
                 {
                     var allVents = ShipStatus.Instance?.AllVents;
                     var vent = allVents?.FirstOrDefault(
                         v => v.Id == ventId);
                     if (vent != null)
                     {
-                        Vector2 targetPos =
-                            (Vector2)vent.transform.position +
-                            new Vector2(0f, -0.1f);
-                        physics.myPlayer.NetTransform.SnapTo(targetPos);
+                        Vector2 targetPos = (Vector2)vent.transform.position + new Vector2(0f, -0.1f);
+                        physics.myPlayer.RpcSnapToForced(targetPos);
                     }
-                }
+                }*/
             }
-            return true;
+            return false;
         }
-        return false;
+        return true;
     }
 
     public override void OnVentilationSystemUpdate(
         PlayerControl user, VentilationSystem.Operation Operation,
         int ventId)
     {
+        return;
+
         if (!AmongUsClient.Instance.AmHost || isBooting) return;
         if (user == null || Is(user)) return;
 
@@ -224,8 +222,7 @@ public sealed class Locksmith : RoleBase
             }
         }
     }
-    public override void OnReportDeadBody(
-    PlayerControl reporter, NetworkedPlayerInfo target)
+    public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
     {
         banishedPlayers.Clear();
     }
@@ -259,8 +256,6 @@ public sealed class Locksmith : RoleBase
             doorsSystem = system.TryCast<DoorsSystemType>();
         }
 
-        // Keep door opening independent of the system lookup. Some maps or
-        // game states expose AllDoors before the doors system is available.
         if (shipStatus != null && shipStatus.AllDoors != null)
         {
             bool openedDoor = false;
@@ -315,8 +310,7 @@ public sealed class Locksmith : RoleBase
         }
     }
 
-    public override bool CanVentMoving(
-        PlayerPhysics physics, int ventId) => false;
+    public override bool CanVentMoving(PlayerPhysics physics, int ventId) => false;
 
     public override string GetProgressText(
         bool comms = false, bool gamelog = false) =>
