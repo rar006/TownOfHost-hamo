@@ -11,6 +11,7 @@ using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Impostor;
 using TownOfHost.Roles.Madmate;
 using static TownOfHost.Translator;
+using TownOfHost.Roles.Neutral;
 
 namespace TownOfHost
 {
@@ -230,7 +231,7 @@ namespace TownOfHost
 
             // ダークシェリフ本人は開始時からシェリフとして自覚・進行する。
             // イントロのチーム名、背景、説明をすべてクルー（シェリフ）用に統一する。
-            if (role is CustomRoles.DarkSheriff) role = CustomRoles.Sheriff;
+            if (pc.GetRoleClass() is DarkSheriff ds && !ds.Awakened) role = CustomRoles.Sheriff;
 
             if (role.GetRoleInfo()?.IntroSound is AudioClip introSound)
             {

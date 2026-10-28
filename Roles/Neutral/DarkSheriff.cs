@@ -20,7 +20,6 @@ public sealed class DarkSheriff : RoleBase, IKiller
             "dsh",
             "#f8cd46",
             OptionSort: (7, 1),
-            // インポスター・マッドメイトを含め、シェリフ判定で対象を選択できる基盤にする。
             isDesyncImpostor: true,
             from: From.TownOfHost_hamo
         );
@@ -34,10 +33,10 @@ public sealed class DarkSheriff : RoleBase, IKiller
     readonly PetModeSwitch mode;
     public override void Add()
     {
-        TownOfHost.Patches.PetActionManager.Register(Player.PlayerId, () => mode.Toggle());
+        Patches.PetActionManager.Register(Player.PlayerId, () => mode.Toggle());
         mode.Start();
     }
-    public override void OnDestroy() => TownOfHost.Patches.PetActionManager.Unregister(Player.PlayerId);
+    public override void OnDestroy() => Patches.PetActionManager.Unregister(Player.PlayerId);
     public bool CanUseKillButton() => Player.IsAlive() && !mode.TaskMode;
     // 会議が始まったらタスクモードに戻す(シェリフと同じ)。会議の後は、役職が元に戻されることがあるのでもう一度合わせる
     public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
@@ -91,12 +90,18 @@ public sealed class DarkSheriff : RoleBase, IKiller
     /// </summary>
     public override void OverrideTrueRoleName(ref UnityEngine.Color roleColor, ref string roleText)
     {
+        if (Awakened)
+        {
+            roleColor = UtilsRoleText.GetRoleColor(CustomRoles.DarkSheriff);
+            roleText = GetString(nameof(CustomRoles.DarkSheriff));
+            return;
+        }
         roleColor = UtilsRoleText.GetRoleColor(CustomRoles.Sheriff);
         roleText = GetString(nameof(CustomRoles.Sheriff));
     }
 
     // HELP／マイロール表示でも自分をシェリフとして認識する。
-    public override CustomRoles Misidentify() => CustomRoles.Sheriff;
+    public override CustomRoles Misidentify() => Awakened ? CustomRoles.NotAssigned : CustomRoles.Sheriff;
 
     public bool CanUseSabotageButton() => false;
 
@@ -147,16 +152,6 @@ public sealed class DarkSheriff : RoleBase, IKiller
             }
         }
         return false;
-    }
-
-    public override string GetLowerText(PlayerControl seer, PlayerControl seen = null,
-        bool isForMeeting = false, bool isForHud = false)
-    {
-        seen ??= seer;
-        if (!Is(seer) || seer.PlayerId != seen.PlayerId || !Player.IsAlive()) return "";
-
-        // 本人へ「私は正義のシェリフだ…」などの自己紹介文は表示しない。
-        return "";
     }
 
     void SendRpc()

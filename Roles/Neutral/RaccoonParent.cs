@@ -16,7 +16,6 @@ public sealed class RaccoonParent : RoleBase, IKiller, IRoomTasker, IUsePhantomB
             typeof(RaccoonParent),
             player => new RaccoonParent(player),
             CustomRoles.RaccoonParent,
-            // 子作りはファントム（透明）ボタンで行う。
             () => RoleTypes.Phantom,
             CustomRoleTypes.Neutral,
             77030,
@@ -86,8 +85,6 @@ public sealed class RaccoonParent : RoleBase, IKiller, IRoomTasker, IUsePhantomB
     public static float GetKillCooldown() => OptionKillCooldownAfterEnd.GetFloat();
     public static float GetChildKillCooldown() => OptionRaccoonChildKillCooldown?.GetFloat() ?? 35f;
     public static bool ChildKillOnMeetingIfGrabbing => OptionRaccoonChildKillOnMeetingIfGrabbing?.GetBool() ?? false;
-
-    // SK完了後はファントム能力を使わないため、親本人をインポスター基盤で維持する。
     public override RoleTypes? AfterMeetingRole => CanMakeChild ? RoleTypes.Phantom : RoleTypes.Impostor;
 
     public override void ApplyGameOptions(IGameOptions opt)

@@ -55,28 +55,18 @@ namespace TownOfHost.Roles.Crewmate
         private static void SetupOptionItem()
         {
             OptionInformationAmount = FloatOptionItem.Create(
-                RoleInfo, 1210, "InformationAmount",
+                RoleInfo, 10, "InformationAmount",
                 new(1f, 4f, 1f), 2f, false);
 
             OptionDeathTimeAccuracy = FloatOptionItem.Create(
-                RoleInfo, 1211, "DeathTimeAccuracy",
+                RoleInfo, 11, "DeathTimeAccuracy",
                 new(5f, 60f, 5f), 15f, false)
                 .SetValueFormat(OptionFormat.Seconds);
 
             OptionShowReport = BooleanOptionItem.Create(
-                RoleInfo, 1212, "ShowReport", false, false);
+                RoleInfo, 12, "ShowReport", false, false);
         }
 
-        public override void OverrideTrueRoleName(
-            ref Color roleColor, ref string roleText)
-        {
-            roleColor = RoleInfo.RoleColor;
-            roleText = GetString("Coroner");
-        }
-
-        public override void ApplyGameOptions(IGameOptions opt)
-        {
-        }
 
         public override void OnStartMeeting()
         {

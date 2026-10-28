@@ -1,4 +1,4 @@
-﻿/*using System.Linq;
+/*using System.Linq;
 
 using TownOfHost.Roles;
 
@@ -531,10 +531,14 @@ namespace TownOfHost
             reason = GameOverReason.ImpostorsByKill;
 
             if (Assassin.assassin?.NowState is Assassin.AssassinMeeting.Collected) return false;
-            if (TownOfHost.Roles.Neutral.Daoshi.CheckInstantWin(out reason)) return true; // ダオシーの単独勝利
-            if (TownOfHost.Roles.Neutral.CatalystPair.CheckInstantWin(out reason)) return true; // カタリスト・コンダクターの勝利
 
+            bool win = false;
 
+            if (Roles.Neutral.Daoshi.CheckInstantWin(out reason)) win = true; // ダオシーの単独勝利
+            if (DarkSheriff.CheckWin(ref reason)) win = true;
+            if (CatalystPair.CheckInstantWin(out reason)) win = true; // カタリスト・コンダクターの勝利
+
+            if (win) return true; 
 
             int Imp = 0;
 
@@ -555,7 +559,6 @@ namespace TownOfHost
             int Pavlov = 0;
 
             int StandMasterCount = 0;
-            // アライグマ陣営(親・子)。クルー扱いの役職なので、Crew の数から分けて数える
             int RaccoonCount = 0;
 
             int EaterCount = 0;
@@ -566,16 +569,16 @@ namespace TownOfHost
             int Daoshi = 0;
 
             foreach (var pc in PlayerCatch.AllPlayerControls)
+
             {
                 if (pc.Is(CustomRoles.Jiangshi))
                 {
                     Daoshi++;
                     continue;
                 }
-            }
-            foreach (var pc in PlayerCatch.AllAlivePlayerControls)
 
-            {
+                if (!pc.IsAlive()) continue;
+
                 if (pc.Is(CustomRoles.PavlovOwner))
 
                 {

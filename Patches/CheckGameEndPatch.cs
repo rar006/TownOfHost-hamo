@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using System.Collections;
 
@@ -459,7 +459,6 @@ namespace TownOfHost
                     TownOfHost.Roles.Neutral.Parity.CheckWin();
                     TownOfHost.Roles.Neutral.Lupin.CheckWin(ref reason);
 
-                    DarkSheriff.CheckWin(ref reason);
 
                     RaccoonParent.CheckWin(ref reason);
 

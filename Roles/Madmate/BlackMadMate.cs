@@ -56,7 +56,7 @@ public sealed class BlackMadMate : RoleBase
 
             "bm",
 
-            "#111111",
+            "#ff1919",
 
             (8, 5),
 

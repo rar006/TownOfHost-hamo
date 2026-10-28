@@ -12,7 +12,6 @@ public sealed class RaccoonChild : RoleBase, IKiller, IRoomTasker
             typeof(RaccoonChild),
             player => new RaccoonChild(player),
             CustomRoles.RaccoonChild,
-            // 自覚後は親と同じキル基盤で動かす。会議終了まではAfterMeetingRoleでクルー基盤を維持する。
             () => RoleTypes.Impostor,
             CustomRoleTypes.Neutral,
             77060,
@@ -20,7 +19,6 @@ public sealed class RaccoonChild : RoleBase, IKiller, IRoomTasker
             "racc",
             "#c9a27a",
             OptionSort: (7, 3),
-            // 全陣営を手動照準できるインポスター基盤として扱う。
             isDesyncImpostor: true,
             from: From.TownOfHost_hamo
         );
