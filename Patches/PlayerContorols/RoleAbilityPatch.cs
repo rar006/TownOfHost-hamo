@@ -232,6 +232,8 @@ namespace TownOfHost
 
             }
 
+            if (Camouflager.NowUse) return false;
+
             // 役職の処理
 
             if (Amnesia.CheckAbility(shapeshifter))

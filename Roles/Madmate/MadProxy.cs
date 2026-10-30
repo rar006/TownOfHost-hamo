@@ -59,7 +59,6 @@ public sealed class MadProxy : RoleBase, IKiller
     public bool CanUseImpostorVentButton() => Options.SkMadCanUseVent.GetBool();
     public bool CanUseSabotageButton() => false;
 
-    // ユーザー提供の2枚目画像を、未加工のままマッドプロキシのキルボタンへ表示する。
     public bool OverrideKillButton(out string text)
     {
         text = "Surrogate_Kill";
