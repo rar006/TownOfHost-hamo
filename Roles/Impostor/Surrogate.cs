@@ -188,9 +188,7 @@ public sealed class Surrogate : RoleBase, IImpostor, IKiller, IUsePhantomButton
         OptionPhantomCooldown = FloatOptionItem.Create(RoleInfo, 11, "SurrogatePhantomCooldown", new(0f, 255f, 1f), 35f, false)
             .SetValueFormat(OptionFormat.Seconds);
 
-        // マッドプロキシは通常配役されない子役職のため、設定はサロゲート欄にまとめる。
-        OptionMadProxySection = ObjectOptionitem.Create(RoleInfo.ConfigId + 12, "MadProxySettings", true, null, RoleInfo.Tab)
-            .SetOptionName(() => "【マッドプロキシ設定】");
+        OptionMadProxySection = ObjectOptionitem.Create(RoleInfo.ConfigId + 12, "MadProxySettings", true, null, RoleInfo.Tab);
         OptionMadProxyKillCooldown = FloatOptionItem.Create(RoleInfo.ConfigId + 13, GeneralOption.KillCooldown, new(0f, 180f, 1f), 40f, RoleInfo.Tab, false)
             .SetValueFormat(OptionFormat.Seconds)
             .SetParent(OptionMadProxySection);
