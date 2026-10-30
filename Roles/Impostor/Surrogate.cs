@@ -231,7 +231,7 @@ public sealed class Surrogate : RoleBase, IImpostor, IKiller, IUsePhantomButton
         SurrogateSystem.CreateProxy(Player, target);
     }
 
-    public override string GetAbilityButtonText() => "SK";
+    public override string GetAbilityButtonText() => SurrogateSystem.TryGetProxy(Player.PlayerId, out _) ? GetString("SurrogateSwap") : "SK";
 
     public override bool OverrideAbilityButton(out string text)
     {

@@ -6709,3 +6709,4 @@ Ventoman,Ventman,ベントマン
 "PhantomCanKillInvis","","透明化中はキルできる"
 "PhantomDescNakama","","<u>透明化中も味方のインポスター(マッドメイト除く)は視認できる。</u>"
 "PhantomCantKill","","<u>透明化中はキルできない。</u>"
+"SurrogateSwap","Swap","交換"

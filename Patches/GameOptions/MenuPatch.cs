@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using System.Collections.Generic;
 
@@ -3224,9 +3224,6 @@ namespace TownOfHost
 
                             rolebutton.Add(option.CustomRole, button);
 
-                            // 役職コードの SimpleRoleInfo.Create(..., isNewRole: true) で指定した役職だけ、
-                            // 提供された未加工のNEW画像を設定ボタン左上へ重ねて表示する。
-                            // ボタンのクリック領域には干渉しないSpriteRendererとして追加する。
                             if (option.CustomRole.IsNewRole())
                             {
                                 const string newBadgeName = "NewRoleBadge";
