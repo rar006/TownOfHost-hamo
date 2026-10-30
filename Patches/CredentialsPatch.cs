@@ -270,9 +270,6 @@ namespace TownOfHost
                     pingTrackerCredential.text = sb.ToString();
 
                 }
-
-#if DEBUG
-
                 if (Main.ViewPingDetails.Value)
 
                 {
@@ -292,8 +289,6 @@ namespace TownOfHost
                 }
 
                 else __instance.text.alignment = TextAlignmentOptions.TopLeft;
-
-#endif
 
             }
 

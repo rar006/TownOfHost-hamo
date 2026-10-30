@@ -2,6 +2,7 @@ using AmongUs.GameOptions;
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
 using TownOfHost.Roles.Impostor;
+using static UnityEngine.GraphicsBuffer;
 
 namespace TownOfHost.Roles.Madmate;
 
@@ -29,14 +30,10 @@ public sealed class MadProxy : RoleBase, IKiller
                 AssignCountRule = new(0, 0, 1)
             },
             introSound: () => GetIntroSound(RoleTypes.Impostor),
-            from: From.TownOfHost_hamo,
-            isNewRole: false
+            from: From.TownOfHost_hamo
         );
 
-    // マッドプロキシはサロゲートの能力でのみ作成される子役職。
-    // 設定値はサロゲート内の「マッドプロキシ設定」を使用する。
     public static float KillCooldown => Surrogate.MadProxyKillCooldown;
-    public static float TransformDuration => Surrogate.MadProxyTransformDuration;
 
     public MadProxy(PlayerControl player) : base(RoleInfo, player, () => HasTask.False) { }
 
@@ -68,7 +65,10 @@ public sealed class MadProxy : RoleBase, IKiller
         text = "Surrogate_Kill";
         return true;
     }
-
+    public override void ApplyGameOptions(IGameOptions opt)
+    {
+        AURoleOptions.ShapeshifterDuration = Surrogate.OptionMadProxyTransformDuration?.GetFloat() ?? 12f;
+    }
     public override bool OnCheckMurderAsTarget(MurderInfo info)
     {
         // 主であるサロゲートはキル対象にならない。ガード演出だけを返す。
@@ -76,7 +76,17 @@ public sealed class MadProxy : RoleBase, IKiller
         {
             info.CanKill = false;
             info.DoKill = false;
-            owner.RpcProtectedMurderPlayer(Player);
+
+            float TurnTimer = 0;
+            IUsePhantomButton.IPPlayerKillCooldown.TryGetValue(Player.PlayerId, out TurnTimer);
+            Main.AllPlayerKillCooldown.TryGetValue(Player.PlayerId, out var killcool);
+            if (MeetingStates.FirstMeeting && !Options.FixFirstKillCooldown.GetBool() && killcool > 10 &&
+            (PlayerState.GetByPlayerId(Player.PlayerId)?.Is10secKillButton == true))
+                killcool = 10;
+            float cooldown = killcool - TurnTimer;
+            if (cooldown <= 1) cooldown = 0.005f;
+
+            Player.SetKillCooldown(cooldown);
             return false;
         }
         return true;

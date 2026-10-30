@@ -15,7 +15,7 @@ public sealed class Amnesiac : RoleBase, IImpostor
             typeof(Amnesiac),
             player => new Amnesiac(player),
             CustomRoles.Amnesiac,
-            () => RoleTypes.Impostor,
+            () => PetModeSwitch.Enabled ? RoleTypes.Crewmate : RoleTypes.Impostor,
             CustomRoleTypes.Impostor,
             2200,
             SetupCustomOption,
@@ -137,6 +137,8 @@ public sealed class Amnesiac : RoleBase, IImpostor
         if (Realized && OptRealizedKillCooldown != null && OptRealizedKillCooldown.GetFloat() > 0f) return OptRealizedKillCooldown.GetFloat();
         return TownOfHost.Options.DefaultKillCooldown;
     }
+
+
     public bool CanUseImpostorVentButton() => Realized && CanUseVent;
     public bool CanUseSabotageButton() => Realized && CanUseSabotage;
     public bool CanUseKillButton()

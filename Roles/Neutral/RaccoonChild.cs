@@ -27,7 +27,6 @@ public sealed class RaccoonChild : RoleBase, IKiller, IRoomTasker
     {
         GrabbedTargetId = byte.MaxValue;
         InvestigatedTargetId = byte.MaxValue;
-        // サイドキック直後はSK前の元役職として振る舞い、次の会議終了後にだけ子であることを自覚する。
         Awakened = false;
         OriginalRole = CustomRoles.NotAssigned;
     }
@@ -256,10 +255,6 @@ public sealed class RaccoonChild : RoleBase, IKiller, IRoomTasker
 
     public bool IsAssignRoomTask() => Awakened && GrabbedTargetId != byte.MaxValue && !investigateReady;
 
-    public void ChangeRoom(PlainShipRoom TaskPSR)
-    {
-    }
-
     public void OnComplete(int completeroom)
     {
         // 指定部屋へ到達したら役職を調査し、掴んでいる対象は自動で解放する。
@@ -273,16 +268,16 @@ public sealed class RaccoonChild : RoleBase, IKiller, IRoomTasker
         bool isForMeeting = false, bool isForHud = false)
     {
         seen ??= seer;
-        if (!Is(seer) || seer.PlayerId != seen.PlayerId || !Player.IsAlive()) return "";
+        if (!Is(seer) || seer.PlayerId != seen.PlayerId || !Player.IsAlive() || !Awakened) return "";
 
         string size = isForHud ? "" : "<size=60%>";
         string color = RoleInfo.RoleColorCode;
 
-        if (!Awakened)
+        /*if (!Awakened)
         {
             if (isForMeeting) return "";
             return $"{size}<color={color}>{GetString("RaccoonChildLowerTextUnaware")}</color>";
-        }
+        }*/
 
         if (investigateReady && InvestigatedTargetId != byte.MaxValue)
         {

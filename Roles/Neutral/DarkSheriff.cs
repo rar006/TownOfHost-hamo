@@ -3,6 +3,9 @@ using AmongUs.GameOptions;
 using Hazel;
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
+using TownOfHost.Roles.Crewmate;
+using UnityEngine;
+using static TownOfHost.Roles.Core.Interfaces.ISchrodingerCatOwner;
 
 namespace TownOfHost.Roles.Neutral;
 
@@ -13,13 +16,14 @@ public sealed class DarkSheriff : RoleBase, IKiller
             typeof(DarkSheriff),
             player => new DarkSheriff(player),
             CustomRoles.DarkSheriff,
-            () => RoleTypes.Impostor,
+            () => PetModeSwitch.Enabled ? RoleTypes.Crewmate : RoleTypes.Impostor,
             CustomRoleTypes.Neutral,
             77150,
             SetupOptionItem,
             "dsh",
             "#f8cd46",
             OptionSort: (7, 1),
+            introSound: () => GetIntroSound(RoleTypes.Crewmate),
             isDesyncImpostor: true,
             from: From.TownOfHost_hamo
         );
@@ -27,8 +31,9 @@ public sealed class DarkSheriff : RoleBase, IKiller
     public DarkSheriff(PlayerControl player) : base(RoleInfo, player)
     {
         Awakened = false;
-        CurrentKillCooldown = OptionKillCooldownBefore.GetFloat();
+        CurrentKillCooldown = Sheriff.KillCooldown.GetFloat();
         mode = new PetModeSwitch(player);
+        ShotLimit = Sheriff.ShotLimitOpt.GetInt();
     }
     readonly PetModeSwitch mode;
     public override void Add()
@@ -37,6 +42,7 @@ public sealed class DarkSheriff : RoleBase, IKiller
         mode.Start();
     }
     public override void OnDestroy() => Patches.PetActionManager.Unregister(Player.PlayerId);
+    int ShotLimit;
     public bool CanUseKillButton() => Player.IsAlive() && !mode.TaskMode;
     // 会議が始まったらタスクモードに戻す(シェリフと同じ)。会議の後は、役職が元に戻されることがあるのでもう一度合わせる
     public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
@@ -48,10 +54,23 @@ public sealed class DarkSheriff : RoleBase, IKiller
         if (!AmongUsClient.Instance.AmHost || !PetModeSwitch.Enabled || !Player.IsAlive()) return;
         _ = new LateTask(() => { if (Player.IsAlive()) mode.Set(mode.TaskMode); }, Main.LagTime + 0.5f, "DarkSheriff.Mode", true);
     }
-    public override string GetProgressText(bool comms = false, bool gamelog = false)
-        => GameStates.CalledMeeting || gamelog ? "" : mode.ModeText();
 
-    static OptionItem OptionKillCooldownBefore;
+    bool CanUseSheriffMode()
+        => Player.IsAlive()
+        && (Sheriff.staticGetCanKillAllAlive() || GameStates.AlreadyDied)
+        && ShotLimit > 0;
+
+    public override string GetProgressText(bool comms = false, bool gamelog = false)
+    {
+        if (Awakened || !Player.IsAlive()) return "";
+        var progress = Utils.ColorString(CanUseSheriffMode() ? Color.yellow : Color.gray, $"({ShotLimit})");
+
+        var m = GameStates.CalledMeeting || gamelog ? "" : mode.ModeText();
+
+        return progress + m;
+    }
+
+    //static OptionItem OptionKillCooldownBefore;
     static OptionItem OptionKillCooldownAfter;
     static OptionItem OptionAwakenKillCount;
     static OptionItem OptionCanVentAfterAwaken;
@@ -65,8 +84,8 @@ public sealed class DarkSheriff : RoleBase, IKiller
 
     static void SetupOptionItem()
     {
-        OptionKillCooldownBefore = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 30f, false)
-            .SetValueFormat(OptionFormat.Seconds);
+        //OptionKillCooldownBefore = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 30f, false)
+        //    .SetValueFormat(OptionFormat.Seconds);
         OptionAwakenKillCount = IntegerOptionItem.Create(RoleInfo, 11, OptionName.DarkSheriffAwakenKillCount, new(1, 15, 1), 3, false);
         OptionKillCooldownAfter = FloatOptionItem.Create(RoleInfo, 12, OptionName.DarkSheriffKillCooldownAfter, new(0f, 180f, 0.5f), 20f, false)
             .SetValueFormat(OptionFormat.Seconds);
@@ -84,33 +103,24 @@ public sealed class DarkSheriff : RoleBase, IKiller
 
     public float CalculateKillCooldown() => CurrentKillCooldown;
 
-    /// <summary>
-    /// 本人には常に通常のシェリフとして役職名を表示する。
-    /// ダークシェリフという内部名はゲーム進行中の自己認識・イントロには出さない。
-    /// </summary>
-    public override void OverrideTrueRoleName(ref UnityEngine.Color roleColor, ref string roleText)
-    {
-        if (Awakened)
-        {
-            roleColor = UtilsRoleText.GetRoleColor(CustomRoles.DarkSheriff);
-            roleText = GetString(nameof(CustomRoles.DarkSheriff));
-            return;
-        }
-        roleColor = UtilsRoleText.GetRoleColor(CustomRoles.Sheriff);
-        roleText = GetString(nameof(CustomRoles.Sheriff));
-    }
-
     // HELP／マイロール表示でも自分をシェリフとして認識する。
-    public override CustomRoles Misidentify() => Awakened ? CustomRoles.NotAssigned : CustomRoles.Sheriff;
-
+    public override CustomRoles Misidentify() => Awakened || !Player.IsAlive() ? CustomRoles.NotAssigned : CustomRoles.Sheriff;
+    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
+    {
+        if (!seer.IsAlive() && !Awakened)
+        {
+            roleText += $"{UtilsRoleText.GetRoleColorAndtext(CustomRoles.DarkSheriff)}";
+        }
+    }
     public bool CanUseSabotageButton() => false;
 
     public void OnMurderPlayerAsKiller(MurderInfo info)
     {
+        ShotLimit--;
         if (info.DoKill && info.AttemptKiller != info.AttemptTarget)
         {
             var kills = Player.GetPlayerState().GetKillCount();
-            if (!Awakened && kills >= OptionAwakenKillCount.GetInt())
+            if (!Awakened && (kills >= OptionAwakenKillCount.GetInt() || ShotLimit <= 0))
             {
                 Awaken();
             }

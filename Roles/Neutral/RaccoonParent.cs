@@ -193,10 +193,6 @@ public sealed class RaccoonParent : RoleBase, IKiller, IRoomTasker, IUsePhantomB
     // 1回到達したらそれ以上は部屋を巡回させない。
     public bool IsAssignRoomTask() => GrabbedTargetId != byte.MaxValue && !investigateReady;
 
-    public void ChangeRoom(PlainShipRoom TaskPSR)
-    {
-    }
-
     public void OnComplete(int completeroom)
     {
         // 指定された部屋に到着した時点で役職を調査し、対象はすぐに自動解放する。

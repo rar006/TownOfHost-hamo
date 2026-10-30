@@ -448,38 +448,13 @@ public sealed class Fanatic : RoleBase, IKillFlashSeeable, IDeathReasonSeeable
 
         return result;
     }
-    public bool UpdateReactorSystem(ReactorSystemType reactorSystem, byte amount)
+    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
     {
-        return false;
-    }
+        seer ??= Player;
 
-    public bool UpdateHeliSabotageSystem(HeliSabotageSystem heliSabotageSystem, byte amount)
-    {
-        return false;
-    }
-
-    public bool UpdateLifeSuppSystem(LifeSuppSystemType lifeSuppSystem, byte amount)
-    {
-        return false;
-    }
-
-    public bool UpdateHudOverrideSystem(HudOverrideSystemType hudOverrideSystem, byte amount)
-    {
-        return false;
-    }
-
-    public bool UpdateHqHudSystem(HqHudSystemType hqHudSystemType, byte amount)
-    {
-        return false;
-    }
-
-    public bool UpdateSwitchSystem(SwitchSystem switchSystem, byte amount)
-    {
-        return false;
-    }
-
-    public bool UpdateDoorsSystem(DoorsSystemType doorsSystem, byte amount)
-    {
-        return true;
+        if (!seer.IsAlive() && !CanseeTrueRole())
+        {
+            roleText += $"(<#ff1919>{GetString("Fanatic")}</color>)";
+        }
     }
 }

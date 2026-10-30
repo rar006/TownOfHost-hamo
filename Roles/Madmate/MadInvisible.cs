@@ -1,4 +1,4 @@
-﻿using AmongUs.GameOptions;
+using AmongUs.GameOptions;
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
 
@@ -17,7 +17,7 @@ public sealed class MadInvisible : RoleBase, IKillFlashSeeable, IDeathReasonSeea
             SetupOptionItem,
             "minv",
             "#FFFFFF",
-            countType: CountTypes.None, // 生存人数にカウントされない
+            countType: CountTypes.None,
             introSound: () => GetIntroSound(RoleTypes.Impostor),
             isNewRole: true
         );

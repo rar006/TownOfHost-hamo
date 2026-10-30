@@ -50,7 +50,8 @@ public static class SurrogateSystem
         if (!AmongUsClient.Instance.AmHost || owner == null || target == null) return false;
         if (!owner.IsAlive() || !target.IsAlive() || owner.PlayerId == target.PlayerId) return false;
         if (OwnerToProxy.ContainsKey(owner.PlayerId)) return false;
-        if (!target.GetCustomRole().IsCrewmate()) return false;
+        if (target.Is(CustomRoleTypes.Impostor)) return false;
+
         if (target.Is(CustomRoles.GM)) return false;
         return true;
     }
@@ -62,7 +63,6 @@ public static class SurrogateSystem
         OwnerToProxy[owner.PlayerId] = target.PlayerId;
         ProxyToOwner[target.PlayerId] = owner.PlayerId;
 
-        // プロキシは通常排出されないマッドメイト。基本役職はインポスターとしてキル基盤を持つ。
         target.RpcSetCustomRole(CustomRoles.MadProxy, log: null);
         target.RpcSetRole(RoleTypes.Impostor, true);
         target.SyncSettings();
@@ -125,7 +125,6 @@ public static class SurrogateSystem
 
         float duration = Surrogate.MadProxyTransformDuration;
         if (duration <= 0f) return;
-        // falseで演出なし。終了時は自分自身へ戻して変身状態だけを解除する。
         proxy.RpcShapeshift(owner, false);
         _ = new LateTask(() =>
         {
@@ -174,7 +173,7 @@ public sealed class Surrogate : RoleBase, IImpostor, IKiller, IUsePhantomButton
     private static OptionItem OptionPhantomCooldown;
     private static OptionItem OptionMadProxySection;
     private static OptionItem OptionMadProxyKillCooldown;
-    private static OptionItem OptionMadProxyTransformDuration;
+    public static OptionItem OptionMadProxyTransformDuration;
     public static float KillCooldown => OptionKillCooldown?.GetFloat() ?? 40f;
     public static float MadProxyKillCooldown => OptionMadProxyKillCooldown?.GetFloat() ?? 40f;
     public static float MadProxyTransformDuration => OptionMadProxyTransformDuration?.GetFloat() ?? 12f;
@@ -191,19 +190,13 @@ public sealed class Surrogate : RoleBase, IImpostor, IKiller, IUsePhantomButton
 
         // マッドプロキシは通常配役されない子役職のため、設定はサロゲート欄にまとめる。
         OptionMadProxySection = ObjectOptionitem.Create(RoleInfo.ConfigId + 12, "MadProxySettings", true, null, RoleInfo.Tab)
-            .SetOptionName(() => "【マッドプロキシ設定】")
-            .SetParent(Options.CustomRoleSpawnChances[CustomRoles.Surrogate])
-            .SetParentRole(CustomRoles.Surrogate);
-        OptionMadProxyKillCooldown = FloatOptionItem.Create(RoleInfo.ConfigId + 13, "MadProxyKillCooldown", new(0f, 180f, 1f), 40f, RoleInfo.Tab, false)
-            .SetOptionName(() => "キルクール")
+            .SetOptionName(() => "【マッドプロキシ設定】");
+        OptionMadProxyKillCooldown = FloatOptionItem.Create(RoleInfo.ConfigId + 13, GeneralOption.KillCooldown, new(0f, 180f, 1f), 40f, RoleInfo.Tab, false)
             .SetValueFormat(OptionFormat.Seconds)
-            .SetParent(OptionMadProxySection)
-            .SetParentRole(CustomRoles.Surrogate);
-        OptionMadProxyTransformDuration = FloatOptionItem.Create(RoleInfo.ConfigId + 14, "MadProxyTransformDuration", new(0f, 255f, 1f), 12f, RoleInfo.Tab, false)
-            .SetOptionName(() => "変身する時間")
+            .SetParent(OptionMadProxySection);
+        OptionMadProxyTransformDuration = FloatOptionItem.Create(RoleInfo.ConfigId + 14, GeneralOption.Duration, new(0f, 255f, 1f), 12f, RoleInfo.Tab, false)
             .SetValueFormat(OptionFormat.Seconds)
-            .SetParent(OptionMadProxySection)
-            .SetParentRole(CustomRoles.Surrogate);
+            .SetParent(OptionMadProxySection);
     }
 
     public override void ApplyGameOptions(IGameOptions opt)
@@ -214,9 +207,6 @@ public sealed class Surrogate : RoleBase, IImpostor, IKiller, IUsePhantomButton
     public float CalculateKillCooldown() => KillCooldown;
     public bool CanUseSabotageButton() => true;
     public bool CanUseImpostorVentButton() => true;
-
-    // マッドプロキシを一度作成した後はSKボタンを能力として使用できない。
-    bool IUsePhantomButton.IsPhantomRole => !SurrogateSystem.TryGetProxy(Player.PlayerId, out _);
     bool IUsePhantomButton.IsresetAfterKill => false;
     bool IUsePhantomButton.UseOneclickButton => true;
 
@@ -226,24 +216,29 @@ public sealed class Surrogate : RoleBase, IImpostor, IKiller, IUsePhantomButton
         ResetCooldown = true;
         if (!AmongUsClient.Instance.AmHost || !Player.IsAlive()) return;
 
-        // SK（ファントム能力）は一ゲームにつき一回だけ。作成後は交換にも再利用しない。
-        if (SurrogateSystem.TryGetProxy(Player.PlayerId, out _)) return;
+        if (SurrogateSystem.TryGetProxy(Player.PlayerId, out var proxy))
+        {
+            SurrogateSystem.TrySwap(Player);
+            return;
+        }
 
         var target = Player.GetKillTarget(true);
+        if (target is null)
+        {
+            ResetCooldown = false;
+            return;
+        }
         SurrogateSystem.CreateProxy(Player, target);
     }
 
-    // ファントム能力はプロキシ作成時のみSKとして表示する。
     public override string GetAbilityButtonText() => "SK";
 
-    // ユーザー提供の1枚目画像を、未加工のままSK（ファントム能力）ボタンへ表示する。
     public override bool OverrideAbilityButton(out string text)
     {
         text = "Surrogate_SK";
         return true;
     }
 
-    // ユーザー提供の2枚目画像を、未加工のままサロゲートのキルボタンへ表示する。
     public bool OverrideKillButton(out string text)
     {
         text = "Surrogate_Kill";

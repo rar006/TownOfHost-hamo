@@ -442,6 +442,9 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
 
         => IsAppointedSheriff ? VillageChief.SheriffCanKillAllAlive.GetBool() : CanKillAllAlive.GetBool();
 
+    public static bool staticGetCanKillAllAlive()
+
+    => CanKillAllAlive.GetBool();
 
 
     public bool CanUseImpostorVentButton() => false;

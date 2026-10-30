@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 
 using UnityEngine;
 
@@ -303,15 +303,14 @@ namespace TownOfHost
             if (ExpandRoleHeaders?.ToggleButton != null) ExpandRoleHeaders.ToggleButton.gameObject.SetActive(!GameStates.IsLobby);
             // YouTubeのコメント枠の設定は、メインメニューの「Stream」と、ゲーム設定のOTHER2に移した
 
-#if DEBUG
-
+            //使う人いそうなので常時で...
             if (ViewPingDetails == null || ViewPingDetails.ToggleButton == null)
-
             {
-
                 ViewPingDetails = ClientOptionItem.Create("ViewPingDetails", Main.ViewPingDetails, __instance);
-
             }
+
+
+#if DEBUG
 
             if (DebugChatopen == null || DebugChatopen.ToggleButton == null)
 
@@ -468,9 +467,8 @@ namespace TownOfHost
         /// <summary>保持している各アイテム/ポップアップ/ボタンの参照を全て破棄する</summary>
         private static void ResetItemReferences()
         {
-            ForceJapanese = JapaneseRoleName = UnloadMod = DumpLog = OpenLogFolder = ForceEnd = null;
+            ForceJapanese = JapaneseRoleName = UnloadMod = DumpLog = OpenLogFolder = ForceEnd = ViewPingDetails = null;
             UseWebHook = Yomiage = CustomName = CustomSprite = HideSomeFriendCodes = null;
-            ViewPingDetails = DebugChatopen = DebugSendAmout = DebugTours = ShowDistance = null;
             FpsLimitRemoval = AutoSaveScreenShot = PreloadMapAssets = ShowPresetInWebhook = null;
             CustomStartLoading = null;
             AutoRehost = EnableDiscordRichPresence = ShowRoomTimer = ShowPlayerCount = ShowRoomCode = ExpandRoleHeaders = null;
