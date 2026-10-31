@@ -46,7 +46,7 @@ public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
 
             CustomRoleTypes.Impostor,
 
-            7500,
+            75000,
 
             SetupOptionItem,
 

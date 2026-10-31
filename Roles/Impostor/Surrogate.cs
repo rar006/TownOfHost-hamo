@@ -188,11 +188,11 @@ public sealed class Surrogate : RoleBase, IImpostor, IKiller, IUsePhantomButton
         OptionPhantomCooldown = FloatOptionItem.Create(RoleInfo, 11, "SurrogatePhantomCooldown", new(0f, 255f, 1f), 35f, false)
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionMadProxySection = ObjectOptionitem.Create(RoleInfo.ConfigId + 12, "MadProxySettings", true, null, RoleInfo.Tab);
-        OptionMadProxyKillCooldown = FloatOptionItem.Create(RoleInfo.ConfigId + 13, GeneralOption.KillCooldown, new(0f, 180f, 1f), 40f, RoleInfo.Tab, false)
+        OptionMadProxySection = ObjectOptionitem.Create(RoleInfo, 12, "MadProxySettings", true, null);
+        OptionMadProxyKillCooldown = FloatOptionItem.Create(RoleInfo, 13, GeneralOption.KillCooldown, new(0f, 180f, 1f), 40f, false)
             .SetValueFormat(OptionFormat.Seconds)
             .SetParent(OptionMadProxySection);
-        OptionMadProxyTransformDuration = FloatOptionItem.Create(RoleInfo.ConfigId + 14, GeneralOption.Duration, new(0f, 255f, 1f), 12f, RoleInfo.Tab, false)
+        OptionMadProxyTransformDuration = FloatOptionItem.Create(RoleInfo, + 14, GeneralOption.Duration, new(0f, 255f, 1f), 12f, false)
             .SetValueFormat(OptionFormat.Seconds)
             .SetParent(OptionMadProxySection);
     }

@@ -66,19 +66,12 @@ namespace TownOfHost
         private static bool IsDebugLogEnabled => Logger.isEnable && !Logger.disableList.Contains("NotifyRoles");
 
         /// <summary>
-
         /// タスクターン中の役職名の変更
-
         /// </summary>
-
         /// <param name="NoCache">前の変更を参照せず、強制的にRpcをぶっぱなすか</param>
-
         /// <param name="ForceLoop">他視点の名前も変更するか</param>
-
         /// <param name="OnlyMeName">自視点の名前のみ変更するか</param>
-
         /// <param name="SpecifySeer">ここにぶち込まれたplayer視点でのみ名前を変える</param>
-
         public static void NotifyRoles(bool NoCache = false, bool ForceLoop = false, bool OnlyMeName = false, params PlayerControl[] SpecifySeer)
 
         {

@@ -15,8 +15,8 @@ public class VanillaRoleDescription : RoleDescription
     private readonly RoleTypes vanillaRoleType;
     string PhantomDesc()
     {
-        var nakama = Phantom.CanSeeNakama.GetBool() ? "\n" + Translator.GetString("PhantomDescNakama") : "";
-        var kill = !Phantom.CanKillInvis.GetBool() ? "\n" + Translator.GetString("PhantomCantKill") : "";
+        var nakama = Phantom.CanSeeNakama.GetBool() ? "\n" + Translator.GetString("PhantomDescNakama") : string.Empty;
+        var kill = !Phantom.CanKillInvis.GetBool() ? "\n" + Translator.GetString("PhantomCantKill") : string.Empty;
 
         return nakama + kill;
     }
@@ -24,7 +24,7 @@ public class VanillaRoleDescription : RoleDescription
     public override string Description => vanillaRoleType is not RoleTypes.Impostor and not RoleTypes.Phantom ?
         DestroyableSingleton<RoleManager>.Instance.GetRole(vanillaRoleType).BlurbMed :
         vanillaRoleType is RoleTypes.Phantom ?
-        DestroyableSingleton<RoleManager>.Instance.GetRole(vanillaRoleType).BlurbMed
+        Translator.GetString("PhantomInfoLong")
         + PhantomDesc()
         :
         vanillaRoleType is RoleTypes.Impostor ?
