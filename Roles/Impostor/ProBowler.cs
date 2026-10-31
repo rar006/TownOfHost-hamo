@@ -1,10 +1,11 @@
-using System.Linq;
 using AmongUs.GameOptions;
-using Hazel;
+using UnityEngine;
+
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
-using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
+using Hazel;
+using System.Linq;
+using System;
 
 /// <Memo>
 /// 転がる設定ONの時、転がりながらひき殺しも考えた。
@@ -24,8 +25,7 @@ public sealed class ProBowler : RoleBase, IImpostor, IUsePhantomButton
             SetupOptionItem,
             "Pb",
             OptionSort: (3, 4),
-            Desc: () => string.Format(GetString("ProBowlerDesc"), OptionBowling.GetBool() ? GetString("ProBowlerDescBowl") : GetString("ProBowlerDescTeleport"), OptionDeathReasonIsFall.GetBool() ? GetString("DeathReason.Fall") : GetString("DeathReason.Kill"), OptionMaxUseCount.GetInt()),
-            from: From.TownOfHost_K
+            Desc: () => string.Format(GetString("ProBowlerDesc"), OptionBowling.GetBool() ? GetString("ProBowlerDescBowl") : GetString("ProBowlerDescTeleport"), OptionDeathReasonIsFall.GetBool() ? GetString("DeathReason.Fall") : GetString("DeathReason.Kill"), OptionMaxUseCount.GetInt())
 
         );
     public ProBowler(PlayerControl player)
@@ -65,8 +65,6 @@ public sealed class ProBowler : RoleBase, IImpostor, IUsePhantomButton
     Vector2 BowlTp;
     Vector2 targetpos;
     int Rollscount;
-    bool IUsePhantomButton.IsPhantomRole => true;
-    bool IUsePhantomButton.IsresetAfterKill => false;
 
     private static void SetupOptionItem()
     {
@@ -79,39 +77,16 @@ public sealed class ProBowler : RoleBase, IImpostor, IUsePhantomButton
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
         AdjustKillCooldown = true;
-        if (Bowl is not null)
-        {
-            ResetCooldown = false;
-            return;
-        }
         ResetCooldown = true;
+        if (Bowl is not null) return;
         NowUseCount++;
-        if (NowUseCount > MaxUseCount)
-        {
-            return;
-        }
-        Bowl = Player.transform.position;
+        Bowl = Player.GetTruePosition();
         UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
-        SendRPC();
-        var dummyshapetarget = PlayerCatch.GetPlayerById(Player.PlayerId is 0 ? 1 : 0);
-        if (dummyshapetarget = null)
-        {
-            dummyshapetarget = Player;
-        }
-
+        var dummyshapetarget = PlayerCatch.AllPlayerControls.Where(pc => pc.PlayerId != Player.PlayerId).OrderBy(x => Guid.NewGuid()).FirstOrDefault(PlayerControl.LocalPlayer);
         Player.RpcShapeshift(dummyshapetarget, true);
-        Player.RpcShapeshift(Player, true);
-        var sender = CustomRpcSender.Create("VultureEatShape");
-        sender.AutoStartRpc(Player.NetId, RpcCalls.Shapeshift)
-            .Write(dummyshapetarget)
-            .Write(true)
-            .EndRpc();
-        sender.EndMessage();
-        sender.SendMessage();
-
         _ = new LateTask(() => Player.RpcShapeshift(Player, false), 1.5f + Main.LagTime, "", true);
+        SendRPC();
     }
-
     public override void ApplyGameOptions(IGameOptions opt)
     {
         AURoleOptions.PhantomCooldown = MaxUseCount <= NowUseCount ? 200 : AbilityCooldown;
