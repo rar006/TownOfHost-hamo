@@ -105,7 +105,7 @@ public sealed class Framer : RoleBase, IImpostor, IUsePhantomButton, IDoubleTrig
 
     public void OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
-        AdjustKillCooldown = false;
+        AdjustKillCooldown = true;
         ResetCooldown = false;
         if (!AmongUsClient.Instance.AmHost || remaining <= 0 || Camouflage.IsCamouflage) return;
         var source = PlayerCatch.GetPlayerById(sourceId);

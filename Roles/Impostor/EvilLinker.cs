@@ -152,7 +152,7 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
 
     {
 
-        AdjustKillCooldown = false;
+        AdjustKillCooldown = true;
 
         ResetCooldown = false;
 
