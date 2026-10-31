@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 
 using System.Collections.Generic;
 
@@ -121,7 +121,6 @@ namespace TownOfHost
                         }
 
                 }
-
             }
 
             else if (role >= CustomRoles.NotAssigned)   //500:NoSubRole 501~:SubRole

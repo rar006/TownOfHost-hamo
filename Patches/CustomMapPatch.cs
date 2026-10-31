@@ -10,6 +10,7 @@ using HarmonyLib;
 using TownOfHost.Attributes;
 using TownOfHost.Modules;
 using TownOfHost.Roles.Core;
+using TownOfHost.Roles.Core.Interfaces;
 using UnityEngine;
 
 namespace TownOfHost;
@@ -321,16 +322,23 @@ class SubmergedPatch
             var roleClass = player.GetRoleClass();
             roleClass?.OnSpawn(MeetingStates.FirstMeeting);
 
+            var killcool = SuddenDeathMode.SuddenKillcooltime.GetFloat();
+            if (roleClass is IKiller killer && killer.CalculateKillCooldown() != Options.DefaultKillCooldown)
+            {
+                killcool = killer.CalculateKillCooldown();
+            }
+
             if (SuddenDeathMode.SuddenKillcooltime.GetBool() && SuddenDeathMode.NowSuddenDeathMode)
             {
-                PlayerCatch.AllPlayerControls.Do(pc => pc.SetKillCooldown(SuddenDeathMode.SuddenKillcooltime.GetFloat(), delay: true));
+                PlayerCatch.AllPlayerControls.Do(pc => pc.SetKillCooldown(killcool, delay: true));
             }
+
             else
             {
                 if (Options.FixFirstKillCooldown.GetBool() && !MeetingStates.MeetingCalled && Options.CurrentGameMode != CustomGameMode.TaskBattle)
-                    player.SetKillCooldown(InitialKillCooldownOption.Resolve(player, Main.AllPlayerKillCooldown[player.PlayerId]), delay: true);
+                    player.SetKillCooldown(Main.AllPlayerKillCooldown[player.PlayerId], delay: true);
                 else if (Options.CurrentGameMode != CustomGameMode.TaskBattle && MeetingStates.FirstMeeting)
-                    player.SetKillCooldown(InitialKillCooldownOption.Resolve(player, 10f), delay: true);
+                    player.SetKillCooldown(10f, delay: true);
             }
 
             if (MeetingStates.FirstMeeting) player.RpcResetAbilityCooldown();

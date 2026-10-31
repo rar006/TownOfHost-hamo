@@ -37,12 +37,12 @@ public sealed class Judge : RoleBase
     private static OptionItem OptionCount;
     public static void SetUpCustomOption()
     {
-        OptionTaskRequirement = IntegerOptionItem.Create(RoleInfo, 25110, GeneralOption.TaskTrigger, new(0, 99, 1), 1, false)
+        OptionTaskRequirement = IntegerOptionItem.Create(RoleInfo, 10, GeneralOption.TaskTrigger, new(0, 99, 1), 1, false)
             .SetValueFormat(OptionFormat.Pieces);
-        OptionCount = IntegerOptionItem.Create(RoleInfo, 25111, GeneralOption.OptionCount, new(1, 15, 1), 1, false);
-        OptionCanKillMadMate = BooleanOptionItem.Create(RoleInfo, 25112, "MeetingSheriffCanKillMadMate", true, false);
-        OptionCanKillNeutrals = BooleanOptionItem.Create(RoleInfo, 25113, "MeetingSheriffCanKillNeutrals", true, false);
-        OptionCanKillLovers = BooleanOptionItem.Create(RoleInfo, 25114, "SheriffCanKillLovers", true, false);
+        OptionCount = IntegerOptionItem.Create(RoleInfo, 11, GeneralOption.OptionCount, new(1, 15, 1), 1, false);
+        OptionCanKillMadMate = BooleanOptionItem.Create(RoleInfo, 12, "MeetingSheriffCanKillMadMate", true, false);
+        OptionCanKillNeutrals = BooleanOptionItem.Create(RoleInfo, 13, "MeetingSheriffCanKillNeutrals", true, false);
+        OptionCanKillLovers = BooleanOptionItem.Create(RoleInfo, 14, "SheriffCanKillLovers", true, false);
     }
     /// <summary>
     /// 個数設定をバニラの達成率に変換する。

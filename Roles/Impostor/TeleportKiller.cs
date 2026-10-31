@@ -1,11 +1,11 @@
-using AmongUs.GameOptions;
-using UnityEngine;
-using Hazel;
 using System.Collections.Generic;
+using AmongUs.GameOptions;
 using HarmonyLib;
-
+using Hazel;
+using TownOfHost.Modules;
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
+using UnityEngine;
 
 namespace TownOfHost.Roles.Impostor;
 
@@ -221,7 +221,7 @@ public sealed class TeleportKiller : RoleBase, IImpostor
             {
                 if (!target.inVent && !target.MyPhysics.Animations.IsPlayingEnterVentAnimation())
                 {
-                    if (target.GetCustomRole().IsImpostor()) return;
+                    if (target.GetCustomRole().IsImpostor() && !SuddenDeathMode.NowSuddenDeathMode) return;
                     if (CustomRoleManager.OnCheckMurder(Player, target, target, target, true, false, deathReason: DeathReason ? CustomDeathReason.TeleportKill : CustomDeathReason.Kill))
                     {
                         var state = PlayerState.GetByPlayerId(target.PlayerId);

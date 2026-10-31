@@ -1,26 +1,16 @@
 using System;
-
 using System.Collections.Generic;
-
 using System.Linq;
-
 using BepInEx.Unity.IL2CPP.Utils.Collections;
-
 using HarmonyLib;
-
 using Hazel;
-
-using UnityEngine;
-
-using TownOfHost.Roles.Core;
-
-using TownOfHost.Roles.Impostor;
-
-using TownOfHost.Roles.Neutral;
-
-using TownOfHost.Roles.AddOns.Common;
-
 using TownOfHost.Modules;
+using TownOfHost.Roles.AddOns.Common;
+using TownOfHost.Roles.Core;
+using TownOfHost.Roles.Core.Interfaces;
+using TownOfHost.Roles.Impostor;
+using TownOfHost.Roles.Neutral;
+using UnityEngine;
 
 
 
@@ -436,8 +426,18 @@ namespace TownOfHost
 
                 {
 
-                    PlayerCatch.AllPlayerControls.Do(pc => pc.SetKillCooldown(SuddenDeathMode.SuddenKillcooltime.GetFloat(), delay: true));
-
+                    var killcool = SuddenDeathMode.SuddenKillcooltime.GetFloat();
+                    foreach (var pc in PlayerCatch.AllPlayerControls)
+                    {
+                        if (pc != null)
+                        {
+                            if (pc.GetRoleClass() is IKiller killer && killer.CalculateKillCooldown() != Options.DefaultKillCooldown)
+                            {
+                                killcool = killer.CalculateKillCooldown();
+                            }
+                            pc.SetKillCooldown(killcool, delay: true);
+                        }
+                    }
                 }
 
                 else
