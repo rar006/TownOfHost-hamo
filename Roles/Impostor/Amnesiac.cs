@@ -29,7 +29,8 @@ public sealed class Amnesiac : RoleBase, IImpostor
     public Amnesiac(PlayerControl player)
     : base(
         RoleInfo,
-        player
+        player,
+        () => Sheriff.RequiresTasks ? HasTask.ForRecompute : HasTask.False
     )
     {
         CantKillImpostor = OptCantKillImpostor.GetBool();

@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using AmongUs.GameOptions;
 
 using TownOfHost.Roles.Core;

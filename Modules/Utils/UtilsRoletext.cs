@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using System.Linq;
 
@@ -920,9 +920,9 @@ namespace TownOfHost
 
             Color TextColor = Color.yellow;
 
-            var TaskCompleteColor = HasTasks(info) ? Color.green : GetRoleColor(state.MainRole).ShadeColor(0.5f); //タスク完了後の色
+            var TaskCompleteColor = !HasTasks(info) && roleClass is not DarkSheriff and not Amnesiac ? GetRoleColor(state.MainRole).ShadeColor(0.5f) : Color.green; //タスク完了後の色
 
-            var NonCompleteColor = HasTasks(info) ? Color.yellow : Color.white; //カウントされない人外は白色
+            var NonCompleteColor = !HasTasks(info) && roleClass is not DarkSheriff and not Amnesiac ? Color.white : Color.yellow; //カウントされない人外は白色(記憶喪失者・ダーシェは白で透けるので黄色)
 
 
 

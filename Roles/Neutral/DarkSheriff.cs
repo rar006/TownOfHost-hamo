@@ -28,7 +28,8 @@ public sealed class DarkSheriff : RoleBase, IKiller
             from: From.TownOfHost_hamo
         );
 
-    public DarkSheriff(PlayerControl player) : base(RoleInfo, player)
+    public DarkSheriff(PlayerControl player) : base(RoleInfo, player
+        , () => Sheriff.RequiresTasks ? HasTask.ForRecompute : HasTask.False)
     {
         Awakened = false;
         CurrentKillCooldown = Sheriff.KillCooldown.GetFloat();

@@ -33,7 +33,7 @@ public sealed class Jester : RoleBase, IKiller
         requireTask = OptionRequireTask.GetBool();
     }
 
-    static OptionItem CanUseVent;
+    public static OptionItem CanUseVent;
     static OptionItem CanVentMove;
     static OptionItem OptionRequireTask;
     static bool requireTask;

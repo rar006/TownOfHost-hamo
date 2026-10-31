@@ -74,12 +74,27 @@ namespace TownOfHost
             CustomRoles role = RoleNullable.Value;
 
             //デフォルトのタスク数
-            bool hasCommonTasks = true;//trueになるのは
+            bool hasCommonTasks = true;
             int NumCommonTasks = Main.NormalOptions.NumCommonTasks;
             int NumLongTasks = Main.NormalOptions.NumLongTasks;
             int NumShortTasks = Main.NormalOptions.NumShortTasks;
 
-            if (OverrideTasksData.AllData.TryGetValue(role, out var data) && data.doOverride.GetBool())
+            if (role is CustomRoles.FakeJester && OverrideTasksData.AllData.TryGetValue(CustomRoles.Jester, out var jd) && jd.doOverride.GetBool())
+            {
+                hasCommonTasks = jd.numCommonTasks.GetInt() == Main.NormalOptions.NumCommonTasks;
+                NumCommonTasks = jd.numCommonTasks.GetInt();
+                NumLongTasks = jd.numLongTasks.GetInt();
+                NumShortTasks = jd.numShortTasks.GetInt();
+            }
+            if (role is CustomRoles.Amnesiac or CustomRoles.DarkSheriff && OverrideTasksData.AllData.TryGetValue(CustomRoles.Sheriff, out var d) && d.doOverride.GetBool())
+            {
+                hasCommonTasks = d.numCommonTasks.GetInt() == Main.NormalOptions.NumCommonTasks;
+                NumCommonTasks = d.numCommonTasks.GetInt();
+                NumLongTasks = d.numLongTasks.GetInt();
+                NumShortTasks = d.numShortTasks.GetInt();
+            }
+
+            if (OverrideTasksData.AllData.TryGetValue(role, out var data) && data.doOverride.GetBool() && role is not CustomRoles.FakeJester and not CustomRoles.DarkSheriff and not CustomRoles.Amnesiac)
             {
                 hasCommonTasks = data.numCommonTasks.GetInt() == Main.NormalOptions.NumCommonTasks;
                 NumCommonTasks = data.numCommonTasks.GetInt();
@@ -91,10 +106,6 @@ namespace TownOfHost
             }
             if (pc.Is(CustomRoles.Workhorse))
                 (hasCommonTasks, NumCommonTasks, NumLongTasks, NumShortTasks) = Workhorse.TaskData;
-
-            // 公式ジャッジには役職専用のロング・通常・ショートタスク数を適用する。
-            if (pc.Is(CustomRoles.Judge))
-                (hasCommonTasks, NumCommonTasks, NumLongTasks, NumShortTasks) = Roles.Vanilla.Judge.TaskData;
 
             if (Options.CurrentGameMode == CustomGameMode.TaskBattle && TaskBattle.IsAdding)
             {

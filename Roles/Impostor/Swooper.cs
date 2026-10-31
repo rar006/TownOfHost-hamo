@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+/*using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
 using HarmonyLib;
@@ -189,7 +189,7 @@ public sealed class Swooper : RoleBase, IImpostor, IUsePhantomButton
         {
             physics.myPlayer.RpcSnapToDesync(seer, og);
         }*/
-    }
+    /*}
 
     private void EnterInvisible()
     {
@@ -394,8 +394,8 @@ public static class SwooperInvisibilityPatch
         if (__instance.AmOwner) return;
         if (__instance.Visible) __instance.Visible = false;
     }
-}
-/*using AmongUs.GameOptions;
+}*/
+using AmongUs.GameOptions;
 using Hazel;
 using HarmonyLib;
 using System.Collections.Generic;
@@ -776,4 +776,4 @@ public static class SwooperInvisibilityPatch
         if (__instance.AmOwner) return;
         if (__instance.Visible) __instance.Visible = false;
     }
-}*/
+}

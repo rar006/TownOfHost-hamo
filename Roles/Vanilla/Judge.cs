@@ -77,5 +77,7 @@ public sealed class Judge : RoleBase
             .SetParentRole(CustomRoles.Judge);
         CanKillLovers = BooleanOptionItem.Create(25116, "SheriffCanKillLovers", true, TabGroup.CrewmateRoles, false)
             .SetParentRole(CustomRoles.Judge);
+
+        OverrideTasksData.Create(RoleInfo, 17);
     }
 }

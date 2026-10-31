@@ -68,7 +68,6 @@ namespace TownOfHost
             get => Opt.GetBool(BoolOptionNames.NoisemakerImpostorAlert);
             set => Opt.SetBool(BoolOptionNames.NoisemakerImpostorAlert, value);
         }
-        // Among Us V11公式ジャッジの必要タスク率。
         public static float JudgeTaskRequirementPercentage
         {
             get => Opt.GetFloat(FloatOptionNames.JudgeTaskRequirementPercentage);
