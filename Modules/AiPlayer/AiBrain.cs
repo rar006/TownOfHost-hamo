@@ -381,7 +381,15 @@ public sealed class AiBrain
         if (Vector2.Distance(Player.GetTruePosition(), victim.GetTruePosition()) > 5f) return;
         // 壁の向こうは見えない
         if (!AiPath.Clear(Player.GetTruePosition(), victim.GetTruePosition())) return;
-        Remember($"{RoomName(victim.GetTruePosition())}で{killer.Data.PlayerName}が{victim.Data.PlayerName}をキルするのを見た");
+
+        var kname = killer.Data.PlayerName;
+        if (Main.ShapeshiftTarget.TryGetValue(killer.PlayerId, out var shapeshiftid))
+        {
+            var spc = PlayerCatch.GetPlayerById(shapeshiftid);
+            if (spc != null) kname = spc.Data.PlayerName;
+        }
+
+        Remember($"{RoomName(victim.GetTruePosition())}で{kname}が{victim.Data.PlayerName}をキルするのを見た");
     }
 
     private void Remember(string text)
@@ -478,6 +486,7 @@ public sealed class AiBrain
         else
         {
             a.Say = rand.Next(0, 2) == 0 ? "特に怪しい人は見てないです" : "今回はスキップでいいかも";
+            a.Vote = "skip";
         }
         return a;
     }
