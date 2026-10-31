@@ -543,7 +543,12 @@ public abstract class RoleBase : IDisposable
     /// </summary>
     public virtual void CheckWinner(GameOverReason reason)
     { }
-
+    /// <summary>
+    /// ジャッジの役職能力が呼ばれたときに処理。<br/>
+    /// 無かったことにするならfalse。
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool CallJudgeVote(PlayerControl voter, PlayerControl votefor, ref byte ExilePlayerid) => true;
     public virtual CustomRoles HaveAddRole() => CustomRoles.NotAssigned;
     /// <summary>
     /// 自身を別役職だと思い込む。

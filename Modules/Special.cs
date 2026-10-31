@@ -36,7 +36,7 @@ static class Event
 
     public static bool White = DateTime.Now.Month == 3 && DateTime.Now.Day is 14;
 
-    public static bool IsInitialRelease = DateTime.Now.Month == 7 && DateTime.Now.Day is 31;
+    public static bool IsInitialRelease = DateTime.Now.Month == 7 && DateTime.Now.Day is 15;
 
     public static bool IsHalloween = (DateTime.Now.Month == 10 && DateTime.Now.Day is 31) || (DateTime.Now.Month == 11 && DateTime.Now.Day is 1 or 2 or 3 or 4 or 5 or 6 or 7);
 

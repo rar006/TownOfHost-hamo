@@ -1,83 +1,145 @@
+using System.Collections.Generic;
 using AmongUs.GameOptions;
+using Hazel;
+using TownOfHost.Modules;
 using TownOfHost.Roles.Core;
+using TownOfHost.Roles.Impostor;
+using TownOfHost.Roles.Neutral;
 
 namespace TownOfHost.Roles.Vanilla;
 
 public sealed class Judge : RoleBase
 {
     public static readonly SimpleRoleInfo RoleInfo =
-        SimpleRoleInfo.Create(
+        SimpleRoleInfo.CreateForVanilla(
             typeof(Judge),
             player => new Judge(player),
-            CustomRoles.Judge,
-            () => RoleTypes.Judge,
-            CustomRoleTypes.Crewmate,
-            25100,
+            RoleTypes.Judge,
             SetUpCustomOption,
-            "ju",
-            "#a1472c",
-            (0, 6),
-            from: From.AmongUs
+            "#a1472c"
+            , from: From.AmongUs
         );
-
-    private static OptionItem TaskRequirement;
-    private static OptionItem LongTasks;
-    private static OptionItem NormalTasks;
-    private static OptionItem ShortTasks;
-    private static OptionItem CanKillMadmate;
-    private static OptionItem CanKillNeutrals;
-    private static OptionItem CanKillLovers;
-
-    /// <summary>
-    /// タスク再配布パッチが使用する、通常・ロング・ショートの個別タスク数。
-    /// </summary>
-    public static (bool hasCommonTasks, int numCommonTasks, int numLongTasks, int numShortTasks) TaskData =>
-        (true, NormalTasks.GetInt(), LongTasks.GetInt(), ShortTasks.GetInt());
-
     public Judge(PlayerControl player)
-        : base(RoleInfo, player)
+    : base(
+        RoleInfo,
+        player
+    )
     {
+        LimitAbility = OptionCount.GetInt();
+        Isfall = false;
     }
-
-    public static bool CanOverrule(PlayerControl target)
-    {
-        if (target == null || !target.IsAlive()) return false;
-        var role = target.GetCustomRole();
-        if (role.IsMadmate() && !CanKillMadmate.GetBool()) return false;
-        if (role.IsNeutral() && !CanKillNeutrals.GetBool()) return false;
-        if (target.IsLovers() && !CanKillLovers.GetBool()) return false;
-        return true;
-    }
-
+    int LimitAbility;
+    bool Isfall;
+    public static OptionItem OptionTaskRequirement;
+    private static OptionItem OptionCanKillMadMate;
+    private static OptionItem OptionCanKillNeutrals;
+    private static OptionItem OptionCanKillLovers;
+    private static OptionItem OptionCount;
     public static void SetUpCustomOption()
     {
-        // 「必要タスク」を親見出しにし、その直下へ3種類のタスク数を配置する。
-        TaskRequirement = BooleanOptionItem.Create(25110, "JudgeTaskRequirement", true, TabGroup.CrewmateRoles, false)
-            .SetParentRole(CustomRoles.Judge)
-            .SetHeader(true);
-
-        // ユーザー指定: 全項目1～99、刻み1。
-        LongTasks = IntegerOptionItem.Create(25111, "JudgeLongTasks", new(1, 99, 1), 1, TabGroup.CrewmateRoles, false)
-            .SetParentRole(CustomRoles.Judge)
-            .SetParent(TaskRequirement)
+        OptionTaskRequirement = IntegerOptionItem.Create(RoleInfo, 25110, GeneralOption.TaskTrigger, new(0, 99, 1), 1, false)
             .SetValueFormat(OptionFormat.Pieces);
-        NormalTasks = IntegerOptionItem.Create(25112, "JudgeNormalTasks", new(1, 99, 1), 1, TabGroup.CrewmateRoles, false)
-            .SetParentRole(CustomRoles.Judge)
-            .SetParent(TaskRequirement)
-            .SetValueFormat(OptionFormat.Pieces);
-        ShortTasks = IntegerOptionItem.Create(25113, "JudgeShortTasks", new(1, 99, 1), 1, TabGroup.CrewmateRoles, false)
-            .SetParentRole(CustomRoles.Judge)
-            .SetParent(TaskRequirement)
-            .SetValueFormat(OptionFormat.Pieces);
+        OptionCount = IntegerOptionItem.Create(RoleInfo, 25111, GeneralOption.OptionCount, new(1, 15, 1), 1, false);
+        OptionCanKillMadMate = BooleanOptionItem.Create(RoleInfo, 25112, "MeetingSheriffCanKillMadMate", true, false);
+        OptionCanKillNeutrals = BooleanOptionItem.Create(RoleInfo, 25113, "MeetingSheriffCanKillNeutrals", true, false);
+        OptionCanKillLovers = BooleanOptionItem.Create(RoleInfo, 25114, "SheriffCanKillLovers", true, false);
+    }
+    /// <summary>
+    /// 個数設定をバニラの達成率に変換する。
+    /// </summary>
+    public static float GetTaskRequirementPercentage(PlayerControl player)
+    {
+        var need = OptionTaskRequirement.GetInt();
+        if (need <= 0) return 0f;
 
-        // 添付画像のジャッジ対象設定。いずれも初期値はオン。
-        CanKillMadmate = BooleanOptionItem.Create(25114, "MeetingSheriffCanKillMadMate", true, TabGroup.CrewmateRoles, false)
-            .SetParentRole(CustomRoles.Judge);
-        CanKillNeutrals = BooleanOptionItem.Create(25115, "MeetingSheriffCanKillNeutrals", true, TabGroup.CrewmateRoles, false)
-            .SetParentRole(CustomRoles.Judge);
-        CanKillLovers = BooleanOptionItem.Create(25116, "SheriffCanKillLovers", true, TabGroup.CrewmateRoles, false)
-            .SetParentRole(CustomRoles.Judge);
+        var all = player == null ? -1 : PlayerState.GetByPlayerId(player.PlayerId)?.GetTaskState()?.AllTasksCount ?? -1;
+        if (all <= 0)
+        {
+            all = Main.NormalOptions.NumCommonTasks
+                + Main.NormalOptions.NumLongTasks
+                + Main.NormalOptions.NumShortTasks;
+        }
+        if (all <= 0) return 0f;
+        if (need >= all) return 100f;
+        return need * 100f / all;
+    }
+    public override void ApplyGameOptions(IGameOptions opt)
+    {
+        AURoleOptions.JudgeTaskRequirementPercentage = GetTaskRequirementPercentage(Player);
+    }
+    public override bool CallJudgeVote(PlayerControl voter, PlayerControl votefor, ref byte ExilePlayerid)
+    {
+        ExilePlayerid = byte.MaxValue;
+        if (LimitAbility <= 0) return false;
+        if (SelfVoteManager.Canuseability() is false) return false;
+        if (votefor.IsAlive() is false) return false;
 
-        OverrideTasksData.Create(RoleInfo, 17);
+        LimitAbility--;
+        var AlienTairo = false;
+        var targetroleclass = votefor.GetRoleClass();
+        if ((targetroleclass as Alien)?.CheckSheriffKill(votefor) == true) AlienTairo = true;
+        if ((targetroleclass as JackalAlien)?.CheckSheriffKill(votefor) == true) AlienTairo = true;
+        if ((targetroleclass as AlienHijack)?.CheckSheriffKill(votefor) == true) AlienTairo = true;
+
+        if (AntiBlackout.OverrideExiledPlayer())
+        {
+            Utils.AllPlayerKillFlash();
+        }
+
+        if ((CanBeKilledBy(votefor.GetCustomRole()) && !AlienTairo) || (votefor.IsLovers() && OptionCanKillLovers.GetBool()) || (votefor.Is(CustomRoles.Amanojaku) && OptionCanKillNeutrals.GetBool()))
+        {//成功
+            ExilePlayerid = votefor.PlayerId;
+            votefor.SetRealKiller(voter);
+        }
+        else
+        {
+            Isfall = true;
+            ExilePlayerid = voter.PlayerId;
+        }
+        SendRpc();
+        return true;
+    }
+    public override void OnExileWrapUp(NetworkedPlayerInfo exiled, ref bool DecidedWinner)
+    {
+        if (exiled == null) return;
+        if (exiled.PlayerId == Player.PlayerId && Isfall)
+        {
+            MyState.DeathReason = CustomDeathReason.Misfire;
+        }
+    }
+    bool CanBeKilledBy(CustomRoles role)
+    {
+        if (role == CustomRoles.SKMadmate) return OptionCanKillMadMate.GetBool();
+        if (role == CustomRoles.Jackaldoll) return OptionCanKillNeutrals.GetBool();
+
+        return role.GetCustomRoleTypes() switch
+        {
+            CustomRoleTypes.Impostor => role is not CustomRoles.Tairou,
+            CustomRoleTypes.Madmate => OptionCanKillMadMate.GetBool(),
+            CustomRoleTypes.Neutral => OptionCanKillNeutrals.GetBool(),
+            CustomRoleTypes.Crewmate => role is CustomRoles.WolfBoy,
+            _ => false
+        };
+    }/*死んだら誤爆にするか悩む。
+    public override bool VotingResults(ref NetworkedPlayerInfo Exiled, ref bool IsTie, Dictionary<byte, int> vote, byte[] mostVotedPlayers, bool ClearAndExile)
+    {
+        if (Exiled is not null)
+        {
+            if (Isfall && Exiled.PlayerId == Player.PlayerId)
+            {
+                MyState.DeathReason = CustomDeathReason.Misfire;
+            }
+        }
+        return false;
+    }*/
+    public override string GetProgressText(bool comms = false, bool GameLog = false) => $" <{(0 < LimitAbility ? RoleInfo.RoleColorCode : "#828282")}>({LimitAbility})</color>";
+    void SendRpc()
+    {
+        using var sender = CreateSender();
+        sender.Writer.Write(LimitAbility);
+    }
+    public override void ReceiveRPC(MessageReader reader)
+    {
+        LimitAbility = reader.ReadInt32();
     }
 }
