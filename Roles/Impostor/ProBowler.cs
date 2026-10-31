@@ -78,7 +78,7 @@ public sealed class ProBowler : RoleBase, IImpostor, IUsePhantomButton
     }
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
-        AdjustKillCooldown = false;
+        AdjustKillCooldown = true;
         if (Bowl is not null)
         {
             ResetCooldown = false;
@@ -93,7 +93,12 @@ public sealed class ProBowler : RoleBase, IImpostor, IUsePhantomButton
         Bowl = Player.transform.position;
         UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
         SendRPC();
-        var dummyshapetarget = PlayerControl.LocalPlayer;
+        var dummyshapetarget = PlayerCatch.GetPlayerById(Player.PlayerId is 0 ? 1 : 0);
+        if (dummyshapetarget = null)
+        {
+            dummyshapetarget = Player;
+        }
+
         Player.RpcShapeshift(dummyshapetarget, true);
         Player.RpcShapeshift(Player, true);
         var sender = CustomRpcSender.Create("VultureEatShape");
@@ -101,14 +106,10 @@ public sealed class ProBowler : RoleBase, IImpostor, IUsePhantomButton
             .Write(dummyshapetarget)
             .Write(true)
             .EndRpc();
-        sender.AutoStartRpc(Player.NetId, RpcCalls.Shapeshift)
-            .Write(Player)
-            .Write(true)
-            .EndRpc();
         sender.EndMessage();
         sender.SendMessage();
 
-        _ = new LateTask(() => Player.RpcShapeshift(Player, false), Main.LagTime, "", true);
+        _ = new LateTask(() => Player.RpcShapeshift(Player, false), 1.5f + Main.LagTime, "", true);
     }
 
     public override void ApplyGameOptions(IGameOptions opt)

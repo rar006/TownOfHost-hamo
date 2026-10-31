@@ -143,7 +143,7 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
 
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
-        AdjustKillCooldown = false;
+        AdjustKillCooldown = true;
         // チャージ中にもう一度押せるように、始めた時はクールダウンを入れない
         ResetCooldown = false;
         if (!AmongUsClient.Instance.AmHost || !Player.IsAlive() || waiting || beaming) return;

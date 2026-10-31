@@ -92,7 +92,7 @@ public sealed class Warlock : RoleBase, IImpostor, IUsePhantomButton
 
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
-        AdjustKillCooldown = false;
+        AdjustKillCooldown = true;
 
         if (IsCursed && AmongUsClient.Instance.AmHost)
         {
@@ -138,6 +138,7 @@ public sealed class Warlock : RoleBase, IImpostor, IUsePhantomButton
                 }
                 if (Optiondouki.GetBool())
                 {
+                    AdjustKillCooldown = false;
                     Player.SetKillCooldown();
                 }
                 if (OptionCantmove.GetBool() && Player.IsAlive())

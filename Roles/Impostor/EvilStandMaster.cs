@@ -194,7 +194,7 @@ public sealed class EvilStandMaster : RoleBase, IImpostor, IUsePhantomButton
 
     {
 
-        AdjustKillCooldown = false;
+        AdjustKillCooldown = true;
 
         ResetCooldown = false;
 
@@ -213,6 +213,8 @@ public sealed class EvilStandMaster : RoleBase, IImpostor, IUsePhantomButton
             if (ReduceOwnKillCD && OwnKillCDReduce > 0f)
 
             {
+                AdjustKillCooldown = false;
+
 
                 float newCd = Mathf.Max(0.1f, Player.killTimer - OwnKillCDReduce);
 

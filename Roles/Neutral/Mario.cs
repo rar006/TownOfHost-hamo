@@ -66,17 +66,18 @@ public sealed class Mario : RoleBase, IKiller, IUsePhantomButton
     bool IUsePhantomButton.IsresetAfterKill => false;
     public override void OnFixedUpdate(PlayerControl player)
     {
+        if (OptionVentCooldown.GetFloat() >= 2f) return;
+
         if (VentCooldownTimer != null && VentCooldownTimer > 0f)
         {
             VentCooldownTimer -= Time.fixedDeltaTime;
-            if (OptionVentCooldown.GetFloat() >= 2f) return;
             AURoleOptions.PhantomCooldown = (float)VentCooldownTimer;
             Player.RpcResetAbilityCooldown();
         }
     }
     public override bool OnEnterVent(PlayerPhysics physics, int ventId)
     {
-        if (VentCooldownTimer > 0.1f) return false;
+        if (OptionVentCooldown.GetFloat() >= 2f && VentCooldownTimer > 0.1f) return false;
         --Count;
         SendRPC();
         if (Count <= 0)

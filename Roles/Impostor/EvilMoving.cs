@@ -116,7 +116,7 @@ public sealed class EvilMoving : RoleBase, IImpostor, IUsePhantomButton
 
     {
 
-        AdjustKillCooldown = false;
+        AdjustKillCooldown = true;
 
         ResetCooldown = false;
 

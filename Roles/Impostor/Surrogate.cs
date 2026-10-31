@@ -210,7 +210,7 @@ public sealed class Surrogate : RoleBase, IImpostor, IKiller, IUsePhantomButton
 
     public void OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
-        AdjustKillCooldown = false;
+        AdjustKillCooldown = true;
         ResetCooldown = true;
         if (!AmongUsClient.Instance.AmHost || !Player.IsAlive()) return;
 
