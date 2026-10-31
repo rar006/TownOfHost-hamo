@@ -43,7 +43,7 @@ public sealed class MadSnitch : RoleBase, IKillFlashSeeable, IDeathReasonSeeable
     private static OptionItem OptionCanVent;
     private static OptionItem OptionCanAlsoBeExposedToImpostor;
     /// <summary>マッドスニッチがインポスターを知るタスク数</summary>
-    private static OptionItem OptionTaskTrigger;
+    public static OptionItem OptionTaskTrigger;
     /// <summary>インポスターがマッドスニッチを視認するタスク数。0ならKnowsImpostorと同じタイミング</summary>
     ///こちらも実装するかは要相談 こちらも夜藍に任せようかな()
     private static OptionItem OptionExposedTaskTrigger;

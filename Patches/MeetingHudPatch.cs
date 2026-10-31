@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 using System.Linq;
 
@@ -295,11 +295,6 @@ public static class MeetingHudPatch
                 var judgePc = PlayerCatch.GetPlayerById(judge);
                 var targetPc = PlayerCatch.GetPlayerById(target);
                 if (judgePc == null || targetPc == null || !judgePc.IsAlive()) return;
-                if (!TownOfHost.Roles.Vanilla.Judge.CanOverrule(targetPc))
-                {
-                    Logger.Info($"{judgePc.GetNameWithRole().RemoveHtmlTags()} の判決は対象外のため無効: {targetPc.GetNameWithRole().RemoveHtmlTags()}", "Judge");
-                    return;
-                }
                 OverruleNonce = nonce;
                 MeetingVoteManager.Instance?.SetVote(judge, target, Isjudgevote: true, ovex: target);
                 Logger.Info($"{judgePc.GetNameWithRole().RemoveHtmlTags()} が {targetPc.GetNameWithRole().RemoveHtmlTags()} に判決", "Judge");
