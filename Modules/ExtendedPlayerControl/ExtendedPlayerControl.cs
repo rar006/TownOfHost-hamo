@@ -75,7 +75,6 @@ namespace TownOfHost
 
             var client = player?.GetClient();
 
-            // 抜けた人などで何度も呼ばれるため、同じ人については10秒に1回だけ記録する(毎回出すとログを書くだけで重くなっていた)
             if (client == null && ShouldLogMissingClient(player)) Logger.Error($"{player?.Data?.GetLogPlayerName() ?? "null"}のclientがnull", "GetClientId");
 
             return client == null ? -1 : client.Id;

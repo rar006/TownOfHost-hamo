@@ -275,85 +275,66 @@ namespace TownOfHost
         }
 
         private static bool CheckInvalidShapeshifting(PlayerControl instance, PlayerControl target, bool animate)
-
         {
-
             logger.Info($"Checking shapeshift {instance.GetNameWithRole().RemoveHtmlTags()} -> {(target == null || target.Data == null ? "(null)" : target.GetNameWithRole().RemoveHtmlTags())} (animate:{animate})");
 
-
-
             if (!target || target.Data == null)
-
             {
-
                 logger.Info("targetがnullのため変身をキャンセルします");
-
                 return false;
+            }
 
+            if (Framer.framed.ContainsKey(instance.PlayerId))
+            {
+                logger.Info($"フレーマーが{instance.Data.PlayerName}の姿を変えているためキャンセルします");
+                return false;
             }
 
             if (!instance.IsAlive())
-
             {
-
                 logger.Info("変身者が死亡しているため変身をキャンセルします");
-
                 return false;
-
             }
 
-            if (instance.Is(CustomRoles.SKMadmate) || instance.Is(CustomRoles.Jackaldoll))
-
+            if (Camouflager.NowUse)
             {
-
-                logger.Info("変身者がサイドキックされてるため変身をキャンセルします");
-
+                logger.Info("カモフラージュ中のため変身をキャンセルします");
                 return false;
-
             }
+
+
+            //フレーマーシェイプ化するならちょっと不都合。
+            /*if (instance.Is(CustomRoles.SKMadmate) || instance.Is(CustomRoles.Jackaldoll))
+            {
+                logger.Info("変身者がサイドキックされてるため変身をキャンセルします");
+                return false;
+            }*/
 
             // RoleInfoによるdesyncシェイプシフター用の判定を追加
-
-            if (instance.Data.Role.Role != RoleTypes.Shapeshifter && instance.GetCustomRole().GetRoleInfo()?.BaseRoleType?.Invoke() != RoleTypes.Shapeshifter)
-
+            // これもフレーマーシェイプ化するならちょっと不都合。
+            /*if (instance.Data.Role.Role != RoleTypes.Shapeshifter && instance.GetCustomRole().GetRoleInfo()?.BaseRoleType?.Invoke() != RoleTypes.Shapeshifter)
             {
-
                 logger.Info("変身者がシェイプシフターではないため変身をキャンセルします");
-
                 return false;
-
-            }
+            }*/
 
             if (instance.Data.Disconnected)
-
             {
-
                 logger.Info("変身者が切断済のため変身をキャンセルします");
-
                 return false;
-
             }
 
             if (target.IsMushroomMixupActive() && animate)
-
             {
-
                 logger.Info("キノコカオス中のため変身をキャンセルします");
-
                 return false;
-
             }
 
             if ((MeetingHud.Instance || GameStates.CalledMeeting) && animate)
-
             {
-
                 logger.Info("会議中のため変身をキャンセルします");
-
                 return false;
-
             }
-
             return true;
 
         }
