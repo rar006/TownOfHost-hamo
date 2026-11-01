@@ -85,7 +85,7 @@ public sealed class Whiteshark : RoleBase, IImpostor, IUsePhantomButton
 
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
-        AdjustKillCooldown = false;
+        AdjustKillCooldown = true;
         ResetCooldown = true;
     }
     static bool IsUsingMovingPlatform(PlayerControl pc)

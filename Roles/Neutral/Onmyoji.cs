@@ -1546,7 +1546,8 @@ public sealed class Shikigami : RoleBase, IUsePhantomButton, IKillFlashSeeable
 
     {
 
-        AdjustKillCooldown = false; ResetCooldown = false;
+        AdjustKillCooldown = false;
+        ResetCooldown = false;
 
         if (!AmongUsClient.Instance.AmHost || !Player.IsAlive()) return;
 

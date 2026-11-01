@@ -29,7 +29,6 @@ namespace TownOfHost
         public static VoteResult? voteresult;
         //private static Dictionary<(byte, byte), RoleTypes> RoleTypeCache = new();
         private readonly static LogHandler logger = Logger.Handler("AntiBlackout");
-        // TownOfHost-K更新: 追放・暗転対策で使用する最低人数を共通化する。
         public const int MustPlayerCount = 4;
 
         private static bool GetA()
@@ -63,7 +62,7 @@ namespace TownOfHost
                 return;
             }
             isDeadCache.Clear();
-           spiritGuideCache.Clear();
+            spiritGuideCache.Clear();
             var nowcount = PlayerCatch.AllPlayerControls.Count();
             foreach (var info in GameData.Instance.AllPlayers)
             {
@@ -87,7 +86,7 @@ namespace TownOfHost
                 if (info == null) continue;
                 if (isDeadCache.TryGetValue(info.PlayerId, out var val))
                 {
-                                        // 暗転中に新たに死亡した状態は、キャッシュ復元で生存へ戻さない。
+                    // 暗転中に新たに死亡した状態は、キャッシュ復元で生存へ戻さない。
                     info.IsDead = info.IsDead || val.isDead;
                     info.Disconnected = val.Disconnected || SelectRolesPatch.Disconnected.Contains(info.PlayerId);
 

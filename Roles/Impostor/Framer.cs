@@ -62,7 +62,7 @@ public sealed class Framer : RoleBase, IImpostor, IUsePhantomButton, IDoubleTrig
     // 姿の元にする人
     private byte sourceId;
     // 姿を変えている人 → 元に戻す時刻
-    private static readonly Dictionary<byte, float> framed = new();
+    public static readonly Dictionary<byte, float> framed = new();
     private bool usedSinceMeeting;
 
     private static void SetupOptionItem()
@@ -101,11 +101,11 @@ public sealed class Framer : RoleBase, IImpostor, IUsePhantomButton, IDoubleTrig
 
     public bool DoubleAction(PlayerControl killer, PlayerControl target) => true;
 
-    public bool UseOneclickButton => remaining > 0;
+    public bool IsPhantomRole => remaining > 0;
 
     public void OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
-        AdjustKillCooldown = false;
+        AdjustKillCooldown = true;
         ResetCooldown = false;
         if (!AmongUsClient.Instance.AmHost || remaining <= 0 || Camouflage.IsCamouflage) return;
         var source = PlayerCatch.GetPlayerById(sourceId);
@@ -154,15 +154,52 @@ public sealed class Framer : RoleBase, IImpostor, IUsePhantomButton, IDoubleTrig
         if (!Camouflage.PlayerSkins.TryGetValue(id, out var outfit) || outfit == null) return;
         SendOutfit(target, outfit, true);
     }
-
+    private static PlayerControl GetOutfitOwner(NetworkedPlayerInfo.PlayerOutfit outfit)
+    {
+        foreach (var pc in PlayerCatch.AllPlayerControls)
+        {
+            if (pc == null || pc.Data == null) continue;
+            foreach (var kv in pc.Data.Outfits)
+            {
+                if (ReferenceEquals(kv.Value, outfit)) return pc;
+            }
+        }
+        return null;
+    }
     // target の姿を outfit にする。includeTarget が false なら本人には送らない(本人の画面では元のまま)
     private static void SendOutfit(PlayerControl target, NetworkedPlayerInfo.PlayerOutfit outfit, bool includeTarget)
     {
-        if (target == null || target.Data == null || target.Data.Disconnected) return;
+        if (target == null || target.Data == null || target.Data.Disconnected || !AmongUsClient.Instance.AmHost) return;
+        var pc = GetOutfitOwner(outfit);
+        if (pc == null) return;
+
+        if (includeTarget)
+        {
+            target.RpcShapeshift(pc, false);
+            return;
+        }
+
         var sender = CustomRpcSender.Create(name: $"Framer.SendOutfit({target.Data.GetLogPlayerName()})");
         foreach (var seer in PlayerCatch.AllPlayerControls)
         {
             if (seer == null || (seer == target && !includeTarget)) continue;
+
+            if (seer == PlayerControl.LocalPlayer)
+            {
+                target.Shapeshift(pc, false);
+                continue;
+            }
+
+            var clientId = seer.GetClientId();
+            if (clientId == -1) continue;
+
+            sender.AutoStartRpc(target.NetId, (byte)RpcCalls.Shapeshift, clientId)
+                .Write(pc)
+                .Write(false)
+                .EndRpc();
+
+            continue;
+
             if (seer == PlayerControl.LocalPlayer)
             {
                 target.SetColor(outfit.ColorId);
@@ -171,8 +208,6 @@ public sealed class Framer : RoleBase, IImpostor, IUsePhantomButton, IDoubleTrig
                 target.SetVisor(outfit.VisorId, outfit.ColorId);
                 continue;
             }
-            var clientId = seer.GetClientId();
-            if (clientId == -1) continue;
             sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetColor, clientId)
                 .Write(target.Data.NetId)
                 .Write((byte)outfit.ColorId)
@@ -204,11 +239,14 @@ public sealed class Framer : RoleBase, IImpostor, IUsePhantomButton, IDoubleTrig
     {
         seen ??= seer;
         var mark = "";
+
         // 選んでいる姿の元は自分にだけ見える
         if (seer == Player && seen.PlayerId == sourceId) mark += Utils.ColorString(RoleInfo.RoleColor, "◎");
+
         // 姿を変えている人には、フレーマーとインポスターにだけ印を出す
         if (framed.ContainsKey(seen.PlayerId) && (seer == Player || seer.GetCustomRole().IsImpostor()))
             mark += Utils.ColorString(RoleInfo.RoleColor, "◇");
+
         return mark;
     }
 

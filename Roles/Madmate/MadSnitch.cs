@@ -16,7 +16,7 @@ public sealed class MadSnitch : RoleBase, IKillFlashSeeable, IDeathReasonSeeable
             CustomRoles.MadSnitch,
             () => OptionCanVent.GetBool() ? RoleTypes.Engineer : RoleTypes.Crewmate,
             CustomRoleTypes.Madmate,
-            20900,
+            7500,
             SetupOptionItem,
             "msn",
             OptionSort: (1, 1),
@@ -34,6 +34,7 @@ public sealed class MadSnitch : RoleBase, IKillFlashSeeable, IDeathReasonSeeable
 
         canAlsoBeExposedToImpostor = OptionCanAlsoBeExposedToImpostor.GetBool();
         TaskTrigger = OptionTaskTrigger.GetInt();
+        ExposedTaskTrigger = OptionExposedTaskTrigger.GetInt();
 
         ExposedTaskTrigger = OptionExposedTaskTrigger.GetInt();
         MyTaskState.NeedTaskCount = OptionTaskTrigger.GetInt();
@@ -42,9 +43,13 @@ public sealed class MadSnitch : RoleBase, IKillFlashSeeable, IDeathReasonSeeable
 
     private static OptionItem OptionCanVent;
     private static OptionItem OptionCanAlsoBeExposedToImpostor;
-    /// <summary>能力発動タスク数</summary>
+    /// <summary>マッドスニッチがインポスターを知るタスク数</summary>
     public static OptionItem OptionTaskTrigger;
     /// <summary>インポスターがマッドスニッチを視認するタスク数。0ならKnowsImpostorと同じタイミング</summary>
+<<<<<<< HEAD
+=======
+    ///こちらも実装するかは要相談 こちらも夜藍に任せようかな()
+>>>>>>> 56c7b58ea5046de5c0a8b51960962f93d8453042
     private static OptionItem OptionExposedTaskTrigger;
     private static OverrideTasksData Tasks;
     enum OptionName

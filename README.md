@@ -18,8 +18,8 @@ TOH-hamoで起きたバグは本家や他MODには報告しないでまずはTOH
 
 
 
-**最新版は[こちら]()**<re>
-過去バージョンは[こちら]()<re>
+**最新版は[こちら](https://github.com/rar006/TownOfHost-hamo/releases/latest)**<br>
+過去バージョンは[こちら](https://github.com/rar006/TownOfHost-hamo/releases)<br>
 
 ## 公開ルームについて
 > [!Note]
@@ -44,14 +44,14 @@ TOH-hamoで起きたバグは本家や他MODには報告しないでまずはTOH
 > - 参加者がサブ垢等で公開ルームを建てそこから非公開ルームへ勧誘する行為
 > - 部屋主,参加者が公開ルームへ参加し、そこから非公開ルームへ勧誘する行為
 
-=>　公開ルーム利用者が意図しないMod体験を行われないようにするためです。<br>
+=>公開ルーム利用者が意図しないMod体験を行われないようにするためです。<br>
 **禁止されない行為**
 > [**Note**]
 > - Discordや村のオープンチャットで非公開ルームのコードを伝え身内間でMod部屋を開催
 > - Town Of Host-hamoのマッチメイキングでの募集
 > - Youtubeなどの配信サイトで上記の禁止行為に該当しない参加型/身内村配信<br>
 
-=>　要するに**Modだと認知していない野良のプレイヤーが交わる可能性がある**とアウトです。<br>
+=>要するに**Modだと認知していない野良のプレイヤーが交わる可能性がある**とアウトです。<br>
 <br>
 勧誘部屋に遭遇した場合は勧誘先に無闇に参加せずまずは開発者にお知らせください。厳正に対処いたします。<br>
 
@@ -86,56 +86,56 @@ Modが使えなくなるよ!<br>
 ってことです。
 
 **TownOfHost-hamoの開発者**<br>
-　haru<br>
-　　[Youtube](https://youtube.com/@harudayo1210?si=XFtImV4TE2FO9o-U)<br>
+haru<br>
+[Youtube](https://youtube.com/@harudayo1210?si=XFtImV4TE2FO9o-U)<br>
 
 ※本家TownOfHost,TownOfHost_PKO様の開発者はここでは省略させていただきます
 #### クレジット
 [Town Of Host](https://github.com/tukasa0001/TownOfHost)<br>
-　Fork元の本家です。<br>TownOfHost様にある機能はTownOfHost-hamoでも大体実装されています<br>
+Fork元の本家です。<br>TownOfHost様にある機能はTownOfHost-hamoでも大体実装されています<br>
 
 [Town Of Host_K](https://github.com/KYMario/TownOfHost-K)<br>
-　Town Of Host_PKO様のフォーク元です。TownOfHost_K様にある機能はTownOfHost-hamoでも大体実装されています<br>
+Town Of Host_PKO様のフォーク元です。TownOfHost_K様にある機能はTownOfHost-hamoでも大体実装されています<br>
 
 [Town Of Host_PKO](https://github.com/satokazoku/TownOfHost-Pko)<br>
 フォーク元です。TownOfHost_PKO様にある機能もTownOfHost-hamoにはだいたい実装されています。<br>
 
 [Town Of Host_Y](https://github.com/Yumenopai/TownOfHost_Y)<br>
-　会議時の役職表示、会議拡張、ワーカホリック,ラビット,チェイサー,ニムロッド,鬼,決闘者,海賊,属性名、一部役職を参考/移植させて頂きました！<br>
+会議時の役職表示、会議拡張、ワーカホリック,ラビット,チェイサー,ニムロッド,鬼,決闘者,海賊,属性名、一部役職を参考/移植させて頂きました！<br>
 
 [Town Of Host For E](https://github.com/AsumuAkaguma/TownOfHost_ForE) <br>
-　機能やコメント取得一部処理の参考にさせて頂きました！<br>
+機能やコメント取得一部処理の参考にさせて頂きました！<br>
 
 [Town Of Host_Enhanced](https://github.com/EnhancedNetwork/TownofHost-Enhanced)<br>
-　Swooperを移植させて頂きました！<br>
+Swooperを移植させて頂きました！<br>
 
 [Endless Host Roles](https://github.com/Gurge44/EndlessHostRoles) <br>
-　ペットの自動付与、タスクターン中のチャット表示を参考にさせて頂きました！<br>
+ペットの自動付与、タスクターン中のチャット表示を参考にさせて頂きました！<br>
 
 [Revolutionary Host Roles](https://github.com/sansaaaaai/Revolutionary-host-roles)<br>
-　カスタムボタンの参考、リローダー、スタッフ、インセンダーを移行させていただきました！<br>
+カスタムボタンの参考、リローダー、スタッフ、インセンダーを移行させていただきました！<br>
 
 [Town Of Host-H](https://github.com/Hyz-sui/TownOfHost-H) <br>
-　10.24アプデの対応で参考にさせていただきました！<br>
+10.24アプデの対応で参考にさせていただきました！<br>
 
 [SuperNewRoles](https://github.com/ykundesu/SuperNewRoles) <br>
-　スパイダー、ナイス猫又、黒猫、ナイス赤ずきん、ポーカーフェイス、三匹の子豚、ミニマリスト、ナイステレポーター、テレポーター、さつまといも、ムービング、イビルムービング、ロケット、自殺願望者、爆ぜ師、ジャッカルシーア、侍、パブロフの犬、モイラ、キューピッド、スペランカー、神、フリーター、マグロ、陰陽師、忘却者、波動砲ジャッカル、弾、波動砲、ダブルキラー、自爆魔、サンタ、村長、天秤、ミーティングシェリフ、トイレファン、イビルギャンブラー、ペンギン、マッドスーサイドを移植/参考<br>
-　ブラックリスト等や様々な部分を参考にさせて頂きました！<br>
+スパイダー、ナイス猫又、黒猫、ナイス赤ずきん、ポーカーフェイス、三匹の子豚、ミニマリスト、ナイステレポーター、テレポーター、さつまといも、ムービング、イビルムービング、ロケット、自殺願望者、爆ぜ師、ジャッカルシーア、侍、パブロフの犬、モイラ、キューピッド、スペランカー、神、フリーター、マグロ、陰陽師、忘却者、波動砲ジャッカル、弾、波動砲、ダブルキラー、自爆魔、サンタ、村長、天秤、ミーティングシェリフ、トイレファン、イビルギャンブラー、ペンギン、マッドスーサイドを移植/参考<br>
+ブラックリスト等や様々な部分を参考にさせて頂きました！<br>
 
 [TheOtherRoles](https://github.com/TheOtherRolesAU/TheOtherRoles)<br>
-　カモフラージャー、弁護士、ゲッサー等を参考/移植させていただきました<br>
+カモフラージャー、弁護士、ゲッサー等を参考/移植させていただきました<br>
 
 [TheOtherRole GM](https://github.com/yukinogatari/TheOtherRoles-GM)<br>
-　一部役職を参考/移植させていただきました<br>
+一部役職を参考/移植させていただきました<br>
 
 TOR_GM_Haoming_Edition<br>
-　イビルトラッカー、シュレディンガーの猫等を参考/移植させていただきました<br>
+イビルトラッカー、シュレディンガーの猫等を参考/移植させていただきました<br>
 
 [Nebula On The Ship](https://github.com/Dolly1016/Nebula/)<br>
-　ナイストラッパー、イビルトラッパー、ドクター、スナイパーを参考/移植させていただきました<br>
+ナイストラッパー、イビルトラッパー、ドクター、スナイパーを参考/移植させていただきました<br>
 
 [au.libhalt.net](https://au.libhalt.net/)<br>
-　マッドジェスターの参考/移植させていただきました<br>
+マッドジェスターの参考/移植させていただきました<br>
 
 [ExtremeRoles](https://github.com/yukieiji/ExtremeRoles)<br>
-　アサシンとマーリンの参考/移植、イーター、エボルバーの移植をさせていただきました。<br>
+アサシンとマーリンの参考/移植、イーター、エボルバーの移植をさせていただきました。<br>

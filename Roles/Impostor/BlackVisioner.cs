@@ -97,6 +97,8 @@ public sealed class BlackVisioner : RoleBase, IImpostor, IUsePhantomButton
     public void OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
         ResetCooldown = true;
+        AdjustKillCooldown = true;
+
         if (PartnerId != byte.MaxValue && !PartnerDead) return;
 
         var target = Player.GetKillTarget(true);
@@ -104,7 +106,6 @@ public sealed class BlackVisioner : RoleBase, IImpostor, IUsePhantomButton
         // 自分の(本来の)インポスター仲間はブラックマッドメイトにできない
         if (target.IsTeammate(Player)) return;
 
-        AdjustKillCooldown = false;
         target.RpcSetCustomRole(CustomRoles.BlackMadMate, log: null);
         if (!Utils.RoleSendList.Contains(target.PlayerId)) Utils.RoleSendList.Add(target.PlayerId);
         target.RpcSetRole(CanMadmateUseVent ? RoleTypes.Engineer : RoleTypes.Crewmate, true);

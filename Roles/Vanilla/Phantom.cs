@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using AmongUs.GameOptions;
 using HarmonyLib;
@@ -28,19 +29,25 @@ public sealed class Phantom : RoleBase, IImpostor, IUsePhantomButton
     {
         Duration = PhantomDuration.GetFloat();
         NowInvisible = false;
+        DurationTimer = null;
     }
     public static OptionItem PhantomCooldown;
     public static OptionItem PhantomDuration;
     public static OptionItem CanKillInvis;
     public static OptionItem CanSeeNakama;
     float Duration;
+    float? DurationTimer;
     public bool NowInvisible;
 
-    //バグるので仕方ない...
     public bool UseOneclickButton => CanKillInvis.GetBool();
-    public override bool CanClickUseVentButton => !NowInvisible;
-    bool IKiller.CanUseImpostorVentButton() => !NowInvisible;
-    public override bool OnEnterVent(PlayerPhysics physics, int ventId) => !NowInvisible;
+    public override bool OnEnterVent(PlayerPhysics physics, int ventId)
+    {
+        if (NowInvisible)
+        {
+            ExitInvis();
+        }
+        return !NowInvisible;
+    }
     enum OptionName
     {
         PhantomCanKillInvis,
@@ -61,6 +68,29 @@ public sealed class Phantom : RoleBase, IImpostor, IUsePhantomButton
         AURoleOptions.PhantomCooldown = PhantomCooldown.GetFloat();
         AURoleOptions.PhantomDuration = PhantomDuration.GetFloat();
     }
+    public override void OnFixedUpdate(PlayerControl player)
+    {
+        if (DurationTimer != null)
+        {
+            DurationTimer -= Time.fixedDeltaTime;
+            if (DurationTimer <= 0f)
+            {
+                ExitInvis();
+            }
+        }
+    }
+
+    public override string GetProgressText(bool comms = false, bool GameLog = false)
+    {
+        if (!NowInvisible) return string.Empty;
+
+        var durat = Math.Truncate((decimal)DurationTimer);
+
+        return $"{durat}";
+    }
+
+    public override string GetLowerText(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
+        => NowInvisible ? Utils.ColorString(RoleInfo.RoleColor, GetString("PhantomInvisText")) : string.Empty;
 
     void SendRPC()
     {
@@ -120,18 +150,12 @@ public sealed class Phantom : RoleBase, IImpostor, IUsePhantomButton
 
         if (NowInvisible)
         {
-            NowInvisible = false;
-            ExitInvis();
-            Swooper.InvisibleSwooperIds.Remove(Player.PlayerId);
+            ResetCooldown = false;
+            return;
         }
-        else
-        {
-            Swooper.InvisibleSwooperIds.Add(Player.PlayerId);
-            _ = new LateTask(() =>
-            {
-                ExitInvis();
-            }, Duration, "PhantomReturnPos");
-        }
+
+        Swooper.InvisibleSwooperIds.Add(Player.PlayerId);
+        DurationTimer = Duration;
 
         AURoleOptions.PhantomDuration = NowInvisible ? PhantomCooldown.GetFloat() : PhantomDuration.GetFloat();
         NowInvisible = !NowInvisible;
@@ -205,17 +229,16 @@ public sealed class Phantom : RoleBase, IImpostor, IUsePhantomButton
             Player.RpcSnapToDesync(p, pos);
             RpcEnterVentDesync(physics, farthestVent?.Id ?? 1, p);
         }
-        _ = new LateTask(() =>
-        {
-            ExitInvis();
-        }, Duration, "");
     }
 
     void ExitInvis()
     {
         NowInvisible = false;
+        Swooper.InvisibleSwooperIds.Remove(Player.PlayerId);
 
         if (!AmongUsClient.Instance.AmHost) return;
+
+        SendRPC();
 
         var physics = Player.MyPhysics;
         /*var writer = CustomRpcSender.Create("Phantom OneClick", SendOption.None);

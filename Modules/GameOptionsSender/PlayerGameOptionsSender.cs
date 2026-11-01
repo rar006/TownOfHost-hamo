@@ -300,7 +300,7 @@ namespace TownOfHost.Modules
             AURoleOptions.NoisemakerAlertDuration = Noisemaker.NoisemakerAlertDuration.GetFloat();
 
             AURoleOptions.ViperDissolveTime = Viper.ViperDissolveTime;
-
+            AURoleOptions.JudgeTaskRequirementPercentage = Judge.GetTaskRequirementPercentage(player);
 
 
             if (player == null)

@@ -66,18 +66,23 @@ public sealed class Mario : RoleBase, IKiller, IUsePhantomButton
     bool IUsePhantomButton.IsresetAfterKill => false;
     public override void OnFixedUpdate(PlayerControl player)
     {
+        if (OptionVentCooldown.GetFloat() >= 2f) return;
+
         if (VentCooldownTimer != null && VentCooldownTimer > 0f)
         {
             VentCooldownTimer -= Time.fixedDeltaTime;
-            if (OptionVentCooldown.GetFloat() >= 2f) return;
             AURoleOptions.PhantomCooldown = (float)VentCooldownTimer;
             Player.RpcResetAbilityCooldown();
         }
     }
     public override bool OnEnterVent(PlayerPhysics physics, int ventId)
     {
+<<<<<<< HEAD
         // 出たばかりの間(null)も入れない。前は null の間に入り直せて、数え直しと追い出しが重なり、入ったり出たりを繰り返していた
         if (VentCooldownTimer == null || VentCooldownTimer > 0.1f) return false;
+=======
+        if (OptionVentCooldown.GetFloat() >= 2f && VentCooldownTimer > 0.1f) return false;
+>>>>>>> 56c7b58ea5046de5c0a8b51960962f93d8453042
         --Count;
         SendRPC();
         if (Count <= 0)

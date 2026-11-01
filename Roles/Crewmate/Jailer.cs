@@ -312,7 +312,7 @@ public sealed class Jailer : RoleBase, IUsePhantomButton, IKiller
 
     {
 
-        AdjustKillCooldown = false;
+        AdjustKillCooldown = true;
 
         ResetCooldown = false;
 

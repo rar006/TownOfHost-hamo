@@ -108,7 +108,7 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
 
     public static OptionItem StartInTaskMode;
 
-    private static bool RequiresTasks => StartInTaskMode?.OptionMeGetBool() ?? true;
+    public static bool RequiresTasks => StartInTaskMode?.OptionMeGetBool() ?? true;
 
     public static OptionItem CanKillAllAlive;
 

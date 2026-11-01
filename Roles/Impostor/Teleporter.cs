@@ -46,7 +46,7 @@ public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
 
             CustomRoleTypes.Impostor,
 
-            7500,
+            75000,
 
             SetupOptionItem,
 
@@ -152,7 +152,7 @@ public sealed class Teleporter : RoleBase, IImpostor, IUsePhantomButton
     {
 
         PetActionManager.Register(Player.PlayerId, OnPetUsed);
-        petReadyAt = UnityEngine.Time.time + AbilityCooldown; // 試合開始直後もボタンと同じだけ待つ
+        petReadyAt = Time.time + AbilityCooldown;
 
     }
 

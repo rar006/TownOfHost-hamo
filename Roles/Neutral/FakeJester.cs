@@ -21,7 +21,7 @@ public sealed class FakeJester : RoleBase, IAdditionalWinner
             typeof(FakeJester),
             player => new FakeJester(player),
             CustomRoles.FakeJester,
-            () => RoleTypes.Crewmate,
+            () => Jester.CanUseVent.GetBool() ? RoleTypes.Engineer : RoleTypes.Crewmate,
             CustomRoleTypes.Neutral,
             85400,
             SetupOptionItem,
@@ -51,6 +51,13 @@ public sealed class FakeJester : RoleBase, IAdditionalWinner
             new(3, 5, 1), 3, false)
             .SetValueFormat(OptionFormat.Times);
         OptionIsAdditionalWin = BooleanOptionItem.Create(RoleInfo, 11, OptionName.FakeJesterIsAdditionalWin, true, false);
+    }
+
+    public override void ApplyGameOptions(IGameOptions opt)
+    {
+        AURoleOptions.EngineerCooldown = 0f;
+        AURoleOptions.EngineerInVentMaxTime = 0f;
+        opt.SetVision(false);
     }
 
     // 通過した会議の回数(会議が開始されるたびに増える)
@@ -92,7 +99,7 @@ public sealed class FakeJester : RoleBase, IAdditionalWinner
 
         // 他プレイヤーからは、これまで通り「ジェスター」に見えたままにしつつ、
         // バケネコと同じ形式で「/フェイクジェスター」を併記する。
-        roleText += $"/{UtilsRoleText.GetRoleColorAndtext(CustomRoles.FakeJester)}";
+        roleText += $"{UtilsRoleText.GetRoleColorAndtext(CustomRoles.FakeJester)}";
     }
 
     public bool CheckWin(ref CustomRoles winnerRole)

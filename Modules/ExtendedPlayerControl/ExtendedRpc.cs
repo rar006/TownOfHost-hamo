@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 
 using System.Collections.Generic;
 
@@ -117,9 +117,12 @@ namespace TownOfHost
                         }
 
                 }
+<<<<<<< HEAD
 
                 if (role is CustomRoles.SKMadmate)
                     NameColorManager.RevealSKMadmateToImpostors(player);
+=======
+>>>>>>> 56c7b58ea5046de5c0a8b51960962f93d8453042
             }
 
             else if (role >= CustomRoles.NotAssigned)   //500:NoSubRole 501~:SubRole

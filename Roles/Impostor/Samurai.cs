@@ -81,21 +81,20 @@ public sealed class Samurai : RoleBase, IImpostor, IUsePhantomButton
 
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
+        AdjustKillCooldown = true;
+        ResetCooldown = false;
+
+        if (!AmongUsClient.Instance.AmHost) return;
+        if (!Player.IsAlive()) return;
+
         if (CanUse)
         {
-            AdjustKillCooldown = false;
-            ResetCooldown = false;
-
-            if (!AmongUsClient.Instance.AmHost) return;
-            if (!Player.IsAlive()) return;
-
             var killedCount = KillTargetsInFront();
             if (killedCount <= 0) return;
 
             Jizo.Checkroom(Player.GetPlainShipRoom(), Player);
             CanUse = false;
 
-            ResetCooldown = true;
             UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
         }
     }

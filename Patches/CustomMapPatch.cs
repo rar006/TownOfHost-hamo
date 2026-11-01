@@ -336,9 +336,9 @@ class SubmergedPatch
             else
             {
                 if (Options.FixFirstKillCooldown.GetBool() && !MeetingStates.MeetingCalled && Options.CurrentGameMode != CustomGameMode.TaskBattle)
-                    player.SetKillCooldown(InitialKillCooldownOption.Resolve(player, Main.AllPlayerKillCooldown[player.PlayerId]), delay: true);
+                    player.SetKillCooldown(Main.AllPlayerKillCooldown[player.PlayerId], delay: true);
                 else if (Options.CurrentGameMode != CustomGameMode.TaskBattle && MeetingStates.FirstMeeting)
-                    player.SetKillCooldown(InitialKillCooldownOption.Resolve(player, 10f), delay: true);
+                    player.SetKillCooldown(10f, delay: true);
             }
 
             if (MeetingStates.FirstMeeting) player.RpcResetAbilityCooldown();

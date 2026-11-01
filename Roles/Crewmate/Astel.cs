@@ -12,7 +12,7 @@ public sealed class Astel : RoleBase
             typeof(Astel),
             player => new Astel(player),
             CustomRoles.Astel,
-            () => RoleTypes.Engineer,
+            () => RoleTypes.Crewmate,
             CustomRoleTypes.Crewmate,
             33120,
             SetupOptionItem,

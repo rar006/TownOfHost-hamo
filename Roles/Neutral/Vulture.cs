@@ -276,6 +276,10 @@ public sealed class Vulture : RoleBase, IKillFlashSeeable, IAdditionalWinner
                 var dummyshapetarget = PlayerCatch.AllPlayerControls.Where(pc => pc.PlayerId != Player.PlayerId).OrderBy(x => Guid.NewGuid()).FirstOrDefault(PlayerControl.LocalPlayer);
                 Player.RpcShapeshift(dummyshapetarget, true);
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 56c7b58ea5046de5c0a8b51960962f93d8453042
                 _ = new LateTask(() => Player.RpcShapeshift(Player, false), 1.5f + Main.LagTime, "", true);
             }
 

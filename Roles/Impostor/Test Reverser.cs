@@ -66,7 +66,7 @@ public sealed class Reverser : RoleBase, IImpostor, IUsePhantomButton
 
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
-        AdjustKillCooldown = false;
+        AdjustKillCooldown = true;
         ResetCooldown = false; // ボタンを押した瞬間にはクールダウンを開始させない
 
         // 反転中はファントムボタンのクリックを無効化

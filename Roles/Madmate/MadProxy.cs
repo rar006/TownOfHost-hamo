@@ -6,10 +6,6 @@ using static UnityEngine.GraphicsBuffer;
 
 namespace TownOfHost.Roles.Madmate;
 
-/// <summary>
-/// サロゲートがファントム能力で作る、通常排出されないキル可能マッドメイト。
-/// 基本役職はインポスターだが、カスタム陣営はマッドメイトとして扱う。
-/// </summary>
 public sealed class MadProxy : RoleBase, IKiller
 {
     public static readonly SimpleRoleInfo RoleInfo =
