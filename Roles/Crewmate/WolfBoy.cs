@@ -1,3 +1,4 @@
+using System.Linq;
 using Hazel;
 using UnityEngine;
 using AmongUs.GameOptions;
@@ -56,6 +57,10 @@ public sealed class WolfBoy : RoleBase, IKiller, ISchrodingerCatOwner
     public static OptionItem optcountimpstor; static bool IsCountImpostor;
     public static OptionItem optcountmadmate; static bool IsCountMadmate;
     public static OptionItem optcountneutral; static bool IsCountNeutral;
+    public static OptionItem OptionSeenAsImpostor;
+    public static OptionItem OptionTellResult;
+    public static bool SeenAsImpostor => OptionSeenAsImpostor?.GetBool() ?? true;
+    CustomRoles? disguise;
     int NowKillcount;
     enum OptionName
     {
@@ -63,7 +68,9 @@ public sealed class WolfBoy : RoleBase, IKiller, ISchrodingerCatOwner
         SheriffCanKillAllAlive,
         WolfBoySchrodingerCatTime,
         Wolfboycanwinkillcount,
-        WolfBoyCountteam
+        WolfBoyCountteam,
+        WolfBoySeenAsImpostor,
+        WolfBoyTellResult
     }
     public int ShotLimit = 0;
     public float CurrentKillCooldown = 30;
@@ -72,8 +79,19 @@ public sealed class WolfBoy : RoleBase, IKiller, ISchrodingerCatOwner
     public ISchrodingerCatOwner.TeamType SchrodingerCatChangeTo => Shurenekodotti.GetBool() ? ISchrodingerCatOwner.TeamType.Mad : ISchrodingerCatOwner.TeamType.Crew;
     public override CustomRoles TellResults(PlayerControl player)
     {
+        if (!SeenAsImpostor) return CustomRoles.NotAssigned;
         if (player != null) Achievements.RpcCompleteAchievement(Player.PlayerId, 0, achievements[1]);
-        return CustomRoles.Impostor;
+        return disguise ??= PickDisguise(OptionTellResult.GetValue() == 1, CustomRoleTypes.Impostor, CustomRoles.Impostor);
+    }
+
+    public static CustomRoles PickDisguise(bool random, CustomRoleTypes type, CustomRoles pure)
+    {
+        if (!random) return pure;
+        var roles = Options.CustomRoleCounts.Keys
+            .Where(r => r is not (CustomRoles.WolfBoy or CustomRoles.Tairou) && r.GetRoleInfo() != null
+                && r.GetCustomRoleTypes() == type && r.IsEnable())
+            .ToArray();
+        return roles.Length == 0 ? pure : roles[IRandom.Instance.Next(roles.Length)];
     }
     private static void SetupOptionItem()
     {
@@ -90,6 +108,8 @@ public sealed class WolfBoy : RoleBase, IKiller, ISchrodingerCatOwner
         CanKillAllAlive = BooleanOptionItem.Create(RoleInfo, 12, OptionName.SheriffCanKillAllAlive, true, false);
         ImpostorVision = BooleanOptionItem.Create(RoleInfo, 13, GeneralOption.ImpostorVision, true, false);
         Shurenekodotti = BooleanOptionItem.Create(RoleInfo, 14, OptionName.WolfBoySchrodingerCatTime, false, false);
+        OptionSeenAsImpostor = BooleanOptionItem.Create(RoleInfo, 20, OptionName.WolfBoySeenAsImpostor, true, false);
+        OptionTellResult = StringOptionItem.Create(RoleInfo, 21, OptionName.WolfBoyTellResult, new[] { "TellResultImpostor", "TellResultRandomRole" }, 0, false, OptionSeenAsImpostor);
         SaruWarningOption.AddTo(RoleInfo);
 
         optcountcrew.ReplacementDictionary = new() { { "%role%", UtilsRoleText.GetRoleColorAndtext(CustomRoles.Crewmate) } };

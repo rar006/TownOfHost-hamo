@@ -59,6 +59,8 @@ namespace TownOfHost
         {
 
             //注:この時点では役職は設定されていません。
+            // ホストは読み込みバーが出ないことがあるので、ここでもロード画面を出す(イントロが始まったら閉じる)
+            try { Modules.StartLoadingScreen.Show(); } catch { }
 
             Roles.RoleAssignManager.SyncImpostorCountBeforeStart(); // オプションの控えを取る前に、人数別設定のインポスター数に合わせる
             GameStates.Intro = true;
@@ -1108,7 +1110,7 @@ namespace TownOfHost
                 AddOnsAssignDataTeamImp.AssignAddOnsFromList();
 
                 AddOnsAssignData.AssignAddOnsFromList();
-
+                RoleGrantAddons.Assign();
                 SilverBuzzer.CloseInitialAssignment();
 
                 Twins.AssingAndReset();

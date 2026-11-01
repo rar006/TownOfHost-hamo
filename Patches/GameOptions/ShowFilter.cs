@@ -242,7 +242,28 @@ class ShowFilter
 
 
 
-                    Scrollbargameobject = Object.Instantiate(scrollbargameobjecttem, tabtransform.parent);
+                    if (scrollbargameobjecttem == null) throw new System.Exception("設定画面のスクロールが見つかりません");
+                    // 設定タブの行(属性タブは数千行)ごと複製すると、それだけで数秒固まっていた。行を一時的に外してから複製する
+                    var srcInner = scrollbargameobjecttem.GetComponent<Scroller>()?.Inner;
+                    Transform holder = null;
+                    if (srcInner != null && srcInner.childCount > 0)
+                    {
+                        holder = new GameObject("FilterCloneHolder").transform;
+                        holder.gameObject.SetActive(false);
+                        while (srcInner.childCount > 0) srcInner.GetChild(0).SetParent(holder, false);
+                    }
+                    try
+                    {
+                        Scrollbargameobject = Object.Instantiate(scrollbargameobjecttem, tabtransform.parent);
+                    }
+                    finally
+                    {
+                        if (holder != null)
+                        {
+                            while (holder.childCount > 0) holder.GetChild(0).SetParent(srcInner, false);
+                            Object.Destroy(holder.gameObject);
+                        }
+                    }
 
                     var scrollbar = Scrollbargameobject.GetComponent<Scroller>;
 
@@ -584,7 +605,13 @@ class ShowFilter
 
                 }
 
-                catch { }
+                catch (System.Exception e)
+                {
+                    // 途中で失敗すると「選択画面を開いている」状態のまま画面が出ず、設定画面が操作できなくなっていた
+                    Logger.Exception(e, "ShowFilter");
+                    CallEsc();
+                    return;
+                }
 
             }
 
@@ -592,6 +619,7 @@ class ShowFilter
 
         //Show 
 
+        if (CustomBackground == null || Scrollbargameobject == null) { CallEsc(); return; }
         CustomBackground.gameObject.SetActive(true);
 
         Scrollbargameobject.gameObject.SetActive(true);

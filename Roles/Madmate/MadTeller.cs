@@ -45,6 +45,7 @@ public sealed class MadTeller : RoleBase, IKiller, IKillFlashSeeable, IDeathReas
         Votemode = (AbilityVoteMode)OptionVoteMode.GetValue();
         onemeetingmaximum = Option1MeetingMaximum.GetFloat();
         MyTaskState.NeedTaskCount = OptionTaskTrigger.GetInt();
+        IsAbilityUseVote = OptionAbilityUseVote.GetBool();
     }
     private static bool canSeeKillFlash;
     private static bool canSeeDeathReason;
@@ -53,6 +54,7 @@ public sealed class MadTeller : RoleBase, IKiller, IKillFlashSeeable, IDeathReas
     private static OptionItem OptionMaximum;
     private static OptionItem OptionRole;
     private static OptionItem OptionVoteMode;
+    static OptionItem OptionAbilityUseVote; static bool IsAbilityUseVote;
     private static OptionItem Option1MeetingMaximum;
     public bool? CheckKillFlash(MurderInfo info) => canSeeKillFlash;
     public bool? CheckSeeDeathReason(PlayerControl seen) => canSeeDeathReason;
@@ -68,7 +70,7 @@ public sealed class MadTeller : RoleBase, IKiller, IKillFlashSeeable, IDeathReas
     enum Option
     {
         TellerCollectRect,
-        TellMaximum,
+        TellMaximum, AbilityUseVote,
         TellRole,
         AbilityVotemode
     }
@@ -80,6 +82,7 @@ public sealed class MadTeller : RoleBase, IKiller, IKillFlashSeeable, IDeathReas
         OptionMaximum = IntegerOptionItem.Create(RoleInfo, 11, Option.TellMaximum, new(1, 99, 1), 1, false)
             .SetValueFormat(OptionFormat.Times);
         OptionVoteMode = StringOptionItem.Create(RoleInfo, 12, Option.AbilityVotemode, EnumHelper.GetAllNames<AbilityVoteMode>(), 1, false);
+        OptionAbilityUseVote = BooleanOptionItem.Create(RoleInfo, 16, Option.AbilityUseVote, false, false);
         OptionRole = BooleanOptionItem.Create(RoleInfo, 13, Option.TellRole, true, false);
         Option1MeetingMaximum = IntegerOptionItem.Create(RoleInfo, 14, GeneralOption.MeetingMaxTime, new(0, 99, 1), 0, false)
             .SetValueFormat(OptionFormat.Times).SetZeroNotation(OptionZeroNotation.Infinity);
@@ -109,7 +112,7 @@ public sealed class MadTeller : RoleBase, IKiller, IKillFlashSeeable, IDeathReas
         }
         return "";
     }
-    bool ISelfVoter.CanUseVoted() => (Canuseability() && Max > count && Check() && (MeetingUsedcount < onemeetingmaximum || onemeetingmaximum == 0)) && !taskTurn.BlocksMeeting;
+    bool ISelfVoter.CanUseVoted() => (Canuseability() && Max > count && Check() && (MeetingUsedcount < onemeetingmaximum || onemeetingmaximum == 0)) && !taskTurn.BlocksMeeting && !IsAbilityUseVote;
 
     public override bool CheckVoteAsVoter(byte votedForId, PlayerControl voter)
     {
@@ -121,7 +124,7 @@ public sealed class MadTeller : RoleBase, IKiller, IKillFlashSeeable, IDeathReas
             {
                 if (Player.PlayerId == votedForId || votedForId == SkipId) return true;
                 UseTellAbility(votedForId);
-                return false;
+                return IsAbilityUseVote;
             }
             else
             {
@@ -134,7 +137,7 @@ public sealed class MadTeller : RoleBase, IKiller, IKillFlashSeeable, IDeathReas
                     if (status is VoteStatus.Vote)
                         UseTellAbility(votedForId);
                     SetMode(Player, status is VoteStatus.Self);
-                    return false;
+                    return IsAbilityUseVote && status is VoteStatus.Vote;
                 }
             }
         }

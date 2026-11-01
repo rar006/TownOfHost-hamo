@@ -1529,6 +1529,7 @@ namespace TownOfHost
 
             if (player.Is(CustomRoles.Opener)) SendMessage(GetAddonsHelp(CustomRoles.Opener), player.PlayerId, AddRoleInfoTitle);
 
+            if (player.Is(CustomRoles.AntiTeleporter)) SendMessage(GetAddonsHelp(CustomRoles.AntiTeleporter), player.PlayerId, AddRoleInfoTitle);
             if (player.Is(CustomRoles.Seeing)) SendMessage(GetAddonsHelp(CustomRoles.Seeing), player.PlayerId, AddRoleInfoTitle);
 
             if (player.Is(CustomRoles.Lighting)) SendMessage(GetAddonsHelp(CustomRoles.Lighting), player.PlayerId, AddRoleInfoTitle);
@@ -1537,6 +1538,7 @@ namespace TownOfHost
 
 
 
+            if (player.Is(CustomRoles.Notice)) SendMessage(GetAddonsHelp(CustomRoles.Notice), player.PlayerId, AddRoleInfoTitle);
             //デバフ
 
             if (player.Is(CustomRoles.News)) SendMessage(GetAddonsHelp(CustomRoles.News), player.PlayerId, AddRoleInfoTitle);
@@ -1676,14 +1678,14 @@ namespace TownOfHost
 
                 CustomRoles.Opener => AddonInfo(role, "п"),
 
-                //CustomRoles.AntiTeleporter => AddonInfo(role, "t", From.RevolutionaryHostRoles),
-
+                CustomRoles.AntiTeleporter => AddonInfo(role, "＠", From.RevolutionaryHostRoles),
                 CustomRoles.Seeing => AddonInfo(role, "☯", From.TownOfHost_Y),
 
                 CustomRoles.Lighting => AddonInfo(role, "＊", From.TownOfHost_Y),
 
                 CustomRoles.Moon => AddonInfo(role, "э"),
 
+                CustomRoles.Notice => AddonInfo(role, "Ｎo"),
                 //デバフ
 
                 CustomRoles.Amnesia => AddonInfo(role),
@@ -2029,7 +2031,6 @@ namespace TownOfHost
 
                 case From.TownOfHost_for_E: Fromtext += $"<#18e744>TownOfHost for E</color>"; break;
 
-                case From.Speyrp: Fromtext = $"<#7fffbf>From:Yoran★</color>"; break;
 
                 case From.TownOfHost_Enhanced: Fromtext += $"<#ffc0cb>TownOfHost Enhanced</color>"; break;
 

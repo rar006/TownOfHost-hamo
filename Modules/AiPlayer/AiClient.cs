@@ -26,6 +26,17 @@ public static class AiConfig
         public string openaiModel { get; set; } = "gpt-4o-mini";
         public string geminiKey { get; set; } = "";
         public string geminiModel { get; set; } = "gemini-2.5-flash";
+        // AI ごとのモデル。空なら上の共通の設定を使う。
+        // 「モデル名」だけ書くと設定の「使うAI」のままモデルだけ変わる。「chatgpt:gpt-4o」のように前に AI の種類(claude / local / chatgpt / gemini)を書くと、その AI だけ別の種類を使う
+        public Dictionary<string, string> aiModels { get; set; } = NewAiModels();
+    }
+
+    public const int MaxAi = 14;
+    private static Dictionary<string, string> NewAiModels()
+    {
+        var d = new Dictionary<string, string>();
+        for (var i = 1; i <= MaxAi; i++) d[$"AI{i}"] = "";
+        return d;
     }
 
     public static void EnsureFile()
@@ -64,7 +75,17 @@ public static class AiConfig
     public static Data Load()
     {
         EnsureFile();
-        try { return JsonSerializer.Deserialize<Data>(File.ReadAllText(FilePath)) ?? new Data(); }
+        try
+        {
+            var d = JsonSerializer.Deserialize<Data>(File.ReadAllText(FilePath)) ?? new Data();
+            // 前の版で作ったファイルには AI ごとの欄が無いので、書き足しておく(書き込む場所が分かるように)
+            d.aiModels ??= new();
+            var added = false;
+            for (var i = 1; i <= MaxAi; i++)
+                if (!d.aiModels.ContainsKey($"AI{i}")) { d.aiModels[$"AI{i}"] = ""; added = true; }
+            if (added) Save(d);
+            return d;
+        }
         catch (Exception e)
         {
             Logger.Warn($"AIの設定ファイルを読めませんでした: {e.Message}", "AiConfig");
@@ -87,30 +108,48 @@ public static class AiClient
         public string Vote = "skip";
     }
 
-    public static async Task<Answer> AskAsync(string system, string user, AiProvider provider)
-        => Parse(await AskRawAsync(system, user, provider).ConfigureAwait(false));
+    public static async Task<Answer> AskAsync(string system, string user, AiProvider provider, string aiName = null)
+        => Parse(await AskRawAsync(system, user, provider, aiName).ConfigureAwait(false));
 
-    // AI の返事を、そのままの文で返す
-    public static async Task<string> AskRawAsync(string system, string user, AiProvider provider)
+    // AI の返事を、そのままの文で返す。aiName を渡すと、その AI だけのモデルの設定(aiModels)を使う
+    public static async Task<string> AskRawAsync(string system, string user, AiProvider provider, string aiName = null)
     {
         var cfg = AiConfig.Load();
+        string model = null;
+        if (aiName != null && cfg.aiModels != null && cfg.aiModels.TryGetValue(aiName, out var v) && !string.IsNullOrWhiteSpace(v))
+        {
+            v = v.Trim();
+            var colon = v.IndexOf(':');
+            if (colon > 0 && ParseProvider(v[..colon]) is AiProvider p) { provider = p; v = v[(colon + 1)..].Trim(); }
+            if (v != "") model = v;
+        }
         return provider switch
         {
-            AiProvider.Claude => await AskClaudeAsync(cfg, system, user).ConfigureAwait(false),
-            AiProvider.ChatGpt => await AskOpenAiAsync(cfg, system, user).ConfigureAwait(false),
-            AiProvider.Gemini => await AskGeminiAsync(cfg, system, user).ConfigureAwait(false),
-            _ => await AskLocalAsync(cfg, system, user).ConfigureAwait(false),
+            AiProvider.Claude => await AskClaudeAsync(cfg, system, user, model).ConfigureAwait(false),
+            AiProvider.ChatGpt => await AskOpenAiAsync(cfg, system, user, model).ConfigureAwait(false),
+            AiProvider.Gemini => await AskGeminiAsync(cfg, system, user, model).ConfigureAwait(false),
+            _ => await AskLocalAsync(cfg, system, user, model).ConfigureAwait(false),
         };
     }
 
+    // 「chatgpt:」などの前につけた AI の種類を読む(qwen2.5:7b のようなモデル名の「:」とは区別する)
+    private static AiProvider? ParseProvider(string s) => s.Trim().ToLowerInvariant() switch
+    {
+        "claude" or "anthropic" => AiProvider.Claude,
+        "chatgpt" or "openai" or "gpt" => AiProvider.ChatGpt,
+        "gemini" or "google" => AiProvider.Gemini,
+        "local" or "ollama" or "ローカル" => AiProvider.Local,
+        _ => null,
+    };
+
     // ChatGPT(OpenAI の Chat Completions API)
-    private static async Task<string> AskOpenAiAsync(AiConfig.Data cfg, string system, string user)
+    private static async Task<string> AskOpenAiAsync(AiConfig.Data cfg, string system, string user, string model)
     {
         var key = string.IsNullOrWhiteSpace(cfg.openaiKey) ? Environment.GetEnvironmentVariable("OPENAI_API_KEY") : cfg.openaiKey;
         if (string.IsNullOrWhiteSpace(key)) throw new InvalidOperationException("ChatGPT の API キーが設定されていません");
         var body = new JsonObject
         {
-            ["model"] = string.IsNullOrWhiteSpace(cfg.openaiModel) ? "gpt-4o-mini" : cfg.openaiModel,
+            ["model"] = model ?? (string.IsNullOrWhiteSpace(cfg.openaiModel) ? "gpt-4o-mini" : cfg.openaiModel),
             ["messages"] = new JsonArray
             {
                 new JsonObject { ["role"] = "system", ["content"] = system },
@@ -131,11 +170,11 @@ public static class AiClient
     }
 
     // Gemini(Google の generateContent API)
-    private static async Task<string> AskGeminiAsync(AiConfig.Data cfg, string system, string user)
+    private static async Task<string> AskGeminiAsync(AiConfig.Data cfg, string system, string user, string modelOverride)
     {
         var key = string.IsNullOrWhiteSpace(cfg.geminiKey) ? Environment.GetEnvironmentVariable("GEMINI_API_KEY") : cfg.geminiKey;
         if (string.IsNullOrWhiteSpace(key)) throw new InvalidOperationException("Gemini の API キーが設定されていません");
-        var model = string.IsNullOrWhiteSpace(cfg.geminiModel) ? "gemini-2.5-flash" : cfg.geminiModel;
+        var model = modelOverride ?? (string.IsNullOrWhiteSpace(cfg.geminiModel) ? "gemini-2.5-flash" : cfg.geminiModel);
         var body = new JsonObject
         {
             ["systemInstruction"] = new JsonObject { ["parts"] = new JsonArray { new JsonObject { ["text"] = system } } },
@@ -159,13 +198,13 @@ public static class AiClient
     }
 
     // Claude API(Messages API)。BepInEx の .NET 6 では公式 SDK の依存(System.Text.Json 10 など)が読み込めないため、HTTP で直接呼ぶ
-    private static async Task<string> AskClaudeAsync(AiConfig.Data cfg, string system, string user)
+    private static async Task<string> AskClaudeAsync(AiConfig.Data cfg, string system, string user, string model)
     {
         var key = string.IsNullOrWhiteSpace(cfg.apiKey) ? Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY") : cfg.apiKey;
         if (string.IsNullOrWhiteSpace(key)) throw new InvalidOperationException("API キーが設定されていません");
         var body = new JsonObject
         {
-            ["model"] = string.IsNullOrWhiteSpace(cfg.model) ? "claude-opus-5-5" : cfg.model,
+            ["model"] = model ?? (string.IsNullOrWhiteSpace(cfg.model) ? "claude-opus-5-5" : cfg.model),
             ["max_tokens"] = 2000,
             ["system"] = system,
             ["output_config"] = new JsonObject { ["effort"] = string.IsNullOrWhiteSpace(cfg.effort) ? "low" : cfg.effort },
@@ -193,11 +232,11 @@ public static class AiClient
     }
 
     // ローカル AI(Ollama)
-    private static async Task<string> AskLocalAsync(AiConfig.Data cfg, string system, string user)
+    private static async Task<string> AskLocalAsync(AiConfig.Data cfg, string system, string user, string model)
     {
         var body = new JsonObject
         {
-            ["model"] = string.IsNullOrWhiteSpace(cfg.localModel) ? "qwen2.5:7b" : cfg.localModel,
+            ["model"] = model ?? (string.IsNullOrWhiteSpace(cfg.localModel) ? "qwen2.5:7b" : cfg.localModel),
             ["stream"] = false,
             ["format"] = "json",
             ["messages"] = new JsonArray
@@ -241,8 +280,10 @@ public static class AiMemory
     private static readonly List<string> chat = new();
     public static IReadOnlyList<string> Chat => chat;
 
-    public static void Reset() => chat.Clear();
+    // これまでに覚えたチャットの数(古いものを消しても減らない)。新しい発言があったかを見るのに使う
+    public static int ChatCount { get; private set; }
 
+    public static void Reset() { chat.Clear(); ChatCount = 0; }
     public static void AddChat(PlayerControl source, string text)
     {
         var name = source.Data?.PlayerName ?? "?";
@@ -250,6 +291,7 @@ public static class AiMemory
         if (clean.Length == 0) return;
         if (clean.Length > 120) clean = clean[..120];
         chat.Add($"{name.RemoveHtmlTags()}: {clean}");
+        ChatCount++;
         if (chat.Count > 30) chat.RemoveAt(0);
     }
 

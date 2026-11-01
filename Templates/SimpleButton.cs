@@ -36,6 +36,9 @@ public class SimpleButton
         NormalSprite = Button.inactiveSprites.GetComponent<SpriteRenderer>();
         HoverSprite = Button.activeSprites.GetComponent<SpriteRenderer>();
         buttonCollider = Button.GetComponent<BoxCollider2D>();
+        // 複製元(メニューのボタン)の枠などの飾りは大きさが合わず、ボタンからはみ出した灰色の枠として見えていたので消す
+        foreach (var renderer in Button.GetComponentsInChildren<SpriteRenderer>(true))
+            if (renderer != NormalSprite && renderer != HoverSprite) renderer.enabled = false;
 
         // ラベルをセンタリング
         var container = Label.transform.parent;

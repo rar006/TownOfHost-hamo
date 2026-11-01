@@ -30,10 +30,13 @@ namespace TownOfHost.Roles.Impostor
         }
         public static OptionItem OptionTairoDeathReason;
         public static OptionItem OptionTairouNotify;
+        public static OptionItem OptionTellResult;
+        CustomRoles? disguise;
         enum OptionName
         {
             TairoDeathReason,
-            TairouNotify
+            TairouNotify,
+            TairouTellResult
         }
         public static bool TairoDeathReason;
         public static bool TairouNotify;
@@ -41,11 +44,12 @@ namespace TownOfHost.Roles.Impostor
         {
             OptionTairoDeathReason = BooleanOptionItem.Create(RoleInfo, 10, OptionName.TairoDeathReason, true, false);
             OptionTairouNotify = BooleanOptionItem.Create(RoleInfo, 11, OptionName.TairouNotify, true, false);
+            OptionTellResult = StringOptionItem.Create(RoleInfo, 12, OptionName.TairouTellResult, new[] { "TellResultCrewmate", "TellResultRandomRole" }, 0, false);
         }
         public override CustomRoles TellResults(PlayerControl player)
         {
             if (player is not null) Achievements.RpcCompleteAchievement(Player.PlayerId, 0, achievements[0]);
-            return CustomRoles.Crewmate;
+            return disguise ??= Crewmate.WolfBoy.PickDisguise(OptionTellResult.GetValue() == 1, CustomRoleTypes.Crewmate, CustomRoles.Crewmate);
         }
         public override bool OnCheckMurderAsTarget(MurderInfo info)
         {

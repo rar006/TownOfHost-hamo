@@ -141,6 +141,17 @@ public static class AutoRehost
 
         if (!_pending) return;
 
+        if (c.AmHost && !GameStates.IsOnlineGame)
+        {
+            // ログインが切れていると、オンラインではなくローカル(LAN)の部屋ができてしまう(部屋番号 32)。
+            // 誰も入れない部屋に居続けないように出て、作り直しをやめる
+            Logger.Warn($"Auto-rehost: オンラインではない部屋(gameId={c.GameId}, {c.NetworkMode})ができたので、抜けて作り直しをやめます。{LoginState()}", "AutoRehost");
+            GiveUp();
+            Logger.seeingame("ログインが切れていたため、オンラインの部屋を作り直せませんでした。ログインし直してから部屋を立ててください");
+            try { c.ExitGame(DisconnectReasons.ExitGame); } catch (Exception e) { Logger.Exception(e, "AutoRehost"); }
+            return;
+        }
+
         if (!(c.AmHost && GameStates.IsOnlineGame)) return;
 
         if (c.GameId == _oldGameId) return; // 同じ部屋への再接続は成功とみなさない
@@ -545,7 +556,7 @@ public static class AutoRehost
 
 
 
-        Logger.Info("Kicked while hosting online lobby. Will attempt to auto-rehost.", "AutoRehost");
+        Logger.Info($"Kicked while hosting online lobby. Will attempt to auto-rehost. ({c?.NetworkMode}, {LoginState()})", "AutoRehost");
 
         ScheduleTick(_seq, PollInterval);
 
@@ -910,7 +921,18 @@ public static class AutoRehost
 
             {
 
-                Logger.Info($"Auto-rehost: dismissing dialog button (PassiveButton) \"{label}\".", "AutoRehost");
+                var text = DialogText(btn.transform);
+                foreach (var word in LoginWords)
+                {
+                    if (text.IndexOf(word, StringComparison.OrdinalIgnoreCase) < 0) continue;
+                    // ログインやアカウントの確認を勝手に押すと、ログインが切れたりオフラインになったりする
+                    Logger.Warn($"Auto-rehost: ログイン・アカウントの確認が出たので押さずに、作り直しをやめます: {text}", "AutoRehost");
+                    GiveUp();
+                    Logger.seeingame("ログインの確認が出たため、部屋の作り直しを止めました");
+                    return true;
+                }
+
+                Logger.Info($"Auto-rehost: dismissing dialog button (PassiveButton) \"{label}\". ({text})", "AutoRehost");
 
                 btn.OnClick?.Invoke();
 
@@ -1138,6 +1160,10 @@ public static class AutoRehost
 
 
 
+        // メインメニューにいて切断済みなら、試合中ではない。試合中に切れると「試合中」の印が残ったままになり、
+        // 「設定を確認」を自動で押す処理が動かず、部屋が作られないまま止まっていた
+        GameStates.InGame = false;
+
         if (_cleanSince == 0f)
 
             _cleanSince = UnityEngine.Time.realtimeSinceStartup;
@@ -1155,6 +1181,31 @@ public static class AutoRehost
         }
 
 
+
+        // ログインが切れたままだと、オンラインの部屋は作れない(ローカルの部屋になる)ので、ログインし直すまで待つ
+        if (!IsLoggedIn())
+        {
+            if (_waitLoginSince == 0f)
+            {
+                _waitLoginSince = UnityEngine.Time.realtimeSinceStartup;
+                Logger.Warn($"Auto-rehost: ログインが切れているので、ログインし直すまで待ちます。{LoginState()}", "AutoRehost");
+            }
+            if (UnityEngine.Time.realtimeSinceStartup - _waitLoginSince > LoginWaitSeconds)
+            {
+                GiveUp();
+                Logger.seeingame("ログインが切れていたため、部屋を作り直せませんでした。ログインし直してから部屋を立ててください");
+                return;
+            }
+            ScheduleTick(gen, PollInterval);
+            return;
+        }
+        _waitLoginSince = 0f;
+        // 作り直す部屋はオンラインにする
+        if (c != null && c.NetworkMode != NetworkModes.OnlineGame)
+        {
+            Logger.Info($"Auto-rehost: 部屋の種類が {c.NetworkMode} だったので、オンラインに戻します", "AutoRehost");
+            c.NetworkMode = NetworkModes.OnlineGame;
+        }
 
         _attempts++;
 
@@ -1195,6 +1246,48 @@ public static class AutoRehost
     }
 
 
+
+    private static float _waitLoginSince;
+    private const float LoginWaitSeconds = 60f;
+
+    private static bool IsLoggedIn()
+    {
+        try
+        {
+            var eos = EOSManager.Instance;
+            return eos != null && eos.HasFinishedLoginFlow() && !eos.authExpiredCallbackTriggered;
+        }
+        catch { return true; }
+    }
+
+    private static string LoginState()
+    {
+        try
+        {
+            var eos = EOSManager.Instance;
+            if (eos == null) return "ログイン状態: 不明";
+            return $"ログイン完了:{eos.HasFinishedLoginFlow()} 期限切れ:{eos.authExpiredCallbackTriggered} 自動ログイン失敗:{eos.silentLoginFailed}";
+        }
+        catch (Exception e) { return $"ログイン状態: 取得失敗({e.Message})"; }
+    }
+
+    // ダイアログに書いてある文(ログイン・アカウントの確認なら、勝手に OK を押さない)
+    private static string DialogText(UnityEngine.Transform button)
+    {
+        var root = button?.parent?.parent ?? button?.parent;
+        if (root == null) return "";
+        var sb = new System.Text.StringBuilder();
+        foreach (var t in root.GetComponentsInChildren<TextMeshPro>())
+        {
+            if (t == null || string.IsNullOrWhiteSpace(t.text)) continue;
+            if (sb.Length > 0) sb.Append(" / ");
+            sb.Append(t.text.Replace("\r", "").Replace("\n", " "));
+            if (sb.Length > 200) break;
+        }
+        return sb.ToString();
+    }
+
+    private static readonly string[] LoginWords = { "ログイン", "サインイン", "アカウント", "オフライン", "ゲスト", "Log in", "Login", "Sign in", "account", "offline", "Guest" };
 
     private static void ScheduleRetryCheck(int gen)
 

@@ -191,7 +191,10 @@ public sealed class Conjurer : RoleBase, IImpostor, IUsePhantomButton
             try { dummy?.Despawn(); } catch { }
         beaconDummies.Clear();
 
-        if (ShowFlash) AllPlayerKillFlash();
+        if (ShowFlash)
+        {
+            AllPlayerKillFlash();
+        }
 
         UtilsGameLog.AddGameLog("Conjurer",
             $"{UtilsName.GetPlayerColor(Player)} 三角形キル発動！{kills}人キル");

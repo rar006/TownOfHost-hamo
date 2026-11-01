@@ -113,7 +113,7 @@ namespace TownOfHost
         private static void BeginEdit(OptionItem option, StringOption stringOption)
         {
             if (!CanEdit(option) || stringOption == null) return;
-            if (AmongUsClient.Instance != null && !AmongUsClient.Instance.AmHost) return;
+            if (AmongUsClient.Instance != null && !AmongUsClient.Instance.AmHost && !TownOfHost.Modules.ModeratorRemoteEdit.CanEditOnClient) return;
 
             if (activeInput != null) Close(false);
             if (activeInput != null) return;
@@ -151,7 +151,7 @@ namespace TownOfHost
         private static void BeginEdit(NumberOption numberOption)
         {
             if (numberOption == null) return;
-            if (AmongUsClient.Instance != null && !AmongUsClient.Instance.AmHost) return;
+            if (AmongUsClient.Instance != null && !AmongUsClient.Instance.AmHost && !TownOfHost.Modules.ModeratorRemoteEdit.CanEditOnClient) return;
 
             if (activeInput != null) Close(false);
             if (activeInput != null) return;

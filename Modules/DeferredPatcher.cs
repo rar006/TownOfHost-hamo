@@ -22,6 +22,21 @@ public static class DeferredPatcher
         "PlayerPhysics", "IntroCutscene", "EndGameManager", "ExileController", "Vent", "NetworkedPlayerInfo",
         "SpawnInMinigame", "SabotageButton", "MovingPlatformBehaviour", "LogicGameFlowNormal", "ElectricTask",
         "GameManager", "TaskAddButton",
+        // ロビーの設定画面・試合中の画面(どれもメインメニューでは開かない)
+        "GameStartManager", "GameSettingMenu", "GameOptionsMenu", "StringOption", "NumberOption", "ToggleOption",
+        "ExileController", "MapBehaviour", "VentilationSystem", "HeliSabotageSystem", "MushroomMixupSabotageSystem",
+        "SwitchSystem", "SecurityCameraSystemType", "VitalsMinigame", "SurveillanceMinigame", "SecurityLogGame",
+        "ShapeshifterMinigame", "ShapeshifterPanel", "TaskAdderGame", "TaskPanelBehaviour", "ViewSettingsInfoPanel",
+        "BanMenu", "DetectiveRole",
+        "RoleManager", "SabotageSystemType", "RolesSettingsMenu", "TutorialManager", "CreateGameOptions",
+        "JoinGameButton", "EnterCodeManager", "GuessManager", "CustomRoleManager", "CustomRolesHelper",
+    };
+
+    // AmongUsClient・InnerNetClient のうち、部屋の中でしか呼ばれないもの(OnGameJoined は入る時に使うので今すぐ登録する)
+    private static readonly HashSet<string> RoomOnlyClientMethods = new()
+    {
+        "OnGameEnd", "OnPlayerJoined", "OnPlayerLeft", "StartGame", "CoStartGame", "KickPlayer", "CreatePlayer",
+        "CanBan", "StartRpcImmediately", "FinishRpcImmediately", "SendAllStreamedObjects",
     };
 
     private static readonly Queue<Type> pending = new();
@@ -40,6 +55,8 @@ public static class DeferredPatcher
         {
             try
             {
+                // パッチではないクラス(約2800個)は Harmony に渡さない(渡すだけで起動が遅くなっていた)
+                if (!type.IsDefined(typeof(HarmonyAttribute), false)) continue;
                 if (IsDeferred(type)) { pending.Enqueue(type); continue; }
                 harmony.CreateClassProcessor(type).Patch();
                 eager++;
@@ -59,7 +76,9 @@ public static class DeferredPatcher
         if (attrs == null || attrs.Count == 0) return false;
         var merged = HarmonyMethod.Merge(attrs);
         var target = merged?.declaringType;
-        return target != null && DeferredTargets.Contains(target.Name);
+        if (target == null) return false;
+        if (DeferredTargets.Contains(target.Name)) return true;
+        return target.Name is "AmongUsClient" or "InnerNetClient" && merged.methodName != null && RoomOnlyClientMethods.Contains(merged.methodName);
     }
 
     /// <summary>メインメニューが開いた後、フレームごとに少しずつ保留分を登録する(1フレーム約12msまで)</summary>
@@ -101,4 +120,12 @@ public static class DeferredPatcher
         try { harmony.CreateClassProcessor(type).Patch(); }
         catch (Exception e) { Logger.Error($"保留パッチの登録に失敗: {type.FullName}\n{e}", "DeferredPatcher", false); }
     }
+}
+
+// 招待や自動の部屋の立て直しなど、メニューのボタンを通らずに部屋へ入った時も、保留中のパッチを先に全部登録する
+[HarmonyPatch(typeof(AmongUsClient), nameof(AmongUsClient.OnGameJoined))]
+static class DeferredPatcherOnGameJoinedPatch
+{
+    [HarmonyPriority(Priority.First)]
+    public static void Prefix() => DeferredPatcher.FinishNow();
 }

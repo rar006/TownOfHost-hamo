@@ -45,8 +45,15 @@ public sealed class GuardMaster : RoleBase
     enum OptionName
     {
         AddGuardCount,
-        MadGuardianCanSeeWhoTriedToKill
+        MadGuardianCanSeeWhoTriedToKill,
+        GuardMasterGuessShield
     }
+    static OptionItem OptionGuessShield;
+
+    // タスクを全部終えたガードマスターは、ゲッサーに当てられても設定で守れる
+    public static GuessShield.Mode GuessShieldFor(PlayerControl target)
+        => OptionGuessShield != null && target?.GetRoleClass() is GuardMaster gm && gm.IsTaskFinished
+            ? (GuessShield.Mode)OptionGuessShield.GetValue() : GuessShield.Mode.None;
     private static void SetupOptionItem()
     {
         OptionCanSeeProtect = BooleanOptionItem.Create(RoleInfo, 10, OptionName.MadGuardianCanSeeWhoTriedToKill, true, false);
@@ -54,6 +61,7 @@ public sealed class GuardMaster : RoleBase
             .SetValueFormat(OptionFormat.Times);
         OptAwakening = BooleanOptionItem.Create(RoleInfo, 12, GeneralOption.TaskAwakening, false, false);
         OptAwakeningTaskcount = IntegerOptionItem.Create(RoleInfo, 13, GeneralOption.AwakeningTaskcount, new(1, 255, 1), 5, false, OptAwakening);
+        OptionGuessShield = StringOptionItem.Create(RoleInfo, 14, OptionName.GuardMasterGuessShield, GuessShield.Selections, 0, false);
         OverrideTasksData.Create(RoleInfo, 20);
     }
     public override bool OnCheckMurderAsTarget(MurderInfo info)

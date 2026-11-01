@@ -100,6 +100,12 @@ namespace TownOfHost
 
             }
 
+            // Shift+F4: どの画面からでもバグ報告を開く(もう一度押すと閉じる)。Shift+F3は通信モニターが使っている
+            if (Input.GetKeyDown(KeyCode.F4) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)))
+            {
+                TownOfHost.Patches.BugReportWizard.ToggleFromHotkey();
+            }
+
             //カスタム翻訳のリロード
 
             if (GetKeysDown(KeyCode.F5, KeyCode.T))

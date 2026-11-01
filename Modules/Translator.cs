@@ -210,7 +210,6 @@ namespace TownOfHost
                 // 設定項目の生成前はイベント名の上書きを行わない。
             }
 
-            if (str == "Chameleon") res = useJapanese ? "カメレオン" : "Chameleon";
             if (langId == SupportedLangs.Japanese && useCustomName)
             {
                 //このソースコ―ドを見た人へ。口外しないでもらえると嬉しいです...

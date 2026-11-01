@@ -63,16 +63,21 @@ public static class Reporting
         if (player == null || !playerIdList.Contains(player.PlayerId)) return;
         if (!player.IsAlive()) return;
 
+        // バニラの通報ボタンが光るのは、MaxReportDistance(約5)以内で壁にさえぎられていない死体がある時。
+        // 前は検知範囲(初期1.5)だけで見ていて、ボタンが光ってもすぐには通報されず、自分で押す方が先になっていた。
+        // 検知範囲の内側なら、壁越しでも通報する
         var reportDistance = DetectRange.GetFloat();
+        var lightDistance = Mathf.Max(reportDistance, player.MaxReportDistance);
         var myPos = player.GetTruePosition();
-
         foreach (var body in UnityEngine.Object.FindObjectsOfType<DeadBody>())
         {
             if (body == null || (UnityEngine.Object)(object)body.gameObject == null) continue;
 
-            var bodyPos = body.transform.position;
-            if (Vector2.Distance(myPos, bodyPos) > reportDistance) continue;
-
+            if (body.Reported) continue;
+            Vector2 bodyPos = body.TruePosition;
+            var distance = Vector2.Distance(myPos, bodyPos);
+            if (distance > lightDistance) continue;
+            if (distance > reportDistance && PhysicsHelpers.AnyNonTriggersBetween(myPos, (bodyPos - myPos).normalized, distance, Constants.ShipAndObjectsMask)) continue;
             var targetInfo = GameData.Instance.GetPlayerById(body.ParentId);
             if (targetInfo == null) continue;
 

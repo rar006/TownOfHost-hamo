@@ -30,10 +30,6 @@ using static TownOfHost.ExtendedPlayerControl;
 
 using static TownOfHost.Translator;
 
-using Rewired;
-
-
-
 namespace TownOfHost
 
 {
@@ -122,6 +118,8 @@ namespace TownOfHost
 
                 }
 
+                if (role is CustomRoles.SKMadmate)
+                    NameColorManager.RevealSKMadmateToImpostors(player);
             }
 
             else if (role >= CustomRoles.NotAssigned)   //500:NoSubRole 501~:SubRole
@@ -1147,6 +1145,7 @@ namespace TownOfHost
         {
             // テレポートは本数を数えられていて、多すぎるとホストが切断されるので、超えそうな時は送らない
             if (!TownOfHost.Modules.NetworkSafety.AllowTeleport()) return;
+            TownOfHost.Modules.ClientEffects.Teleport(pc, pc.GetTruePosition(), position);
             var netTransform = pc.NetTransform;
 
             if (AmongUsClient.Instance.AmClient)

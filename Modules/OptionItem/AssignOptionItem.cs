@@ -114,7 +114,7 @@ namespace TownOfHost
         }
         public void SendRpc(bool Isoverride)
         {
-            if (PlayerCatch.AnyModClient() is false) return;
+            if (PlayerCatch.AnyModClient() is false && TownOfHost.Modules.NonHostRpcGuard.AnyHiddenModClient is false) return;
             if (Name.Contains("SlotRole") is false) return;
 
             MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.SyncAssignOption, SendOption.None, -1);

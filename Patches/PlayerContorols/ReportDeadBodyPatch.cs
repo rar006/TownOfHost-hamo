@@ -254,11 +254,23 @@ public static bool Prefix(PlayerControl __instance, [HarmonyArgument(0)] Network
 
         /// <param name="Cancelcheck">属性等のチェック入れるか</param>
 
+        private static int exReportWaited;
+
         public static void ExReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target = null, bool? Cancelcheck = true, string Meetinginfo = "", string colorcode = "#000000")
 
         {
 
             if (!AmongUsClient.Instance.AmHost) return;
+            // 追放の画面の途中(会議が終わってからタスクに戻るまで)に会議を始めると、会議とタスクの画面が混ざって灰色の暗転のまま進めなくなる。
+            // (リピーターの会議が、追放の画面の途中で始まっていた)。追放の画面が終わるまで待ってから始める
+            if (ExileController.Instance != null || AntiBlackout.IsSet)
+            {
+                if (exReportWaited >= 40) { exReportWaited = 0; Logger.Warn("追放の画面が終わらないので、会議を開くのをやめました", "ExReportDeadBody"); return; }
+                exReportWaited++;
+                _ = new LateTask(() => ExReportDeadBody(reporter, target, Cancelcheck, Meetinginfo, colorcode), 0.5f, "ExReportDeadBody.WaitExile", true);
+                return;
+            }
+            exReportWaited = 0;
 
             if (CustomWinnerHolder.WinnerTeam is not CustomWinner.Default) return;
 
@@ -379,6 +391,14 @@ public static bool Prefix(PlayerControl __instance, [HarmonyArgument(0)] Network
 
             }
 
+            // 消された死体(クリーナーなど)は、誰も通報できない
+            if (target != null && Modules.DeadBodyEraser.IsErased(target.PlayerId))
+            {
+                Logger.Info($"{target.PlayerName} の死体は消されているので通報をキャンセル", "ReportDeadBody");
+                GameStates.CalledMeeting = false;
+                AddDontrepo(repoter, DontReportreson.Other);
+                return false;
+            }
             if (SuddenDeathMode.NowSuddenDeathMode)
 
             {
@@ -695,6 +715,7 @@ public static bool Prefix(PlayerControl __instance, [HarmonyArgument(0)] Network
 
 
 
+            AntiTeleporter.OnMeetingCalled();
             AdminProvider.CalculateAdmin(true);
 
 
@@ -764,17 +785,21 @@ public static bool Prefix(PlayerControl __instance, [HarmonyArgument(0)] Network
                 UtilsNotifyRoles.ExtendedMeetingText = $"<color={colorcode}><u>★" + GetString(Meetinginfo) + "</u></color>";
 
                 RpcSyncMeetingInfo(reporter, target, null, Meetinginfo, colorcode);
-
+                if (Meetinginfo != "Firstmeetinginfo")
+                    TownOfHost.Modules.ClientEffects.MeetingCutIn(GetString(Meetinginfo), colorcode, (byte)(Meetinginfo == "Balancer.meeting" ? 1 : 0),
+                        Meetinginfo == "Balancer.meeting" ? Roles.Crewmate.Balancer.MeetingTargets : null);
             }
 
             DisableDevice.CheckAddtime();
 
             DisableDevice.SendMessage();
+            Modules.DeadBodyEraser.OnReportDeadBody();
 
 
 
             var meetingInfo = UtilsNotifyRoles.ExtendedMeetingText;
 
+            Notice.OnReportDeadBody(reporter, target);
             foreach (var pc in PlayerCatch.AllPlayerControls)
 
             {

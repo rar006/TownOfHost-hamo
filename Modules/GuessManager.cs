@@ -76,6 +76,13 @@ public static class GuessManager
 
 
 
+    // ゲッサーの画面のボタンを出してよい人(チャットの /cmd bt を使える人と同じ)
+    public static bool CanUseGuess(PlayerControl pc)
+        => pc != null && !Guesser.IsBlockedTeller(pc.GetCustomRole()) && (pc.Is(CustomRoles.Guesser) || pc.Is(CustomRoles.NiceGuesser) || pc.Is(CustomRoles.EvilGuesser) || pc.Is(CustomRoles.BetrayGuesser)
+            || (pc.Is(CustomRoles.LastImpostor) && LastImpostor.giveguesser)
+            || (pc.Is(CustomRoles.LastNeutral) && LastNeutral.GiveGuesser.GetBool())
+            || (RoleAddAddons.GetRoleAddon(pc.GetCustomRole(), out var op, pc, subrole: CustomRoles.Guesser) && op.GiveGuesser.GetBool()));
+
     private static bool ComfirmIncludeMsg(string msg, string key)
 
     {
@@ -146,7 +153,8 @@ public static class GuessManager
 
             //Notゲッサーはここで処理を止める。
 
-            if (!pc.Is(CustomRoles.Guesser)
+            if (Guesser.IsBlockedTeller(pc.GetCustomRole())
+                || !pc.Is(CustomRoles.Guesser)
                 && !pc.Is(CustomRoles.BetrayGuesser)
 
                 && !(pc.Is(CustomRoles.LastImpostor) && LastImpostor.giveguesser)
@@ -391,6 +399,22 @@ public static class GuessManager
 
                 }
 
+                // 当たっていても、守護者に守られている人・タスクを終えたガードマスターは、設定で撃たれない(撃った人に跳ね返す)
+                if (!guesserSuicide && pc.PlayerId != target.PlayerId)
+                {
+                    var shield = TownOfHost.Roles.Crewmate.GuessShield.Of(target);
+                    if (shield is TownOfHost.Roles.Crewmate.GuessShield.Mode.Block)
+                    {
+                        Utils.SendMessage(GetString("GuessShieldBlocked"), pc.PlayerId);
+                        Logger.Info($"{target.GetNameWithRole().RemoveHtmlTags()} は守られていてゲスが効かなかった", "Guesser");
+                        return true;
+                    }
+                    if (shield is TownOfHost.Roles.Crewmate.GuessShield.Mode.Reflect)
+                    {
+                        guesserSuicide = true;
+                        Logger.Info($"{target.GetNameWithRole().RemoveHtmlTags()} は守られていてゲスが跳ね返った", "Guesser");
+                    }
+                }
                 Logger.Info($"{pc.GetNameWithRole().RemoveHtmlTags()} が {target.GetNameWithRole().RemoveHtmlTags()} をゲス", "Guesser");
 
 
@@ -974,6 +998,13 @@ public static class GuessManager
 
 
 
+        // ゲッサーの画面からは「#役職の番号」で届く(名前の打ち間違いが起きない)
+        if (msg.StartsWith("#") && int.TryParse(msg.Substring(1), out var roleNumber) && Enum.IsDefined(typeof(CustomRoles), roleNumber))
+        {
+            role = (CustomRoles)roleNumber;
+            error = string.Empty;
+            return true;
+        }
         if (!UtilsRoleInfo.GetRoleByInputName(msg, out role, true))
 
         {

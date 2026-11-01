@@ -56,6 +56,7 @@ class AddondataInfo
 
                 CustomRoles.Opener => "п",
 
+                CustomRoles.AntiTeleporter => "＠",
                 CustomRoles.Seeing => "☯",
 
                 CustomRoles.Lighting => "＊",
@@ -88,6 +89,7 @@ class AddondataInfo
 
                 CustomRoles.News => "Ｎ",
 
+                CustomRoles.Notice => "Ｎо",
                 CustomRoles.Sunglasses => "Ｓ",
 
                 CustomRoles.Jumbo => "Ｊ",
@@ -235,8 +237,7 @@ class AddondataInfo
 
                     {CustomRoles.LastCrewmate,"#66ccff"},
 
-                    //{CustomRoles.AntiTeleporter,"#dea785"},
-
+                    {CustomRoles.AntiTeleporter,"#793838"},
                     //デバフ
 
                     { CustomRoles.NonReport,"#006666"},
@@ -261,6 +262,7 @@ class AddondataInfo
 
                     {CustomRoles.News, "#828282"},
 
+                    {CustomRoles.Notice, "#33455e"},
                     {CustomRoles.Sunglasses , "#2e103d"},
 
                     {CustomRoles.Jumbo, "#ffcc00" },

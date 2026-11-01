@@ -157,9 +157,13 @@ public static class MeetingHudPatch
             }
 
             if (voter.isDummy)
-
             {
-
+                // ダミー(AIプレイヤーなど)は生きているかを確かめずに投票を受け付けていたので、死んでいても投票できていた
+                if (!voter.IsAlive() || voter.Data == null || voter.Data.IsDead)
+                {
+                    Logger.Info($"死んでいるダミーの投票を無視します: {voter.Data?.PlayerName}", nameof(CastVotePatch));
+                    return false;
+                }
                 MeetingVoteManager.Instance?.SetVote(srcPlayerId, suspectPlayerId);
 
                 return true;
@@ -567,7 +571,7 @@ public static class MeetingHudPatch
 
                 }
 
-                if (meetinginfoplayer.PlayerId == pc.PlayerId)
+                if (meetinginfoplayer.PlayerId == pc.PlayerId && AmongUsClient.Instance.AmHost)
 
                 {
 

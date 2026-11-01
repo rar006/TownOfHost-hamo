@@ -262,6 +262,7 @@ public sealed class Sniper : RoleBase, IImpostor
             {
                 RemoveRifle();
                 Rifle = new SniperRifle(Player, SnipeBasePosition);
+                TownOfHost.Modules.ClientEffects.Sound(TownOfHost.Modules.ClientEffects.SoundKind.SniperEquip, Player.GetTruePosition());
             }
 
             return;
@@ -283,7 +284,8 @@ public sealed class Sniper : RoleBase, IImpostor
 
         //命中判定はホストのみ行う
         if (!AmongUsClient.Instance.AmHost) return;
-
+        // MOD を入れている人には、遠くまで響く銃声が聞こえる(壁の向こうは小さく)
+        TownOfHost.Modules.ClientEffects.Sound(TownOfHost.Modules.ClientEffects.SoundKind.SniperShot, Player.GetTruePosition());
         var targets = GetSnipeTargets();
 
         if (targets.Count != 0)

@@ -29,6 +29,8 @@ public sealed class VampireBloodStain : CustomNetObject
         SetAppearance(colorId: 6, skinId: "", hatId: "", petId: "", visorId: "");
         SetName("<size=150%><color=#8b0000>●</color></size>");
         SnapToPosition(_spawnPos);
+        // MOD の人には床の血だまりを描いて、ダミーの●は隠す
+        try { if (PlayerControl != null) ClientEffects.BloodStain(PlayerControl.NetId, _spawnPos); } catch { }
         Logger.Info($"VampireBloodStain: OnCreated完了 position={_spawnPos}", "Vampire.Bloodstain");
     }
 

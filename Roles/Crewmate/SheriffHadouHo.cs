@@ -223,7 +223,9 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton
 
     void SetRoleTextHeight(bool beaming)
     {
-        var t = Player.cosmetics.nameText.transform.Find("RoleText");
+        var nameText = Player != null ? Player.cosmetics?.nameText : null;
+        if (nameText == null) return;
+        var t = nameText.transform.Find("RoleText");
         if (t == null) return;
         var rt = t.GetComponent<TMPro.TextMeshPro>();
         if (rt == null) return;

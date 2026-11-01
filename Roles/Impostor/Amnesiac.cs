@@ -1,4 +1,5 @@
 using AmongUs.GameOptions;
+using System.Linq;
 using UnityEngine;
 
 using TownOfHost.Roles.Core;
@@ -78,7 +79,8 @@ public sealed class Amnesiac : RoleBase, IImpostor
     static OptionItem OptNeedtoLastImpostor;
     static OptionItem OptIsWolfBoy;
     static OptionItem OptRealizedKillCooldown;
-
+    static AssignOptionItem OptRealizedRole;
+    static AssignOptionItem OptRealizedAddons;
     public static bool CantKillImpostor;
     public static bool MatchSettingstoSheriff;
     public static bool CanRealize;
@@ -108,7 +110,9 @@ public sealed class Amnesiac : RoleBase, IImpostor
         AmnesiacCanUseVent,
         AmnesiacCanUseSabotage,
         AmnesiacIsWolfboy,
-        AmnesiacRealizedKillCooldown
+        AmnesiacRealizedKillCooldown,
+        AmnesiacRealizedRole,
+        AmnesiacRealizedAddons
     }
 
     public static void SetupCustomOption()
@@ -127,6 +131,10 @@ public sealed class Amnesiac : RoleBase, IImpostor
             .SetValueFormat(OptionFormat.Seconds)
             .SetZeroNotation(OptionZeroNotation.Hyphen)
             .SetOptionName(() => "思い出した後のキルクール(ー = 通常と同じ)");
+        // 思い出した後に変わる役職(その役職の能力が使える)。選ばなければ記憶喪失者のまま。何個か選んだ時はその中からランダム
+        OptRealizedRole = AssignOptionItem.Create(RoleInfo, 22, Options.AmnesiacRealizedRole, 0, false, OptRealize, imp: true, notassing: CustomRoles.Amnesiac);
+        // 思い出した時に付く属性(スタックのように何個でも)
+        OptRealizedAddons = AssignOptionItem.Create(RoleInfo, 23, Options.AmnesiacRealizedAddons, 0, false, OptRealize, addon: true, notassing: Fortuner.RemoveAddon);
         SaruWarningOption.AddTo(RoleInfo);
     }
 
@@ -194,6 +202,32 @@ public sealed class Amnesiac : RoleBase, IImpostor
         if (PetModeSwitch.Enabled) mode.Set(false); // 思い出したらキルモードに固定
         Player.SetKillCooldown();
         UtilsNotifyRoles.NotifyRoles();
+        GiveRealizedRoles();
+    }
+
+    // 思い出した時の属性と役職。キルの判定の途中で役職を変えると処理が壊れるので、少し待ってから変える
+    private void GiveRealizedRoles()
+    {
+        var pc = Player;
+        var addons = OptRealizedAddons?.GetNowRoleValue()?.ToArray() ?? new CustomRoles[0];
+        var roles = OptRealizedRole?.GetNowRoleValue()?.Where(r => r is not CustomRoles.Amnesiac && r < CustomRoles.NotAssigned).ToArray() ?? new CustomRoles[0];
+        if (addons.Length == 0 && roles.Length == 0) return;
+        var role = roles.Length == 0 ? CustomRoles.NotAssigned : roles[IRandom.Instance.Next(roles.Length)];
+        _ = new LateTask(() =>
+        {
+            if (pc == null || !pc.IsAlive() || !GameStates.IsInTask) return;
+            if (role is not CustomRoles.NotAssigned)
+            {
+                pc.RpcSetCustomRole(role, true, log: null);
+                Logger.Info($"{pc.Data.GetLogPlayerName()} は思い出して {role} になった", "Amnesiac");
+            }
+            foreach (var addon in addons)
+            {
+                if (pc.Is(addon) || !CustomRolesHelper.CanHaveSubRole(pc.GetCustomRole(), addon)) continue;
+                pc.RpcSetCustomRole(addon);
+            }
+            UtilsNotifyRoles.NotifyRoles();
+        }, 0.5f, "Amnesiac.Realized", true);
     }
     public override void OnFixedUpdate(PlayerControl player)
     {

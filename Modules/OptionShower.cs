@@ -42,14 +42,32 @@ namespace TownOfHost
 
             if (pages == null || pages.Count == 0) return "";
             if (currentPage >= pages.Count) currentPage = pages.Count - 1; //現在のページが最大ページ数を超えていれば最後のページに修正
-            // 最後のページは何も表示しない(Tabでまた最初のページに戻る)
-            if (currentPage == pages.Count - 1) return "";
+            // 最後のページは何も表示しない(Tabでまた最初のページに戻る)。ページが1つしか無い時は、それを出す
+            if (pages.Count > 1 && currentPage == pages.Count - 1) return "";
 
             return $"{pages[currentPage]}{GetString("PressTabToNextPage")}({currentPage + 1}/{pages.Count})";
 
         }
 
+        private static bool updateErrorLogged;
+        // 一覧を作る途中で失敗すると、作りかけの1ページだけが残り、それが「何も出さない最後のページ」扱いになって
+        // ロビーの設定一覧(Tab)が何も出なくなっていた。失敗しても、そこまでのページと最後の空ページは残す
         public static void UpdateText()
+        {
+            try
+            {
+                UpdateTextCore();
+            }
+            catch (System.Exception e)
+            {
+                if (!updateErrorLogged) Logger.Exception(e, "OptionShower");
+                updateErrorLogged = true;
+                pages ??= new();
+                if (pages.Count == 0 || pages[^1] != "") pages.Add("");
+            }
+        }
+
+        private static void UpdateTextCore()
 
         {
 

@@ -76,8 +76,7 @@ class GhostRoleCore
 
         Opener.Init();
 
-        //AntiTeleporter.Init();
-
+        AntiTeleporter.Init();
         Moon.Init();
 
         Tiebreaker.Init();
@@ -110,6 +109,7 @@ class GhostRoleCore
 
         News.Init();
 
+        Notice.Init();
         InfoPoor.Init();
 
         Water.Init();
@@ -190,6 +190,7 @@ class GhostRoleCore
             (CustomRoles.Management, Management.SetupCustomOption),
             (CustomRoles.Seeing, Seeing.SetupCustomOption),
             (CustomRoles.Opener, Opener.SetupCustomOption),
+            (CustomRoles.AntiTeleporter, AntiTeleporter.SetupCustomOption),
             (CustomRoles.Lighting, Lighting.SetupCustomOption),
             (CustomRoles.Moon, Moon.SetupCustomOption),
         });
@@ -201,6 +202,7 @@ class GhostRoleCore
         {
             (CustomRoles.Amnesia, Amnesia.SetupCustomOption),
             (CustomRoles.News, News.SetupCustomOption),
+            (CustomRoles.Notice, Notice.SetupCustomOption),
             (CustomRoles.OneWolf, OneWolf.SetupCustomOption),
             (CustomRoles.Securer, Securer.SetupCustomOption),
             (CustomRoles.Sealer, Sealer.SetupCustomOption),

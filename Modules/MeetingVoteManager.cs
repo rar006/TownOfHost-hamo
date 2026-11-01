@@ -245,6 +245,17 @@ public class MeetingVoteManager
             }, 4f, "LateAntiBlackoutSet", null);
         }
 
+        if (AmongUsClient.Instance.AmHost)
+        {
+            var sender = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.SyncModSystem, Hazel.SendOption.None, -1);
+            sender.Write((int)RPC.ModSystem.SyncVoteResult);
+            sender.Write(result.Exiled?.PlayerId ?? byte.MaxValue);
+            sender.Write(result.IsTie);
+            sender.Write(result.OverrideExiled);
+            sender.Write(result.OverruleNonce);
+            sender.Write(resulttext);
+            AmongUsClient.Instance.FinishRpcImmediately(sender);
+        }
         if (AntiBlackout.OverrideExiledPlayer())
         {
             meetingHud.RpcVotingComplete(states.ToArray(), null, true, false, 0);
@@ -279,17 +290,6 @@ public class MeetingVoteManager
         if (result.Exiled != null)
         {
             MeetingHudPatch.CheckForDeathOnExile(CustomDeathReason.Vote, result.Exiled.PlayerId);
-        }
-        if (AmongUsClient.Instance.AmHost)
-        {
-            var sender = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.SyncModSystem, Hazel.SendOption.None, -1);
-            sender.Write((int)RPC.ModSystem.SyncVoteResult);
-            sender.Write(result.Exiled?.PlayerId ?? byte.MaxValue);
-            sender.Write(result.IsTie);
-            sender.Write(result.OverrideExiled);
-            sender.Write(result.OverruleNonce);
-            sender.Write(resulttext);
-            AmongUsClient.Instance.FinishRpcImmediately(sender);
         }
         Destroy();
     }
@@ -641,7 +641,7 @@ public VoteResult(byte exileId, bool Istie, byte overrideexilid, ushort overrule
             this.IsTie = Istie;
             this.OverrideExiled = overrideexilid;
             this.OverruleNonce = overrulenonce;
-            Logger.Info($"{this.Exiled} - {this.IsTie} - {this.OverrideExiled}", "VoteResult");
+            Logger.Info($"{this.Exiled?.PlayerId ?? byte.MaxValue} - {this.IsTie} - {this.OverrideExiled}", "VoteResult");
         }
     }
 

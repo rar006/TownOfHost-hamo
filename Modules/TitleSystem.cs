@@ -130,6 +130,17 @@ public static partial class TitleSystem
 
     private static async Task<(int Status, JsonDocument Doc)> RequestAsync(HttpMethod method, string url, object body = null)
     {
+        if (method != HttpMethod.Get) return await SendOnceAsync(method, url, body).ConfigureAwait(false);
+        try { return await SendOnceAsync(method, url, body).ConfigureAwait(false); }
+        catch (HttpRequestException e)
+        {
+            Logger.Warn($"通信が切れたので、もう一度読み込みます: {e.Message}", Tag);
+            return await SendOnceAsync(method, url, body).ConfigureAwait(false);
+        }
+    }
+
+    private static async Task<(int Status, JsonDocument Doc)> SendOnceAsync(HttpMethod method, string url, object body)
+    {
         using var request = new HttpRequestMessage(method, url);
         Authorize(request);
         if (body != null) request.Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
@@ -432,9 +443,10 @@ public static partial class TitleSystem
         if (Time.time < nextVanillaNameAt) return;
         nextVanillaNameAt = Time.time + 1f;
         var budget = VanillaNameBudget;
-        // 他の処理(チャット送信時の一時的な名前変更など)で名前が上書きされても、5秒ごとに送り直して直す
+        // 他の処理(チャット送信時の一時的な名前変更など)で名前が上書きされても、20秒ごとに送り直して直す
+        // (5秒ごとだと、二つ名のある人の分を全員へ何度も送り、通信が多すぎて重くなっていた)
         var forceResend = Time.time >= nextVanillaForceAt;
-        if (forceResend) nextVanillaForceAt = Time.time + 5f;
+        if (forceResend) nextVanillaForceAt = Time.time + 20f;
         // 30秒ごとに全員の二つ名をサーバーから読み直す(通知の取りこぼし対策)
         if (Time.time >= nextHostRefreshAt) { nextHostRefreshAt = Time.time + 30f; RefreshVanillaPlayers(); }
         try
@@ -442,7 +454,21 @@ public static partial class TitleSystem
             var all = PlayerControl.AllPlayerControls.ToArray().Where(p => p != null && p.Data != null).ToArray();
             foreach (var seer in all)
             {
-                if (seer.AmOwner || seer.IsModClient()) continue; // 未導入の人だけ
+                if (seer.AmOwner) continue;
+                if (seer.IsModClient())
+                {
+                    // MOD 導入が分かる前に二つ名付き(改行入り)の名前を送っていたら、元の名前に戻す。
+                    // 残ったままだと、その人のチャットの頭に改行が足されて吹き出しがずれる
+                    foreach (var target in all)
+                    {
+                        var key = (target.PlayerId, seer.PlayerId);
+                        if (Main.LastNotifyNames == null || !Main.LastNotifyNames.TryGetValue(key, out var sent) || sent?.StartsWith(VanillaNameHead) != true) continue;
+                        if (budget <= 0) break;
+                        target.RpcSetNamePrivate(target.Data.PlayerName ?? target.name, false, seer, true);
+                        budget--;
+                    }
+                    continue;
+                }
                 foreach (var target in all)
                 {
                     var baseName = target.Data.PlayerName ?? target.name;
@@ -603,6 +629,10 @@ public static partial class TitleSystem
         {
             await EnsureCatalogAsync().ConfigureAwait(false);
             var rec = await FetchUserAsync(fc, true).ConfigureAwait(false);
+            // 30秒ごとの読み直しで、変わっていない時は表示も通知もしない(前は毎回全員へ通知して、通信が多かった)
+            var before = Shown.TryGetValue(id, out var old) ? old.Item2 : System.Array.Empty<string>();
+            var after = ValidIds(rec.Equipped);
+            if (before.SequenceEqual(after)) return;
             SetShown(id, fc, rec.Equipped);
             if (notify && rec.Equipped.Count > 0) RunOnMain(() => SendNotifyFor(id));
         }
@@ -682,7 +712,7 @@ public static partial class TitleSystem
 
             var tr = nameText.transform.Find("TitleText");
             string text = null;
-            if (GameStates.IsLobby && !gameStarting && !GameStates.InGame && RoomEnabled && Shown.TryGetValue(pc.PlayerId, out var shown) && shown.Fc == CachedFriendCode(pc))
+            if (AmongUsClient.Instance != null && AmongUsClient.Instance.AmHost && GameStates.IsLobby && !gameStarting && !GameStates.InGame && RoomEnabled && Shown.TryGetValue(pc.PlayerId, out var shown) && shown.Fc == CachedFriendCode(pc))
             {
                 var parts = new List<string>();
                 foreach (var id in shown.Ids)
@@ -733,6 +763,7 @@ public static partial class TitleSystem
         if (!Enabled || !TryParseCommand(raw, out var sub, out var args)) return false;
         // ゲーム中は別のコマンドかもしれないので、二つ名では横取りしない
         if (!GameStates.IsLobby) return false;
+        if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return false;
 
         if (!RoomEnabled) { Reply("この部屋では二つ名が使えない設定になっています。"); return true; }
         if (IsCommandDisabled(sub)) { Reply("このコマンドは部屋の設定で無効化されています。"); return true; }
@@ -801,6 +832,7 @@ public static partial class TitleSystem
         if (!TryParseCommand(raw, out var sub, out var args)) return false;
         if (!GameStates.IsLobby) return false;
         var id = player.PlayerId;
+        Logger.Info($"{player.Data?.GetLogPlayerName()} の二つ名コマンド /cmd {sub} をホストが処理します", Tag);
         if (!RoomEnabled) { Utils.SendMessage("この部屋では二つ名が使えない設定になっています。", id); return true; }
         if (IsCommandDisabled(sub)) { Utils.SendMessage("このコマンドは部屋の設定で無効化されています。", id); return true; }
         if (sub == "nit") { HostTradeCommand(player, args); return true; } // MOD未導入の人の交換はホストが仲介

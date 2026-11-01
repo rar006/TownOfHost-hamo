@@ -21,6 +21,8 @@ class StreamerInfo
     private readonly HttpClient client;
     static StreamerInfo streamerInfo;
     public static int number;
+    // 前回の試合を始めた時の、次の参加希望の番号(これ以降の番号が、前回の試合開始から出た参加希望)
+    public static int HopeIdAtLastStart;
 
     public static readonly List<(string Name, string Text)> RecentComments = new();
     private const int MaxRecentComments = 30;
@@ -56,7 +58,8 @@ class StreamerInfo
     {
         // ホストも参加者も、コメント枠を出している時はここから取りに行く
         // (以前ホストは試合中の処理からしか取りに行っておらず、ロビーではコメントが出なかった)
-        if (!Main.ShowStreamComments.Value || !HasStream) return;
+        // コメント枠を OBS にだけ出している時も取りに行く
+        if (!(Main.ShowStreamComments.Value || Main.ObsComments.Value) || !HasStream) return;
         TryStartFetch();
     }
 
@@ -187,6 +190,7 @@ class StreamerInfo
         if (AmongUsClient.Instance?.AmHost is false or null) return;
         var dellist = new List<int>();
         JoindHopeplayers.Clear();
+        HopeIdAtLastStart = number;
         for (var i = 0; Hopeplayers.Count > i; i++)
         {
             var hope = Hopeplayers.OrderBy(x => x.Key).ToList()[i];

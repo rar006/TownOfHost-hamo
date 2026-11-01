@@ -158,6 +158,8 @@ public static class NetworkSafety
                 if (Enum.TryParse<RpcCalls>(name, out var rc)) hostOnlyVanillaRpcs.Add((byte)rc);
         }
         if (hostOnlyVanillaRpcs.Contains(callId)) return true;
+        // 「MODを入れています」の知らせだけはホストへ届ける(ここで捨てていたので、ホストからは全員MODなしに見えて専用の演出が出なかった)
+        if (callId == (byte)CustomRPC.HiddenModHello) return false;
         return Enum.IsDefined(typeof(CustomRPC), (int)callId) && !Enum.IsDefined(typeof(RpcCalls), callId);
     }
 

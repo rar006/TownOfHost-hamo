@@ -47,6 +47,7 @@ class Penguin : RoleBase, IImpostor
     }
 
     private PlayerControl AbductVictim;
+    public PlayerControl DragVictim => AbductVictim;
     private float AbductTimer;
     private float AbductTimerLimit;
     private bool stopCount;

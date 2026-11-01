@@ -145,6 +145,7 @@ namespace TownOfHost
             PlayerCatch.CountAlivePlayers(true);
             Utils.AfterMeetingTasks();
 
+            AntiTeleporter.AfterMeetingTasks();
             if (AmongUsClient.Instance.AmHost && Main.NormalOptions.MapId != 4)
             {
                 foreach (var pc in PlayerCatch.AllPlayerControls)

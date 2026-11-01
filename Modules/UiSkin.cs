@@ -3,18 +3,19 @@ using UnityEngine;
 namespace TownOfHost.Modules;
 
 // 画面に出す枠(通信モニター・デバッグの枠・YouTubeのコメント枠)の共通の見た目。
-// 角の丸い暗いパネルに、水色の細いふちと、見出しの帯の下の光る線を付ける。
+// TOH-hm のオプション画面と同じく、黒いパネルに白い太めのふちを二重に付け、選んでいる所はピンクにする。
 // 角の丸みは 9 分割(Sliced)の絵なので、枠の大きさを変えても角はつぶれない。
 public static class UiSkin
 {
-    public static readonly Color PanelColor = new(0.035f, 0.05f, 0.085f, 0.88f);
-    public static readonly Color HeaderColor = new(0.075f, 0.105f, 0.17f, 0.97f);
-    public static readonly Color BorderColor = new(0.3f, 0.8f, 1f, 0.5f);
-    public static readonly Color AccentColor = new(0.3f, 0.85f, 1f, 1f);
-    public static readonly Color AccentLineColor = new(0.3f, 0.85f, 1f, 0.75f);
-    public const string AccentHex = "#4dd9ff";
-    public const string DimHex = "#7f8ea3";
-    public const string ButtonHex = "#9fb3c8";
+    public static readonly Color PanelColor = new(0f, 0f, 0f, 0.92f);
+    public static readonly Color HeaderColor = new(0.07f, 0.07f, 0.08f, 0.97f);
+    public static readonly Color BorderColor = new(1f, 1f, 1f, 0.95f);
+    public static readonly Color InnerBorderColor = new(1f, 1f, 1f, 0.45f);
+    public static readonly Color AccentColor = new(1f, 0.52f, 0.85f, 1f);
+    public static readonly Color AccentLineColor = new(1f, 1f, 1f, 0.3f);
+    public const string AccentHex = "#ff85d9";
+    public const string DimHex = "#9a9a9a";
+    public const string ButtonHex = "#d8d8d8";
 
     private const int TexSize = 32;
     private const int Radius = 10;
@@ -45,7 +46,7 @@ public static class UiSkin
                 var core = new Vector2(Mathf.Clamp(p.x, Radius, TexSize - Radius), Mathf.Clamp(p.y, Radius, TexSize - Radius));
                 var outside = Vector2.Distance(p, core) - Radius;
                 var a = Mathf.Clamp01(0.5f - outside);
-                if (ring) a -= Mathf.Clamp01(0.5f - (outside + 1.6f));
+                if (ring) a -= Mathf.Clamp01(0.5f - (outside + 2.6f));
                 tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
             }
         tex.Apply();
@@ -96,7 +97,7 @@ public static class UiSkin
     // 枠ひとそろい(背景・見出しの帯・ふち・光る線・帯の左の印)
     public sealed class Panel
     {
-        public SpriteRenderer Background, Header, HeaderFill, Border, Line, Pill;
+        public SpriteRenderer Background, Header, HeaderFill, Border, InnerBorder, Line, Pill;
 
         public Panel(string name, Transform parent, Color background)
         {
@@ -104,6 +105,7 @@ public static class UiSkin
             Header = Rect(name + "Header", parent, Rounded, HeaderColor, 0.07f);
             HeaderFill = Rect(name + "HeaderFill", parent, Solid, HeaderColor, 0.07f);
             Border = Rect(name + "Border", parent, Frame, BorderColor, 0.05f);
+            InnerBorder = Rect(name + "InnerBorder", parent, Frame, InnerBorderColor, 0.05f);
             Line = Rect(name + "Line", parent, Solid, AccentLineColor, 0.05f);
             Pill = Rect(name + "Pill", parent, Solid, AccentColor, 0.05f);
         }
@@ -113,6 +115,9 @@ public static class UiSkin
         {
             Place(Background, x, y, w, h);
             Place(Border, x, y, w, h);
+            // 内側にもう 1 本、細めのふち(二重の枠に見せる)
+            const float inset = 0.035f;
+            Place(InnerBorder, x + inset, y + inset, w - inset * 2f, h - inset * 2f);
             var top = y + h;
             Place(Header, x, top - headerHeight, w, headerHeight);
             // 帯の下側の角は丸めない(本文とつながって見えるように)
@@ -130,6 +135,7 @@ public static class UiSkin
             Header.sortingOrder = baseOrder + 1;
             HeaderFill.sortingOrder = baseOrder + 1;
             Border.sortingOrder = baseOrder + 2;
+            InnerBorder.sortingOrder = baseOrder + 2;
             Line.sortingOrder = baseOrder + 2;
             Pill.sortingOrder = baseOrder + 2;
         }

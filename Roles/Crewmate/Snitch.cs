@@ -88,7 +88,7 @@ public class Snitch : RoleBase
         return target.Is(CustomRoleTypes.Impostor)
             || (CanFindNeutralKiller && target.IsNeutralKiller())
             || (CanFindNeutralKiller && target.Is(CustomRoles.GrimReaper))
-            || target.Is(CustomRoles.WolfBoy);
+            || (target.Is(CustomRoles.WolfBoy) && WolfBoy.SeenAsImpostor);
     }
 
     /// <summary>

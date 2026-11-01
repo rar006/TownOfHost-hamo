@@ -328,7 +328,7 @@ public sealed class AllArounder : RoleBase, ISystemTypeUpdateHook, IKillFlashSee
             CustomRoleTypes.Impostor => role is not CustomRoles.Tairou,
             CustomRoleTypes.Madmate => OptionMeetingSheriffCanKillMadMate.GetBool(),
             CustomRoleTypes.Neutral => OptionMeetingSheriffCanKillNeutrals.GetBool(),
-            CustomRoleTypes.Crewmate => role is CustomRoles.WolfBoy,
+            CustomRoleTypes.Crewmate => role is CustomRoles.WolfBoy && WolfBoy.SeenAsImpostor,
             _ => false
         };
     }

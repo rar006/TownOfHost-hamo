@@ -11,6 +11,7 @@ using BepInEx.Unity.IL2CPP.Utils.Collections;
 using TownOfHost.Modules;
 using static TownOfHost.Translator;
 
+using System.Linq;
 namespace TownOfHost
 {
     [HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.MakePublic))]
@@ -87,7 +88,12 @@ namespace TownOfHost
     [HarmonyPatch(typeof(CreateGameOptions), nameof(CreateGameOptions.Start))]
     class CreateGameOptionsStartPatch
     {
-        public static void Prefix() => CreateGameOptionsUpdateServerText.Prefix();
+        public static void Prefix(CreateGameOptions __instance)
+        {
+            __instance.chatTypeButtons.Last().gameObject.SetActive(false);
+            __instance.chatTypeButtons.First().OnClick.Invoke();
+            CreateGameOptionsUpdateServerText.Prefix();
+        }
     }
     [HarmonyPatch(typeof(CreateGameOptions), nameof(CreateGameOptions.UpdateServerText))]
     class CreateGameOptionsUpdateServerText
@@ -260,7 +266,9 @@ namespace TownOfHost
                     Logger.Info($"{totalMessages}", "InnerNetClient");
                 }*/
             }
-            if (!Options.FixSpawnPacketSize.GetBool() && !Utils.IsRestriction()) return true;
+            // 届かなくても送り直さない通信(動きなど)が1000バイトを超えると、回線によっては丸ごと落ちるので、設定に関係なく分けて送る
+            var largeUnreliable = msg.SendOption == SendOption.None && msg.Length > limitSize;
+            if (!Options.FixSpawnPacketSize.GetBool() && !Utils.IsRestriction() && !largeUnreliable) return true;
             if (DontTouch || AntiBlackout.IsCached) return true;
 
             //ラージパケットを分割(9人以上部屋で落ちる現象の対策コード)

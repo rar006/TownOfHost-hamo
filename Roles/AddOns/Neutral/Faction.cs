@@ -22,6 +22,14 @@ class Faction
 
     public static OptionItem CantKillFaction;
 
+    // 第三陣営の役職が増えて 70800(ガーディングの設定)まで届き、同じ番号の設定ができて属性の設定画面が固まっていた。
+    // 70799 まで使ったら、空いている 79500 番台へ続ける(今までの番号の設定はそのまま残る)
+    static int NextId(ref int id)
+    {
+        if (id == 70800) id = 79500;
+        return id++;
+    }
+
     public static void SetUpOption()
 
     {
@@ -64,7 +72,7 @@ class Faction
 
             }
 
-            var option = BooleanOptionItem.Create(id++, "AssingroleType", true, TabGroup.Addons, false).SetSubRoleOptionItem(CustomRoles.Faction).SetEnabled(() =>
+            var option = BooleanOptionItem.Create(NextId(ref id), "AssingroleType", true, TabGroup.Addons, false).SetSubRoleOptionItem(CustomRoles.Faction).SetEnabled(() =>
 
             {
 
@@ -96,7 +104,7 @@ class Faction
 
         {
 
-            var option = BooleanOptionItem.Create(id++, "AssingroleType", true, TabGroup.Addons, false).SetSubRoleOptionItem(CustomRoles.Faction).SetEnabled(() => role.IsEnable());
+            var option = BooleanOptionItem.Create(NextId(ref id), "AssingroleType", true, TabGroup.Addons, false).SetSubRoleOptionItem(CustomRoles.Faction).SetEnabled(() => role.IsEnable());
 
             option.ReplacementDictionary = new Dictionary<string, string> { { "%roletype%", UtilsRoleText.GetRoleColorAndtext(role) } };
 

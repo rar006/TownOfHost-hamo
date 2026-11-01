@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -8,6 +8,7 @@ using UnityEngine;
 
 using TownOfHost.Modules;
 using TownOfHost.Roles.Core;
+using TownOfHost.Roles.Core.Interfaces;
 using TownOfHost.Roles.Impostor;
 using TownOfHost.Roles.Madmate;
 using static TownOfHost.Translator;
@@ -432,7 +433,18 @@ namespace TownOfHost
                         {
                             _ = new LateTask(() =>
                             {
-                                PlayerCatch.AllPlayerControls.Do(pc => pc.SetKillCooldown(SuddenDeathMode.SuddenKillcooltime.GetFloat() - 0.7f, delay: true));
+                                var killcool = SuddenDeathMode.SuddenKillcooltime.GetFloat();
+                                foreach (var pc in PlayerCatch.AllPlayerControls)
+                                {
+                                    if (pc != null)
+                                    {
+                                        if (pc.GetRoleClass() is IKiller killer && killer.CalculateKillCooldown() != Options.DefaultKillCooldown)
+                                        {
+                                            killcool = killer.CalculateKillCooldown();
+                                        }
+                                        pc.SetKillCooldown(killcool, delay: true);
+                                    }
+                                }
                             }, 0.7f, "FixKillCooldownTask", null);
                         }
                         else if (Options.FixFirstKillCooldown.GetBool())
@@ -608,7 +620,9 @@ namespace TownOfHost
                 if (Options.firstturnmeeting)
                 {
                     _ = new LateTask(() =>
-                        ReportDeadBodyPatch.ExReportDeadBody(PlayerControl.LocalPlayer, PlayerControl.LocalPlayer.Data, false, "Firstmeetinginfo", "#23dbc0"), 0.7f + Main.LagTime, "", true);
+
+                        FirstTurnMeeting.StartWhenSpawned(0f), FirstTurnMeeting.IntroGrace + Main.LagTime, "", true);
+
                 }
                 else
                 {
@@ -670,12 +684,19 @@ namespace TownOfHost
 static class FirstTurnMeeting
 {
     private const float Step = 0.25f;
-    private const float MaxWait = 8f;
+    // 1ターン目の会議が始まるまで(エアシップで湧く場所を選ぶのを待っている間も)は、能力を使えなくする
+    // (待っている間に変身・ベント・サボなどを使うと、会議の後におかしくなっていた)
+    public static bool BeforeFirstMeeting => GameModeManager.IsStandardClass() && Options.firstturnmeeting && MeetingStates.FirstMeeting && !GameStates.IsMeeting;
+    // 湧く場所を選ぶのが遅い人(Switch・スマホ)を置いて会議を始めると、その人の画面が暗転したままになる(5 秒では足りなかった)
+    private const float MaxWait = 15f;
+    // ホストのイントロが終わっても、読み込みの遅い人はまだイントロ中のことがあるので、少し待ってから始める
+    public const float IntroGrace = 1.5f;
 
     public static void StartWhenSpawned(float waited)
     {
         if (!AmongUsClient.Instance.AmHost || GameStates.IsLobby || GameStates.IsMeeting || GameStates.CalledMeeting) return;
-        var notSpawned = PlayerCatch.AllAlivePlayerControls.Count(pc => pc != null && !pc.GetPlayerState().HasSpawned);
+        // AI(ダミー)は湧く場所を選ぶ画面が無いので待たない(待つと、毎回 8 秒遅れて会議が始まっていた)
+        var notSpawned = PlayerCatch.AllAlivePlayerControls.Count(pc => pc != null && !pc.isDummy && !pc.GetPlayerState().HasSpawned);
         if (notSpawned > 0 && waited < MaxWait)
         {
             _ = new LateTask(() => StartWhenSpawned(waited + Step), Step, "FirstTurnMeeting.Wait", true);

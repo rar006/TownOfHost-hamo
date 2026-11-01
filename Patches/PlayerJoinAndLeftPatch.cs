@@ -10,6 +10,7 @@ using AmongUs.GameOptions;
 
 using HarmonyLib;
 
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using InnerNet;
 
 using TownOfHost.Modules;
@@ -122,8 +123,15 @@ namespace TownOfHost
 
             Main.playerVersion = new Dictionary<byte, PlayerVersion>();
 
-            RPC.RpcVersionCheck();
+            TownOfHost.Modules.NonHostRpcGuard.ClearHidden();
 
+            RPC.RpcVersionCheck();
+            // 試合のあとロビーに戻った直後の知らせは、ほかの人の準備ができる前に届いて落ちることがあるので、ホストは少しあとにもう一度送る
+            if (__instance.AmHost)
+                _ = new LateTask(() =>
+                {
+                    if (AmongUsClient.Instance != null && AmongUsClient.Instance.AmHost && GameStates.IsLobby) RPC.RpcVersionCheck();
+                }, 4f, "ResendVersionCheck", true);
             SoundManager.Instance.ChangeAmbienceVolume(DataManager.Settings.Audio.AmbienceVolume);
 
             ChatUpdatePatch.DoBlockChat = false;

@@ -15,9 +15,23 @@ namespace TownOfHost
         public static SimpleButton CommentFrameReset;
         public static SimpleButton ObsToggle;
         public static SimpleButton ObsRoleMode;
-        static string ObsLabel() => Main.ObsOverlay.Value ? $"OBS表示: ON\n{ObsOverlay.Url}" : "OBS表示: OFF";
+        public static SimpleButton ObsMapToggle;
+        static string ObsLabel() => Main.ObsOverlay.Value ? $"OBS表示: ON{UrlLine(ObsOverlay.Url)}" : "OBS表示: OFF";
+        // URL は2行目に小さく出す
+        static string UrlLine(string url) => $"\n<size=70%>{url}</size>";
+        // ボタンの大きさに収まる文字の大きさ
+        const float ButtonFontSize = 1.6f;
+        static void Fit(SimpleButton button)
+        {
+            if (SimpleButton.IsNullOrDestroyed(button) || button.Label == null) return;
+            button.FontSize = ButtonFontSize;
+            button.Label.lineSpacing = -20f;
+        }
         static string ObsRoleLabel() => $"OBSの役職: {ObsOverlay.RoleModeLabel(Main.ObsShowRoles.Value)}";
-        static string CommentFrameLabel() => Main.ShowStreamComments.Value ? "コメント枠: ON" : "コメント枠: OFF";
+        static string ObsMapLabel() => Main.ObsShowMap.Value ? $"OBSのマップ: ON{UrlLine(ObsOverlay.MapUrl)}" : "OBSのマップ: OFF";
+        // ゲーム画面 → OBSだけ(録画には映らない) → OFF の順に切り替える
+        static string CommentFrameLabel() => Main.ShowStreamComments.Value ? "コメント枠: ゲーム画面"
+            : Main.ObsComments.Value ? $"コメント枠: OBSだけ{UrlLine(ObsOverlay.CommentsUrl)}" : "コメント枠: OFF";
         public static TextBoxTMP JoinWord; public static TextMeshPro JoinWordTitle;
         public static TextBoxTMP RemoveWord; public static TextMeshPro RemoveWordTitle;
         public static void CreateMenu(MainMenuManager mainmenumanager)
@@ -95,7 +109,17 @@ namespace TownOfHost
                     new(212, 113, 106, byte.MaxValue),
                     () =>
                     {
-                        Main.ShowStreamComments.Value = !Main.ShowStreamComments.Value;
+                        if (Main.ShowStreamComments.Value)
+                        {
+                            // ゲーム画面に出さず、OBS のブラウザソースにだけ出す(配信には映り、ゲームの録画には映らない)
+                            Main.ShowStreamComments.Value = false;
+                            Main.ObsComments.Value = true;
+                            Main.ObsOverlay.Value = true;
+                            GUIUtility.systemCopyBuffer = ObsOverlay.CommentsUrl;
+                            if (ObsToggle?.Label != null) ObsToggle.Label.text = ObsLabel();
+                        }
+                        else if (Main.ObsComments.Value) Main.ObsComments.Value = false;
+                        else Main.ShowStreamComments.Value = true;
                         // ゲーム内の設定(OTHER2)の ON/OFF も合わせる
                         Modules.ExtraFeatureOptions.ShowStreamComments?.SetValue(Main.ShowStreamComments.Value ? 1 : 0, false, false);
                         if (CommentFrameToggle?.Label != null) CommentFrameToggle.Label.text = CommentFrameLabel();
@@ -104,6 +128,7 @@ namespace TownOfHost
                     transform: mainmenumanager.screenTint.transform
                     );
                 CommentFrameToggle.Button.gameObject.SetActive(false);
+                Fit(CommentFrameToggle);
             }
             if (SimpleButton.IsNullOrDestroyed(ObsToggle))
             {
@@ -137,6 +162,25 @@ namespace TownOfHost
                     transform: mainmenumanager.screenTint.transform
                     );
                 ObsRoleMode.Button.gameObject.SetActive(false);
+                // 会議が始まった時の各プレイヤーの位置(死んだ人は死んだ場所)をマップに出す、OBS用の別ページ
+                ObsMapToggle = MainMenuManagerPatch.CreateButton(
+                    "ObsMapToggle",
+                    new Vector3(2.1f, -1.25f, -5),
+                    new(80, 80, 200, byte.MaxValue),
+                    new(110, 110, 230, byte.MaxValue),
+                    () =>
+                    {
+                        Main.ObsShowMap.Value = !Main.ObsShowMap.Value;
+                        if (Main.ObsShowMap.Value) GUIUtility.systemCopyBuffer = ObsOverlay.MapUrl;
+                        if (ObsMapToggle?.Label != null) ObsMapToggle.Label.text = ObsMapLabel();
+                    },
+                    ObsMapLabel(),
+                    transform: mainmenumanager.screenTint.transform
+                    );
+                ObsMapToggle.Button.gameObject.SetActive(false);
+                Fit(ObsToggle);
+                Fit(ObsRoleMode);
+                Fit(ObsMapToggle);
             }
             if (SimpleButton.IsNullOrDestroyed(CommentFrameReset))
             {
@@ -150,6 +194,7 @@ namespace TownOfHost
                     transform: mainmenumanager.screenTint.transform
                     );
                 CommentFrameReset.Button.gameObject.SetActive(false);
+                Fit(CommentFrameReset);
             }
             void SetOpenMenu()
             {
@@ -161,6 +206,7 @@ namespace TownOfHost
                 if (!SimpleButton.IsNullOrDestroyed(CommentFrameReset)) CommentFrameReset.Button.gameObject.SetActive(true);
                 if (!SimpleButton.IsNullOrDestroyed(ObsToggle)) { ObsToggle.Button.gameObject.SetActive(true); ObsToggle.Label.text = ObsLabel(); }
                 if (!SimpleButton.IsNullOrDestroyed(ObsRoleMode)) { ObsRoleMode.Button.gameObject.SetActive(true); ObsRoleMode.Label.text = ObsRoleLabel(); }
+                if (!SimpleButton.IsNullOrDestroyed(ObsMapToggle)) { ObsMapToggle.Button.gameObject.SetActive(true); ObsMapToggle.Label.text = ObsMapLabel(); }
                 mainmenumanager.screenTint.enabled = true;
                 if (JoinWord is not null)
                 {
@@ -234,6 +280,7 @@ namespace TownOfHost
                 if (!SimpleButton.IsNullOrDestroyed(CommentFrameReset)) CommentFrameReset.Button.gameObject.SetActive(false);
                 if (!SimpleButton.IsNullOrDestroyed(ObsToggle)) ObsToggle.Button.gameObject.SetActive(false);
                 if (!SimpleButton.IsNullOrDestroyed(ObsRoleMode)) ObsRoleMode.Button.gameObject.SetActive(false);
+                if (!SimpleButton.IsNullOrDestroyed(ObsMapToggle)) ObsMapToggle.Button.gameObject.SetActive(false);
                 NowURLTitle?.gameObject?.SetActive(false);
                 JoinWordTitle?.gameObject?.SetActive(false);
                 RemoveWordTitle?.gameObject?.SetActive(false);

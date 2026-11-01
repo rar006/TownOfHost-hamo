@@ -912,7 +912,7 @@ namespace TownOfHost.Roles
                 CustomRoles.Faction => [],
                 _ => new CustomRoles[1] { role },
             };
-        public static bool IsPresent(this CustomRoles role) => AssignRoleList.Any(x => x == role);
+        public static bool IsPresent(this CustomRoles role) => AssignRoleList.Contains(role);
         public static int GetRealCount(this CustomRoles role) => AssignRoleList.Count(x => x == role);
     }
     public class RoleAssignInfo

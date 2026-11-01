@@ -54,6 +54,24 @@ public static class NewsTabPatch
         ApplyFilter(__instance);
     }
 
+    // ゲーム側は一覧を作った後に「いちばん新しいニュース」の本文を出し直すので、
+    // 公式タブでもMODニュースの本文が出ていた。今のタブに合わない本文なら、そのタブの先頭のニュースに差し替える
+    [HarmonyPatch(nameof(AnnouncementPopUp.UpdateAnnouncementText))]
+    [HarmonyPrefix]
+    private static void UpdateAnnouncementTextPrefix(AnnouncementPopUp __instance, [HarmonyArgument(0)] ref int number)
+    {
+        if ((number >= ModNewsNumberThreshold) == (CurrentTab == NewsTab.Mod)) return;
+        var panels = __instance.visibleAnnouncements;
+        if (panels == null) return;
+        foreach (var p in panels)
+        {
+            if (p == null || p.announcement == null) continue;
+            if (IsModNews(p) != (CurrentTab == NewsTab.Mod)) continue;
+            number = p.announcement.Number;
+            return;
+        }
+    }
+
     private static bool IsModNews(AnnouncementPanel panel)
         => panel != null && panel.announcement != null && panel.announcement.Number >= ModNewsNumberThreshold;
 

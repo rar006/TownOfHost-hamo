@@ -50,7 +50,7 @@ internal static class ExternalRpcPetPatch
 
         var pc = __instance.myPlayer;
         if (pc == null || !pc.IsAlive()) return;
-
+        if (FirstTurnMeeting.BeforeFirstMeeting) return; // 1ターン目の会議の前はペットの能力を使わない
         if (!LastProcess.ContainsKey(pc.PlayerId))
             LastProcess[pc.PlayerId] = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 2;
         if (LastProcess[pc.PlayerId] + 1 >= DateTimeOffset.UtcNow.ToUnixTimeSeconds()) return;

@@ -23,6 +23,8 @@ public static class StreamCommentFrame
     private const float PadX = 0.1f, PadY = 0.08f;
 
     private static TextMeshPro text;
+    // 録画には映さない(配信の画面だけに出す)
+    public static GameObject FrameObject => text != null ? text.gameObject : null;
     private static TextMeshPro header;
     private static TextMeshPro button;
     private static TextMeshPro lockButton;
@@ -33,7 +35,7 @@ public static class StreamCommentFrame
     private static SpriteRenderer background;
     private static Modules.UiSkin.Panel panel;
     // 配信の上に重ねるので、ほかの枠より少し透かす
-    private static readonly Color BackgroundColor = new(0.035f, 0.05f, 0.085f, 0.62f);
+    private static readonly Color BackgroundColor = new(0f, 0f, 0f, 0.65f);
     private const string LiveMark = "<color=#ff4d4d>●</color> ";
     private static string HeaderTitle => LiveMark + Modules.UiSkin.Title("YouTube") + $" <size=75%><color={Modules.UiSkin.DimHex}>LIVE CHAT</color></size>";
     private static AspectPosition aspect;

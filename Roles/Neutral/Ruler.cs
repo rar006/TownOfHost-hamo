@@ -91,6 +91,8 @@ public sealed class Ruler : RoleBase, ISelfVoter, IAdditionalWinner
     static OptionItem OptionVisionDecreaseRate;
 
     static OptionItem OptionRandomTogetherSeconds;
+    static OptionItem OptionRuleAllWin;
+    static OptionItem OptionRuleAllEmptiness;
 
     const float PassByTrackingGraceSeconds = 3f;
 
@@ -149,6 +151,8 @@ public sealed class Ruler : RoleBase, ISelfVoter, IAdditionalWinner
         RulerVisionDecreaseRate,
 
         RulerRandomTogetherSeconds,
+        RulerRuleAllWin,
+        RulerRuleAllEmptiness,
 
     }
 
@@ -264,6 +268,9 @@ public sealed class Ruler : RoleBase, ISelfVoter, IAdditionalWinner
 
             .SetValueFormat(OptionFormat.Seconds);
 
+        // ルールの候補に「全員勝利」「全員空虚者」を出すか
+        OptionRuleAllWin = BooleanOptionItem.Create(RoleInfo, 30, OptionName.RulerRuleAllWin, true, false);
+        OptionRuleAllEmptiness = BooleanOptionItem.Create(RoleInfo, 31, OptionName.RulerRuleAllEmptiness, true, false);
         OverrideTasksData.Create(RoleInfo, 20, tasks: (true, 1, 1, 1));
 
     }
@@ -718,7 +725,10 @@ public sealed class Ruler : RoleBase, ISelfVoter, IAdditionalWinner
 
     {
 
-        var pool = EnumHelper.GetAllValues<RulerRule>().Where(rule => rule != RulerRule.None).ToList();
+        var pool = EnumHelper.GetAllValues<RulerRule>().Where(rule => rule != RulerRule.None)
+            .Where(rule => rule != RulerRule.GameEndAllWin || (OptionRuleAllWin?.GetBool() ?? true))
+            .Where(rule => rule != RulerRule.GameEndAllEmptiness || (OptionRuleAllEmptiness?.GetBool() ?? true))
+            .ToList();
 
         var result = new List<RulerRule>();
 

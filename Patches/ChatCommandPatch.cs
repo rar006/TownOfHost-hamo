@@ -6940,7 +6940,8 @@ namespace TownOfHost
 
             {
 
-                int return_count = PlayerControl.LocalPlayer.name.Count(x => x == '\n');
+                // ロビーの名前の改行は二つ名を出すためのもので、吹き出しの名前は1行なので、メッセージに改行を足さない
+                int return_count = GameStates.IsLobby ? 0 : PlayerControl.LocalPlayer.name.Count(x => x == '\n');
 
                 chatText = new StringBuilder(chatText).Insert(0, "\n", return_count).ToString();
 

@@ -39,6 +39,8 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
         killCooldown = OptionKillCooldown.GetFloat();
         fireCooldown = OptionFireCooldown.GetFloat();
         beamSize = OptionBeamSize.GetFloat();
+        beamLength = OptionBeamLength.GetFloat();
+        pierceWalls = OptionPierceWalls.GetBool();
         chargeTime = OptionChargeTime.GetFloat();
         fireDelay = OptionFireDelay.GetFloat();
     }
@@ -52,7 +54,9 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
     private static OptionItem OptionBeamSize;
     private static OptionItem OptionChargeTime;
     private static OptionItem OptionFireDelay;
-    enum OptionName { NovaFireMode, NovaFireCooldown, NovaBeamSize, NovaChargeTime, NovaFireDelay }
+    private static OptionItem OptionBeamLength;
+    private static OptionItem OptionPierceWalls;
+    enum OptionName { NovaFireMode, NovaFireCooldown, NovaBeamSize, NovaChargeTime, NovaFireDelay, NovaBeamLength, NovaPierceWalls }
 
     private static FireMode mode;
     private static float killCooldown;
@@ -60,11 +64,15 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
     private static float beamSize;
     private static float chargeTime;
     private static float fireDelay;
+    private static float beamLength = 20f;
 
     private const float BeamTime = 1.5f;
-    private const float BeamLength = 10f;
+    // ビームの長さは設定で決める(以前は10で、机や箱などの物にも当たって止まっていたので短かった)
+    private static bool pierceWalls;
+    private const float FullMapLength = 100f;
+    private static float BeamLength => pierceWalls ? 45f : beamLength;
     // 今回のビームが届く長さ(壁に当たったらそこまで)
-    private float reach = BeamLength;
+    private float reach = 20f;
     // ビームが自分の体から少し前で始まるように
     private const float BeamStart = 0.5f;
     // チャージ中はほんの少しだけ歩けるようにして、歩こうとした向きを読む
@@ -81,6 +89,9 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
     // チャージが終わってから、この秒数ボタンを押さなかったら自動で撃つ(ずっと止まったままにならないように)
     private const float MaxHoldTime = 10f;
     private const int MaxTiles = 16;
+    // 壁を貫通する時はビームが長いので、MOD を入れていない人の画面でも途切れにくいよう少しだけ多く出す
+    private const int MaxTilesPierce = 24;
+    private static int TileLimit => pierceWalls ? MaxTilesPierce : MaxTiles;
 
     private bool charging;
     // 向きを決めてから、ビームが出るまでの待ち
@@ -133,6 +144,9 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
             .SetValueFormat(OptionFormat.Seconds);
         OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 14, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
+        OptionBeamLength = FloatOptionItem.Create(RoleInfo, 16, OptionName.NovaBeamLength, new(5f, 40f, 2.5f), 20f, false)
+            .SetValueFormat(OptionFormat.Multiplier);
+        OptionPierceWalls = BooleanOptionItem.Create(RoleInfo, 17, OptionName.NovaPierceWalls, true, false);
     }
 
     public float CalculateKillCooldown() => killCooldown;
@@ -171,6 +185,7 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
         guideAngle = float.NaN;
         SetSpeed(AimSpeed);
         ShowGuide(NovaBeamTile.Style.Guide);
+        ClientEffects.Charge(Player, chargeTime + fireDelay, new Color(0.5f, 0.94f, 1f));
         SendRpc();
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
     }
@@ -246,7 +261,7 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
             return;
         }
         // ビーム用のダミーは、出すのに時間がかかるので、最初に作って見えない所へ置いておく
-        if (!tilesSpawned && GameStates.IsInTask)
+        if (!tilesSpawned && GameStates.IsInTask && !ClientEffects.SkipNovaDummies)
         {
             if (tileSpawnAt < 0f) tileSpawnAt = Time.time + TileSpawnDelay;
             if (Time.time < tileSpawnAt) return;
@@ -312,11 +327,11 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
             var bar = NovaBeamTile.BarLength;
             var span = BeamLength - BeamStart;
             var bars = span <= bar ? 1 : Mathf.CeilToInt((span - bar) / (bar * 0.7f)) + 1;
-            return Mathf.Clamp(bars, 1, MaxTiles) + 1;
+            return Mathf.Clamp(bars, 1, TileLimit) + 1;
         }
         var tile = NovaBeamTile.TileWorldSize;
         var need = Mathf.CeilToInt((BeamLength + beamSize) / tile * 1.42f) + 3;
-        return Mathf.Clamp(need, 4, MaxTiles) + 1;
+        return Mathf.Clamp(need, 4, TileLimit) + 1;
     }
 
     private Vector2 Dir => new(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
@@ -326,6 +341,7 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
     private void ShowGuide(NovaBeamTile.Style style)
     {
         guideAngle = angle;
+        ClientEffects.NovaGuide(Player, Player.transform.position, angle, style == NovaBeamTile.Style.Locked);
         if (tiles.Count == 0) return;
         tiles[0].GuideColor = "#" + ColorUtility.ToHtmlStringRGB(Palette.PlayerColors[Player.Data.DefaultOutfit.ColorId]);
         tiles[0].SetStyle(style);
@@ -353,6 +369,8 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
         waiting = false;
         beaming = false;
         RestoreSpeed();
+        ClientEffects.ChargeStop(Player);
+        ClientEffects.NovaClear(Player);
         foreach (var tile in tiles) tile.Park();
         SendRpc();
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
@@ -366,22 +384,27 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
         beamUntil = Time.time + BeamTime;
         SetSpeed(Main.MinSpeed);
         Utils.AllPlayerKillFlash();
-        reach = WallDistance(anchor, Dir);
+        reach = pierceWalls ? ClientEffects.MapReach(anchor, Dir, FullMapLength) : WallDistance(anchor, Dir);
         if (tiles.Count > 0) tiles[0].Park();
+        ClientEffects.ChargeStop(Player);
+        ClientEffects.NovaClear(Player);
+        ClientEffects.NovaBeam(Player, anchor + Dir * BeamStart, angle, reach - BeamStart, beamSize + 0.9f, BeamTime);
+        ClientEffects.Sound(ClientEffects.SoundKind.NovaFire);
         DrawBeam();
         SendRpc();
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
         ApplyBeamHit();
-        Logger.Info($"{Player.GetNameWithRole().RemoveHtmlTags()} が {ShownAngle()}度 にビームを撃ちました", "Nova");
+        Logger.Info($"{Player.GetNameWithRole().RemoveHtmlTags()} が {ShownAngle()}度 にビームを撃ちました(届く長さ {reach:F1})", "Nova");
     }
 
     // 撃つ向きに、壁(扉も)がどこにあるかを少しずつ確かめる。壁より先には届かない
+    // 机や箱などの物では止まらないよう、船の壁(ShipOnlyMask)だけを見る
     private static float WallDistance(Vector2 from, Vector2 dir)
     {
         const float step = 0.25f;
         for (var t = step; t <= BeamLength; t += step)
         {
-            if (PhysicsHelpers.AnyNonTriggersBetween(from, dir, t, Constants.ShipAndObjectsMask))
+            if (PhysicsHelpers.AnyNonTriggersBetween(from, dir, t, Constants.ShipOnlyMask))
                 return Mathf.Max(BeamStart + 0.1f, t - step);
         }
         return BeamLength;
@@ -635,6 +658,7 @@ public sealed class NovaBeamTile : CustomNetObject
         created = true;
         SetAppearance(colorId: 0, skinId: "", hatId: "", petId: "", visorId: "");
         if (!measured) Measure();
+        if (ClientEffects.NovaOn) ClientEffects.HideDummy(PlayerControl.NetId);
         SetName("");
         shownName = "";
         SnapToPosition(wanted);

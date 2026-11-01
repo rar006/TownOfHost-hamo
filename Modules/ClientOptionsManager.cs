@@ -17,6 +17,10 @@ namespace TownOfHost
         public static bool LogData = true;
         public static bool PresetData = true;
         public static string YomiagePort = "50080";
+        // 試合結果のスレッドに付ける、勝った陣営のフォーラムのタグの ID(空なら付けない)
+        public static string TagCrewmate = "";
+        public static string TagImpostor = "";
+        public static string TagNeutral = "";
         [PluginModuleInitializer]
         public static void Init()
         {
@@ -55,6 +59,7 @@ namespace TownOfHost
             EnsureWebhookDataOptions();
             LogData = true;
             PresetData = true;
+            TagCrewmate = TagImpostor = TagNeutral = "";
             using StreamReader sr = new(OPTIONS_FILE_PATH, Encoding.GetEncoding("UTF-8"));
             string text;
             string[] tmp = Array.Empty<string>();
@@ -76,7 +81,37 @@ namespace TownOfHost
                     if (optionName == "presetdata" && bool.TryParse(optionValue, out var presetData))
                         PresetData = presetData;
                     if (tmp[0].ToLower() == "yomiageport") YomiagePort = tmp.Skip(1).Join(delimiter: ":");
+                    if (optionName == "tagcrewmate") TagCrewmate = optionValue;
+                    if (optionName == "tagimpostor") TagImpostor = optionValue;
+                    if (optionName == "tagneutral") TagNeutral = optionValue;
                 }
+            }
+        }
+
+        // options.txt の 1 行を書きかえる(無ければ足す)。ゲームの中の入力画面から使う
+        public static void SetValue(string key, string value)
+        {
+            try
+            {
+                CreateIfNotExists();
+                var name = key.Replace(" ", "").ToLowerInvariant();
+                var lines = File.ReadAllLines(OPTIONS_FILE_PATH, Encoding.UTF8).ToList();
+                var index = lines.FindIndex(line => line.Split(':')[0].Replace(" ", "").ToLowerInvariant() == name);
+                var newLine = $"{key}:{value}";
+                if (index >= 0) lines[index] = newLine;
+                else
+                {
+                    // 「この値を変更しないでください」の注意書きより前に足す
+                    var note = lines.FindIndex(line => line.TrimStart().StartsWith("//"));
+                    if (note >= 0) lines.Insert(note, newLine);
+                    else lines.Add(newLine);
+                }
+                File.WriteAllLines(OPTIONS_FILE_PATH, lines, Encoding.UTF8);
+                CheckOptions();
+            }
+            catch (Exception ex)
+            {
+                Logger.Exception(ex, "OptionsManager");
             }
         }
 

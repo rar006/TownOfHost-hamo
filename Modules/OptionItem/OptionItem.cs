@@ -706,8 +706,7 @@ namespace TownOfHost
 
                 }
 
-                opt.TitleText.text = size + "<b>" + GetName(isoption: true) + mark + Fromtext + "</b></size>";
-
+                opt.TitleText.text = size + "<b>" + GetName(isoption: true) + "　" + mark + Fromtext + "</b></size>";
                 opt.ValueText.text = GetString();
 
                 opt.oldValue = opt.Value = CurrentValue;
@@ -938,6 +937,9 @@ namespace TownOfHost
         public void SyncOptions()
 
         {
+
+            // ホスト以外のモデレーターが設定画面で変えた時は、ホストに送って反映してもらう
+            if (TownOfHost.Modules.ModeratorRemoteEdit.TrySendOption(this)) return;
 
             if (
 

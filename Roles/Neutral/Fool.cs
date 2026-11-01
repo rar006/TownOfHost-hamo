@@ -97,6 +97,9 @@ public sealed class Fool : RoleBase, IKiller, IAdditionalWinner
     static OptionItem OptionIsTellResultImposotr; static bool Isresultimposotr;
 
     static OptionItem OptionWinAlive; static bool winalive;
+    static OptionItem OptionTellResult;
+    // 占い結果に出す役職(試合中は同じものを出し続ける)
+    CustomRoles? disguise;
 
     bool IsKillerKilled;
 
@@ -105,6 +108,7 @@ public sealed class Fool : RoleBase, IKiller, IAdditionalWinner
     {
 
         FoolIsTellResultImpostor,
+        WolfBoyTellResult,
 
         FoolAlivetoWin
 
@@ -122,6 +126,8 @@ public sealed class Fool : RoleBase, IKiller, IAdditionalWinner
 
         OptionIsTellResultImposotr = BooleanOptionItem.Create(info, 13, OptionName.FoolIsTellResultImpostor, true, false).SetInfo(UtilsRoleText.GetRoleColorAndtext(CustomRoles.Fool));
 
+        // 狼少年・大狼と同じく「インポスター」だけだと、インポスターの素の役職がいない時にすぐ分かるので、役職からランダムも選べる
+        OptionTellResult = StringOptionItem.Create(info, 15, OptionName.WolfBoyTellResult, new[] { "TellResultImpostor", "TellResultRandomRole" }, 0, false, OptionIsTellResultImposotr).SetInfo(UtilsRoleText.GetRoleColorAndtext(CustomRoles.Fool));
         OptionWinAlive = BooleanOptionItem.Create(info, 14, OptionName.FoolAlivetoWin, false, false).SetInfo(UtilsRoleText.GetRoleColorAndtext(CustomRoles.Fool));
 
     }
@@ -134,7 +140,8 @@ public sealed class Fool : RoleBase, IKiller, IAdditionalWinner
 
     public override void ApplyGameOptions(IGameOptions opt) => opt.SetVision(hasimpostorvision);
 
-    public override CustomRoles TellResults(PlayerControl player) => Isresultimposotr ? CustomRoles.Impostor : CustomRoles.NotAssigned;
+    public override CustomRoles TellResults(PlayerControl player)
+        => Isresultimposotr ? disguise ??= TownOfHost.Roles.Crewmate.WolfBoy.PickDisguise(OptionTellResult.GetValue() == 1, CustomRoleTypes.Impostor, CustomRoles.Impostor) : CustomRoles.NotAssigned;
 
 
 

@@ -1,4 +1,6 @@
+using System;
 using Hazel;
+
 
 using TownOfHost.Modules;
 
@@ -56,6 +58,14 @@ namespace TownOfHost
 
             }
 
+            // 会議中はブラッドラストの赤を隠す（インポとバレるのを防ぐ）
+            if (isMeeting && target.Is(CustomRoles.Bloodlust) && target.GetRoleClass() is Bloodlust blMeeting && blMeeting.IsNameExposed
+                && (colorCode == "#ff1919" || string.Equals(colorCode, "ff1919", StringComparison.OrdinalIgnoreCase)))
+            {
+                colorCode = "";
+                if (KnowTargetRoleColor(seer, target, isMeeting))
+                    colorCode = target.GetRoleColorCode();
+            }
             string openTag = "", closeTag = "";
 
             if (!SuddenDeathMode.NowSuddenDeathMode)
@@ -92,14 +102,14 @@ namespace TownOfHost
 
                 {
 
-                    if (targetRole.GetRoleInfo()?.IsCantSeeTeammates == true)
-
-                        colorCode = Roles.Vanilla.Impostor.RoleInfo.RoleColorCode;
-
-                    if ((seerRole.GetRoleInfo()?.IsCantSeeTeammates == true && !(roleClass as Amnesiac).Realized) || seer.Is(CustomRoles.OneWolf) || target.Is(CustomRoles.OneWolf))
-
-                        colorCode = "#ffffff"; //white
-
+                    var skipTeammateRecolor = target.GetRoleClass() is Bloodlust bloodlustExposed && bloodlustExposed.IsNameExposed;
+                    if (!skipTeammateRecolor)
+                    {
+                        if (targetRole.GetRoleInfo()?.IsCantSeeTeammates == true)
+                            colorCode = Roles.Vanilla.Impostor.RoleInfo.RoleColorCode;
+                        if ((seerRole.GetRoleInfo()?.IsCantSeeTeammates == true && !(roleClass as Amnesiac).Realized) || seer.Is(CustomRoles.OneWolf) || target.Is(CustomRoles.OneWolf))
+                            colorCode = "#ffffff"; //white
+                    }
                 }
 
             }
@@ -142,8 +152,8 @@ namespace TownOfHost
 
                 || ((seer.Is(CountTypes.Jackal) || seer.Is(CustomRoles.Jackaldoll)) && (target.Is(CountTypes.Jackal) || target.Is(CustomRoles.Jackaldoll)))
 
-                || (seer.Is(CountTypes.MilkyWay) && target.Is(CountTypes.MilkyWay));
-
+                || (seer.Is(CountTypes.MilkyWay) && target.Is(CountTypes.MilkyWay))
+                || (Options.ImpostorCanSeeSKMadmate.GetBool() && seer.GetCustomRole().IsImpostor() && target.Is(CustomRoles.SKMadmate));
         }
 
         public static bool TryGetData(PlayerControl seer, PlayerControl target, out string colorCode)
@@ -200,6 +210,19 @@ namespace TownOfHost
 
         }
 
+        public static void RevealSKMadmateToImpostors(PlayerControl skMadmate)
+        {
+            if (!AmongUsClient.Instance.AmHost) return;
+            if (skMadmate == null || !Options.ImpostorCanSeeSKMadmate.GetBool()) return;
+            if (!skMadmate.Is(CustomRoles.SKMadmate)) return;
+
+            foreach (var pc in PlayerCatch.AllPlayerControls)
+            {
+                if (pc == null || pc.PlayerId == skMadmate.PlayerId) continue;
+                if (!pc.GetCustomRole().IsImpostor()) continue;
+                Add(pc.PlayerId, skMadmate.PlayerId, "#ff1919");
+            }
+        }
         public static void Remove(byte seerId, byte targetId)
 
         {

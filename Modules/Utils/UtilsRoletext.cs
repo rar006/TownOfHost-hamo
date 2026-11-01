@@ -112,6 +112,7 @@ namespace TownOfHost
 
                         || (Options.CanSeeImpostorRole.GetBool() && seerrole.IsImpostor() && seen.GetCustomRole().IsImpostor())
 
+                        || (Options.ImpostorCanSeeSKMadmate.GetBool() && seerrole.IsImpostor() && seen.Is(CustomRoles.SKMadmate))
                         || seen.Is(CustomRoles.MadonnaLovers) && seer.Is(CustomRoles.MadonnaLovers) && Madonna.IsKnowRole
 
                         || (seen.Is(CustomRoles.CupidLovers) && seer.Is(CustomRoles.CupidLovers) && Cupid.IsKnowRole)
@@ -402,8 +403,7 @@ namespace TownOfHost
 
                         case CustomRoles.Opener: sb.Append(Opener.SubRoleMark); break;
                         
-                        //case CustomRoles.AntiTeleporter: sb.Append(AntiTeleporter.SubRoleMark); break;
-
+                        case CustomRoles.AntiTeleporter: sb.Append(AntiTeleporter.SubRoleMark); break;
                         case CustomRoles.Lighting: sb.Append(Lighting.SubRoleMark); break;
 
                         case CustomRoles.Moon: sb.Append(Moon.SubRoleMark); break;
@@ -453,6 +453,7 @@ namespace TownOfHost
 
                         case CustomRoles.News: sb.Append(News.SubRoleMark); break;
 
+                        case CustomRoles.Notice: sb.Append(Notice.SubRoleMark); break;
                         case CustomRoles.Sunglasses: sb.Append(Sunglasses.SubRoleMark); break;
 
                         case CustomRoles.Reporting: sb.Append(Reporting.SubRoleMark); break;

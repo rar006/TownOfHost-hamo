@@ -100,6 +100,8 @@ public static class AiPlayers
                    "3. 設定の「ローカルAIのモデル名を入力する」でモデル名を入れる(最初は qwen2.5:7b)\n" +
                    "4. Ollama を起動したまま、試合を始める";
         }
+        text += $"\n\nAIごとにモデルを変えるには、{AiConfig.FilePath} の aiModels の「AI1」などの欄にモデル名を書きます(空なら共通の設定)。" +
+                "「chatgpt:gpt-4o」「gemini:gemini-2.5-flash」「claude:claude-sonnet-5-5」「local:qwen2.5:7b」のように前に種類を書くと、そのAIだけ別のAIを使えます。";
         text += "\n\nAIはローカルの部屋だけで動きます(公式サーバーは偽のプレイヤーを受け付けないため)。AIに繋がらない時は、簡単なルールで動きます。";
         Utils.SendMessage(text, PlayerControl.LocalPlayer.PlayerId, "<#8cffb4>【AIプレイヤーの使い方】</color>");
     }
@@ -177,7 +179,9 @@ public static class AiPlayers
             var behaviour = dummy.GetComponent<DummyBehaviour>();
             if (behaviour != null) behaviour.enabled = true;
             AmongUsClient.Instance.Spawn(dummy);
-            info.RpcSetTasks(Array.Empty<byte>());
+            // ロビーではタスクを配らない。船(ShipStatus)が無い所で配ると、ゲームが船を 30 秒待ったあと
+            // 「ほかのプレイヤーのデータ待ちでタイムアウト」としてホスト自身を切断していた(試合を始めた時に配り直される)
+            if (ShipStatus.Instance != null) info.RpcSetTasks(Array.Empty<byte>());
             aiIds.Add(id);
             Logger.Info($"AIプレイヤーを出しました: AI{i + 1} (id={id})", "AiPlayers");
         }
@@ -212,7 +216,9 @@ public static class AiPlayers
         foreach (var id in aiIds)
         {
             var pc = PlayerCatch.GetPlayerById(id);
-            if (pc != null) brains[id] = new AiBrain(pc);
+            if (pc == null) continue;
+            brains[id] = new AiBrain(pc);
+            AiPath.Setup(pc);
         }
         // 役職の説明を読ませる(役職は、イントロが始まる時にはもう決まっている)
         foreach (var brain in brains.Values) brain.LearnRole();

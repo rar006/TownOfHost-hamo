@@ -76,14 +76,20 @@ public sealed class Mario : RoleBase, IKiller, IUsePhantomButton
     }
     public override bool OnEnterVent(PlayerPhysics physics, int ventId)
     {
-        if (VentCooldownTimer > 0.1f) return false;
+        // 出たばかりの間(null)も入れない。前は null の間に入り直せて、数え直しと追い出しが重なり、入ったり出たりを繰り返していた
+        if (VentCooldownTimer == null || VentCooldownTimer > 0.1f) return false;
         --Count;
         SendRPC();
         if (Count <= 0)
         {
             Win();
         }
-        _ = new LateTask(() => Player.MyPhysics.RpcBootFromVent(ventId), 0.9f, "", true);
+        // エンジニアの時は自分で 0.1 秒で出るので、まだ中にいる時だけ追い出す
+        // (もう出ている人に送ると、もう一度入って出る動きになり、しばらく抜け出せないように見えていた)
+        _ = new LateTask(() =>
+        {
+            if (Player != null && Player.inVent) Player.MyPhysics.RpcBootFromVent(ventId);
+        }, 0.5f, "Mario.Boot", true);
         VentCooldownTimer = null;
         _ = new LateTask(() => VentCooldownTimer = OptionVentCooldown.GetFloat(), 1.2f, "", true);
         return true;

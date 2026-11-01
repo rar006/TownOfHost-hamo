@@ -834,13 +834,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         Player.SetKillCooldown(60f);
 
-        _ = new LateTask(() => { Player.SyncSettings(); }, 0.1f, "JackalHadouHoKillTimer", true);
-
-        Player.SyncSettings();
-
-        Main.AllPlayerKillCooldown[Player.PlayerId] = 60f;
-
-        Player.SyncSettings();
+        _ = new LateTask(() => { if (Player != null) Player.SyncSettings(); }, 0.1f, "JackalHadouHoKillTimer", true);
 
         _prevCharging = IsCharging;
 
@@ -888,7 +882,9 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
     {
 
-        var rt = Player.cosmetics.nameText.transform.Find("RoleText");
+        var nameText = Player != null ? Player.cosmetics?.nameText : null;
+        if (nameText == null) return;
+        var rt = nameText.transform.Find("RoleText");
 
         if (rt == null) return;
 

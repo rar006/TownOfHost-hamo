@@ -153,6 +153,7 @@ namespace TownOfHost
         public class GameStartManagerUpdatePatch
         {
             private static float exitTimer = 0f;
+            private static float nextVersionRequestAt = 2f;
             private static TextMeshPro timerLabelCache;
             //private static float ext = 0f;
             private static GameObject startHiddenByMod;
@@ -248,18 +249,31 @@ namespace TownOfHost
                 else
                 {
                     if (MatchVersions(0))
+                    {
                         exitTimer = 0;
+                        nextVersionRequestAt = 2f;
+                    }
                     else
                     {
                         exitTimer += Time.deltaTime;
-                        if (exitTimer > 10)
+                        // 試合のあとロビーに戻った直後は、ホストのバージョンの知らせが届かないことがある(届かないまま10秒で抜けていた)。
+                        // 知らせが無い時は、ホストに3秒ごとに送り直しを頼み、20秒待ってから抜ける。違うバージョンだと分かった時は今まで通り10秒
+                        var known = Main.playerVersion.ContainsKey(0);
+                        if (!known && exitTimer >= nextVersionRequestAt)
+                        {
+                            nextVersionRequestAt += 3f;
+                            RequestHostVersion();
+                        }
+                        var limit = known ? 10f : 20f;
+                        if (exitTimer > limit)
                         {
                             exitTimer = 0;
+                            nextVersionRequestAt = 2f;
                             AmongUsClient.Instance.ExitGame(DisconnectReasons.ExitGame);
                             SceneChanger.ChangeScene("MainMenu");
                         }
 
-                        warningMessage = Utils.ColorString(Color.red, string.Format(GetString("Warning.AutoExitAtMismatchedVersion"), $"<{Main.ModColor}>{Main.ModName}</color>", Math.Round(10 - exitTimer).ToString()));
+                        warningMessage = Utils.ColorString(Color.red, string.Format(GetString("Warning.AutoExitAtMismatchedVersion"), $"<{Main.ModColor}>{Main.ModName}</color>", Math.Round(limit - exitTimer).ToString()));
                     }
                 }
                 if (warningMessage == "")
@@ -293,6 +307,19 @@ namespace TownOfHost
                     __instance.RulesPresetText.text = GetTimerString();
                 }
             }
+            static void RequestHostVersion()
+            {
+                try
+                {
+                    var client = AmongUsClient.Instance;
+                    if (client == null || client.AmHost || PlayerControl.LocalPlayer == null) return;
+                    var w = client.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.RequestRetryVersionCheck, Hazel.SendOption.Reliable, client.HostId);
+                    client.FinishRpcImmediately(w);
+                    Logger.Info("ホストのバージョンが届いていないので、送り直しを頼みました", "VersionCheck");
+                }
+                catch { }
+            }
+
             public static bool MatchVersions(byte playerId, bool acceptVanilla = false)
             {
                 if (!Main.playerVersion.TryGetValue(playerId, out var version)) return acceptVanilla;

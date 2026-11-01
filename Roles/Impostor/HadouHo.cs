@@ -136,15 +136,14 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         IsCharging = true;
         Charging = true;
         chargeTimer = 0f;
+        TownOfHost.Modules.ClientEffects.Charge(Player, ChargeTime, new Color(1f, 0.55f, 0.2f));
         Main.AllPlayerSpeed[Player.PlayerId] = Main.MinSpeed;
         Player.MarkDirtySettings();
         Utils.AllPlayerKillFlash();
         Main.AllPlayerKillCooldown[Player.PlayerId] = 60f;
         Player.SetKillCooldown(60f);
-        _ = new LateTask(() => { Player.SyncSettings(); }, 0.1f, "HadouHoKillTimer", true);
-        Player.SyncSettings();
-        Main.AllPlayerKillCooldown[Player.PlayerId] = 60f;
-        Player.SyncSettings();
+        // 設定は 1 回送れば足りる(続けて 3 回送っていて、何人も同時に押すと通信が多すぎてキックされていた)
+        _ = new LateTask(() => { if (Player != null) Player.SyncSettings(); }, 0.1f, "HadouHoKillTimer", true);
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
         _prevCharging = true;
         _prevBeamMark = false;
@@ -153,7 +152,10 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
 
     void SetRoleTextHeight(bool beaming)
     {
-        var t = Player.cosmetics.nameText.transform.Find("RoleText");
+        // 抜けた後に残った処理から呼ばれると、名前の文字がもう無くて落ちていた
+        var nameText = Player != null ? Player.cosmetics?.nameText : null;
+        if (nameText == null) return;
+        var t = nameText.transform.Find("RoleText");
         if (t == null) return;
         var rt = t.GetComponent<TMPro.TextMeshPro>();
         if (rt == null) return;
@@ -163,6 +165,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
 
     private void ResetState()
     {
+        TownOfHost.Modules.ClientEffects.ChargeStop(Player);
         IsCharging = false;
         ShowBeamMark = false;
         Charging = false;
@@ -223,6 +226,10 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         if (IsDead || !Player.IsAlive()) return;
         BeamFacingLeft = Player.cosmetics.FlipX;
         SendBeamDirection(BeamFacingLeft);
+        TownOfHost.Modules.ClientEffects.ChargeStop(Player);
+        var beamFrom = Player.GetTruePosition() + (BeamFacingLeft ? Vector2.left : Vector2.right) * 0.5f;
+        TownOfHost.Modules.ClientEffects.NovaBeam(Player, beamFrom, BeamFacingLeft ? 180f : 0f, TownOfHost.Modules.ClientEffects.MapReach(beamFrom, BeamFacingLeft ? Vector2.left : Vector2.right), 2.2f, BeamTime);
+        TownOfHost.Modules.ClientEffects.Sound(TownOfHost.Modules.ClientEffects.SoundKind.NovaFire);
         Utils.AllPlayerKillFlash();
         IsCharging = false; chargeTimer = 0f; HasHit = false; ShowBeamMark = true;
         SetRoleTextHeight(true);
@@ -351,6 +358,8 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
     {
         seen ??= seer;
         if (!Player.IsAlive() || isForMeeting) return false;
+        // MOD を入れている人の画面では、ためとビームを専用の演出で描くので、名前の文字のビームは出さない
+        if (TownOfHost.Modules.ClientEffects.DrawsBeamFor(seer)) return false;
         string myColor = "#" + ColorUtility.ToHtmlStringRGB(Palette.PlayerColors[Player.Data.DefaultOutfit.ColorId]);
 
         if (IsCharging && seen.PlayerId == Player.PlayerId)

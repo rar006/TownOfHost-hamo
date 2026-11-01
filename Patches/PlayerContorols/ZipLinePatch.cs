@@ -208,6 +208,9 @@ namespace TownOfHost
 
         }
 
+
+        public static bool IsUsingZipline(PlayerControl player)
+            => player != null && ZiplineCools.Contains(player.PlayerId);
     }
 
 

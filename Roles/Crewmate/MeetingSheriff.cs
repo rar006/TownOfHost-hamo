@@ -448,7 +448,7 @@ public sealed class MeetingSheriff : RoleBase, ISelfVoter
 
             CustomRoleTypes.Neutral => MeetingSheriffCanKillNeutrals,
 
-            CustomRoleTypes.Crewmate => role is CustomRoles.WolfBoy,
+            CustomRoleTypes.Crewmate => role is CustomRoles.WolfBoy && WolfBoy.SeenAsImpostor,
 
             _ => false
 

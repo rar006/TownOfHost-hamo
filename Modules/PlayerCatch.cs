@@ -235,9 +235,31 @@ namespace TownOfHost
 
         public static Dictionary<byte, CustomRoleTypes> AllPlayerFirstTypes = new();
 
-        public static IEnumerable<PlayerControl> AllPlayerControls => PlayerControl.AllPlayerControls.ToArray().Where(p => p != null && p.PlayerId <= 15);
+        public static IEnumerable<PlayerControl> AllPlayerControls => Snapshot().Where(p => p != null && p.PlayerId <= 15);
 
-        public static IEnumerable<PlayerControl> AllAlivePlayerControls => PlayerControl.AllPlayerControls.ToArray().Where(p => p != null && p.IsAlive() && p.PlayerId <= 15);
+        public static IEnumerable<PlayerControl> AllAlivePlayerControls => Snapshot().Where(p => p != null && p.IsAlive() && p.PlayerId <= 15);
+
+        // 全員の一覧は1フレームに何百回も読まれる。毎回ゲーム本体の一覧を丸ごと写すと重いので、
+        // 同じフレームで人数も変わっていなければ、写した一覧を使い回す(中身は前と同じ)
+        private static PlayerControl[] snapshot = System.Array.Empty<PlayerControl>();
+        private static int snapshotFrame = -1;
+        private static int snapshotCount = -1;
+        private static PlayerControl[] Snapshot()
+        {
+            var list = PlayerControl.AllPlayerControls;
+            if (list == null) return System.Array.Empty<PlayerControl>();
+            int frame;
+            try { frame = UnityEngine.Time.frameCount; }
+            catch { return list.ToArray(); }
+            var count = list.Count;
+            if (frame == snapshotFrame && count == snapshotCount) return snapshot;
+            var arr = new PlayerControl[count];
+            for (var i = 0; i < count; i++) arr[i] = list[i];
+            snapshot = arr;
+            snapshotFrame = frame;
+            snapshotCount = count;
+            return arr;
+        }
 
         //1ターン前に生きてた人達のリスト
 

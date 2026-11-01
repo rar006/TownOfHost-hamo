@@ -98,11 +98,11 @@ namespace TownOfHost
 
                 {
 
-                    case CountTypes.Fox:
-
                     case CountTypes.Crew when pc.Is(CustomRoles.RaccoonParent) || pc.Is(CustomRoles.RaccoonChild):
                         RaccoonCount++;
                         break;
+                    case CountTypes.Fox:
+
                     case CountTypes.Crew:
 
                         // ★ 変化済みヴィランは Crew ではなく VillainActive としてカウント
@@ -619,11 +619,11 @@ namespace TownOfHost
 
                 {
 
-                    case CountTypes.Fox:
-
                     case CountTypes.Crew when pc.Is(CustomRoles.RaccoonParent) || pc.Is(CustomRoles.RaccoonChild):
                         RaccoonCount++;
                         break;
+                    case CountTypes.Fox:
+
                     case CountTypes.Crew: Crew++; FoxAndCrew++; break;
 
                     case CountTypes.Impostor: Imp++; break;

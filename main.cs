@@ -132,11 +132,11 @@ namespace TownOfHost
         public static bool IsNonHostClient =>
             AmongUsClient.Instance != null && !AmongUsClient.Instance.AmHost;
 
-        public const string BepInExPluginVersion = "4.00.40.02";
+        public const string BepInExPluginVersion = "4.00.40.04";
 
-        public const string PluginVersion = "4.00.40.02";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
+        public const string PluginVersion = "4.00.40.04";//ほんとはx.y.z表記にしたかったけどx.y.z.km.ks表記だと警告だされる
 
-        public const string PluginShowVersion = "4.40.02α";
+        public const string PluginShowVersion = "4.40.04α";
 
         public const string ModVersion = ".35.14";//リリースver用バージョン変更dc9b79
 
@@ -217,6 +217,7 @@ namespace TownOfHost
         public static ConfigEntry<bool> AutoSaveScreenShot { get; private set; }
 
         public static ConfigEntry<bool> ShowPresetInWebhook { get; private set; }
+        public static ConfigEntry<bool> WebhookWinTag { get; private set; }
 
         public static ConfigEntry<bool> PreloadMapAssets { get; private set; }
 
@@ -232,7 +233,8 @@ namespace TownOfHost
 
         public static ConfigEntry<bool> ShowRoomTimer { get; private set; }
         public static ConfigEntry<bool> CustomStartLoading { get; private set; }
-
+        public static ConfigEntry<bool> LoadingMiniGame { get; private set; }
+        public static ConfigEntry<int> LoadingMiniGameBest { get; private set; }
         public static ConfigEntry<bool> ShowPlayerCount { get; private set; }
 
         public static ConfigEntry<bool> ShowRoomCode { get; private set; }
@@ -305,6 +307,22 @@ namespace TownOfHost
         public static ConfigEntry<string> StreamURLConfig { get; private set; }
         public static ConfigEntry<bool> ObsOverlay { get; private set; }
         public static ConfigEntry<int> ObsShowRoles { get; private set; }
+        public static ConfigEntry<bool> ObsShowMap { get; private set; }
+        public static ConfigEntry<bool> ObsComments { get; private set; }
+        // 録画(TOH-hm オプションの「録画」)
+        public static ConfigEntry<int> RecordQuality { get; private set; }
+        public static ConfigEntry<int> RecordFps { get; private set; }
+        public static ConfigEntry<int> RecordGameVolume { get; private set; }
+        public static ConfigEntry<int> RecordOtherVolume { get; private set; }
+        public static ConfigEntry<int> RecordMicVolume { get; private set; }
+        public static ConfigEntry<bool> RecordHideStreamUi { get; private set; }
+        // デバッグ版の「イントロ撮影」
+        public static ConfigEntry<bool> IntroShot { get; private set; }
+        public static ConfigEntry<string> IntroShotTitle { get; private set; }
+        public static ConfigEntry<string> IntroShotSub { get; private set; }
+        public static ConfigEntry<string> IntroShotTextColor { get; private set; }
+        public static ConfigEntry<string> IntroShotBackColor { get; private set; }
+        public static ConfigEntry<bool> IntroShotRole { get; private set; }
 
         //Other Configs
 
@@ -433,15 +451,20 @@ namespace TownOfHost
 
                 "../TOHhm_DATA"));
 
+        // Steam で起動を押してから(ゲームのプロセスが始まってから)の秒数。どこで時間がかかっているかをログで見るため
+        public static double SecondsSinceProcessStart()
+        {
+            try { return (DateTime.Now - System.Diagnostics.Process.GetCurrentProcess().StartTime).TotalSeconds; }
+            catch { return -1; }
+        }
+
         public override void Load()
 
         {
 
             GameCount = 0;
             Instance = this;
-
-
-
+            BepInEx.Logging.Logger.CreateLogSource("TOHhamoBoot").LogInfo($"ゲームを起動してからMODの読み込み開始まで: {SecondsSinceProcessStart():0.0}秒");
             //Client Options
 
             HideName = Config.Bind("Client Options", "Hide Game Code Name", "Town Of Host-hamo");
@@ -472,6 +495,8 @@ namespace TownOfHost
 
             ShowPresetInWebhook = Config.Bind("Client Options", "Show Preset In Webhook", true);
 
+            WebhookWinTag = Config.Bind("Client Options", "Webhook Win Tag", true);
+
             PreloadMapAssets = Config.Bind("Client Options", "Preload Map Assets", false);
 
             AutoRehost = Config.Bind("Client Options", "Auto Rehost", false);
@@ -489,7 +514,8 @@ namespace TownOfHost
 
             ShowRoomTimer = Config.Bind("Client Options", "Show Room Timer", false);
             CustomStartLoading = Config.Bind("Client Options", "Custom Start Loading", true);
-
+            LoadingMiniGame = Config.Bind("Client Options", "Loading Mini Game", false);
+            LoadingMiniGameBest = Config.Bind("Client Options", "Loading Mini Game Best", 0);
             ShowPlayerCount = Config.Bind("Client Options", "Show Player Count", false);
 
             ShowRoomCode = Config.Bind("Client Options", "Show Room Code", false);
@@ -522,6 +548,20 @@ namespace TownOfHost
             StreamURLConfig = Config.Bind("StreamMenu", "StreamURL", "");
             ObsOverlay = Config.Bind("StreamMenu", "ObsOverlay", false);
             ObsShowRoles = Config.Bind("StreamMenu", "ObsShowRoles", 1);
+            ObsShowMap = Config.Bind("StreamMenu", "ObsShowMap", false);
+            ObsComments = Config.Bind("StreamMenu", "ObsComments", false);
+            RecordQuality = Config.Bind("Recorder", "Quality", 1);
+            RecordFps = Config.Bind("Recorder", "Fps", 30);
+            RecordGameVolume = Config.Bind("Recorder", "GameVolume", 100);
+            RecordOtherVolume = Config.Bind("Recorder", "OtherVolume", 100);
+            RecordMicVolume = Config.Bind("Recorder", "MicVolume", 0);
+            RecordHideStreamUi = Config.Bind("Recorder", "HideStreamUi", true);
+            IntroShot = Config.Bind("IntroShot", "Enabled", false);
+            IntroShotTitle = Config.Bind("IntroShot", "Title", ModName);
+            IntroShotSub = Config.Bind("IntroShot", "Sub", "");
+            IntroShotTextColor = Config.Bind("IntroShot", "TextColor", "#00FFFF");
+            IntroShotBackColor = Config.Bind("IntroShot", "BackColor", "#2E6BFF");
+            IntroShotRole = Config.Bind("IntroShot", "Role", true);
 
             DebugKeyInput = Config.Bind("Authentication", "Debug Key", "");
 
@@ -1093,7 +1133,7 @@ namespace TownOfHost
         TaskPlayerB = CustomRoles.TaskPlayerB,
 
         Sleeper = CustomRoles.Sleeper,
-
+        Informant = CustomRoles.Informant,
         Null = CustomRoles.Null,
 
         Typewriter = CustomRoles.Typewriter,

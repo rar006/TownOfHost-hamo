@@ -76,6 +76,27 @@ namespace TownOfHost.Patches
             BugReportUIPatch.ShowPanel();
         }
 
+        // ホットキーから開く。ボタンが無い画面でも出せるよう、今いる画面に合わせて親を選び直す
+        public static void ToggleFromHotkey()
+        {
+            if (BugReportUIPatch.IsPanelShown)
+            {
+                Close();
+                return;
+            }
+            if (DestroyableSingleton<HudManager>.InstanceExists)
+            {
+                BugReportUIPatch.SetCurrentParent(DestroyableSingleton<HudManager>.Instance.transform);
+            }
+            else if (BugReportUIPatch.CurrentParent == null)
+            {
+                var menu = Object.FindObjectOfType<MainMenuManager>();
+                if (menu != null) BugReportUIPatch.SetCurrentParent(menu.gameModeButtons?.transform?.parent ?? menu.transform);
+            }
+            if (BugReportUIPatch.CurrentParent == null) return;
+            Open();
+        }
+
         /// <summary>チケット一覧画面で「新規で報告する」を押したときに呼ぶ。</summary>
         public static void StartNewReport()
         {
@@ -241,6 +262,7 @@ namespace TownOfHost.Patches
         /// <summary>他のボタン実装(HELP風ボタンなど)からパネルの親を更新するためのAPI。</summary>
         public static void SetCurrentParent(Transform parent) => _currentParent = parent;
         public static Transform CurrentParent => _currentParent;
+        public static bool IsPanelShown => _panelRoot != null && !_panelRoot.IsDestroyedOrNull() && _panelRoot.activeSelf;
 
         // 起動直後(MainMenuManager.Start等)はTMPTemplate/SimpleButtonの土台(SetBase)が
         // まだ用意できていないことがあるため、パネルは「実際にボタンを押した瞬間」に初めて

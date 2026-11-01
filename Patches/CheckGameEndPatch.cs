@@ -468,8 +468,7 @@ namespace TownOfHost
 
                     Zombie.TryTakeOverCrewWin(ref reason, team);
 
-
-
+                    Autocrat.CheckLateWin();
                     // ★ 神の勝利チェック
 
                     foreach (var pc in PlayerCatch.AllAlivePlayerControls.Where(p => p.Is(CustomRoles.God)))
@@ -720,7 +719,7 @@ namespace TownOfHost
 
 
 
-            if (PlayerCatch.AnyModClient())
+            if (PlayerCatch.AnyModClient() || TownOfHost.Modules.NonHostRpcGuard.AnyHiddenModClient)
 
             {
 
@@ -734,10 +733,7 @@ namespace TownOfHost
 
 
 
-            yield return new WaitForSeconds(EndGameDelay);
-
-
-
+            yield return WaitEndGameDelay;
             if (ReviveRequiredPlayerIds.Count > 0)
 
             {
@@ -760,11 +756,10 @@ namespace TownOfHost
 
                 GameDataSerializePatch.SerializeMessageCount--;
 
-                yield return new WaitForSeconds(EndGameDelay);
-
+                yield return WaitEndGameDelay;
             }
 
-            yield return new WaitForSeconds(EndGameDelay);
+            yield return WaitEndGameDelay;
 
             // ゲーム終了直後の一斉役職変更(ImpostorGhost/CrewmateGhost)RPCの影響で、
 
@@ -792,7 +787,7 @@ namespace TownOfHost
 
             }
 
-            yield return new WaitForSeconds(EndGameDelay);
+            yield return WaitEndGameDelay;
 
 
 
@@ -954,6 +949,7 @@ namespace TownOfHost
 
         }
 
+        private static WaitForSeconds WaitEndGameDelay => new(EndGameDelay);
         private const float EndGameDelay = 0.2f;
 
 

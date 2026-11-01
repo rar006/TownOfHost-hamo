@@ -302,6 +302,12 @@ namespace TownOfHost
 
             }
 
+            if (FirstTurnMeeting.BeforeFirstMeeting)
+            {
+                logger.Info("1ターン目の会議の前なので変身をキャンセルします");
+                return false;
+            }
+
             if (instance.Is(CustomRoles.SKMadmate) || instance.Is(CustomRoles.Jackaldoll))
 
             {
@@ -495,6 +501,8 @@ namespace TownOfHost
 
 
             if (__instance.PlayerId == PlayerControl.LocalPlayer.PlayerId) return false;
+
+            if (FirstTurnMeeting.BeforeFirstMeeting) return false;
 
 
 
@@ -847,6 +855,13 @@ namespace TownOfHost
 
                     __instance.RpcBootFromVent(id);
 
+                // 1ターン目の会議の前はベントに入れない
+                if (FirstTurnMeeting.BeforeFirstMeeting)
+                {
+                    _ = new LateTask(() => __instance.RpcBootFromVent(id), 0.5f, "FirstTurnMeeting.BootVent", true);
+                    return true;
+                }
+
 
 
                 if (user.Is(CustomRoles.DemonicVenter))
@@ -1106,8 +1121,12 @@ namespace TownOfHost
             // ケイどろ: 牢屋に入っている間はベントを使えない
             if (Kedoro.IsActive && !Kedoro.TryUseVent(user, log)) return false; // 牢屋の中・回数切れ
 
+            if (TownOfHost.Roles.Crewmate.Locksmith.IsSealedFor(user, id))
+            {
+                if (log) Logger.Info($"{pp.name} は鍵師が封鎖したベント({id})に入ろうとしたので弾きます", "OnenterVent");
+                return false;
+            }
             if (Sealer.BlocksVent(user))
-
             {
 
                 if (log) Logger.Info($"{pp.name} is sealed from using vents.", "OnenterVent");

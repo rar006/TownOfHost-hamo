@@ -38,6 +38,17 @@ public static class Guesser
     public static OptionItem NCanGuessVanilla;
     public static OptionItem NCanGuessTaskDoneSnitch;
     public static OptionItem NCanWhiteCrew;
+    public static OptionItem TellerCannotGuess;
+
+    // 占い系の役職(占いとゲッサーで自分だけで答えが出せてしまうので、設定で止められるようにする)
+    static readonly CustomRoles[] TellerRoles =
+    {
+        CustomRoles.FortuneTeller, CustomRoles.AmateurTeller, CustomRoles.PonkotuTeller,
+        CustomRoles.SuspiciousTeller, CustomRoles.MadTeller, CustomRoles.EvilTeller,
+    };
+    // 「占い系はゲッサーを使えない」がONで、その人が占い系か
+    public static bool IsBlockedTeller(CustomRoles role)
+        => TellerCannotGuess?.GetBool() == true && System.Array.IndexOf(TellerRoles, role) >= 0;
     public static void SetupCustomOption()
     {
         SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.Guesser, fromtext: "<color=#000000>From:</color><color=#ff0000>The Other Roles</color></size>");
@@ -74,6 +85,7 @@ public static class Guesser
         NCanGuessVanilla = BooleanOptionItem.Create(Id + 67, "CanGuessVanilla", true, TabGroup.Addons, false).SetSubRoleOptionItem(CustomRoles.Guesser).SetColor(ModColors.NeutralGray);
         NCanGuessTaskDoneSnitch = BooleanOptionItem.Create(Id + 68, "CanGuessTaskDoneSnitch", false, TabGroup.Addons, false).SetSubRoleOptionItem(CustomRoles.Guesser).SetColor(ModColors.NeutralGray);
         NCanWhiteCrew = BooleanOptionItem.Create(Id + 69, "CanWhiteCrew", false, TabGroup.Addons, false).SetSubRoleOptionItem(CustomRoles.Guesser).SetColor(ModColors.NeutralGray);
+        TellerCannotGuess = BooleanOptionItem.Create(Id + 71, "GuesserTellerCannotGuess", false, TabGroup.Addons, false).SetSubRoleOptionItem(CustomRoles.Guesser);
     }
     [GameModuleInitializer]
 

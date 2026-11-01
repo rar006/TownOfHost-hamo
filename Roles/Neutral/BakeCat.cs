@@ -38,6 +38,7 @@ namespace TownOfHost.Roles.Neutral
             () => HasTask.ForRecompute
         )
         {
+            IsMisidentify = OptionMisidentify.GetBool();
             CanKill = false;
             Killer = null;
         }
@@ -48,6 +49,7 @@ namespace TownOfHost.Roles.Neutral
         public static OptionItem OptionHasImpostorVision;
         public static OptionItem OptionDieKiller;
         public static OptionItem OptionDieKillerTIme;
+        private static OptionItem OptionMisidentify; static bool IsMisidentify;
         static OptionItem OptionShowRoleNameToKiller;
         static OptionItem OptionShowRoleNameToKillerTeam;
         static OptionItem OptionCountChenge;
@@ -87,6 +89,7 @@ namespace TownOfHost.Roles.Neutral
             BakeCatShowRoleNameToKillerTeam,
             BakeCatCountChenge,
             SchrodingerCatCanSeeKillableTeammate
+            , BakeCatMisidentify
         }
         public static void SetupOptionItem()
         {
@@ -101,6 +104,7 @@ namespace TownOfHost.Roles.Neutral
             OptionCanSeeKillableTeammate = BooleanOptionItem.Create(RoleInfo, 17, Op.SchrodingerCatCanSeeKillableTeammate, false, false);
             OptionShowRoleNameToKiller = BooleanOptionItem.Create(RoleInfo, 18, Op.BakeCatShowRoleNameToKiller, true, false);
             OptionShowRoleNameToKillerTeam = BooleanOptionItem.Create(RoleInfo, 19, Op.BakeCatShowRoleNameToKillerTeam, false, false, OptionShowRoleNameToKiller);
+            OptionMisidentify = BooleanOptionItem.Create(RoleInfo, 20, Op.BakeCatMisidentify, true, false);
         }
         public override void ApplyGameOptions(IGameOptions opt)
         {
@@ -126,14 +130,12 @@ namespace TownOfHost.Roles.Neutral
 
             if (killer.Is(CustomRoles.GrimReaper) || killer.Is(CustomRoles.BakeCat))
                 return true;
-            else
-                if (Team == TeamType.None)
-                {
-                    info.CanKill = false;
-                    ChangeTeamOnKill(killer);
-
-                    return false;
-                }
+            else if (Team == TeamType.None)
+            {
+                info.CanKill = false;
+                ChangeTeamOnKill(killer);
+                return false;
+            }
             return true;
         }
 
@@ -303,7 +305,7 @@ namespace TownOfHost.Roles.Neutral
             UtilsGameLog.AddGameLog($"BakeNeko", UtilsName.GetPlayerColor(Player) + ":  " + string.Format(GetString("SchrodingerCat.Ch"), UtilsName.GetPlayerColor(killer, true) + $"(<b>{UtilsRoleText.GetTrueRoleName(killer.PlayerId, false)}</b>)"));
             UtilsGameLog.LastLogRole[Player.PlayerId] = UtilsGameLog.LastLogRole[Player.PlayerId].RemoveColorTags().Color(DisplayRoleColor);
         }
-        public override CustomRoles Misidentify() => Team == TeamType.None ? CustomRoles.Crewmate : CustomRoles.NotAssigned;
+        public override CustomRoles Misidentify() => Team == TeamType.None && IsMisidentify ? CustomRoles.Crewmate : CustomRoles.NotAssigned;
         public override CustomRoles TellResults(PlayerControl player) => Team == TeamType.None ? CustomRoles.Crewmate : CustomRoles.NotAssigned;
         public override void OverrideTrueRoleName(ref Color roleColor, ref string roleText)
         {
@@ -325,7 +327,7 @@ namespace TownOfHost.Roles.Neutral
                 return;
             }
 
-            if (seer.IsAlive() is false && Team == TeamType.None)
+            if (seer.IsAlive() is false && Team == TeamType.None && IsMisidentify)
             {
                 roleText += $"{UtilsRoleText.GetRoleColorAndtext(CustomRoles.BakeCat)}";
             }

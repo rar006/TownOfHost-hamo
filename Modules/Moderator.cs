@@ -905,6 +905,29 @@ public static class Moderator
         return colorId >= 0;
     }
 
+    // 名簿の管理の画面用
+    public static List<string[]> ListEntries()
+        => Entries.Select(e => new[] { e.FriendCode, e.Puid, e.Name }).ToList();
+
+    public static bool AddEntry(string friendCode, string puid, string name)
+    {
+        var added = UpsertModerator(friendCode, puid, name);
+        Save();
+        try { RefreshModeratorDisplayNames(force: true); } catch { }
+        return added;
+    }
+
+    public static bool RemoveEntry(string friendCode, string puid)
+    {
+        var removed = 0;
+        RemoveModeratorByIdentity(friendCode, puid, ref removed);
+        if (removed == 0) return false;
+        RebuildLookup();
+        Save();
+        try { RefreshModeratorDisplayNames(force: true); } catch { }
+        return true;
+    }
+
     private static bool UpsertModerator(string friendCode, string puid, string name)
     {
         friendCode = NormalizeFriendCode(friendCode);

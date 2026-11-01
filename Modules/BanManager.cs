@@ -83,6 +83,74 @@ namespace TownOfHost
                 Logger.seeingame($"{player?.PlayerName.RemoveHtmlTags()}はBANListに記載済み...");
             }
         }
+        // 名簿の管理の画面用。1行は「フレンドコード,PUID,名前」
+        public enum ListKind { Ban, White }
+        private static string PathOf(ListKind kind) => kind == ListKind.Ban ? BAN_LIST_PATH : WhiteList_LIST_PATH;
+
+        public static List<string[]> ReadEntries(ListKind kind)
+        {
+            var list = new List<string[]>();
+            try
+            {
+                if (!File.Exists(PathOf(kind))) return list;
+                foreach (var line in File.ReadAllLines(PathOf(kind)))
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    var parts = line.Split(',', 3);
+                    list.Add(new[] { parts[0].Trim(), parts.Length > 1 ? parts[1].Trim() : "", parts.Length > 2 ? parts[2].Trim() : "" });
+                }
+            }
+            catch (Exception ex) { Logger.Exception(ex, "ReadEntries"); }
+            return list;
+        }
+
+        static bool SameEntry(string[] e, string friendCode, string puid)
+            => (!string.IsNullOrEmpty(friendCode) && string.Equals(e[0], friendCode, StringComparison.OrdinalIgnoreCase))
+                || (!string.IsNullOrEmpty(puid) && string.Equals(e[1], puid, StringComparison.OrdinalIgnoreCase));
+
+        public static bool HasEntry(ListKind kind, string friendCode, string puid)
+            => ReadEntries(kind).Exists(e => SameEntry(e, friendCode, puid));
+
+        public static bool AddEntry(ListKind kind, string friendCode, string puid, string name)
+        {
+            friendCode = (friendCode ?? "").Trim();
+            puid = (puid ?? "").Trim();
+            if (friendCode == "" && puid == "") return false;
+            if (HasEntry(kind, friendCode, puid)) return false;
+            try
+            {
+                Directory.CreateDirectory(Main.BaseDirectory);
+                File.AppendAllText(PathOf(kind), $"{friendCode},{puid},{(name ?? "").RemoveHtmlTags().Replace(",", " ").Trim()}\n");
+                if (kind == ListKind.White) LoadWhiteList();
+                return true;
+            }
+            catch (Exception ex) { Logger.Exception(ex, "AddEntry"); return false; }
+        }
+
+        public static bool RemoveEntry(ListKind kind, string friendCode, string puid)
+        {
+            try
+            {
+                var path = PathOf(kind);
+                if (!File.Exists(path)) return false;
+                var lines = File.ReadAllLines(path);
+                var kept = new List<string>();
+                var removed = false;
+                foreach (var line in lines)
+                {
+                    var parts = line.Split(',', 3);
+                    var e = new[] { parts[0].Trim(), parts.Length > 1 ? parts[1].Trim() : "" };
+                    if (!string.IsNullOrWhiteSpace(line) && SameEntry(e, friendCode, puid)) { removed = true; continue; }
+                    kept.Add(line);
+                }
+                if (!removed) return false;
+                File.WriteAllLines(path, kept);
+                if (kind == ListKind.White) LoadWhiteList();
+                return true;
+            }
+            catch (Exception ex) { Logger.Exception(ex, "RemoveEntry"); return false; }
+        }
+
         public static void CheckDenyNamePlayer(InnerNet.ClientData player)
         {
             if (!AmongUsClient.Instance.AmHost || !Options.ApplyDenyNameList.GetBool()) return;

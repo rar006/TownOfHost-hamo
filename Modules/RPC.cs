@@ -106,7 +106,12 @@ namespace TownOfHost
 
         SyncTestBot,
         SyncTitle = 200,
-
+        HiddenModHello = 201,
+        ClientEffect = 202,
+        // モデレーターが設定画面から部屋の設定を変える(ModeratorRemoteEdit)
+        ModeratorStatus = 203,
+        ModeratorSetOption = 204,
+        ModeratorSetVanilla = 205,
     }
 
 
@@ -171,7 +176,7 @@ namespace TownOfHost
 
                         string name = subReader.ReadString();
 
-                        if (subReader.BytesRemaining > 0 && (subReader?.ReadBoolean() ?? true)) return false;
+                        if (subReader.BytesRemaining > 0 && (subReader?.ReadBoolean() ?? true) && !Main.IsNonHostClient) return false;
 
                         Logger.Info("名前変更:" + __instance.GetNameWithRole().RemoveHtmlTags() + " => " + name, "SetName");
 
@@ -252,7 +257,9 @@ namespace TownOfHost
                 && Enum.IsDefined(typeof(CustomRPC), (int)callId)
 
                 // SyncTitle(二つ名の更新通知・交換)は各プレイヤーが送るので、ホスト以外からも受け付ける
-                && !(callId is (byte)CustomRPC.VersionCheck or (byte)CustomRPC.RequestRetryVersionCheck or (byte)CustomRPC.ModUnload or (byte)CustomRPC.ClientSendHideMessage or (byte)CustomRPC.RequestCommandProcessing or (byte)CustomRPC.SyncTitle))
+                && !(callId is (byte)CustomRPC.VersionCheck or (byte)CustomRPC.RequestRetryVersionCheck or (byte)CustomRPC.ModUnload or (byte)CustomRPC.ClientSendHideMessage or (byte)CustomRPC.RequestCommandProcessing or (byte)CustomRPC.SyncTitle or (byte)CustomRPC.HiddenModHello
+                    // 送った人は ModeratorRemoteEdit の中で確かめる(ホストかどうか・モデレーターかどうか)
+                    or (byte)CustomRPC.ModeratorStatus or (byte)CustomRPC.ModeratorSetOption or (byte)CustomRPC.ModeratorSetVanilla))
 
             {
 
@@ -345,7 +352,7 @@ namespace TownOfHost
                         string forkId = 3 <= version.Major ? reader.ReadString() : Main.OriginalForkId;
 
                         Main.playerVersion[__instance.PlayerId] = new PlayerVersion(version, tag, forkId);
-
+                        if (TownOfHost.Modules.NonHostRpcGuard.KickIfNotAllowed(__instance)) break;
                         if (GameStartManagerPatch.GameStartManagerUpdatePatch.MatchVersions(__instance.PlayerId))
 
                         {
@@ -388,15 +395,26 @@ namespace TownOfHost
 
                     break;
 
+                case CustomRPC.ClientEffect:
+                    TownOfHost.Modules.ClientEffects.Receive(reader);
+                    break;
+                case CustomRPC.HiddenModHello:
+                    if (!AmongUsClient.Instance.AmHost) break;
+                    if (TownOfHost.Modules.NonHostRpcGuard.KickIfNotAllowed(__instance)) break;
+                    TownOfHost.Modules.NonHostRpcGuard.MarkHidden(__instance);
+                    OptionItem.SyncAllOptions();
+                    break;
                 case CustomRPC.SyncCustomSettings:
-
                     int optionId = reader.ReadPackedInt32();
 
                     if (optionId >= 0 && OptionItem.FastOptions.TryGetValue(optionId, out var optionSync))
 
                     {
 
-                        optionSync.SetValue(reader.ReadPackedInt32());
+                        // ホストから届いた値なので、モデレーターの画面からでもホストへ送り返さない
+                        TownOfHost.Modules.ModeratorRemoteEdit.ApplyingFromHost = true;
+                        try { optionSync.SetValue(reader.ReadPackedInt32()); }
+                        finally { TownOfHost.Modules.ModeratorRemoteEdit.ApplyingFromHost = false; }
 
                         break;
 
@@ -642,6 +660,17 @@ namespace TownOfHost
                     TitleSystem.ReceiveRpc(__instance, reader);
                     break;
 
+                case CustomRPC.ModeratorStatus:
+                    TownOfHost.Modules.ModeratorRemoteEdit.ReceiveStatus(__instance, reader);
+                    break;
+
+                case CustomRPC.ModeratorSetOption:
+                    TownOfHost.Modules.ModeratorRemoteEdit.ReceiveOption(__instance, reader);
+                    break;
+
+                case CustomRPC.ModeratorSetVanilla:
+                    TownOfHost.Modules.ModeratorRemoteEdit.ReceiveVanilla(__instance, reader);
+                    break;
                 case CustomRPC.SyncTestBot:
 
                     TestBotManager.ReceiveSync(reader);
@@ -723,15 +752,9 @@ namespace TownOfHost
     {
 
         public static void SyncCustomSettingsRPC()
-
         {
-
             if (!AmongUsClient.Instance.AmHost) return;
-
-            if (!PlayerCatch.AnyModClient()) return;
-
-
-
+            if (!PlayerCatch.AnyModClient() && !TownOfHost.Modules.NonHostRpcGuard.AnyHiddenModClient) return;
             int count = 0;
 
             MessageWriter writer = null;
@@ -782,12 +805,8 @@ namespace TownOfHost
 
         {
 
-            if (!AmongUsClient.Instance.AmHost || !PlayerCatch.AnyModClient()) return;
-
+            if (!AmongUsClient.Instance.AmHost || (!PlayerCatch.AnyModClient() && !TownOfHost.Modules.NonHostRpcGuard.AnyHiddenModClient)) return;
             if (item is AssignOptionItem) return;
-
-
-
             MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.SyncCustomSettings, SendOption.Reliable, -1);
 
             writer.WritePacked(item.Id);
@@ -840,6 +859,15 @@ namespace TownOfHost
 
             Main.playerVersion[PlayerControl.LocalPlayer.PlayerId] = new PlayerVersion(Main.PluginVersion, $"{ThisAssembly.Git.Commit}({ThisAssembly.Git.Branch})", Main.ForkId);
 
+            if (!AmongUsClient.Instance.AmHost)
+
+            {
+
+                var hello = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.HiddenModHello, SendOption.Reliable, AmongUsClient.Instance.HostId);
+
+                AmongUsClient.Instance.FinishRpcImmediately(hello);
+
+            }
         }
 
 

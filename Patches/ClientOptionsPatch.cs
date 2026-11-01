@@ -63,6 +63,11 @@ namespace TownOfHost
         private static ClientActionItem PreloadMapAssets;
 
         private static ClientActionItem ShowPresetInWebhook;
+        private static ClientActionItem WebhookUrlInput;
+        private static ClientActionItem WebhookWinTag;
+        private static ClientActionItem WebhookTagInput;
+        private static ClientActionItem RecorderSettings;
+        private static ClientActionItem IntroShotSettings;
 
                 private static ClientActionItem AutoRehost;
 
@@ -72,7 +77,8 @@ namespace TownOfHost
 
         private static ClientActionItem ShowRoomTimer;
         private static ClientActionItem CustomStartLoading;
-
+        private static ClientActionItem LoadingMiniGame;
+        private static ToggleButtonBehaviour listManagerButton;
         private static ClientActionItem ShowPlayerCount;
 
         private static ClientActionItem ShowRoomCode;
@@ -181,10 +187,23 @@ namespace TownOfHost
             {
 
 
-                    ShowPresetInWebhook = ClientOptionItem.Create("ShowPresetInWebhook", Main.ShowPresetInWebhook, __instance, showTooltip: true, page: 0);
+                    ShowPresetInWebhook = ClientOptionItem.Create("ShowPresetInWebhook", Main.ShowPresetInWebhook, __instance, showTooltip: true, page: 1);
 
             }
 
+            // Webhook の URL と、勝った陣営のタグを、ゲームの中で設定する
+            if (WebhookUrlInput == null || WebhookUrlInput.ToggleButton == null)
+                WebhookUrlInput = ClientActionItem.Create("WebhookUrlInput", () => Modules.WebhookSettingDialog.Open(Modules.WebhookSettingDialog.Mode.Url), __instance, page: 1);
+            if (WebhookWinTag == null || WebhookWinTag.ToggleButton == null)
+                WebhookWinTag = ClientOptionItem.Create("WebhookWinTag", Main.WebhookWinTag, __instance, page: 1);
+            if (WebhookTagInput == null || WebhookTagInput.ToggleButton == null)
+                WebhookTagInput = ClientActionItem.Create("WebhookTagInput", () => Modules.WebhookSettingDialog.Open(Modules.WebhookSettingDialog.Mode.Tags), __instance, page: 1);
+            // 録画(ホストでなくても使える)
+            if (RecorderSettings == null || RecorderSettings.ToggleButton == null)
+                RecorderSettings = ClientActionItem.Create("RecorderSettings", RecorderScreen.Show, __instance, page: 1);
+            // イントロ撮影(デバッグ版だけ)
+            if (DebugModeManager.AmDebugger && (IntroShotSettings == null || IntroShotSettings.ToggleButton == null))
+                IntroShotSettings = ClientActionItem.Create("IntroShotSettings", IntroShotScreen.Show, __instance, page: 1);
             // 読み上げ機能/ボタンの見た目を変更する
 
             if (Yomiage == null || Yomiage.ToggleButton == null)
@@ -299,6 +318,10 @@ namespace TownOfHost
             {
                 CustomStartLoading = ClientOptionItem.Create("CustomStartLoading", Main.CustomStartLoading, __instance, page: 1);
             }
+            if (LoadingMiniGame == null || LoadingMiniGame.ToggleButton == null)
+            {
+                LoadingMiniGame = ClientOptionItem.Create("LoadingMiniGame", Main.LoadingMiniGame, __instance, page: 1);
+            }
             // ロビーでは表示しない
             if (ExpandRoleHeaders?.ToggleButton != null) ExpandRoleHeaders.ToggleButton.gameObject.SetActive(!GameStates.IsLobby);
             // YouTubeのコメント枠の設定は、メインメニューの「Stream」と、ゲーム設定のOTHER2に移した
@@ -394,15 +417,29 @@ namespace TownOfHost
 
             }
 
+            // BANリスト・ホワイトリスト・モデレーターを画面で追加・解除する(サウンド設定の右)
+            if (listManagerButton.IsDestroyedOrNull())
+            {
+                listManagerButton = Object.Instantiate(__instance.DisableMouseMovement, __instance.transform.FindChild("GeneralTab/MiscGroup"));
+                listManagerButton.transform.localPosition = new(0.85f, 1.27f, __instance.DisableMouseMovement.transform.localPosition.z);
+                listManagerButton.transform.localScale = new(0.55f, 0.7f);
+                listManagerButton.name = "ListManagerButton";
+                listManagerButton.Text.text = Translator.GetString("ListManager");
+                listManagerButton.Background.color = Palette.DisabledGrey;
+                var listPassiveButton = listManagerButton.GetComponent<PassiveButton>();
+                listPassiveButton.OnClick = new();
+                listPassiveButton.OnClick.AddListener((System.Action)ListManagerScreen.Show);
+            }
             if (soundSettingsButton.IsDestroyedOrNull())
 
             {
 
                 soundSettingsButton = Object.Instantiate(__instance.DisableMouseMovement, __instance.transform.FindChild("GeneralTab/MiscGroup"));
 
-                soundSettingsButton.transform.localPosition = new(0, 1.27f, __instance.DisableMouseMovement.transform.localPosition.z);//左側:-1.3127f,1.5588f
+                // 右に「BAN・ホワイト・モデレーターの管理」を並べるので、少し左に寄せて小さくする
+                soundSettingsButton.transform.localPosition = new(-0.85f, 1.27f, __instance.DisableMouseMovement.transform.localPosition.z);//左側:-1.3127f,1.5588f
 
-                soundSettingsButton.transform.localScale = new(0.7f, 0.7f);
+                soundSettingsButton.transform.localScale = new(0.55f, 0.7f);
 
                 soundSettingsButton.name = "SoundStgButton";
 
@@ -470,7 +507,15 @@ namespace TownOfHost
             ForceJapanese = JapaneseRoleName = UnloadMod = DumpLog = OpenLogFolder = ForceEnd = ViewPingDetails = null;
             UseWebHook = Yomiage = CustomName = CustomSprite = HideSomeFriendCodes = null;
             FpsLimitRemoval = AutoSaveScreenShot = PreloadMapAssets = ShowPresetInWebhook = null;
+            WebhookUrlInput = WebhookWinTag = WebhookTagInput = RecorderSettings = IntroShotSettings = null;
+            RecorderScreen.ForgetPopup();
+            IntroShotScreen.ForgetPopup();
             CustomStartLoading = null;
+            LoadingMiniGame = null;
+            ListManagerScreen.ForgetPopup();
+            if (listManagerButton != null && listManagerButton.gameObject != null)
+                Object.Destroy(listManagerButton.gameObject);
+            listManagerButton = null;
             AutoRehost = EnableDiscordRichPresence = ShowRoomTimer = ShowPlayerCount = ShowRoomCode = ExpandRoleHeaders = null;
             ModUnloaderScreen.ForgetPopup();
             SoundSettingsScreen.ForgetPopup();
@@ -553,7 +598,7 @@ namespace TownOfHost
             ModUnloaderScreen.Hide();
 
             SoundSettingsScreen.Hide();
-
+            ListManagerScreen.Hide();
             StreamerHopeMenu.Hide();
 
             TownOfHost.Modules.MatchmakingWordManager.HideEditor();

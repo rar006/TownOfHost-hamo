@@ -2115,7 +2115,7 @@ namespace TownOfHost
 
                             var opt = op;
 
-                            while (opt.Parent != null && (!opt.GetBool() || roleopts.Contains(opt)))
+                            while (opt.Parent != null && (!opt.GetBool() || roleopts.Contains(opt) || IsRoleDetailOption(opt)))
 
                             {
 
@@ -2473,18 +2473,19 @@ namespace TownOfHost
 
         }
 
-        private const int CreatePerFrame = 30;
-        public static void CreateOptions(TabGroup tab, Dictionary<TabGroup, GameObject> menus, Dictionary<CustomRoles, GameObject> crmenus, Transform tabtransfrom, bool forceAllTabs = false)
-        {
-            var sw = System.Diagnostics.Stopwatch.StartNew();
-            CreateOptionsCore(tab, menus, crmenus, tabtransfrom, forceAllTabs);
-            if (sw.ElapsedMilliseconds >= 25) Logger.Info($"{tab} の設定を作る: {sw.ElapsedMilliseconds}ms", "SettingsPerf");
-        }
-        private static void CreateOptionsCore(TabGroup tab, Dictionary<TabGroup, GameObject> menus, Dictionary<CustomRoles, GameObject> crmenus, Transform tabtransfrom, bool forceAllTabs)
+        // 役職ごとの詳しい設定(役職の画面を開いた時だけ見えるもの)か。「Maximum」は一覧にも出るので含めない
+        public static bool IsRoleDetailOption(OptionItem option)
+            => option.ParentRole is not CustomRoles.NotAssigned && option.CustomRole is CustomRoles.NotAssigned && option.Name is not "Maximum";
+
+        // タブを開いた時は一覧に出る行だけを作り、役職ごとの詳しい設定はその役職の画面を初めて開いた時に作る
+        // (見た目は同じ。全部の役職の設定を一度に作っていたので、タブを開くのが重かった)
+        public static void CreateOptions(TabGroup tab, Dictionary<TabGroup, GameObject> menus, Dictionary<CustomRoles, GameObject> crmenus, Transform tabtransfrom, bool forceAllTabs = false, CustomRoles onlyRole = CustomRoles.NotAssigned)
 
         {
 
-            if (!forceAllTabs && tabGenerated.Contains(tab)) return;
+            var forRole = onlyRole is not CustomRoles.NotAssigned;
+
+            if (!forRole && !forceAllTabs && tabGenerated.Contains(tab)) return;
 
             var template = GetTeamplate();
 
@@ -2598,19 +2599,26 @@ namespace TownOfHost
 
 
 
-            var createdNow = 0;
-            var unfinished = false;
             foreach (var option in OptionItem.AllOptions)
 
             {
 
-                if (!forceAllTabs && option.Tab != tab) continue;
+                if (forRole)
+                {
+                    if (option.ParentRole != onlyRole || !IsRoleDetailOption(option)) continue;
+                    // 見出しは OptionBehaviour を持たないので、作ってあるかは見出しの有無で見る
+                    if ((option as ObjectOptionitem)?.IsHedderObject is true && option.OptionHedder != null) continue;
+                }
+                else
+                {
+                    if (!forceAllTabs && option.Tab != tab) continue;
+                    if (!forceAllTabs && IsRoleDetailOption(option)) continue;
+                }
 
                 if (option.OptionBehaviour == null)
 
                 {
 
-                    if (!forceAllTabs && ++createdNow > CreatePerFrame) { unfinished = true; break; }
                     var parentrole = option.ParentRole;
 
                     //タブの場合
@@ -2630,11 +2638,6 @@ namespace TownOfHost
                         var chm = tabtitle.transform.FindChild("CategoryHeaderMasked").GetComponent<CategoryHeaderMasked>();
 
                         CategoryHeaderEditRole[] tabsubtitle = chm.transform.parent.GetComponentsInChildren<CategoryHeaderEditRole>();
-                        foreach (var sub in tabsubtitle)
-                        {
-                            if (sub == null || sub.transform == tabtitle.transform || chm.transform.IsChildOf(sub.transform)) continue;
-                            Object.Destroy(sub.gameObject);
-                        }
 
                         chm.Title.DestroyTranslator();
 
@@ -3146,6 +3149,8 @@ namespace TownOfHost
 
                                 crmenus[option.CustomRole].SetActive(true);
 
+                                CreateOptions(option.Tab, menus, crmenus, tabtransfrom, onlyRole: option.CustomRole);
+
                                 var tabtitle = ModSettingsTab.transform.FindChild("Scroller/SliderInner/ChancesTab/CategoryHeaderMasked").GetComponent<CategoryHeaderMasked>();
 
                                 CategoryHeaderEditRole[] tabsubtitle = tabtitle.transform.parent.GetComponentsInChildren<CategoryHeaderEditRole>();
@@ -3450,20 +3455,7 @@ namespace TownOfHost
 
 
 
-            if (unfinished)
-            {
-                // 続きは次のフレームで(設定画面を閉じていたら止める)
-                var generation = tabGenerated;
-                _ = new LateTask(() =>
-                {
-                    // 閉じて開き直した時は、前の画面の続きは作らない
-                    if (ModSettingsTab == null || tabGenerated == null || tabGenerated != generation || tabGenerated.Contains(tab)) return;
-                    CreateOptions(tab, menus, crmenus, tabtransfrom);
-                }, 0.001f, "CreateOptions.Continue", true);
-                return;
-            }
-            tabGenerated.Add(tab);
-            GameOptionsMenuUpdatePatch.ForceRelayout();
+            if (!forRole) tabGenerated.Add(tab);
             }
             finally
             {

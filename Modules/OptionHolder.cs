@@ -314,6 +314,7 @@ namespace TownOfHost
 
         public static OptionItem SkMadCanUseVent;
 
+        public static OptionItem ImpostorCanSeeSKMadmate;
         public static OptionItem MadMateOption;
 
         public static OptionItem MadmateCanSeeKillFlash;
@@ -1225,7 +1226,20 @@ namespace TownOfHost
         public static OptionItem ConvenientOptions;
 
         public static OptionItem AutoGrantPet;
-
+        public static OptionItem ErasedBodyRemovePet;
+        public static OptionItem ErasedBodyCover;
+        public static OptionItem ClientEffects;
+        public static OptionItem ClientEffectsNova;
+        public static OptionItem ClientEffectsSlugger;
+        public static OptionItem ClientEffectsSound;
+        public static OptionItem ClientEffectsVolume;
+        public static OptionItem ClientEffectsMeeting;
+        public static OptionItem ClientEffectsDeath;
+        public static OptionItem ClientEffectsShake;
+        public static OptionItem ClientEffectsSkipDummy;
+        public static OptionItem ClientEffectsTeleport;
+        public static OptionItem ClientEffectsGuessUi;
+        public static OptionItem ClientEffectsGuessUiDelay;
         public static OptionItem FirstTurnMeeting;
 
         public static bool firstturnmeeting;
@@ -1334,6 +1348,7 @@ namespace TownOfHost
         public static OptionItem KiclHotNotFriend;
 
         public static OptionItem KickInitialName;
+        public static OptionItem KickModClient;
 
         public static OptionItem BANKickjoinplayer;
 
@@ -1876,6 +1891,9 @@ namespace TownOfHost
 
                 .SetParent(CanMakeMadmateCount);
 
+            ImpostorCanSeeSKMadmate = BooleanOptionItem.Create(102020, "ImpostorCanSeeSKMadmate", false, TabGroup.MadmateRoles, false)
+                .SetParent(CanMakeMadmateCount)
+                .SetColor(Palette.ImpostorRed);
             MadMateOption = BooleanOptionItem.Create(102002, "MadmateOption", false, TabGroup.MadmateRoles, false)
 
                 .SetHeader(true)
@@ -2675,9 +2693,28 @@ namespace TownOfHost
                 .SetColorcode("#f0d36a")
 
                 .SetParent(ConvenientOptions);
+            ErasedBodyRemovePet = BooleanOptionItem.Create(111009, "ErasedBodyRemovePet", true, TabGroup.Game, false)
+                .SetColorcode("#f0d36a")
+                .SetParent(ConvenientOptions);
+            ErasedBodyCover = BooleanOptionItem.Create(111010, "ErasedBodyCover", true, TabGroup.Game, false)
+                .SetColorcode("#f0d36a")
+                .SetParent(ConvenientOptions);
 
-
-
+            ClientEffects = BooleanOptionItem.Create(111200, "ClientEffects", true, TabGroup.Game, false)
+                .SetColorcode("#7fefff")
+                .SetHeader(true);
+            ClientEffectsNova = BooleanOptionItem.Create(111201, "ClientEffectsNova", true, TabGroup.Game, false).SetParent(ClientEffects);
+            ClientEffectsSlugger = BooleanOptionItem.Create(111202, "ClientEffectsSlugger", true, TabGroup.Game, false).SetParent(ClientEffects);
+            ClientEffectsSound = BooleanOptionItem.Create(111203, "ClientEffectsSound", true, TabGroup.Game, false).SetParent(ClientEffects);
+            ClientEffectsVolume = IntegerOptionItem.Create(111204, "ClientEffectsVolume", new(10, 100, 10), 80, TabGroup.Game, false)
+                .SetValueFormat(OptionFormat.Percent).SetParent(ClientEffectsSound);
+            ClientEffectsMeeting = BooleanOptionItem.Create(111206, "ClientEffectsMeeting", true, TabGroup.Game, false).SetParent(ClientEffects);
+            ClientEffectsDeath = BooleanOptionItem.Create(111207, "ClientEffectsDeath", true, TabGroup.Game, false).SetParent(ClientEffects);
+            ClientEffectsShake = BooleanOptionItem.Create(111208, "ClientEffectsShake", true, TabGroup.Game, false).SetParent(ClientEffects);
+            ClientEffectsSkipDummy = BooleanOptionItem.Create(111209, "ClientEffectsSkipDummy", true, TabGroup.Game, false).SetParent(ClientEffects);
+            ClientEffectsTeleport = BooleanOptionItem.Create(111210, "ClientEffectsTeleport", true, TabGroup.Game, false).SetParent(ClientEffects);
+            ClientEffectsGuessUi = BooleanOptionItem.Create(111211, "ClientEffectsGuessUi", true, TabGroup.Game, false).SetParent(ClientEffects);
+            ClientEffectsGuessUiDelay = FloatOptionItem.Create(111212, "ClientEffectsGuessUiDelay", new(0f, 10f, 0.5f), 3f, TabGroup.Game, false).SetParent(ClientEffectsGuessUi).SetValueFormat(OptionFormat.Seconds);
             OptionBatchSetting = BooleanOptionItem.Create(113000, "OptionBatchSetting", false, TabGroup.Game, false)
 
                 .SetHeader(true)
@@ -3814,6 +3851,9 @@ namespace TownOfHost
 
                 .SetInfo(Translator.GetString("KickBanOptionWhiteList"));
 
+            KickModClient = BooleanOptionItem.Create(1_000_128, "KickModClient", false, TabGroup.Other2, true)
+                .SetColor(Color.red)
+                .SetInfo(Translator.GetString("KickBanOptionWhiteList"));
             BANKickjoinplayer = BooleanOptionItem.Create(1_000_126, "BanKickjoinplayer", false, TabGroup.Other2, true)
 
                 .SetColor(Color.red)
@@ -3825,6 +3865,9 @@ namespace TownOfHost
             VanillaOptionHolder.Initialize();
 
             DebugModeManager.SetupCustomOption();
+
+            // 「この役職に付ける属性」は、役職の画面のいちばん下に出るよう、全部の役職の設定の後に作る
+            RoleGrantAddons.CreateAll();
 
             OptionSaver.Load();
 
@@ -4084,6 +4127,9 @@ namespace TownOfHost
                 .RegisterUpdateValueEvent((object obj, OptionItem.UpdateValueEventArgs args) => spawnOption.Refresh());
 
 
+
+            if (!forceHidden && customGameMode == CustomGameMode.Standard)
+                RoleGrantAddons.Reserve(id, tab, role, spawnOption, tag);
 
             if (combination != CombinationRoles.None) Combinations.Add(combination);
 

@@ -165,9 +165,10 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
     // ===== 通報: 能力モードならキョンシーにする =====
     public override bool CancelReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target, ref DontReportreson reason)
     {
-        if (reporter == null || reporter.PlayerId != Player.PlayerId || target == null) return false;
-        // キョンシーにした人の死体は通報できない
+        if (reporter == null || target == null) return false;
+        // キョンシーにした人の死体は、ダオシー以外も含めて誰も通報できない
         if (Jiangshi.Contains(target.PlayerId)) { reason = DontReportreson.Other; return true; }
+        if (reporter.PlayerId != Player.PlayerId) return false;
         if (!abilityMode) return false;
         // 素早く2回押すと通常通報
         if (lastReportTarget == target.PlayerId && Time.time - lastReportAttempt < 0.6f) return false;
@@ -187,6 +188,8 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
             // 2回目の通報が来ていなければキョンシーにする
             if (pc == null || GameStates.CalledMeeting || Jiangshi.Contains(pc.PlayerId) || Time.time - lastReportAttempt < 0.55f) return;
             Jiangshi.Add(pc.PlayerId);
+            // 死体が残っていると、ほかの人に通報されてしまうので消す
+            Modules.DeadBodyEraser.Erase(pc.PlayerId);
             UserRoles2026.MakeGhost(pc, CustomRoles.Jiangshi);
             Utils.SendMessage(GetString("JiangshiBorn"), pc.PlayerId);
             SendRPC();

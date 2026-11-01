@@ -47,13 +47,14 @@ public sealed class Guardian : RoleBase, ISelfVoter
     static OptionItem OptionMaxSimultaneousGuards;
     static OptionItem OptionMaxLifetimeGuards;
     static OptionItem OptionRequiredTaskCount;
-
+    static OptionItem OptionGuessShield;
     enum OptionName
     {
         GuardianGuardDurationMeetings,
         GuardianMaxSimultaneousGuards,
         GuardianMaxLifetimeGuards,
         GuardianRequiredTaskCount,
+        GuardianGuessShield,
     }
 
     static void SetupOptionItem()
@@ -70,6 +71,17 @@ public sealed class Guardian : RoleBase, ISelfVoter
         OptionRequiredTaskCount = IntegerOptionItem.Create(RoleInfo, 13, OptionName.GuardianRequiredTaskCount,
             new(0, 8, 1), 3, false)
             .SetValueFormat(OptionFormat.Pieces);
+        OptionGuessShield = StringOptionItem.Create(RoleInfo, 14, OptionName.GuardianGuessShield, GuessShield.Selections, 0, false);
+    }
+
+    // 守っている人がゲッサーに当てられた時の守り方(生きている守護者のどれかが守っていれば効く)
+    public static GuessShield.Mode GuessShieldFor(PlayerControl target)
+    {
+        if (target == null || OptionGuessShield == null) return GuessShield.Mode.None;
+        foreach (var role in CustomRoleManager.AllActiveRoles.Values)
+            if (role is Guardian g && g.Player.IsAlive() && g.guardedTargets.ContainsKey(target.PlayerId))
+                return (GuessShield.Mode)OptionGuessShield.GetValue();
+        return GuessShield.Mode.None;
     }
 
     // 現在守護モード中かどうか

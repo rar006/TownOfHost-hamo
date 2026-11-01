@@ -20,6 +20,7 @@ using TownOfHost.Roles.Vanilla;
 
 
 
+using System;
 namespace TownOfHost.Roles.Neutral;
 
 
@@ -272,38 +273,10 @@ public sealed class Vulture : RoleBase, IKillFlashSeeable, IAdditionalWinner
 
             {
 
-                var dummyshapetarget = PlayerCatch.AllPlayerControls.Where(pc => pc.PlayerId != Player.PlayerId).FirstOrDefault(PlayerControl.LocalPlayer);
-
+                var dummyshapetarget = PlayerCatch.AllPlayerControls.Where(pc => pc.PlayerId != Player.PlayerId).OrderBy(x => Guid.NewGuid()).FirstOrDefault(PlayerControl.LocalPlayer);
                 Player.RpcShapeshift(dummyshapetarget, true);
 
-                Player.RpcShapeshift(Player, true);
-
-                var sender = CustomRpcSender.Create("VultureEatShape");
-
-                sender.AutoStartRpc(Player.NetId, RpcCalls.Shapeshift)
-
-                    .Write(dummyshapetarget)
-
-                    .Write(true)
-
-                    .EndRpc();
-
-                sender.AutoStartRpc(Player.NetId, RpcCalls.Shapeshift)
-
-                    .Write(Player)
-
-                    .Write(true)
-
-                    .EndRpc();
-
-                sender.EndMessage();
-
-                sender.SendMessage();
-
-
-
-                _ = new LateTask(() => Player.RpcShapeshift(Player, false), Main.LagTime, "", true);
-
+                _ = new LateTask(() => Player.RpcShapeshift(Player, false), 1.5f + Main.LagTime, "", true);
             }
 
             if (turneat > 2)
@@ -536,6 +509,8 @@ public sealed class Vulture : RoleBase, IKillFlashSeeable, IAdditionalWinner
 
         if (!AmongUsClient.Instance.AmHost) return;
 
+        Modules.DeadBodyEraser.Erase(targetId);
+
         using var sender = CreateSender();
 
         sender.Writer.WritePacked((int)RPC_Types.EatPlayer);
@@ -595,6 +570,8 @@ public sealed class Vulture : RoleBase, IKillFlashSeeable, IAdditionalWinner
                 var targetId = reader.ReadByte();
 
                 staticEatedPlayers.Add(targetId);
+
+                Modules.DeadBodyEraser.HideLocal(targetId);
 
                 DiePlayerPos.Where(poss => poss.Key == targetId).Do(poss => GetArrow.Remove(Player.PlayerId, poss.Value));
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -55,8 +55,23 @@ namespace TownOfHost
             {
                 var webhookUrl = ClientOptionsManager.WebhookUrl;
                 var threadName = $"{DateTime.Now:yyyy年 MM月dd日 HH:mm} {Main.GameCount}試合目";
+                // 勝った陣営: スレッドの名前の頭に付け、タグの ID があればフォーラムのタグも付ける
+                string tagId = null;
+                if (Main.WebhookWinTag.Value)
+                {
+                    var (label, id) = CustomWinnerHolder.WinnerTeam switch
+                    {
+                        CustomWinner.Crewmate => ("クルー勝利", ClientOptionsManager.TagCrewmate),
+                        CustomWinner.Impostor => ("インポスター勝利", ClientOptionsManager.TagImpostor),
+                        CustomWinner.Draw or CustomWinner.None or CustomWinner.Default => ("引き分け", ""),
+                        _ => ("ニュートラル勝利", ClientOptionsManager.TagNeutral),
+                    };
+                    threadName = $"【{label}】{threadName}";
+                    if (!string.IsNullOrWhiteSpace(id)) tagId = id.Trim();
+                }
                 var killLog = UtilsGameLog.BuildKillLogText().RemoveHtmlTags();
-                var preset = ClientOptionsManager.PresetData
+                // ゲーム内の「Webhook試合結果にプリセットファイルを添付する」がOFFなら送らない(今まではこのボタンが使われておらず、押しても変わらなかった)
+                var preset = Main.ShowPresetInWebhook.Value && ClientOptionsManager.PresetData
                     ? Encoding.UTF8.GetBytes(OptionSerializer.GenerateOptionsString())
                     : null;
                 var currentLog = ClientOptionsManager.LogData
@@ -67,6 +82,7 @@ namespace TownOfHost
                 _ = Task.Run(() => SendGameResultToForum(
                     webhookUrl,
                     threadName,
+                    tagId,
                     pngImage,
                     killLog,
                     preset,
@@ -82,6 +98,7 @@ namespace TownOfHost
         private static void SendGameResultToForum(
             string webhookUrl,
             string threadName,
+            string tagId,
             byte[] pngImage,
             string killLog,
             byte[] preset,
@@ -91,8 +108,17 @@ namespace TownOfHost
             try
             {
                 var createUrl = AddQuery(webhookUrl, "wait=true");
-                var createPayload = $"{{\"thread_name\":\"{EscapeJson(threadName)}\",\"allowed_mentions\":{{\"parse\":[]}}}}";
-                var responseBody = Post(createUrl, createPayload, pngImage, "image.png");
+                var tags = tagId == null ? "" : $",\"applied_tags\":[\"{EscapeJson(tagId)}\"]";
+                var createPayload = $"{{\"thread_name\":\"{EscapeJson(threadName)}\"{tags},\"allowed_mentions\":{{\"parse\":[]}}}}";
+                string responseBody;
+                try { responseBody = Post(createUrl, createPayload, pngImage, "image.png"); }
+                catch (HttpRequestException) when (tagId != null)
+                {
+                    // タグの ID がまちがっていると作れないので、タグ無しで作り直す
+                    Logger.Warn("Webhook: タグを付けられなかったので、タグ無しで送ります", "SendResult");
+                    createPayload = $"{{\"thread_name\":\"{EscapeJson(threadName)}\",\"allowed_mentions\":{{\"parse\":[]}}}}";
+                    responseBody = Post(createUrl, createPayload, pngImage, "image.png");
+                }
                 var match = Regex.Match(responseBody, "\\\"channel_id\\\"\\s*:\\s*\\\"(?<id>\\d+)\\\"");
                 if (!match.Success)
                     throw new InvalidOperationException("Discord response did not contain the created forum thread ID.");

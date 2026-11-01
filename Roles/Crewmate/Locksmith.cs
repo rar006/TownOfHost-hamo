@@ -89,39 +89,15 @@ public sealed class Locksmith : RoleBase
 
         if (AmongUsClient.Instance.AmHost && !GameStates.CalledMeeting)
         {
-            isBooting = true;
             foreach (var p in PlayerControl.AllPlayerControls)
             {
-                if (p == null || p.PlayerId == Player.PlayerId ||
-                    p.Data.IsDead) continue;
-
-                if (p.inVent && p.MyPhysics != null)
-                {
-                    p.MyPhysics.RpcBootFromVent(ventId);
-                    p.inVent = false;
-
-                    var allVents = ShipStatus.Instance?.AllVents;
-                    if (allVents != null)
-                    {
-                        var ventObj = allVents.FirstOrDefault(
-                            v => v.Id == ventId);
-                        if (ventObj != null && p.NetTransform != null)
-                        {
-                            Vector2 escapePos =
-                                (Vector2)ventObj.transform.position +
-                                new Vector2(0f, -0.1f);
-                            p.NetTransform.SnapTo(escapePos);
-                        }
-                    }
-                    if (!banishedPlayers.ContainsKey(p.PlayerId))
-                    {
-                        banishedPlayers.Add(p.PlayerId, 1.5f);
-                    }
-                }
+                if (p == null || p.PlayerId == Player.PlayerId || p.Data.IsDead || p.MyPhysics == null) continue;
+                var atThisVent = Patches.ISystemType.VentilationSystemUpdateSystemPatch.NowVentId.TryGetValue(p.PlayerId, out var nowVent) && nowVent == ventId;
+                if (!atThisVent || (!p.inVent && !CoEnterVentPatch.VentPlayers.ContainsKey(p.PlayerId))) continue;
+                banishedPlayers[p.PlayerId] = 1.5f;
+                BootSafely(p, ventId);
             }
-            isBooting = false;
         }
-
         sealedVents.Add(ventId);
         if (!SealedVentsStatic.Contains(ventId))
         {
@@ -170,6 +146,20 @@ public sealed class Locksmith : RoleBase
         return true;
     }
 
+    public static bool IsSealedFor(PlayerControl user, int ventId)
+        => SealedVentsStatic.Contains(ventId) && user != null && !user.Is(CustomRoles.Locksmith);
+
+    static void BootSafely(PlayerControl p, int ventId)
+    {
+        p.MyPhysics.RpcBootFromVent(ventId);
+        _ = new LateTask(() =>
+        {
+            if (p == null || p.MyPhysics == null || p.Data == null || p.Data.IsDead || !GameStates.IsInTask) return;
+            if (!p.inVent) return;
+            Logger.Info($"{p.Data.GetLogPlayerName()} がまだベントの中にいるので、もう一度追い出します", "Locksmith");
+            p.MyPhysics.RpcBootFromVent(ventId);
+        }, 0.6f, "Locksmith.BootAgain", true);
+    }
     public override void OnVentilationSystemUpdate(
         PlayerControl user, VentilationSystem.Operation Operation,
         int ventId)
@@ -184,40 +174,15 @@ public sealed class Locksmith : RoleBase
             if (banishedPlayers.ContainsKey(user.PlayerId) &&
                 banishedPlayers[user.PlayerId] > 0f)
             {
-                // 追い出した直後にもう一度入った時も、必ず追い出す
-                // (以前は inVent を変えるだけで追い出しを送らず、本人の画面ではベントから出られなくなっていた)
-                user.MyPhysics?.RpcBootFromVent(ventId);
-                user.inVent = false;
+                if (user.MyPhysics != null) BootSafely(user, ventId);
                 return;
             }
 
             if (user.MyPhysics != null)
             {
                 isBooting = true;
-                user.MyPhysics.RpcBootFromVent(ventId);
-                user.inVent = false;
-
-                if (!banishedPlayers.ContainsKey(user.PlayerId))
-                {
-                    banishedPlayers.Add(user.PlayerId, 1.5f);
-                }
-                else
-                {
-                    banishedPlayers[user.PlayerId] = 1.5f;
-                }
-
-                var allVents = ShipStatus.Instance?.AllVents;
-                if (allVents != null)
-                {
-                    var vent = allVents.FirstOrDefault(v => v.Id == ventId);
-                    if (vent != null && user.NetTransform != null)
-                    {
-                        Vector2 targetPos =
-                            (Vector2)vent.transform.position +
-                            new Vector2(0f, -0.1f);
-                        user.NetTransform.SnapTo(targetPos);
-                    }
-                }
+                banishedPlayers[user.PlayerId] = 1.5f;
+                BootSafely(user, ventId);
                 isBooting = false;
             }
         }
@@ -355,6 +320,5 @@ public sealed class Locksmith : RoleBase
         var n1 = new Achievement(RoleInfo, 0, 0, 0, 0);
         achievements.Add(0, n1);
 
-        CustomRoleManager.OnEnterVentOthers.Add(OnEnterVentOthersHook);
     }
 }

@@ -59,6 +59,7 @@ public sealed class Trapper : RoleBase
         ReportDeadBodyPatch.CanReport[killer.PlayerId] = false;
         killer.MarkDirtySettings();
         IsTraping = true;
+        TownOfHost.Modules.ClientEffects.Bind(killer, BlockMoveTime);
         Achievements.RpcCompleteAchievement(Player.PlayerId, 0, achievements[0]);
         _ = new LateTask(() =>
         {

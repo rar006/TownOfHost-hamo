@@ -165,11 +165,10 @@ namespace TownOfHost
 
                 roleCommands.Add(CustomRoles.Opener, "Oe");
 
-                //roleCommands.Add(CustomRoles.AntiTeleporter, "At");
-
+                roleCommands.Add(CustomRoles.AntiTeleporter, "At");
                 roleCommands.Add(CustomRoles.Revenger, "Re");
 
-                roleCommands.Add(CustomRoles.Seeing, "Se");
+                roleCommands.Add(CustomRoles.Seeing, "See");
 
                 roleCommands.Add(CustomRoles.Autopsy, "Au");
 
@@ -217,6 +216,7 @@ namespace TownOfHost
 
                 roleCommands.Add(CustomRoles.InfoPoor, "IP");
 
+                roleCommands.Add(CustomRoles.Notice, "No");
                 roleCommands.Add(CustomRoles.Sunglasses, "Sun");
 
                 //第三
@@ -631,11 +631,11 @@ namespace TownOfHost
 
                 "自爆魔" or "じばくま" or "ジバクマ" => GetString("SelfBomber"),
 
-                "スウーパー" or "すうーぱー" => GetString("Super"),
+                "スウーパー" or "すうーぱー" => GetString("Swooper"),
 
                 "イビルスタンドマスター" or "いびるすたんどますたー" => GetString("EvilStandMaster"),
 
-                "波動砲" or "はどうほう" => GetString("WaveCannon"),
+                "波動砲" or "はどうほう" => GetString("HadouHo"),
 
                 "ダブルキラー" or "だぶるきらー" or "だぶきら" or "ダブキラ" => GetString("DoubleKiller"),
 
@@ -647,15 +647,15 @@ namespace TownOfHost
 
                 "ビギナーインポスター" or "びぎなーいんぽすたー" or "びぎいん" or "ビギイン" => GetString("BeginnerImpostor"),
 
-                "マスマーダー" or "ますまーだー" or "ますま" or "マスマ" => GetString("MassMurderer"),
+                "マスマーダー" or "ますまーだー" or "ますま" or "マスマ" => GetString("MassMurder"),
 
-                "タイムリーパー" or "たいむりーぱー" or "タイリ" or "たいり" => GetString("TimeReaper"),
+                "タイムリーパー" or "たいむりーぱー" or "タイリ" or "たいり" => GetString("TimeSleeper"),
 
                 "チェイサー" or "ちぇいさー" => GetString("Chaser"),
 
                 "エイリアン" or "えいりあん" => GetString("Alien"),
 
-                "ハイジャックエイリアン" or "はいじゃっくえいりあん" => GetString("HijackAlien"),
+                "ハイジャックエイリアン" or "はいじゃっくえいりあん" => GetString("AlienHijack"),
 
                 "ジャンパー" or "じゃんぱー" => GetString("Jumper"),
 
@@ -663,11 +663,11 @@ namespace TownOfHost
 
                 "イビルトラッカー" or "いびるとらっかー" or "イビトラ" or "いびとら" => GetString("EvilTracker"),
 
-                "イビルギャンブラー" or "いびるぎゃんぶらー" or "イビギャン" or "いびぎゃん" => GetString("EvilGambler"),
+                "イビルギャンブラー" or "いびるぎゃんぶらー" or "イビギャン" or "いびぎゃん" => GetString("Evilgambler"),
 
                 "イビルサテライト" or "いびるさてらいと" or "イビサテ" or "いびさて" => GetString("EvilSatellite"),
 
-                "イビルアドナー" or "いびるあどなー" or "イビアド" or "いびあど" => GetString("EvilAddoner"),
+                "イビルアドナー" or "いびるあどなー" or "イビアド" or "いびあど" => GetString("EvilAddoer"),
 
                 "イビルメーカー" or "いびるめーかー" or "イビメ" or "いびめ" => GetString("EvilMaker"),
 
@@ -675,7 +675,7 @@ namespace TownOfHost
 
                 "イビルブレンダー" or "イビルブレンダー" => GetString("EvilBlender"),
 
-                "バルーナー" or "ばるーなー" => GetString("Baluner"),
+                "バルーナー" or "ばるーなー" => GetString("Ballooner"),
 
                 "爆弾魔" or "ボマー" or "ばくだんま" or "ぼまー" => GetString("Bomber"),
 
@@ -685,7 +685,7 @@ namespace TownOfHost
 
                 "テレポートキラー" or "てれぽーときらー" or "テレキラ" or "てれきら" => GetString("TeleportKiller"),
 
-                "花火職人" or "はなびしょくにん" or "はなびしょくじん" or "はなび" or "花火" => GetString("FireworksExpert"),
+                "花火職人" or "はなびしょくにん" or "はなびしょくじん" or "はなび" or "花火" => GetString("FireWorks"),
 
                 "コネクトセーバー" or "こねくとせーばー" or "コネセ" or "こねせ" => GetString("ConnectSaver"),
 
@@ -723,17 +723,18 @@ namespace TownOfHost
 
                 "ステルス" or "すてるす" => GetString("Stealth"),
 
-                "ネコカボチャ" or "ねこかぼちゃ" or "ネコカボ" or "ねこかぼ" or "猫カボチャ" or "猫かぼちゃ" or "猫かぼ" or "猫カボ" => GetString("CatPumpkin"),
+                "ネコカボチャ" or "ねこかぼちゃ" or "ネコカボ" or "ねこかぼ" or "猫カボチャ" or "猫かぼちゃ" or "猫かぼ" or "猫カボ" => GetString("NekoKabocha"),
 
                 "マフィア" or "まふぃあ" => GetString("Mafia"),
 
-                "カリスマスター" or "かりすますたー" or "カリスマ" or "かりすま" => GetString("CharismaMaster"),
+                "カリスマスター" or "かりすますたー" or "カリスマ" or "かりすま" => GetString("CharismaStar"),
 
                 "大狼" or "たいろう" or "大老" or "おおろう" => GetString("Tairou"),//適当に入れたけどおおろうって何?
 
-                "アンフォーチュナー" or "あんふぉーちゅなー" or "案フォーチュナー" or "アンフォ" or "あんふぉ" or "案フォ" or "案ふぉ" => GetString("Unfortuner"),
+                "アンフォーチュナー" or "あんふぉーちゅなー" or "案フォーチュナー" or "アンフォ" or "あんふぉ" or "案フォ" or "案ふぉ" => GetString("UnFortuner"),
 
-                "シリアルキラー" or "しりあるきらー" or "シリキラ" or "しりきら" or "シリアル" or "しりある" => GetString("SerialKiller"),//ちなみに俺は呼び方シリアルが好き
+                "シリアルキラー" or "しりあるきらー" or "シリキラ" or "しりきら" => GetString("SerialKiller"),
+                "シリアル" or "しりある" => GetString("Serial"),//ちなみに俺は呼び方シリアルが好き
 
                 "バウンティハンター" or "ばうんてぃはんたー" or "バウンティ" or "ばうんてぃ" or "ばうはん" or "バウハン" => GetString("BountyHunter"),
 
@@ -787,7 +788,7 @@ namespace TownOfHost
 
                 "マッドハッカー" or "まっどはっかー" => GetString("MadHacker"),
 
-                "マッドリデュース" or "まっどりでゅーす" => GetString("MadReduce"),
+                "マッドリデュース" or "まっどりでゅーす" => GetString("MadReduced"),
 
                 "マッドアベンジャー" or "まっどあべんじゃー" => GetString("MadAvenger"),
 
@@ -823,11 +824,11 @@ namespace TownOfHost
 
                 "村長" or "そんちょう" or "ソンチョウ" or "むらちょう" or "ムラチョウ" => GetString("VillageChief"),
 
-                "波動砲シェリフ" or "はどうほうしぇりふ" => GetString("WaveCannonSheriff"),
+                "波動砲シェリフ" or "はどうほうしぇりふ" => GetString("SheriffHadouHo"),
 
                 "あやしい占い師" or "怪しい占い師" or "あやしいうらないし" or "アヤシイウラナイシ" => GetString("SuspiciousTeller"),
 
-                "かけだし占い師" or "駆け出し占い師" or "かけだしうらないし" or "カケダシウラナイシ" => GetString("BeginnerTeller"),
+                "かけだし占い師" or "駆け出し占い師" or "かけだしうらないし" or "カケダシウラナイシ" => GetString("AmateurTeller"),
 
                 "ぽんこつ占い師" or "ポンコツ占い師" => GetString("PonkotuTeller"),
 
@@ -855,7 +856,7 @@ namespace TownOfHost
 
                 "ヒッチハイカー" or "ひっちはいかー" or "ストーカー" => GetString("Hitchhiker"),
 
-                "オールラウンダー" or "おーるだうんだー" or "オルラ" or "おるら" => GetString("Allrounder"),
+                "オールラウンダー" or "おーるだうんだー" or "オルラ" or "おるら" => GetString("AllArounder"),
 
                 "ナイスアドナー" or "ナイアド" or "ないあど" => GetString("NiceAddoer"),
 
@@ -911,7 +912,7 @@ namespace TownOfHost
 
                 "サイキック" or "さいきっく" => GetString("Psychic"),
 
-                "サテライト" or "さてらいと" => GetString("Satelite"),
+                "サテライト" or "さてらいと" => GetString("Satellite"),
 
                 "ライター" or "らいたー" => GetString("Lighter"),
 
@@ -929,7 +930,7 @@ namespace TownOfHost
 
                 "ウォーカー" or "うぉーかー" => GetString("Walker"),
 
-                "カムバッカー" or "かむばっかー" or "かむば" or "カムバ" or "噛むバッカー" => GetString("ComeBacker"),
+                "カムバッカー" or "かむばっかー" or "かむば" or "カムバ" or "噛むバッカー" => GetString("Comebacker"),
 
                 "アンドロイド" or "あんどろいど" or "すまほ" or "android" => GetString("Android"),
 

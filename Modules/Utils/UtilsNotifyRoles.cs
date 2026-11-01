@@ -727,8 +727,6 @@ namespace TownOfHost
 
                                     || ((seerRole as JackalAlien)?.mode == Alien.AlienMode.ProgressKiller == true && JackalAlien.ProgressWorkhorseseen)
 
-                                    || (role is CustomRoles.ProgressKiller && ProgressKiller.ProgressWorkhorseseen)
-
                                     || ((seerRole as AlienHijack)?.mode == Alien.AlienMode.ProgressKiller && Alien.ProgressWorkhorseseen))
 
                                     {
@@ -1516,8 +1514,6 @@ namespace TownOfHost
                                     if (((seerRole as Alien)?.mode == Alien.AlienMode.ProgressKiller == true && Alien.ProgressWorkhorseseen)
 
                                     || ((seerRole as JackalAlien)?.mode == Alien.AlienMode.ProgressKiller == true && JackalAlien.ProgressWorkhorseseen)
-
-                                    || (role is CustomRoles.ProgressKiller && ProgressKiller.ProgressWorkhorseseen)
 
                                     || ((seerRole as AlienHijack)?.mode == Alien.AlienMode.ProgressKiller && Alien.ProgressWorkhorseseen))
 

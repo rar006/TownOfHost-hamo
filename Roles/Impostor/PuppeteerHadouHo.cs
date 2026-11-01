@@ -129,10 +129,7 @@ public sealed class PuppeteerHadouHo : RoleBase, IImpostor, IUsePhantomButton
         Utils.AllPlayerKillFlash();
         Main.AllPlayerKillCooldown[Player.PlayerId] = 60f;
         Player.SetKillCooldown(60f);
-        _ = new LateTask(() => { Player.SyncSettings(); }, 0.1f, "PuppeteerHadouHoKillTimer", true);
-        Player.SyncSettings();
-        Main.AllPlayerKillCooldown[Player.PlayerId] = 60f;
-        Player.SyncSettings();
+        _ = new LateTask(() => { if (Player != null) Player.SyncSettings(); }, 0.1f, "PuppeteerHadouHoKillTimer", true);
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
         _prevCharging = true;
         _prevBeamMark = false;
@@ -141,7 +138,9 @@ public sealed class PuppeteerHadouHo : RoleBase, IImpostor, IUsePhantomButton
 
     void SetRoleTextHeight(bool beaming)
     {
-        var t = Player.cosmetics.nameText.transform.Find("RoleText");
+        var nameText = Player != null ? Player.cosmetics?.nameText : null;
+        if (nameText == null) return;
+        var t = nameText.transform.Find("RoleText");
         if (t == null) return;
         var rt = t.GetComponent<TMPro.TextMeshPro>();
         if (rt == null) return;

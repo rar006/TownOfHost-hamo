@@ -734,6 +734,8 @@ public static class RoleGuideButtonPatch
 
 
         bool shouldShow = !GameSettingMenu.Instance && !(AmongUsClient.Instance != null && AmongUsClient.Instance.NetworkMode == NetworkModes.FreePlay); // フリープレイ(カスタムスポーン設定)ではHELPを表示しない
+        // イントロの間は出さない(イントロを撮影する時に映らないように)
+        if (IntroCutscene.Instance != null) shouldShow = false;
 
         var buttonObject = _btnRenderer.gameObject;
 

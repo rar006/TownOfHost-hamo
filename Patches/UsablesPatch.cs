@@ -49,6 +49,10 @@ namespace TownOfHost
             [HarmonyArgument(2)] ref bool couldUse,
             ref float __result)
         {
+            // 参加者専用MODでは役職の情報が揃っていないので、ベントの判定はバニラに任せる(入れるかはホストが判定する)
+            // 以前はMODの判定をそのまま使っていたので、エンジニアなどがベントを押しても反応しなかった
+            if (Main.IsNonHostClient) return true;
+
             PlayerControl playerControl = pc.Object;
 
             // 前半，Mod独自の処理

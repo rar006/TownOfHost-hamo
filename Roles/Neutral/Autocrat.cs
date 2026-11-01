@@ -83,6 +83,20 @@ public sealed class Autocrat : RoleBase, IAdditionalWinner
         winnerRole = CustomRoles.Autocrat;
         return true;
     }
+    // 妖狐などは追加勝利の確認より後に勝者へ入るので、その後にもう一度確かめる
+    public static void CheckLateWin()
+    {
+        foreach (var pc in PlayerCatch.AllPlayerControls)
+        {
+            if (pc.GetRoleClass() is not Autocrat autocrat) continue;
+            if (CustomWinnerHolder.WinnerIds.Contains(pc.PlayerId)) continue;
+            var winnerRole = CustomRoles.Autocrat;
+            if (!autocrat.CheckWin(ref winnerRole)) continue;
+            Logger.Info($"{pc.Data.GetLogPlayerName()}:{winnerRole}での追加勝利(後から)", "AdditinalWinner");
+            CustomWinnerHolder.WinnerIds.Add(pc.PlayerId);
+            CustomWinnerHolder.AdditionalWinnerRoles.Add(winnerRole);
+        }
+    }
     public override bool? CheckGuess(PlayerControl killer)
     {
         return CanBeGuessed.GetBool();

@@ -210,6 +210,7 @@ public sealed class Seer : RoleBase, IKillFlashSeeable
             _ = new LateTask(() =>
             {
                 if (!Player.IsAlive()) return;
+                TownOfHost.Modules.ClientEffects.SeerSoul(Player, pos, colorId);
                 var soul = new SoulObject(pos, colorId, playerName, Player);
                 SoulObjects.Add(soul);
             }, idx * 0.6f, $"Seer.SpawnSoul{idx}", true);

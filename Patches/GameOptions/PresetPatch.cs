@@ -193,7 +193,7 @@ class PresetMenu
         ResetDerivedRolesTo0();
         OptionItem.SyncAllOptions();
         OptionSaver.Save();
-        Utils.SendMessage("人外村プリセットにしました。第三陣営の役職がすべて100%、ほかの役職は0%です。\n(アサインモードがランダムの時は、第三陣営の最大人数も上げてください)", PlayerControl.LocalPlayer.PlayerId, "<#9e9e9e>【人外村】</color>");
+        Utils.SendMessage("人外村プリセットにしました。ニュートラルの役職がすべて100%、ほかの役職は0%です。\n(アサインモードがランダムの時は、ニュートラルの最大人数も上げてください)", PlayerControl.LocalPlayer.PlayerId, "<#9e9e9e>【人外村】</color>");
     }
     private static PassiveButton CreatePresetButton(string text, Color32 color, int yNum, Action onClick, float x = 5.561f)
     {

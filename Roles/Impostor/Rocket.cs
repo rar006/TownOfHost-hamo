@@ -242,6 +242,7 @@ public sealed class Rocket : RoleBase, IImpostor, IUsePhantomButton
             Vector2 spawnPos = launchPos + new Vector2(xOffset, 0f);
 
             PlayerState.GetByPlayerId(target.PlayerId).DeathReason = CustomDeathReason.Launch;
+            TownOfHost.Modules.ClientEffects.Death(target, Player, CustomDeathReason.Launch);
             target.RpcExileV3();
             PlayerState.GetByPlayerId(target.PlayerId).SetDead();
 

@@ -23,13 +23,9 @@ namespace TownOfHost
     {
 
         private static float _timer = 1f;
-        private static readonly System.Collections.Generic.Dictionary<int, (int Sig, float Next)> _layoutCache = new();
-        public static void ForceRelayout()
-        {
-            _layoutCache.Clear();
-            _timer = 1f;
-        }
-
+        private static readonly System.Collections.Generic.Dictionary<int, (int Sig, float Next, int Scroll)> _layoutCache = new();
+        private static CustomRoles _lastRoleTab = CustomRoles.NotAssigned;
+        private static bool _wasShowFilter;
         private static int LayoutSignature()
         {
             unchecked
@@ -37,29 +33,42 @@ namespace TownOfHost
                 var h = (int)NowRoleTab;
                 h = h * 31 + (int)Options.CurrentGameMode;
                 h = h * 31 + OptionItem.CurrentPreset;
-                h = h * 31 + (AmongUsClient.Instance.AmHost ? 1 : 0);
+                h = h * 31 + ((AmongUsClient.Instance.AmHost || TownOfHost.Modules.ModeratorRemoteEdit.CanEditOnClient) ? 1 : 0);
                 h = h * 31 + (ActiveOnlyMode ? 1 : 0);
                 h = h * 31 + RoleGojuon.StateHash;
                 try { h = h * 31 + Main.NormalOptions.MapId; } catch { }
-                try { if (ModSettingsTab != null) h = h * 31 + Mathf.RoundToInt(ModSettingsTab.scrollBar.Inner.localPosition.y * 20f); } catch { }
                 foreach (var o in OptionItem.AllOptions)
                 {
                     h = h * 31 + o.GetValue();
                     if (o.OptionBehaviour is null) h += 7;
-                    if (o.OptionHedder is null) h += 3;
                 }
                 return h;
             }
         }
 
-        public static void Postfix(GameOptionsMenu __instance)
+        private static int ScrollSignature()
         {
-            var sw = System.Diagnostics.Stopwatch.StartNew();
-            Run(__instance);
-            if (sw.ElapsedMilliseconds >= 25) Logger.Info($"{__instance?.name} の並べ直し: {sw.ElapsedMilliseconds}ms", "SettingsPerf");
+            try { if (ModSettingsTab != null) return Mathf.RoundToInt(ModSettingsTab.scrollBar.Inner.localPosition.y * 20f); } catch { }
+            return 0;
         }
 
-        private static void Run(GameOptionsMenu __instance)
+        // スクロールしただけの時は、全部を並べ直さず、役職ボタンの出し入れだけをする
+        // (以前はスクロール中ずっと、タブの設定を全部並べ直していたので重かった)
+        private static void UpdateRoleButtonsOnly(GameOptionsMenu menu)
+        {
+            if (NowRoleTab is not CustomRoles.NotAssigned) return;
+            foreach (var option in OptionItem.AllOptions)
+            {
+                if (option.CustomRole is CustomRoles.NotAssigned || option.OptionBehaviour == null) continue;
+                if (menu.gameObject.name != option.Tab + "-Stg") continue;
+                if (!rolebutton.TryGetValue(option.CustomRole, out var button) || button == null) continue;
+                var dy = option.OptionBehaviour.LabelBackground.transform.position.y - roletaby;
+                var show = !(2f < dy || dy <= -2);
+                if (button.gameObject.activeSelf != show) button.gameObject.SetActive(show);
+            }
+        }
+
+        public static void Postfix(GameOptionsMenu __instance)
 
         {
 
@@ -255,12 +264,26 @@ namespace TownOfHost
 
 
             // 並べ直しは設定の数だけ重くなるので、表示に関わるもの(値・スクロールなど)が変わった時だけする(念のため 3 秒ごとにはする)
+            // 役職の画面を開き直した時・属性を選ぶ画面を閉じた時は、値が同じでも行の置き場所が変わっているので必ず並べ直す
+            // (前の並びのまま残って、設定の行が重なって表示されることがあった)
+            if (ShowFilter.IsShowFilter || _wasShowFilter || NowRoleTab != _lastRoleTab) _layoutCache.Clear();
+            _wasShowFilter = ShowFilter.IsShowFilter;
+            _lastRoleTab = NowRoleTab;
             if (!ShowFilter.IsShowFilter)
             {
                 var menuId = __instance.GetInstanceID();
                 var sig = LayoutSignature();
-                if (_layoutCache.TryGetValue(menuId, out var last) && last.Sig == sig && Time.time < last.Next) return;
-                _layoutCache[menuId] = (sig, Time.time + 3f);
+                var scroll = ScrollSignature();
+                if (_layoutCache.TryGetValue(menuId, out var last) && last.Sig == sig && Time.time < last.Next)
+                {
+                    if (last.Scroll != scroll)
+                    {
+                        _layoutCache[menuId] = (sig, last.Next, scroll);
+                        UpdateRoleButtonsOnly(__instance);
+                    }
+                    return;
+                }
+                _layoutCache[menuId] = (sig, Time.time + 3f, scroll);
             }
             if (NowRoleTab is not CustomRoles.NotAssigned)
 
@@ -370,7 +393,7 @@ namespace TownOfHost
 
                     }
 
-                    enabled = AmongUsClient.Instance.AmHost && !option.IsHiddenOn(Options.CurrentGameMode);
+                    enabled = (AmongUsClient.Instance.AmHost || TownOfHost.Modules.ModeratorRemoteEdit.CanEditOnClient) && !option.IsHiddenOn(Options.CurrentGameMode);
 
                     Color color = new Color32(200, 200, 200, 255);
 
@@ -574,7 +597,7 @@ namespace TownOfHost
 
                     var hi = 0;
 
-                    var henabled = AmongUsClient.Instance.AmHost && !option.IsHiddenOn(Options.CurrentGameMode);
+                    var henabled = (AmongUsClient.Instance.AmHost || TownOfHost.Modules.ModeratorRemoteEdit.CanEditOnClient) && !option.IsHiddenOn(Options.CurrentGameMode);
 
                     var heparent = option.Parent;
 
@@ -726,7 +749,7 @@ namespace TownOfHost
 
                             var hi = 0;
 
-                            var henabled = AmongUsClient.Instance.AmHost && !option.IsHiddenOn(Options.CurrentGameMode);
+                            var henabled = (AmongUsClient.Instance.AmHost || TownOfHost.Modules.ModeratorRemoteEdit.CanEditOnClient) && !option.IsHiddenOn(Options.CurrentGameMode);
 
                             var heparent = option.Parent;
 
@@ -798,7 +821,7 @@ namespace TownOfHost
 
 
 
-                    enabled = AmongUsClient.Instance.AmHost && !option.IsHiddenOn(Options.CurrentGameMode);
+                    enabled = (AmongUsClient.Instance.AmHost || TownOfHost.Modules.ModeratorRemoteEdit.CanEditOnClient) && !option.IsHiddenOn(Options.CurrentGameMode);
 
 
 
@@ -1116,7 +1139,7 @@ namespace TownOfHost
 
             }
 
-            catch { }
+            catch (System.Exception e) { Logger.Warn($"設定画面を並べ直せませんでした: {e}", "GameOptionsMenu"); }
 
         }
 
@@ -1148,8 +1171,7 @@ namespace TownOfHost
 
         private static float _nextVanillaHideAt;
         private static int _lastVanillaHideState = -1;
-        private static int _pendingVanillaHideState = -1;
-        private static float _pendingVanillaHideSince;
+        private static float _nextCountAt;
         private static readonly System.Collections.Generic.HashSet<int> _modBehaviourIds = new();
 
         private static void HideVanillaRowsInModTab()
@@ -1158,16 +1180,13 @@ namespace TownOfHost
             if (tab == null || !tab.gameObject.activeInHierarchy) return;
             // 今までに開いたタブの全部を毎回調べていて、タブを開くほど重くなっていた。
             // 設定の部品が増えた時・役職のタブを変えた時だけ調べる(念のため 30 秒ごとにはする。全部を調べるので、短いと数秒ごとにカクついていた)
+            // 部品の数え直しも全部の設定を見るので、毎フレームではなく0.5秒ごとにする
+            if (Time.time < _nextCountAt) return;
+            _nextCountAt = Time.time + 0.5f;
             var count = 0;
             foreach (var o in OptionItem.AllOptions) if (o?.OptionBehaviour is not null) count++;
             var state = count * 397 + (int)NowRoleTab;
-            if (state != _pendingVanillaHideState)
-            {
-                _pendingVanillaHideState = state;
-                _pendingVanillaHideSince = Time.time;
-                return;
-            }
-            if (state == _lastVanillaHideState ? Time.time < _nextVanillaHideAt : Time.time - _pendingVanillaHideSince < 0.5f) return;
+            if (state == _lastVanillaHideState && Time.time < _nextVanillaHideAt) return;
             _lastVanillaHideState = state;
             _nextVanillaHideAt = Time.time + 30f;
             _modBehaviourIds.Clear();

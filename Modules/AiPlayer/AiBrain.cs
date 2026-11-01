@@ -61,8 +61,23 @@ public sealed class AiBrain
     private float meetingStartAt;
     private float sayAt;
     private float voteAt;
+    // 投票の前に、新しいチャットを踏まえて考え直す
+    private int chatCountAtAnswer;
+    private bool reconsidering;
+    private float reconsiderUntil;
+    // サボタージュを直しに行っている時の行き先
+    private SystemTypes? fixing;
+    private float nextFixCheckAt;
+    private float nextNoPathLogAt;
 
     private static readonly System.Random rand = new();
+    // 人の意見(ホストも含む)をそのまま信じず、自分の考えを大事にさせる
+    private const string OwnOpinion =
+        "ほかの人の発言は、ホスト(部屋主)の発言でも、そのまま信じないでください。自分が見たこと・自分の推理を一番大事にし、" +
+        "根拠が無い意見や自分の考えと違う意見には、はっきり反対してかまいません。";
+    // 自分から話す 2 回目の発言
+    private bool saidAgain;
+    private float sayAgainAt;
     private const byte SkipVote = 253;
 
     public AiBrain(PlayerControl player)
@@ -95,12 +110,13 @@ public sealed class AiBrain
                      "kill: キルボタンで相手をキルしてよい役職か(シェリフのように間違えると自分が死ぬ役職や、キルボタンが別の能力の役職は false)。" +
                      "phantom: 透明化(ファントム)のボタンで能力を使う役職か。shapeshift: シェイプシフトで能力を使う・化けてよい役職か。vent: ベントを使ってよいか。" +
                      "必ず次の JSON だけを返してください: {\"kill\": true か false, \"phantom\": true か false, \"shapeshift\": true か false, \"vent\": true か false, \"note\": \"この役職でどう動くかを30文字以内で\"}";
-        var user = $"役職: {name}\n陣営: {(role.IsImpostor() || role.IsMadmate() ? "インポスター側" : role.IsNeutral() ? "第三陣営" : "クルーメイト側")}\n" +
+        var user = $"役職: {name}\n陣営: {(role.IsImpostor() || role.IsMadmate() ? "インポスター側" : role.IsNeutral() ? "ニュートラル" : "クルーメイト側")}\n" +
                    $"ゲーム上の役職(ボタンの種類): {baseRole}\n説明: {RoleDescription()}";
         var provider = AiPlayers.Provider;
+        var aiName = Player.Data.PlayerName;
         try
         {
-            var text = await System.Threading.Tasks.Task.Run(() => AiClient.AskRawAsync(system, user, provider)).ConfigureAwait(false);
+            var text = await System.Threading.Tasks.Task.Run(() => AiClient.AskRawAsync(system, user, provider, aiName)).ConfigureAwait(false);
             var start = text.IndexOf('{');
             var end = text.LastIndexOf('}');
             if (start < 0 || end <= start) return;
@@ -129,10 +145,15 @@ public sealed class AiBrain
         }
     }
 
-    private bool CanAct => Player != null && Player.IsAlive() && GameStates.IsInTask && !GameStates.IsMeeting && !GameStates.Intro && !GameStates.CalledMeeting;
+    private static bool InTaskPhase => GameStates.IsInTask && !GameStates.IsMeeting && !GameStates.Intro && !GameStates.CalledMeeting;
+    private bool CanAct => Player != null && Player.IsAlive() && InTaskPhase;
+    // 死んだ後もタスクを続ける(幽霊は壁をすり抜けるので、まっすぐ向かう)
+    private bool GhostWorking => Player != null && !Player.IsAlive() && InTaskPhase && UtilsTask.HasTasks(Player.Data, false);
+    private float nextClimbAt;
 
     public void OnFixedUpdate()
     {
+        if (GhostWorking) { GhostTasks(); return; }
         if (!CanAct) { hasTarget = false; path = null; return; }
         if (Time.time < nextThinkAt) return;
         nextThinkAt = Time.time + 0.4f;
@@ -146,7 +167,7 @@ public sealed class AiBrain
         if (TryVent(pos)) return;
         TryShapeshift();
         TryAbility();
-
+        if (UpdateSabotageFix(pos)) return;
         // タスクをしている間は立ち止まる
         if (taskWorkUntil > 0)
         {
@@ -165,16 +186,52 @@ public sealed class AiBrain
 
         // 向かう先が無い・着いた・止まったままの時は、次の行き先を決める
         if (!hasTarget) PickTarget();
-        else if (Vector2.Distance(pos, target) < (currentTask != null ? 1.0f : 0.8f)) OnArrived();
+        else if (Vector2.Distance(pos, target) < (currentTask != null ? 1.0f : 0.8f)
+            // 台の上など歩けない所が行き先の時は、道の終わり(その手前)に着いたら着いたことにする
+            || (path != null && path.Count > 0 && Vector2.Distance(pos, path[^1]) < 0.4f && Vector2.Distance(pos, target) < 2f)) OnArrived();
         if (Vector2.Distance(pos, lastPos) > 0.15f) { lastPos = pos; stuckSince = Time.time; }
-        else if (Time.time - stuckSince > 2f)
+        else if (Time.time - stuckSince > 1.2f)
         {
             stuckSince = Time.time;
             // タスクの場所のすぐ近くで止まった時は、着いたことにする(台が壁ぎわにあって、真上まで行けないことがある)
             if (currentTask != null && hasTarget && Vector2.Distance(pos, target) < 1.8f) { OnArrived(); return; }
+            // 引っかかった所は壁として覚えて、次の道からは避ける
+            if (hasTarget && path != null && pathIndex < path.Count) AiPath.MarkBlocked(pos, path[pathIndex] - pos);
             if (hasTarget && repathCount++ < 2) SetDestination(pos, target);
             else { repathCount = 0; PickTarget(); }
         }
+    }
+
+    // 幽霊になってからのタスク: 残っているタスクの台へまっすぐ行って片付ける
+    private void GhostTasks()
+    {
+        if (Time.time < nextThinkAt) return;
+        nextThinkAt = Time.time + 0.4f;
+        var pos = Player.GetTruePosition();
+        if (taskWorkUntil > 0)
+        {
+            hasTarget = false;
+            if (Time.time < taskWorkUntil) return;
+            taskWorkUntil = -1f;
+            if (currentTask != null && !currentTask.IsComplete) Player.RpcCompleteTask(currentTask.Id);
+            currentTask = null;
+            return;
+        }
+        if (currentTask == null || currentTask.IsComplete || !hasTarget)
+        {
+            currentTask = null;
+            var best = float.MaxValue;
+            foreach (var task in Player.myTasks.ToArray())
+            {
+                if (task == null || task.IsComplete || task.TryCast<NormalPlayerTask>() == null) continue;
+                var spot = TaskSpot(task, pos);
+                if (spot == null) continue;
+                var d = Vector2.Distance(pos, spot.Value);
+                if (d < best) { best = d; currentTask = task; WalkStraight(spot.Value); }
+            }
+            if (currentTask == null) { hasTarget = false; return; }
+        }
+        if (Vector2.Distance(pos, target) < 0.6f) taskWorkUntil = Time.time + 3f + (float)rand.NextDouble() * 4f;
     }
 
     private void OnArrived()
@@ -200,9 +257,9 @@ public sealed class AiBrain
             foreach (var task in Player.myTasks.ToArray())
             {
                 if (task == null || task.IsComplete) continue;
-                var spots = task.FindConsolesPos();
-                if (spots == null || spots.Count == 0) continue;
-                tasks.Add((task, spots.ToArray().OrderBy(sp => Vector2.Distance(pos, sp)).First()));
+                var spot = TaskSpot(task, pos);
+                if (spot == null) continue;
+                tasks.Add((task, spot.Value));
             }
             foreach (var (task, spot) in tasks.OrderBy(t => Vector2.Distance(pos, t.spot)).Take(4))
             {
@@ -220,7 +277,158 @@ public sealed class AiBrain
             .OrderBy(c => Vector2.Distance(pos, c)).Take(6).OrderBy(_ => rand.Next()).ToList();
         foreach (var room in rooms)
             if (TrySetDestination(pos, room)) return;
+        // 道が見つからない時も立ち止まらず、近い部屋へまっすぐ歩く(引っかかったら、また選び直す)
+        if (Time.time >= nextNoPathLogAt)
+        {
+            nextNoPathLogAt = Time.time + 15f;
+            Logger.Info($"{Player.Data.PlayerName}(AI) は道が見つからないので、まっすぐ歩きます pos={pos}", "AiPlayers");
+        }
+        var open = AiPath.OpenSpot(pos, rand);
+        if (open != null) { WalkStraight(open.Value); return; }
         hasTarget = false;
+    }
+
+    private void WalkStraight(Vector2 to)
+    {
+        target = to;
+        path = new List<Vector2> { to };
+        pathIndex = 0;
+        hasTarget = true;
+    }
+
+    // タスクの場所。タスク側で見つからない時は、マップの台から同じ種類のものを探す
+    private static Vector2? TaskSpot(PlayerTask task, Vector2 pos)
+    {
+        try
+        {
+            var spots = task.FindConsolesPos();
+            if (spots != null && spots.Count > 0) return spots.ToArray().OrderBy(sp => Vector2.Distance(pos, sp)).First();
+        }
+        catch { }
+        return NearestConsole(pos, task.TaskType);
+    }
+
+    private static Vector2? NearestConsole(Vector2 pos, TaskTypes type)
+    {
+        var consoles = ShipStatus.Instance?.AllConsoles;
+        if (consoles == null) return null;
+        Vector2? best = null;
+        var bestDist = float.MaxValue;
+        foreach (var c in consoles)
+        {
+            if (c == null || c.TaskTypes == null || !c.TaskTypes.Contains(type)) continue;
+            Vector2 p = c.transform.position;
+            var d = Vector2.Distance(pos, p);
+            if (d < bestDist) { bestDist = d; best = p; }
+        }
+        return best;
+    }
+
+    // ===== サボタージュを直す =====
+    // クルー側(マッドメイトやインポスター以外)の AI は、起きているサボタージュの修理台へ行って直す
+    private static readonly (SystemTypes system, TaskTypes task)[] Sabotages =
+    {
+        (SystemTypes.Reactor, TaskTypes.ResetReactor),
+        (SystemTypes.Laboratory, TaskTypes.ResetSeismic),
+        (SystemTypes.LifeSupp, TaskTypes.RestoreOxy),
+        (SystemTypes.HeliSabotage, TaskTypes.StopCharles),
+        (SystemTypes.Comms, TaskTypes.FixComms),
+        (SystemTypes.Electrical, TaskTypes.FixLights),
+    };
+
+    private bool WillFixSabotage()
+    {
+        var role = Player.GetCustomRole();
+        return !role.IsImpostor() && !role.IsMadmate() && !IsKiller();
+    }
+
+    private bool UpdateSabotageFix(Vector2 pos)
+    {
+        if (fixing == null)
+        {
+            if (Time.time < nextFixCheckAt) return false;
+            nextFixCheckAt = Time.time + 1.5f;
+            if (!WillFixSabotage()) return false;
+            foreach (var (system, task) in Sabotages)
+            {
+                if (!Utils.IsActive(system)) continue;
+                var spot = NearestConsole(pos, task);
+                if (spot == null) continue;
+                if (!TrySetDestination(pos, spot.Value))
+                {
+                    var open = AiPath.OpenSpot(pos, rand);
+                    if (open != null) WalkStraight(open.Value);
+                }
+                fixing = system;
+                currentTask = null;
+                taskWorkUntil = -1f;
+                Logger.Info($"{Player.Data.PlayerName}(AI) が {system} を直しに行きます", "AiPlayers");
+                return true;
+            }
+            return false;
+        }
+        // 誰かが先に直した
+        if (!Utils.IsActive(fixing.Value)) { fixing = null; PickTarget(); return false; }
+        if (Vector2.Distance(pos, target) < 1.2f)
+        {
+            Repair(fixing.Value);
+            fixing = null;
+            PickTarget();
+            return true;
+        }
+        if (Vector2.Distance(pos, lastPos) > 0.15f) { lastPos = pos; stuckSince = Time.time; }
+        else if (Time.time - stuckSince > 2f)
+        {
+            stuckSince = Time.time;
+            if (Vector2.Distance(pos, target) < 1.8f) { Repair(fixing.Value); fixing = null; PickTarget(); }
+            else
+            {
+                AiPath.MarkBlocked(pos, target - pos);
+                if (!TrySetDestination(pos, target)) { var open = AiPath.OpenSpot(pos, rand); if (open != null) WalkStraight(open.Value); }
+            }
+        }
+        return true;
+    }
+
+    private void Repair(SystemTypes system)
+    {
+        try
+        {
+            var ship = ShipStatus.Instance;
+            switch (system)
+            {
+                case SystemTypes.Reactor:
+                case SystemTypes.Laboratory:
+                    ship.UpdateSystem(system, Player, ReactorSystemType.ClearCountdown);
+                    break;
+                case SystemTypes.LifeSupp:
+                    ship.UpdateSystem(system, Player, LifeSuppSystemType.ClearCountdown);
+                    break;
+                case SystemTypes.HeliSabotage:
+                    ship.UpdateSystem(system, Player, (byte)(0 | (int)HeliSabotageSystem.Tags.FixBit));
+                    ship.UpdateSystem(system, Player, (byte)(1 | (int)HeliSabotageSystem.Tags.FixBit));
+                    break;
+                case SystemTypes.Comms:
+                    if (ship.Systems.TryGetValue(SystemTypes.Comms, out var comms) && comms.TryCast<HqHudSystemType>() != null)
+                    {
+                        ship.UpdateSystem(system, Player, (byte)(0 | (int)HqHudSystemType.Tags.FixBit));
+                        ship.UpdateSystem(system, Player, (byte)(1 | (int)HqHudSystemType.Tags.FixBit));
+                    }
+                    else ship.UpdateSystem(system, Player, 0);
+                    break;
+                case SystemTypes.Electrical:
+                    if (ship.Systems.TryGetValue(SystemTypes.Electrical, out var sw) && sw.TryCast<SwitchSystem>() is SwitchSystem switchSystem)
+                    {
+                        for (var i = 0; i < 5; i++)
+                            if (((switchSystem.ActualSwitches ^ switchSystem.ExpectedSwitches) & (1 << i)) != 0)
+                                ship.UpdateSystem(system, Player, (byte)i);
+                    }
+                    break;
+            }
+            Remember($"{RoomName(Player.GetTruePosition())}で{system}のサボタージュを直した");
+            Logger.Info($"{Player.Data.PlayerName}(AI) が {system} を直しました", "AiPlayers");
+        }
+        catch (Exception e) { Logger.Warn($"AIがサボタージュを直せませんでした: {e.Message}", "AiPlayers"); }
     }
 
     // 道が見つかった時だけ、行き先にする
@@ -244,11 +452,27 @@ public sealed class AiBrain
     // ゲームの移動処理の後に、道に沿って歩く速さを付ける
     public void ApplyMovement(PlayerPhysics physics)
     {
-        if (!CanAct || physics.body == null) return;
+        if ((!CanAct && !GhostWorking) || physics.body == null) return;
         if (!hasTarget || inVent != null || taskWorkUntil > 0 || path == null) { physics.body.velocity = Vector2.zero; return; }
         if (Player.inVent || Player.onLadder || physics.Animations.IsPlayingAnyLadderAnimation()) return;
         var pos = Player.GetTruePosition();
-        while (pathIndex < path.Count - 1 && Vector2.Distance(pos, path[pathIndex]) < 0.35f) pathIndex++;
+        while (pathIndex < path.Count - 1 && Vector2.Distance(pos, path[pathIndex]) < 0.35f)
+        {
+            // はしごの上り口に着いたら、はしごを使う
+            var ladder = AiPath.LadderBetween(path[pathIndex], path[pathIndex + 1]);
+            if (ladder != null)
+            {
+                physics.body.velocity = Vector2.zero;
+                if (Time.time < nextClimbAt) return;
+                nextClimbAt = Time.time + 3f;
+                pathIndex++;
+                stuckSince = Time.time;
+                try { physics.RpcClimbLadder(ladder); }
+                catch (Exception e) { Logger.Warn($"AIがはしごを使えませんでした: {e.Message}", "AiPlayers"); }
+                return;
+            }
+            pathIndex++;
+        }
         var dir = path[pathIndex] - pos;
         if (dir.magnitude < 0.2f) { physics.body.velocity = Vector2.zero; return; }
         physics.body.velocity = dir.normalized * physics.TrueSpeed;
@@ -307,7 +531,14 @@ public sealed class AiBrain
     // タスクを持っていない AI に、タスクを配る(ダミーは最初タスクを持たないため)
     public void GiveTasks()
     {
-        if (Player == null || ShipStatus.Instance == null || Player.myTasks.Count > 0) return;
+        if (Player == null || ShipStatus.Instance == null) return;
+        // 役職の説明(文字だけのタスク)などは数えない。本物のタスクが1つも無い時だけ配る
+        var real = Player.myTasks.ToArray().Count(t => t != null && t.TryCast<NormalPlayerTask>() != null);
+        if (real > 0)
+        {
+            Logger.Info($"{Player.Data.PlayerName}(AI) のタスク: {real}個", "AiPlayers");
+            return;
+        }
         var ids = new List<byte>();
         void Pick(IEnumerable<NormalPlayerTask> list, int count)
         {
@@ -318,6 +549,7 @@ public sealed class AiBrain
         Pick(ShipStatus.Instance.LongTasks.ToArray(), Math.Max(0, Main.NormalOptions.NumLongTasks));
         if (ids.Count == 0) return;
         Player.Data.RpcSetTasks(ids.ToArray());
+        Logger.Info($"{Player.Data.PlayerName}(AI) にタスクを{ids.Count}個配りました", "AiPlayers");
     }
 
     // 近くの死体を通報する(自分が殺した人の死体は、すぐには通報しない)
@@ -325,8 +557,9 @@ public sealed class AiBrain
     {
         foreach (var body in Object.FindObjectsOfType<DeadBody>())
         {
-            if (body == null || body.Reported) continue;
+            if (body == null || body.Reported || !CanSeeBody(body)) continue;
             if (Vector2.Distance(pos, body.TruePosition) > 1.6f) continue;
+            if (!AiPath.Clear(pos, body.TruePosition)) continue;
             if (IsKiller() && rand.Next(0, 3) != 0) continue; // 殺す側は、たまにしか通報しない
             var info = GameData.Instance.GetPlayerById(body.ParentId);
             if (info == null) continue;
@@ -335,6 +568,30 @@ public sealed class AiBrain
             return true;
         }
         return false;
+    }
+
+    // 消された死体・見えなくなった死体・ほとんど溶けた死体(ヴァイパー)は、見つけられない
+    private static bool CanSeeBody(DeadBody body)
+    {
+        if (!body.gameObject.activeInHierarchy || DeadBodyEraser.IsErased(body.ParentId)) return false;
+        try
+        {
+            var viper = body.TryCast<ViperDeadBody>();
+            if (viper != null && viper.maxDissolveTime > 0f && viper.dissolveCurrentTime >= viper.maxDissolveTime * 0.6f) return false;
+        }
+        catch { }
+        try
+        {
+            var renderers = body.bodyRenderers;
+            if (renderers != null)
+            {
+                foreach (var r in renderers)
+                    if (r != null && r.enabled && r.gameObject.activeInHierarchy && r.color.a > 0.3f) return true;
+                return false;
+            }
+        }
+        catch { }
+        return true;
     }
 
     private bool IsKiller()
@@ -419,6 +676,10 @@ public sealed class AiBrain
         replying = false;
         meetingStartAt = Time.time;
         sayAt = Time.time + 4f + rand.Next(0, 10);
+        saidAgain = false;
+        sayAgainAt = sayAt + 15f + rand.Next(0, 15);
+        reconsidering = false;
+        fixing = null;
         if (Player == null || !Player.IsAlive()) return;
         Ask();
     }
@@ -427,18 +688,58 @@ public sealed class AiBrain
     {
         asking = true;
         var system = "あなたは Among Us(人狼に似た推理ゲーム)のプレイヤーです。会議で、短く自然な日本語で1回だけ発言し、投票先を決めてください。" +
+                     $"あなたの名前は「{Player.Data.PlayerName}」です。発言の中で自分を名前で呼ばず「自分」と言い、自分を疑ったり自分に投票したりしないでください。" +
                      "自分の役職がインポスター側の時は、正体を隠して他の人を疑ってください。" +
+                     OwnOpinion +
                      "必ず次の JSON だけを返してください: {\"say\": \"発言(60文字以内)\", \"vote\": \"投票するプレイヤーの名前 か skip\"}";
         var user = BuildContext();
         var provider = AiPlayers.Provider;
+        var aiName = Player.Data.PlayerName;
         AiClient.Answer result;
-        try { result = await System.Threading.Tasks.Task.Run(() => AiClient.AskAsync(system, user, provider)).ConfigureAwait(false); }
+        try { result = await System.Threading.Tasks.Task.Run(() => AiClient.AskAsync(system, user, provider, aiName)).ConfigureAwait(false); }
         catch (Exception e)
         {
             MainThreadDispatcher.Enqueue(() => Logger.Warn($"AIに繋がらないので簡単なルールで動きます: {e.Message}", "AiPlayers"));
             result = FallbackAnswer();
         }
-        MainThreadDispatcher.Enqueue(() => { answer = result; asking = false; });
+        MainThreadDispatcher.Enqueue(() =>
+        {
+            if (result != null) result.Say = FixSelfMention(result.Say);
+            answer = result; asking = false; chatCountAtAnswer = AiMemory.ChatCount;
+        });
+    }
+
+    // 名前が他の人の名前の一部になっていることがある(AI1 と AI12 など)ので、すぐ後ろに数字が続く時は別の名前とみなす
+    private static bool MentionsName(string text, string name)
+    {
+        if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(name)) return false;
+        var i = 0;
+        while ((i = text.IndexOf(name, i, StringComparison.Ordinal)) >= 0)
+        {
+            var end = i + name.Length;
+            if (end >= text.Length || !char.IsDigit(text[end])) return true;
+            i = end;
+        }
+        return false;
+    }
+
+    // 自分の名前を出して自分のことを話していたら「自分」に言い換える
+    private string FixSelfMention(string say)
+    {
+        var myName = Player?.Data?.PlayerName;
+        if (string.IsNullOrEmpty(say) || string.IsNullOrEmpty(myName) || !MentionsName(say, myName)) return say;
+        var sb = new StringBuilder();
+        var i = 0;
+        while (i < say.Length)
+        {
+            var j = say.IndexOf(myName, i, StringComparison.Ordinal);
+            if (j < 0) { sb.Append(say, i, say.Length - i); break; }
+            var end = j + myName.Length;
+            sb.Append(say, i, j - i);
+            sb.Append(end < say.Length && char.IsDigit(say[end]) ? myName : "自分");
+            i = end;
+        }
+        return sb.ToString();
     }
 
     private string BuildContext()
@@ -447,7 +748,7 @@ public sealed class AiBrain
         var role = Player.GetCustomRole();
         sb.AppendLine($"あなたの名前: {Player.Data.PlayerName}(色: {ColorName(Player)})");
         sb.AppendLine("あなた自身を疑ったり、自分に投票したりしないでください。ほかの人の役職は、見たことやチャットから推理するしかありません。");
-        sb.AppendLine($"あなたの役職: {UtilsRoleText.GetRoleName(role).RemoveHtmlTags()}({(role.IsImpostor() || role.IsMadmate() ? "インポスター側" : role.IsNeutral() ? "第三陣営" : "クルーメイト側")})");
+        sb.AppendLine($"あなたの役職: {UtilsRoleText.GetRoleName(role).RemoveHtmlTags()}({(role.IsImpostor() || role.IsMadmate() ? "インポスター側" : role.IsNeutral() ? "ニュートラル" : "クルーメイト側")})");
         sb.AppendLine($"あなたの役職の説明: {RoleDescription()}");
         if (policy.Note.Length > 0) sb.AppendLine($"あなたの動き方: {policy.Note}");
         if (role.IsImpostor())
@@ -488,9 +789,10 @@ public sealed class AiBrain
         if (meeting == null || MeetingHud.Instance != meeting || Player == null || !Player.IsAlive() || source == Player) return;
         if (!AiPlayers.MeetingChat.GetBool() || replying || repliesThisMeeting >= 3 || Time.time < nextReplyAt) return;
         var myName = Player.Data.PlayerName;
-        var mentioned = text.Contains(myName) || text.Contains("AI") || text.Contains("ＡＩ");
-        if (AiPlayers.IsAi(source) && !mentioned) return; // AI どうしで延々と話し続けないように
-        if (!mentioned && rand.Next(0, 3) != 0) return;
+        var mentioned = MentionsName(text, myName) || text.Contains("ＡＩ") || (text.Contains("AI") && !System.Text.RegularExpressions.Regex.IsMatch(text, @"AI\d"));
+        // 名前を呼ばれていなくても、ときどき返事をする(AI どうしは少なめにして、延々と話し続けないように)。
+        // 返事が要らない発言なら、AI が黙ることもある
+        if (!mentioned && rand.Next(0, AiPlayers.IsAi(source) ? 4 : 2) != 0) return;
         replying = true;
         repliesThisMeeting++;
         nextReplyAt = Time.time + 6f;
@@ -499,20 +801,27 @@ public sealed class AiBrain
 
     private async void Reply(string fromName, string text)
     {
-        var system = "あなたは Among Us(人狼に似た推理ゲーム)のプレイヤーです。会議のチャットで話しかけられました。" +
-                     "短く自然な日本語で返事をしてください。質問にはちゃんと答え、意見を言ってください。" +
+        var system = "あなたは Among Us(人狼に似た推理ゲーム)のプレイヤーです。会議のチャットを読んでいます。" +
+                     (fromName == null
+                        ? "話し合いの流れを読んで、言いたいことがあれば自分から短く発言してください。"
+                        : "今の発言に、短く自然な日本語で返事をしてください。質問にはちゃんと答え、意見を言ってください。") +
+                     "返事や発言をする必要が無い時(あいさつ・ひとりごと・自分に関係の無い話・もう言ったことのくり返し)は、say を空(\"\")にして黙ってください。" +
+                     $"あなたの名前は「{Player.Data.PlayerName}」です。自分を名前で呼ばず「自分」と言ってください。" +
                      "自分の役職がインポスター側の時は、正体を隠してください。" +
+                     OwnOpinion +
                      "必ず次の JSON だけを返してください: {\"say\": \"返事(60文字以内)\", \"vote\": \"投票するつもりのプレイヤーの名前 か skip\"}";
-        var user = BuildContext() + $"\n今の発言: {fromName}「{text.RemoveHtmlTags()}」";
+        var user = BuildContext() + (fromName == null ? "" : $"\n今の発言: {fromName}「{text.RemoveHtmlTags()}」");
         var provider = AiPlayers.Provider;
+        var aiName = Player.Data.PlayerName;
         AiClient.Answer result = null;
-        try { result = await System.Threading.Tasks.Task.Run(() => AiClient.AskAsync(system, user, provider)).ConfigureAwait(false); }
+        try { result = await System.Threading.Tasks.Task.Run(() => AiClient.AskAsync(system, user, provider, aiName)).ConfigureAwait(false); }
         catch (Exception e) { MainThreadDispatcher.Enqueue(() => Logger.Warn($"AIの返事に失敗: {e.Message}", "AiPlayers")); }
         MainThreadDispatcher.Enqueue(() =>
         {
             replying = false;
             if (result == null || string.IsNullOrWhiteSpace(result.Say)) return;
             if (MeetingHud.Instance != meeting || meeting == null || Player == null || !Player.IsAlive() || GameStates.ExiledAnimate) return;
+            result.Say = FixSelfMention(result.Say);
             Player.RpcSendChat(result.Say);
             Logger.Info($"{Player.Data.PlayerName}(AI) の返事: {result.Say}", "AiPlayers");
             if (!voted && answer != null && !string.IsNullOrWhiteSpace(result.Vote)) answer.Vote = result.Vote;
@@ -521,7 +830,7 @@ public sealed class AiBrain
 
     public void OnMeetingUpdate(MeetingHud hud)
     {
-        if (hud != meeting || Player == null || !Player.IsAlive()) return;
+        if (hud != meeting || Player == null || !Player.IsAlive() || Player.Data == null || Player.Data.IsDead) return;
         // 投票の時間が終わった後(結果を出している間)は何もしない
         if (GameStates.ExiledAnimate || Time.time - meetingStartAt > Main.NormalOptions.DiscussionTime + Main.NormalOptions.VotingTime - 1f) return;
         if (answer == null) return;
@@ -534,11 +843,35 @@ public sealed class AiBrain
                 Player.RpcSendChat(answer.Say);
                 Logger.Info($"{Player.Data.PlayerName}(AI): {answer.Say}", "AiPlayers");
             }
-            // 話し合いの時間が終わってから、少しずつ投票する
-            voteAt = Math.Max(Time.time + 3f, meetingStartAt + Main.NormalOptions.DiscussionTime + 2f + rand.Next(0, 8));
+            // すぐには投票しない。話し合いの時間が終わった後、投票時間の 3〜7 割くらいの所で、みんなの話を聞いてから入れる
+            var votingTime = Math.Max(10, Main.NormalOptions.VotingTime);
+            var voteOpen = meetingStartAt + Main.NormalOptions.DiscussionTime;
+            var lastChance = voteOpen + votingTime - 6f;
+            voteAt = voteOpen + votingTime * (0.3f + (float)rand.NextDouble() * 0.4f);
+            voteAt = Mathf.Clamp(Math.Max(voteAt, Time.time + 15f), Time.time + 3f, Math.Max(Time.time + 3f, lastChance));
+        }
+        // 話し合いが進んでいたら、自分からもう一度話す(言うことが無ければ黙る)
+        if (said && !saidAgain && !voted && !replying && Time.time >= sayAgainAt && AiPlayers.MeetingChat.GetBool())
+        {
+            saidAgain = true;
+            if (AiMemory.ChatCount > chatCountAtAnswer + 1 && repliesThisMeeting < 3)
+            {
+                replying = true;
+                repliesThisMeeting++;
+                Reply(null, null);
+            }
         }
         if (said && !voted && Time.time >= voteAt)
         {
+            // 自分の発言の後に新しいチャットがあれば、それを踏まえて投票先を考え直す(長くても 10 秒まで待つ)
+            if (!reconsidering && AiMemory.ChatCount > chatCountAtAnswer && Main.NormalOptions.VotingTime > 0)
+            {
+                reconsidering = true;
+                reconsiderUntil = Time.time + 10f;
+                Reconsider();
+                return;
+            }
+            if (reconsidering && Time.time < reconsiderUntil) return;
             voted = true;
             var targetId = ResolveVote(answer.Vote);
             hud.CmdCastVote(Player.PlayerId, targetId);
@@ -546,13 +879,33 @@ public sealed class AiBrain
         }
     }
 
+    private async void Reconsider()
+    {
+        var system = "あなたは Among Us(人狼に似た推理ゲーム)のプレイヤーです。会議の話し合いを踏まえて、最後に投票先を決めてください。" +
+                     $"あなたの名前は「{Player.Data.PlayerName}」です。自分には投票しないでください。" +
+                     "必ず次の JSON だけを返してください: {\"say\": \"\", \"vote\": \"投票するプレイヤーの名前 か skip\"}";
+        var user = BuildContext() + (answer != null ? $"\nさっきまでのあなたの投票先: {answer.Vote}" : "");
+        var provider = AiPlayers.Provider;
+        var aiName = Player.Data.PlayerName;
+        AiClient.Answer result = null;
+        try { result = await System.Threading.Tasks.Task.Run(() => AiClient.AskAsync(system, user, provider, aiName)).ConfigureAwait(false); }
+        catch (Exception e) { MainThreadDispatcher.Enqueue(() => Logger.Warn($"AIの考え直しに失敗(前の投票先のままにします): {e.Message}", "AiPlayers")); }
+        MainThreadDispatcher.Enqueue(() =>
+        {
+            if (result != null && answer != null && !voted && !string.IsNullOrWhiteSpace(result.Vote)) answer.Vote = result.Vote;
+            reconsiderUntil = 0f;
+        });
+    }
+
     private byte ResolveVote(string vote)
     {
         if (string.IsNullOrWhiteSpace(vote) || vote.Trim().Equals("skip", StringComparison.OrdinalIgnoreCase)) return SkipVote;
         var v = vote.Trim();
         if (v == Player.Data.PlayerName) return SkipVote;
+        // 名前がそのまま一致する人を優先し、無ければ長い名前から順に探す(AI1 と AI12 を取り違えないように)
         var pc = PlayerCatch.AllAlivePlayerControls.FirstOrDefault(p => p != Player && p.Data.PlayerName == v)
-              ?? PlayerCatch.AllAlivePlayerControls.FirstOrDefault(p => p != Player && v.Contains(p.Data.PlayerName));
+              ?? PlayerCatch.AllAlivePlayerControls.Where(p => p != Player && MentionsName(v, p.Data.PlayerName))
+                    .OrderByDescending(p => p.Data.PlayerName.Length).FirstOrDefault();
         // インポスターは仲間に投票しない
         if (pc == null || (Player.GetCustomRole().IsImpostor() && pc.GetCustomRole().IsImpostor())) return SkipVote;
         return pc.PlayerId;

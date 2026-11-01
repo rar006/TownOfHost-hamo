@@ -217,65 +217,33 @@ namespace TownOfHost.Patches
                 yield return null;
             }
 
+            var phaseWatch = System.Diagnostics.Stopwatch.StartNew();
             var imagePaths = UtilsSprite.GetAllEmbeddedImagePaths();
             var total = Math.Max(imagePaths.Length, 1);
             var loaded = 0;
-            const int perFrame = 8;
+            // 1フレームに使う時間で区切る。ロード画面の動きは少しなめらかでなくなるが、短く区切るほど
+            // 画面を描く待ち時間が増えて読み込みが遅くなるので、多めに(約40ms)まとめて読む
+            const double frameBudgetMs = 40.0;
+            var budget = System.Diagnostics.Stopwatch.StartNew();
 
             foreach (var path in imagePaths)
             {
                 UtilsSprite.GetOrLoadTexture(path);
                 loaded++;
-                CurrentStatusText = $"アセットを読み込み中… ({loaded}/{total})";
-                loadText.text = BuildLoadingText(CurrentStatusText);
 
-                var percent = Mathf.Clamp01(loaded / (float)total);
-                SetBarFill(barFill, barWidth, percent);
-
-                if (loaded % perFrame == 0) yield return null;
+                if (budget.Elapsed.TotalMilliseconds >= frameBudgetMs)
+                {
+                    CurrentStatusText = $"アセットを読み込み中… ({loaded}/{total})";
+                    loadText.text = BuildLoadingText(CurrentStatusText);
+                    SetBarFill(barFill, barWidth, Mathf.Clamp01(loaded / (float)total));
+                    yield return null;
+                    budget.Restart();
+                }
             }
             SetBarFill(barFill, barWidth, 1f);
 
-            CurrentStatusText = "サウンドを読み込み中…";
-            loadText.text = BuildLoadingText(CurrentStatusText);
-            yield return null;
-            AudioClip[] audioClips = null;
-            try
-            {
-                var allClips = Resources.FindObjectsOfTypeAll(Il2CppInterop.Runtime.Il2CppType.Of<AudioClip>());
-                var list = new List<AudioClip>(allClips.Length);
-                foreach (var obj in allClips)
-                {
-                    var clip = obj.TryCast<AudioClip>();
-                    if (clip != null) list.Add(clip);
-                }
-                audioClips = list.ToArray();
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning($"音声アセット一覧の取得に失敗しました(致命的ではありません): {ex.Message}");
-            }
-
-            if (audioClips != null)
-            {
-                var clipCount = 0;
-                foreach (var clip in audioClips)
-                {
-                    try
-                    {
-                        if (clip.loadState == AudioDataLoadState.Unloaded)
-                        {
-                            clip.LoadAudioData();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.LogWarning($"音声クリップ({clip?.name})の事前読み込みに失敗しました(致命的ではありません): {ex.Message}");
-                    }
-                    clipCount++;
-                    if (clipCount % perFrame == 0) yield return null;
-                }
-            }
+            // ゲームの音を全部ここで先に読むのはやめた(ゲームが使う時に読むので、待ち時間が増えるだけだった)
+            var imageMs = phaseWatch.ElapsedMilliseconds;
             const float maxInitWaitSeconds = 60f;
             var initWaitElapsed = 0f;
             while (!Main.IsLoaded && initWaitElapsed < maxInitWaitSeconds)
@@ -290,22 +258,10 @@ namespace TownOfHost.Patches
                 Logger.LogError($"{maxInitWaitSeconds}秒待ってもMain.IsLoadedがtrueになりませんでした。安全のため続行します。");
             }
 
-            const float finalCheckSeconds = 3f;
-            var finalCheckElapsed = 0f;
-            var unloadOp = Resources.UnloadUnusedAssets();
-            var gcDone = false;
-            while (finalCheckElapsed < finalCheckSeconds)
-            {
-                if (!gcDone && (unloadOp == null || unloadOp.isDone))
-                {
-                    GC.Collect();
-                    gcDone = true;
-                }
-                CurrentStatusText = $"最終確認中… ({Mathf.CeilToInt(finalCheckSeconds - finalCheckElapsed)})";
-                loadText.text = BuildLoadingText(CurrentStatusText);
-                finalCheckElapsed += Time.deltaTime;
-                yield return null;
-            }
+            // 使っていない画像の片付け(Resources.UnloadUnusedAssets)は起動直後だと1秒以上かかるのでやめ、GC だけ行う
+            var initWaitMs = phaseWatch.ElapsedMilliseconds - imageMs;
+            GC.Collect();
+            Logger.LogInfo($"ロード画面: 画像 {imageMs}ms / MODの初期化待ち {initWaitMs}ms");
 
             var completeMessages = new[]
             {
@@ -317,19 +273,11 @@ namespace TownOfHost.Patches
             };
             loadText.text = BuildLoadingText(completeMessages[UnityEngine.Random.Range(0, completeMessages.Length)], isFinal: true);
 
-            for (int i = 0; i < 3; i++)
-            {
-                yield return new WaitForSeconds(0.1f);
-                loadText.alpha = 0f;
-                yield return new WaitForSeconds(0.1f);
-                loadText.alpha = 1f;
-            }
-            yield return new WaitForSeconds(0.3f);
-
+            // 終わりの文字の点滅(約0.35秒)はやめて、すぐ消し始める。消える速さも倍に
             fade = 1f;
             while (fade > 0f)
             {
-                fade -= Time.deltaTime * 1.4f;
+                fade -= Time.deltaTime * 6f;
                 var c = new Color(1f, 1f, 1f, Mathf.Clamp01(fade));
                 if (logoObj != null) logoObj.GetComponent<SpriteRenderer>().color = c;
                 loadText.color = c;
@@ -368,6 +316,7 @@ namespace TownOfHost.Patches
             finished = true;
 
             Logger.LogInfo($"TOHhamo loading screen finished. Preloaded {UtilsSprite.PreloadedTextureCount} embedded images.");
+            Logger.LogInfo($"ゲームを起動してからメニューが出るまで: {TownOfHost.Main.SecondsSinceProcessStart():0.0}秒");
         }
 
         private static string BuildLoadingText(string status, bool isFinal = false)

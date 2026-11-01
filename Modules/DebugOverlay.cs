@@ -60,6 +60,8 @@ public sealed class DebugWindow
         Title = title;
         defX = x; defY = y; defW = w; defH = h;
         extraButtons.AddRange(buttons);
+        // 通信モニターなどの枠は、録画には映さない
+        Recorder.GameRecorder.HideInRecording(() => root);
     }
 
     // 帯に「固」(動かせないようにする)と「前」(いちばん手前に出す)のボタンを付ける

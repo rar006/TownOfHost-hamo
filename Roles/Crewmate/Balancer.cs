@@ -119,6 +119,8 @@ public sealed class Balancer : RoleBase, ISelfVoter
     //プレイヤーによって操作できる
 
     byte Target1, Target2;
+    // 天秤会議の演出で札を光らせる 2 人
+    public static byte[] MeetingTargets = System.Array.Empty<byte>();
 
     bool used;
 
@@ -670,6 +672,7 @@ public sealed class Balancer : RoleBase, ISelfVoter
 
                 _ = new LateTask(() => Utils.AllPlayerKillFlash(), 1f, "BMkillf", true);
 
+                MeetingTargets = new[] { Target1, Target2 };
                 ReportDeadBodyPatch.ExReportDeadBody(reporter, oniku.Data, false, "Balancer.meeting", UtilsRoleText.GetRoleColorCode(CustomRoles.Balancer));
 
             }, 2f, "BalanerMeeting");

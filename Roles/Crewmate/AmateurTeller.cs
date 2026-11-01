@@ -91,6 +91,7 @@ public sealed class AmateurTeller : RoleBase, IKiller, ISelfVoter
 
         canusebutton = AbilityUseTurnCanButton.GetBool();
 
+        IsAbilityUseVote = OptionAbilityUseVote.GetBool();
     }
 
 
@@ -101,6 +102,7 @@ public sealed class AmateurTeller : RoleBase, IKiller, ISelfVoter
 
     static OptionItem OptionRole;
 
+    static OptionItem OptionAbilityUseVote; static bool IsAbilityUseVote;
     static OptionItem OptionCanTaskcount;
 
     static OptionItem OptAwakening;
@@ -149,6 +151,7 @@ public sealed class AmateurTeller : RoleBase, IKiller, ISelfVoter
 
         AbilityVotemode,
 
+        AbilityUseVote,
         TellRole,
 
         AmateurTellerTargetCanseeArrow,
@@ -189,6 +192,7 @@ public sealed class AmateurTeller : RoleBase, IKiller, ISelfVoter
 
         OptionVoteMode = StringOptionItem.Create(RoleInfo, 11, Option.AbilityVotemode, EnumHelper.GetAllNames<AbilityVoteMode>(), 1, false);
 
+        OptionAbilityUseVote = BooleanOptionItem.Create(RoleInfo, 18, Option.AbilityUseVote, false, false);
         OptionRole = BooleanOptionItem.Create(RoleInfo, 12, Option.TellRole, true, false);
 
         TargetCanseePlayer = BooleanOptionItem.Create(RoleInfo, 13, Option.AmateurTellerTargetCanseePlayer, true, false);
@@ -245,7 +249,7 @@ public sealed class AmateurTeller : RoleBase, IKiller, ISelfVoter
 
     }
 
-    bool ISelfVoter.CanUseVoted() => (Canuseability() && maximum > count && MyTaskState.HasCompletedEnoughCountOfTasks(cantaskcount) && (!Use)) && !taskTurn.BlocksMeeting;
+    bool ISelfVoter.CanUseVoted() => (Canuseability() && maximum > count && MyTaskState.HasCompletedEnoughCountOfTasks(cantaskcount) && (!Use)) && !taskTurn.BlocksMeeting && !IsAbilityUseVote;
 
     public override bool CheckVoteAsVoter(byte votedForId, PlayerControl voter)
 
@@ -268,8 +272,7 @@ public sealed class AmateurTeller : RoleBase, IKiller, ISelfVoter
 
                 UseTellAbility(votedForId);
 
-                return false;
-
+                return IsAbilityUseVote;
             }
 
             else
@@ -294,8 +297,7 @@ public sealed class AmateurTeller : RoleBase, IKiller, ISelfVoter
 
                     SetMode(Player, status is VoteStatus.Self);
 
-                    return false;
-
+                    return IsAbilityUseVote && status is VoteStatus.Vote;
                 }
 
             }

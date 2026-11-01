@@ -325,17 +325,32 @@ public class CustomNetObject
                     .Write((int)MurderResultFlags.FailedError)
                     .EndRpc();
 
-                writer.StartMessage(1);
-                writer.WritePacked(capturedPC.NetId);
-                writer.Write((byte)254);
-                writer.EndMessage();
-
                 sender.EndMessage();
                 sender.SendMessage();
             }
 
             capturedPC.CachedPlayerData = PlayerControl.LocalPlayer.Data;
         }, 0.1f, "CNO.AssignId", true);
+
+        // 番号を同じパケットの中ですぐ 254 に戻すと、受け取った人のゲームが「このプレイヤーの情報」を確かめる前に戻ってしまい、
+        // 情報を待ち続けて 30 秒で全員が落ちていた(ダミーが会議まで残った時)。確かめ終わるまで少し待ってから戻す
+        _ = new LateTask(() =>
+        {
+            if (capturedPC == null || !AllObjects.Contains(capturedSelf)) return;
+            foreach (var pc in PlayerCatch.AllPlayerControls)
+            {
+                if (pc.AmOwner) continue;
+                var sender = CustomRpcSender.Create("CNO.ResetId", SendOption.Reliable);
+                MessageWriter writer = sender.stream;
+                sender.StartMessage(pc.OwnerId);
+                writer.StartMessage(1);
+                writer.WritePacked(capturedPC.NetId);
+                writer.Write((byte)254);
+                writer.EndMessage();
+                sender.EndMessage();
+                sender.SendMessage();
+            }
+        }, 1.1f, "CNO.ResetId", true);
 
         _ = new LateTask(() =>
         {

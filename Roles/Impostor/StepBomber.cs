@@ -137,7 +137,10 @@ namespace TownOfHost.Roles.Impostor
                 }
 
                 _pendingTargetId = targetId;
-                _clickWindowTimer = DoubleClickThreshold;
+                // 通信の遅れがあっても2回目のクリックが届くよう、待つ時間はping分だけ延ばす
+                _clickWindowTimer = Mathf.Max(DoubleClickThreshold, AmongUsClient.Instance.Ping / 1000f * 2f + 0.1f);
+                // 1回目のクリックで「連打キル防止」の時間が始まり、2回目(通常キル)が必ず弾かれていたので消しておく
+                CheckMurderPatch.TimeSinceLastKill.Remove(Player.PlayerId);
 
                 info.CanKill = false;
                 info.DoKill = false;

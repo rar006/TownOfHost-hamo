@@ -31,7 +31,10 @@ namespace TownOfHost
             if (role is CustomRoles.Inheritance && Inheritance.IsNewRole) return true;
             // 2026-10 追加の属性・ゴースト役職
             return role is CustomRoles.Surviving or CustomRoles.Berserker or CustomRoles.ToughGuy or CustomRoles.Comorbidity or CustomRoles.Murder or CustomRoles.BetrayGuesser
-                or CustomRoles.Arsene or CustomRoles.Jiangshi;
+                or CustomRoles.Arsene or CustomRoles.Jiangshi
+                // TownOfHost-K v51.14.33 で入った役職・属性
+                or CustomRoles.SpeedStar or CustomRoles.Chameleon or CustomRoles.Bloodlust or CustomRoles.EvilButtoner
+                or CustomRoles.Notice or CustomRoles.AntiTeleporter;
         }
         public static bool IsImpostor(this CustomRoles role)
         {
@@ -103,7 +106,7 @@ namespace TownOfHost
                 CustomRoles.BountyGuesser or
                 CustomRoles.PlusVote or
                 CustomRoles.Opener or
-                //CustomRoles.AntiTeleporter or
+                CustomRoles.AntiTeleporter or
                 CustomRoles.Seeing or
                 CustomRoles.Revenger or
                 CustomRoles.Autopsy or
@@ -111,6 +114,7 @@ namespace TownOfHost
                 CustomRoles.MagicHand or
                 CustomRoles.Powerful or
                 CustomRoles.Absorb or
+                CustomRoles.Notice or
                 CustomRoles.Symbol or
                 CustomRoles.LastCrewmate or
                 CustomRoles.Inheritance or
@@ -157,7 +161,7 @@ namespace TownOfHost
                 CustomRoles.BountyGuesser or
                 CustomRoles.PlusVote or
                 CustomRoles.Opener or
-                //CustomRoles.AntiTeleporter or
+                CustomRoles.AntiTeleporter or
                 CustomRoles.Seeing or
                 CustomRoles.Revenger or
                 CustomRoles.Autopsy or
@@ -168,6 +172,7 @@ namespace TownOfHost
                 CustomRoles.Comorbidity or
                 CustomRoles.Powerful or
                 CustomRoles.Absorb or
+                CustomRoles.Notice or
                 CustomRoles.Inheritance
                 ;
         }

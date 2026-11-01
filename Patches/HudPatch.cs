@@ -539,6 +539,8 @@ namespace TownOfHost
                 if (player.Is(CustomRoles.Amnesia)) LowerInfoText.text = "";
 
                 if (player.GetMisidentify(out _)) LowerInfoText.text = "";
+                // 始まりの「シーッ！」や役職紹介の画面の上に能力の説明が重なって出ていたので、紹介が終わるまでは出さない
+                if (IntroCutscene.Instance != null || !GameStates.introDestroyed) LowerInfoText.text = "";
 
 
 
@@ -1205,16 +1207,6 @@ namespace TownOfHost
             if (Amnesia.CheckAbility(seer))
 
             {
-
-                //プログレスキラー
-
-                if (seer.Is(CustomRoles.ProgressKiller) && target.Is(CustomRoles.Workhorse) && ProgressKiller.ProgressWorkhorseseen)
-
-                {
-
-                    Mark.Append($"<#0000ff>♦</color>");
-
-                }
 
                 //エーリアン
 

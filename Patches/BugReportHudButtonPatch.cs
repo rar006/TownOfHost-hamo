@@ -153,6 +153,8 @@ namespace TownOfHost.Patches
                 var shouldShow = GameStates.IsLobby && !GameStates.IsInGame && GameSettingMenu.Instance == null && !(AmongUsClient.Instance != null && AmongUsClient.Instance.NetworkMode == NetworkModes.FreePlay); // フリープレイではBUGを表示しない
                 // デバッグ版は、試合中(フリープレイも)でもバグ報告できるようにする
                 if (DebugModeManager.AmDebugger) shouldShow = (GameStates.IsLobby || GameStates.IsInGame) && GameSettingMenu.Instance == null;
+                // イントロの間は出さない(イントロを撮影する時に映らないように)
+                if (IntroCutscene.Instance != null) shouldShow = false;
                 if (_buttonObj.activeSelf != shouldShow)
                     _buttonObj.SetActive(shouldShow);
 

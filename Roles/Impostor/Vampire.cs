@@ -70,6 +70,8 @@ namespace TownOfHost.Roles.Impostor
         readonly List<VampireBloodStain> activeBloodstains = new();
         // 直前のFixedUpdateでタスクフェーズだったかどうか(会議→タスクへの切り替わり検出用)
         bool wasInTask;
+        // 会議があったか。OnFixedUpdate は会議中には呼ばれないので、会議中かどうかを見張っても気付けない(血痕が一度も出ていなかった)
+        bool meetingPassed;
         public bool CanBeLastImpostor { get; } = false;
         Dictionary<byte, float> BittenPlayers = new(14);
 
@@ -138,8 +140,9 @@ namespace TownOfHost.Roles.Impostor
             // 【重要・不具合対策】CustomNetObjectの生成キューは1体あたり約0.4秒かかる
             // 設計のため、複数体を同一フレームでnewすると生成処理が競合し、2体目以降が
             // 正しく表示されないことがあった。LateTaskで少しずつ間隔を空けて生成する。
-            if (!wasInTask && pendingBloodstainPositions.Count > 0)
+            if (meetingPassed && pendingBloodstainPositions.Count > 0)
             {
+                meetingPassed = false;
                 Logger.Info($"Vampire: タスクフェーズ開始を検知、保留中の血痕{pendingBloodstainPositions.Count}件をスポーンします", "Vampire.Bloodstain");
                 var positions = new List<Vector2>(pendingBloodstainPositions);
                 for (int i = 0; i < positions.Count; i++)
@@ -199,6 +202,7 @@ namespace TownOfHost.Roles.Impostor
         }
         public override void OnReportDeadBody(PlayerControl repo, NetworkedPlayerInfo __)
         {
+            meetingPassed = true;
             if (AddOns.Common.Amnesia.CheckAbilityreturn(Player)) return;
             foreach (var targetId in BittenPlayers.Keys)
             {

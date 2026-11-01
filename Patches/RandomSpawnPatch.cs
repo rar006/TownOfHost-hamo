@@ -10,20 +10,14 @@ using HarmonyLib;
 
 using Hazel;
 
-using UnityEngine;
-
-using TownOfHost.Roles.Core;
-
-using TownOfHost.Roles.Impostor;
-
-using TownOfHost.Roles.Neutral;
-
-using TownOfHost.Roles.AddOns.Common;
-
 using TownOfHost.Modules;
 
 
 
+using TownOfHost.Roles.AddOns.Common;
+using TownOfHost.Roles.Core;
+using TownOfHost.Roles.Core.Interfaces;
+using UnityEngine;
 namespace TownOfHost
 
 {
@@ -224,6 +218,12 @@ namespace TownOfHost
 
                         Logger.Info($"SnapTo: {player.GetRealName()}, ({position.x}, {position.y})", "RandomSpawn");
 
+                        if (AntiTeleporter.TryConsumePendingReturn(player.PlayerId, out var returnPos))
+                        {
+                            player.RpcSnapToForced(returnPos + new Vector2(0f, 0.1f));
+                            state.HasSpawned = true;
+                            return false;
+                        }
                         // SnapTo先が湧き位置だったら湧き処理に進む
 
                         if (IsAirshipVanillaSpawnPosition(position))
@@ -358,6 +358,18 @@ namespace TownOfHost
 
                 }
 
+                if (AntiTeleporter.TryConsumePendingReturn(PlayerControl.LocalPlayer.PlayerId, out var returnPos))
+                {
+                    __instance.gotButton = true;
+                    PlayerControl.LocalPlayer.SetKinematic(true);
+                    PlayerControl.LocalPlayer.NetTransform.SetPaused(true);
+                    PlayerControl.LocalPlayer.RpcSnapToForced(returnPos + new Vector2(0f, 0.1f));
+                    PlayerState.GetByPlayerId(PlayerControl.LocalPlayer.PlayerId).HasSpawned = true;
+                    DestroyableSingleton<HudManager>.Instance.PlayerCam.SnapToTarget();
+                    __instance.StopAllCoroutines();
+                    __instance.StartCoroutine(__instance.CoSpawnAt(PlayerControl.LocalPlayer, spawnPoint));
+                    return false;
+                }
                 // ランダムスポーンが有効ならバニラの湧きをキャンセル
 
                 if (IsRandomSpawn())
@@ -436,8 +448,18 @@ namespace TownOfHost
 
                 {
 
-                    PlayerCatch.AllPlayerControls.Do(pc => pc.SetKillCooldown(SuddenDeathMode.SuddenKillcooltime.GetFloat(), delay: true));
-
+                    var killcool = SuddenDeathMode.SuddenKillcooltime.GetFloat();
+                    foreach (var pc in PlayerCatch.AllPlayerControls)
+                    {
+                        if (pc != null)
+                        {
+                            if (pc.GetRoleClass() is IKiller killer && killer.CalculateKillCooldown() != Options.DefaultKillCooldown)
+                            {
+                                killcool = killer.CalculateKillCooldown();
+                            }
+                            pc.SetKillCooldown(killcool, delay: true);
+                        }
+                    }
                 }
 
                 else
@@ -877,6 +899,7 @@ namespace TownOfHost
 
                 }
 
+                TownOfHost.Modules.ClientEffects.SilentTeleport();
                 player.RpcSnapToForced(location);
 
 
@@ -1271,6 +1294,7 @@ namespace TownOfHost
 
                 Logger.Info($"{pc.Data.GetLogPlayerName()}:{location}", "VpRandomSpawn");
 
+                TownOfHost.Modules.ClientEffects.SilentTeleport();
                 pc.RpcSnapToForced(new Vector2(location.x / 10, location.y / 10));
 
             }

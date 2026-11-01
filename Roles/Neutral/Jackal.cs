@@ -44,8 +44,7 @@ namespace TownOfHost.Roles.Neutral
 
                 "#00b4eb",
 
-                (1, 0),
-
+                (0, 0),
                 true,
 
                 countType: CountTypes.Jackal,

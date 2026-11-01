@@ -90,6 +90,7 @@ public sealed class MassMedia : RoleBase, IKiller, IKillFlashSeeable
 
     static OptionItem OptionCanSeeKillflash;
 
+    static OptionItem OptionCanGuessOtherReport;
     static OptionItem OptionCriminalprofile;
 
     List<byte> Suspects;
@@ -126,8 +127,8 @@ public sealed class MassMedia : RoleBase, IKiller, IKillFlashSeeable
 
         MassMediaCanSeeKillflash,
 
-        MassMediaCriminalprofile
-
+        MassMediaCriminalprofile,
+        MassMediaCanGuessOtherReport
     }
 
     public override void Add()
@@ -182,6 +183,7 @@ public sealed class MassMedia : RoleBase, IKiller, IKillFlashSeeable
 
         OptionMeetingTargetReset = BooleanOptionItem.Create(RoleInfo, 12, Option.MassMediaMeetingTargetReset, false, false);
 
+        OptionCanGuessOtherReport = BooleanOptionItem.Create(RoleInfo, 15, Option.MassMediaCanGuessOtherReport, true, false);
         OptionCanSeeKillflash = BooleanOptionItem.Create(RoleInfo, 13, Option.MassMediaCanSeeKillflash, false, false);
 
         OptionCriminalprofile = BooleanOptionItem.Create(RoleInfo, 14, Option.MassMediaCriminalprofile, false, false);
@@ -360,16 +362,11 @@ public sealed class MassMedia : RoleBase, IKiller, IKillFlashSeeable
 
     {
 
-        if (AddOns.Common.Amnesia.CheckAbilityreturn(Player)) return;
-
-        if (Is(repo) && Player.Is(CustomRoles.MassMedia))//自分が通報したならチャンスだよ!!
-
+        if (Amnesia.CheckAbilityreturn(Player)) return;
+        if (tg != null && tg.PlayerId == Targetid)
         {
 
-            //死体通報なら～
-
-            if (tg != null && tg.PlayerId == Targetid)
-
+            if (Is(repo) && Player.Is(CustomRoles.MassMedia))
             {
 
                 GuessMode = true;
@@ -378,6 +375,10 @@ public sealed class MassMedia : RoleBase, IKiller, IKillFlashSeeable
 
             }
 
+            else if (OptionCanGuessOtherReport.GetBool())
+            {
+                GuessMode = true;
+            }
         }
 
         //リセット
@@ -408,8 +409,7 @@ public sealed class MassMedia : RoleBase, IKiller, IKillFlashSeeable
 
         seen ??= seer;
 
-        if (isForMeeting && Suspects.Contains(seen.PlayerId))
-
+        if (isForMeeting && GuessMode && Suspects.Contains(seen.PlayerId))
         {
 
             return "<#512513>〇</color>";
@@ -534,8 +534,7 @@ public sealed class MassMedia : RoleBase, IKiller, IKillFlashSeeable
 
     {
 
-        if (AddOns.Common.Amnesia.CheckAbilityreturn(Player)) return;
-
+        if (Amnesia.CheckAbilityreturn(Player)) return;
         if (Win && AmongUsClient.Instance.AmHost)
 
         {

@@ -610,8 +610,11 @@ public static class CustomRoleManager
 
             CheckMurderInfos[appearanceKiller.PlayerId] = info;
 
+            // 死体を残さないキル(DeadBodyEraser)は、キルの代わりに追放の通信で死なせる
+            if (Modules.DeadBodyEraser.TakeNoBody(appearanceTarget))
+                Modules.DeadBodyEraser.ExileInsteadOfMurder(appearanceKiller, appearanceTarget);
             // 自分で死んだ見た目でも、本当のキル役がいる時は、死んだ本人には自分に殺されたように見せない
-            if (!(info.IsFakeSuicide && !info.IsSuicide && appearanceTarget.TryRpcMurderShowRealKiller(attemptKiller)))
+            else if (!(info.IsFakeSuicide && !info.IsSuicide && appearanceTarget.TryRpcMurderShowRealKiller(attemptKiller)))
                 appearanceKiller.RpcMurderPlayer(appearanceTarget);
 
 
@@ -799,9 +802,7 @@ public static class CustomRoleManager
         var roomName = attemptTarget.GetShipRoomName();
 
         targetState.KillRoom = roomName;
-
-
-
+        TownOfHost.Modules.ClientEffects.Death(attemptTarget, attemptKiller, targetState.DeathReason);
         targetState.SetDead();
 
         attemptTarget.SetRealKiller(attemptKiller, true);
@@ -2204,6 +2205,18 @@ public enum CustomRoles
     Sender,
     MadSender,
     Parity,
+    // ===== 移植役職 (SuperNewRoles / Nebula on the Ship) =====
+    Slugger,
+    Pusher,
+    Cleaner,
+    Destroyer,
+    Gimlet,
+    Informant,
+    LifeSaver,
+    // TownOfHost-K v51.14.33 の新役職。既存の役職の番号を変えないよう、空いている番号を明示する
+    Bloodlust = 330,
+    EvilButtoner = 331,
+    Notice = 1073,
 }
 
 public enum CustomRoleTypes

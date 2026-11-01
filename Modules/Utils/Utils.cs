@@ -343,7 +343,6 @@ namespace TownOfHost
             if (!force && !GameStates.CalledMeeting) state.IsBlackOut = true; //ブラックアウト
 
             if (player.IsModClient() && !force)
-
             {
 
                 if (player.PlayerId == 0)
@@ -388,14 +387,16 @@ namespace TownOfHost
 
         }
 
+        static float lastAllKillFlashAt = -100f;
         public static void AllPlayerKillFlash()
 
         {
 
             if (SuddenDeathMode.NowSuddenDeathMode || Options.CurrentGameMode is CustomGameMode.MurderMystery) return;
-
-
-
+            // 何人もが続けて光らせると(波動砲が何人もいる時など)、そのたびに全員へ送り直して通信が多すぎるとサーバーに部屋ごとキックされていた。
+            // 光っている間に来た分は、今の光にまとめる
+            if (UnityEngine.Time.time - lastAllKillFlashAt < Options.KillFlashDuration.GetFloat() * 2) return;
+            lastAllKillFlashAt = UnityEngine.Time.time;
             if (IsActive(SystemTypes.Reactor) || IsActive(SystemTypes.HeliSabotage))
 
             {
@@ -415,9 +416,6 @@ namespace TownOfHost
             var systemtypes = GetCriticalSabotageSystemType();
 
             ShipStatus.Instance.RpcUpdateSystem(systemtypes, 128);
-
-
-
             NowKillFlash = true;
 
             _ = new LateTask(() =>

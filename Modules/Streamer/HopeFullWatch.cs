@@ -44,13 +44,18 @@ public static class HopeFullWatch
         {
             wasFull = true;
             nextWarnAt = Time.time + WarnInterval;
-            var text = $"部屋が{players.Length}人で満員ですが、コメントで参加希望を書いた人がまだ{waiting}人入れていません。";
+            var text = $"部屋が{players.Length}人で満員ですが、前回の試合開始からコメントで参加希望を書いた人が、まだ{waiting}人入れていません。";
             if (AutoRehost.GetBool() && rehostAt < 0f)
             {
                 rehostAt = Time.time + RehostDelay;
                 Utils.SendMessage($"部屋が満員のため、{RehostDelay:F0}秒後に部屋を立て直します。立て直した後、もう一度入り直してください。", byte.MaxValue, "<#ff8080>【参加希望】</color>");
             }
-            Utils.SendMessage(text, PlayerControl.LocalPlayer.PlayerId, "<#ff8080>【ホストだけに表示】</color>");
+            // ホストとモデレーターにだけ見せる
+            foreach (var p in players)
+            {
+                if (p.PlayerId != PlayerControl.LocalPlayer.PlayerId && !Moderator.IsModerator(p)) continue;
+                Utils.SendMessage(text, p.PlayerId, "<#ff8080>【ホストとモデレーターだけに表示】</color>");
+            }
             Logger.Info(text, "HopeFullWatch");
         }
 
@@ -62,12 +67,12 @@ public static class HopeFullWatch
         }
     }
 
-    // コメントで参加希望を書いたのに、まだ部屋にいない人の数
+    // 前回の試合開始から、コメントで参加希望を書いたのに、まだ部屋にいない人の数
     private static int WaitingHopes(PlayerControl[] players)
     {
         if (!StreamerInfo.HasStream) return 0;
         var names = players.Select(p => p.Data.PlayerName).ToHashSet();
-        return StreamerInfo.Hopeplayers.Values.Count(h => h != null && !string.IsNullOrEmpty(h.PlayerName) && !names.Contains(h.PlayerName));
+        return StreamerInfo.Hopeplayers.Values.Count(h => h != null && h.Id >= StreamerInfo.HopeIdAtLastStart && !string.IsNullOrEmpty(h.PlayerName) && !names.Contains(h.PlayerName));
     }
 
     private static void Cancel()
