@@ -31,7 +31,7 @@ public sealed class Catalyst : RoleBase, IKiller, IUsePhantomButton
                 AssignUnitRoles = [CustomRoles.Catalyst, CustomRoles.Conductor]
             },
             combination: CombinationRoles.CatalystandConductor,
-            isNewRole: true
+            isNewRole: false
         );
 
     static OptionItem OptionResonanceCooldown;
@@ -173,7 +173,7 @@ public sealed class Conductor : RoleBase, IKiller, IUsePhantomButton
             introSound: () => GetIntroSound(RoleTypes.Phantom),
             countType: CountTypes.Crew,
             combination: CombinationRoles.CatalystandConductor,
-            isNewRole: true
+            isNewRole: false
         );
 
     public Conductor(PlayerControl player) : base(RoleInfo, player, () => HasTask.False) { }

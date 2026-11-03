@@ -25,7 +25,7 @@ public sealed class Slugger : RoleBase, IImpostor, IUsePhantomButton
             "slg",
             "#FF1919",
             from: From.SuperNewRoles,
-            isNewRole: true
+            isNewRole: false
         );
 
     public Slugger(PlayerControl player) : base(RoleInfo, player)

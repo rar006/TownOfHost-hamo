@@ -29,7 +29,7 @@ public sealed class Romeo : RoleBase
             },
             combination: CombinationRoles.RomeoandJuliet,
             from: From.TownOfHost_hamo,
-            isNewRole: true
+            isNewRole: false
         );
 
     public Romeo(PlayerControl player) : base(RoleInfo, player, () => HasTask.False) { }
@@ -89,7 +89,7 @@ public sealed class Juliet : RoleBase
             tab: TabGroup.Combinations,
             combination: CombinationRoles.RomeoandJuliet,
             from: From.TownOfHost_hamo,
-            isNewRole: true
+            isNewRole: false
         );
 
     public Juliet(PlayerControl player) : base(RoleInfo, player, () => HasTask.False) { }

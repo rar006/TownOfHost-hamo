@@ -18,7 +18,7 @@ public sealed class Flatfish : RoleBase
             "ff",
             "#C39143",
             countType: CountTypes.Crew,
-            isNewRole: true
+            isNewRole: false
         );
 
     static OptionItem OptionMoveTime;

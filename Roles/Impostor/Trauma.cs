@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
 using UnityEngine;
@@ -29,7 +29,7 @@ public sealed class Trauma : RoleBase, IImpostor
                 AssignUnitRoles = [CustomRoles.Trauma, CustomRoles.Surmount]
             },
             combination: CombinationRoles.TraumaandSurmount,
-            isNewRole: true
+            isNewRole: false
         );
 
     public enum DebuffType { Vision, KillCooldown }

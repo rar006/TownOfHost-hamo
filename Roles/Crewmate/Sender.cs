@@ -1,4 +1,4 @@
-﻿using AmongUs.GameOptions;
+using AmongUs.GameOptions;
 using Hazel;
 using TownOfHost.Modules;
 using TownOfHost.Roles.Core;
@@ -20,7 +20,7 @@ public sealed class Sender : RoleBase, ISelfVoter
             SetupOptionItem,
             "snd",
             "#7FB3D5",
-            isNewRole: true
+            isNewRole: false
         );
 
     static OptionItem OptionUses;

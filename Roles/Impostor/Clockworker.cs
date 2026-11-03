@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using AmongUs.GameOptions;
 using Hazel;
 using UnityEngine;
@@ -20,7 +20,7 @@ public sealed class Clockworker : RoleBase, IImpostor
             SetupOptionItem,
             "cw",
             "#FF1919",
-            isNewRole: true
+            isNewRole: false
         );
 
     static OptionItem OptionTimer;

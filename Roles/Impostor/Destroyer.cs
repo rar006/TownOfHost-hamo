@@ -23,7 +23,7 @@ public sealed class Destroyer : RoleBase, IImpostor
             "dsy",
             "#FF1919",
             from: From.NebulaontheShip,
-            isNewRole: true
+            isNewRole: false
         );
 
     public Destroyer(PlayerControl player) : base(RoleInfo, player)

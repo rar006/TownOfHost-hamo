@@ -23,7 +23,7 @@ public sealed class Informant : RoleBase, IKiller, IUsePhantomButton, IAdditiona
             "#C7C7C7",
             (6, 5),
             from: From.TownOfHost_hamo,
-            isNewRole: true
+            isNewRole: false
         );
 
     public Informant(PlayerControl player)

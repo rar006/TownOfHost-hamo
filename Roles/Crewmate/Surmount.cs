@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
 using UnityEngine;
@@ -24,7 +24,7 @@ public sealed class Surmount : RoleBase
             false,
             tab: TabGroup.Combinations,
             combination: CombinationRoles.TraumaandSurmount,
-            isNewRole: true
+            isNewRole: false
         );
 
     public static Surmount Instance { get; private set; }

@@ -28,7 +28,7 @@ namespace TownOfHost.Roles.Crewmate
                 colorCode: "#B4B4B4",
                 OptionSort: (2, 10),
                 from: From.TownOfHost_Temp,
-                isNewRole: true
+                isNewRole: false
             );
 
         public static OptionItem OptionInformationAmount;

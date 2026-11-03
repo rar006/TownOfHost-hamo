@@ -22,7 +22,7 @@ public sealed class Parity : RoleBase, IKiller, ISystemTypeUpdateHook
             "#9B59B6",
             isDesyncImpostor: true,
             countType: CountTypes.Crew,
-            isNewRole: true
+            isNewRole: false
         );
 
     static OptionItem OptionKillCooldown;

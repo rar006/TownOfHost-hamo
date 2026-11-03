@@ -24,7 +24,7 @@ public sealed class Locksmith : RoleBase
             (9, 7),
             introSound: () => GetIntroSound(RoleTypes.Engineer),
             from: From.TownOfHost_Temp,
-            isNewRole: true
+            isNewRole: false
         );
 
     public Locksmith(PlayerControl player)

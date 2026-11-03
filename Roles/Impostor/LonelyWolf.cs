@@ -1,4 +1,4 @@
-﻿using AmongUs.GameOptions;
+using AmongUs.GameOptions;
 using UnityEngine;
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
@@ -19,7 +19,7 @@ public sealed class LonelyWolf : RoleBase, IImpostor
             "lwo",
             "#FF1919",
             isCantSeeTeammates: true,
-            isNewRole: true
+            isNewRole: false
         );
 
     static OptionItem OptionKillCooldown;

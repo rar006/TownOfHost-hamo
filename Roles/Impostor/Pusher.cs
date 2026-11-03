@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
 using UnityEngine;
@@ -24,7 +24,7 @@ public sealed class Pusher : RoleBase, IImpostor, IUsePhantomButton
             "psh",
             "#FF1919",
             from: From.SuperNewRoles,
-            isNewRole: true
+            isNewRole: false
         );
 
     public Pusher(PlayerControl player) : base(RoleInfo, player)

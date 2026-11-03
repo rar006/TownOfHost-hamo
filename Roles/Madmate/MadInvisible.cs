@@ -19,7 +19,7 @@ public sealed class MadInvisible : RoleBase, IKillFlashSeeable, IDeathReasonSeea
             "#FFFFFF",
             countType: CountTypes.None,
             introSound: () => GetIntroSound(RoleTypes.Impostor),
-            isNewRole: true
+            isNewRole: false
         );
 
     static OptionItem OptionCantBeKilled;

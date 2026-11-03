@@ -21,7 +21,7 @@ public sealed class MemoryRestorer : RoleBase, ISelfVoter
             SetupOptionItem,
             "mr",
             "#0000CD",
-            isNewRole: true
+            isNewRole: false
         );
 
     static OptionItem OptionUses;

@@ -1,4 +1,4 @@
-﻿using AmongUs.GameOptions;
+using AmongUs.GameOptions;
 using Hazel;
 using TownOfHost.Roles.Core;
 using TownOfHost.Roles.Core.Interfaces;
@@ -20,7 +20,7 @@ public sealed class MadSender : RoleBase, IKillFlashSeeable, IDeathReasonSeeable
             "msd",
             "#ff1919",
             introSound: () => GetIntroSound(RoleTypes.Impostor),
-            isNewRole: true
+            isNewRole: false
         );
 
     static OptionItem OptionUses;

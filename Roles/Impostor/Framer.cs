@@ -23,7 +23,7 @@ public sealed class Framer : RoleBase, IImpostor, IUsePhantomButton, IDoubleTrig
             "frm",
             OptionSort: (6, 10),
             from: From.TownOfHost_hamo,
-            isNewRole: true
+            isNewRole: false
         );
 
     public Framer(PlayerControl player)

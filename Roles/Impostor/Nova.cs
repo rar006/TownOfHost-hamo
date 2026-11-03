@@ -30,7 +30,7 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
             "nv",
             OptionSort: (3, 13),
             from: From.UchuAddon,
-            isNewRole: true
+            isNewRole: false
         );
 
     public Nova(PlayerControl player) : base(RoleInfo, player)

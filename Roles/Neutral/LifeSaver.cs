@@ -22,7 +22,7 @@ public sealed class LifeSaver : RoleBase, IAdditionalWinner
             (6, 6),
             introSound: () => GetIntroSound(RoleTypes.Engineer),
             from: From.TownOfHost_hamo,
-            isNewRole: true
+            isNewRole: false
         );
 
     public LifeSaver(PlayerControl player)

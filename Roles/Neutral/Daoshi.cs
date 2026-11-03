@@ -23,7 +23,7 @@ public sealed class Daoshi : RoleBase, IKiller, IKillFlashSeeable
             "#7986CB",
             isDesyncImpostor: true,
             countType: CountTypes.Crew,
-            isNewRole: true
+            isNewRole: false
         );
 
     static OptionItem OptionKillCooldown;

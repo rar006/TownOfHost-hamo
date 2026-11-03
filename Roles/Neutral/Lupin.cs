@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
 using UnityEngine;
@@ -24,7 +24,7 @@ public sealed class Lupin : RoleBase, IKiller, ISelfVoter
             "#3b5ba5",
             isDesyncImpostor: true,
             countType: CountTypes.Crew,
-            isNewRole: true
+            isNewRole: false
         );
 
     internal static OptionItem OptionAwakenTime;

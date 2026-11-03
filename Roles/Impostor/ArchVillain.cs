@@ -21,7 +21,7 @@ public sealed class ArchVillain : RoleBase, IImpostor
             SetupOptionItem,
             "avi",
             "#FF0000",
-            isNewRole: true
+            isNewRole: false
         );
 
     static OptionItem OptionKillCooldown;

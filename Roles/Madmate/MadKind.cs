@@ -22,7 +22,7 @@ public sealed class MadKind : RoleBase, IKillFlashSeeable, IDeathReasonSeeable
             OptionSort: (4, 2),
             introSound: () => GetIntroSound(RoleTypes.Impostor),
             from: From.TownOfHost_hamo,
-            isNewRole: true
+            isNewRole: false
         );
 
     public MadKind(PlayerControl player)

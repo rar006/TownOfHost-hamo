@@ -22,7 +22,7 @@ public sealed class Gimlet : RoleBase, IImpostor, IUsePhantomButton
             "gml",
             "#FF1919",
             from: From.NebulaontheShip,
-            isNewRole: true
+            isNewRole: false
         );
 
     public Gimlet(PlayerControl player) : base(RoleInfo, player)
@@ -151,6 +151,7 @@ public sealed class Gimlet : RoleBase, IImpostor, IUsePhantomButton
         lastStepAt = Time.time;
         var from = dashPos;
         var moved = Advance(step);
+        dashPos.x += DashSpeed;
         HitPlayers(from, dashPos);
         Player.RpcSnapToForced(dashPos + bodyOffset);
         ShowDrill();

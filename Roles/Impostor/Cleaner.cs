@@ -21,7 +21,7 @@ public sealed class Cleaner : RoleBase, IImpostor, IUsePhantomButton
             "cln",
             "#FF1919",
             from: From.NebulaontheShip,
-            isNewRole: true
+            isNewRole: false
         );
 
     public Cleaner(PlayerControl player) : base(RoleInfo, player)

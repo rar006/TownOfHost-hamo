@@ -28,7 +28,7 @@ public sealed class NiceHacker : RoleBase
             "#C2FF00",
             OptionSort: (6, 10),
             from: From.TownOfHost_hamo,
-            isNewRole: true
+            isNewRole: false
         );
 
     public NiceHacker(PlayerControl player)

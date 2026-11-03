@@ -27,7 +27,7 @@ namespace TownOfHost.Roles.Impostor
                 colorCode: "#FF0000",
                 OptionSort: (3, 2),
                 from: From.TownOfHost_Temp,
-                isNewRole: true
+                isNewRole: false
             );
 
         public static OptionItem OptionStepsToDetonate;

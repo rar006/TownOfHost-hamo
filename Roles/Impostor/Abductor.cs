@@ -20,7 +20,7 @@ public sealed class Abductor : RoleBase, IImpostor
             SetupOptionItem,
             "abd",
             "#FF1919",
-            isNewRole: true
+            isNewRole: false
         );
 
     static OptionItem OptionKillCooldown;
