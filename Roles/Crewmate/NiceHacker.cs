@@ -126,6 +126,7 @@ public sealed class NiceHacker : RoleBase
 
     public override void ApplyGameOptions(IGameOptions opt)
     {
+        opt.SetVision(false);
         AURoleOptions.ShapeshifterCooldown = 1f;
         AURoleOptions.ShapeshifterDuration = 1f;
     }

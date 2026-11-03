@@ -696,10 +696,6 @@ namespace TownOfHost
                     killcool = killer.CalculateKillCooldown();
                 }
 
-                if (roleclass is IKiller killer && killer.CalculateKillCooldown() != Options.DefaultKillCooldown)
-                {
-                    killcool = killer.CalculateKillCooldown();
-                }
                 if (player.GetPlayerState().Killcount <= 0 && 0 < killcool)
 
                 {

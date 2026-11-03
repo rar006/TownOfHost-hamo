@@ -1,4 +1,4 @@
-﻿using AmongUs.GameOptions;
+using AmongUs.GameOptions;
 using Hazel;
 
 using TownOfHost.Roles.Core;
@@ -115,8 +115,7 @@ public sealed class Muter : RoleBase, IAdditionalWinner
         if (Player?.IsAlive() != true) return false;
 
         winnerRole = CustomRoles.Muter;
-        if (CustomWinnerHolder.WinnerTeam != CustomWinner.Crewmate)
-            CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Muter, Player.PlayerId, true);
+        CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Muter, Player.PlayerId, true);
 
         return true;
     }
