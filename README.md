@@ -1,7 +1,7 @@
 # Town Of Host-hamo
 
 # 重要
-バグが多いですがご了承ください！
+TownOfHost-hamoは進化をしてTownOfHost-YをベースとしたMODを開発することになりました！
 
 ## この Mod について
 
