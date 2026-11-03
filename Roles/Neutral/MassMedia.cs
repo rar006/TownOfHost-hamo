@@ -44,10 +44,6 @@ public sealed class MassMedia : RoleBase, IKiller, IKillFlashSeeable
     static OptionItem OptionBlackVision;
     static OptionItem OptionMeetingTargetReset;
     static OptionItem OptionCanSeeKillflash;
-<<<<<<< HEAD
-
-=======
->>>>>>> 56c7b58ea5046de5c0a8b51960962f93d8453042
     static OptionItem OptionCanGuessOtherReport;
     static OptionItem OptionCriminalprofile;
     List<byte> Suspects;
@@ -67,10 +63,6 @@ public sealed class MassMedia : RoleBase, IKiller, IKillFlashSeeable
         MassMediaShikai,
         MassMediaMeetingTargetReset,
         MassMediaCanSeeKillflash,
-<<<<<<< HEAD
-
-=======
->>>>>>> 56c7b58ea5046de5c0a8b51960962f93d8453042
         MassMediaCriminalprofile,
         MassMediaCanGuessOtherReport
     }
@@ -99,10 +91,6 @@ public sealed class MassMedia : RoleBase, IKiller, IKillFlashSeeable
         OptionBlackVision = FloatOptionItem.Create(RoleInfo, 11, Option.MassMediaShikai, new(0f, 0.20f, 0.02f), 0.04f, false)
                 .SetValueFormat(OptionFormat.Multiplier);
         OptionMeetingTargetReset = BooleanOptionItem.Create(RoleInfo, 12, Option.MassMediaMeetingTargetReset, false, false);
-<<<<<<< HEAD
-
-=======
->>>>>>> 56c7b58ea5046de5c0a8b51960962f93d8453042
         OptionCanGuessOtherReport = BooleanOptionItem.Create(RoleInfo, 15, Option.MassMediaCanGuessOtherReport, true, false);
         OptionCanSeeKillflash = BooleanOptionItem.Create(RoleInfo, 13, Option.MassMediaCanSeeKillflash, false, false);
         OptionCriminalprofile = BooleanOptionItem.Create(RoleInfo, 14, Option.MassMediaCriminalprofile, false, false);
@@ -192,26 +180,14 @@ public sealed class MassMedia : RoleBase, IKiller, IKillFlashSeeable
     }
     public override void OnReportDeadBody(PlayerControl repo, NetworkedPlayerInfo tg)
     {
-<<<<<<< HEAD
-
         if (Amnesia.CheckAbilityreturn(Player)) return;
         if (tg != null && tg.PlayerId == Targetid)
         {
-
-=======
-        if (Amnesia.CheckAbilityreturn(Player)) return;
-        if (tg != null && tg.PlayerId == Targetid)
-        {
->>>>>>> 56c7b58ea5046de5c0a8b51960962f93d8453042
             if (Is(repo) && Player.Is(CustomRoles.MassMedia))
             {
                 GuessMode = true;
                 Achievements.RpcCompleteAchievement(Player.PlayerId, 0, achievements[0]);
             }
-<<<<<<< HEAD
-
-=======
->>>>>>> 56c7b58ea5046de5c0a8b51960962f93d8453042
             else if (OptionCanGuessOtherReport.GetBool())
             {
                 GuessMode = true;
@@ -231,10 +207,6 @@ public sealed class MassMedia : RoleBase, IKiller, IKillFlashSeeable
     public override string GetMark(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)
     {
         seen ??= seer;
-<<<<<<< HEAD
-
-=======
->>>>>>> 56c7b58ea5046de5c0a8b51960962f93d8453042
         if (isForMeeting && GuessMode && Suspects.Contains(seen.PlayerId))
         {
             return "<#512513>〇</color>";
@@ -298,24 +270,12 @@ public sealed class MassMedia : RoleBase, IKiller, IKillFlashSeeable
     }
     public override void AfterMeetingTasks()
     {
-<<<<<<< HEAD
-
-=======
->>>>>>> 56c7b58ea5046de5c0a8b51960962f93d8453042
         if (Amnesia.CheckAbilityreturn(Player)) return;
         if (Win && AmongUsClient.Instance.AmHost)
         {
             if (CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.MassMedia, Player.PlayerId, true))
             {
                 CustomWinnerHolder.NeutralWinnerIds.Add(Player.PlayerId);
-                foreach (var crew in PlayerCatch.AllAlivePlayerControls.Where(x => x.GetCustomRole().IsCrewmate()))
-                {
-                    crew.SetRealKiller(Player);
-                    crew.RpcMurderPlayer(crew);
-                    var state = PlayerState.GetByPlayerId(crew.PlayerId);
-                    state.DeathReason = CustomDeathReason.Misfire;
-                    state.SetDead();
-                }
             }
         }
         Main.AllPlayerKillCooldown[Player.PlayerId] = KillCooldown;
@@ -324,6 +284,25 @@ public sealed class MassMedia : RoleBase, IKiller, IKillFlashSeeable
         if (AmongUsClient.Instance.AmHost) Player.SyncSettings();
         _ = new LateTask(() => SuspectsSearch = true, 10, "MassMediaSearch");
     }
+
+    public override void CheckWinner(GameOverReason reason)
+    {
+        if (CustomWinnerHolder.WinnerTeam is not CustomWinner.MassMedia) return;
+        foreach (var otherPlayer in PlayerCatch.AllAlivePlayerControls)
+        {
+            if (otherPlayer.Is(CustomRoles.Terrorist) || otherPlayer.Is(CustomRoles.MassMedia))
+            {
+                continue;
+            }
+            otherPlayer.SetRealKiller(Player);
+            otherPlayer.RpcMurderPlayer(otherPlayer);
+            var playerState = PlayerState.GetByPlayerId(otherPlayer.PlayerId);
+            playerState.DeathReason = CustomDeathReason.Bombed;
+            playerState.SetDead();
+        }
+    }
+
+
     public bool CanUseKillButton() => true;
     public bool CanUseImpostorVentButton() => false;
     public bool CanUseSabotageButton() => false;

@@ -315,13 +315,10 @@ public static class CustomRoleManager
 
             //MurderPlayer用にinfoを保存
             CheckMurderInfos[appearanceKiller.PlayerId] = info;
-<<<<<<< HEAD
 
             // 死体を残さないキル(DeadBodyEraser)は、キルの代わりに追放の通信で死なせる
             if (Modules.DeadBodyEraser.TakeNoBody(appearanceTarget))
                 Modules.DeadBodyEraser.ExileInsteadOfMurder(appearanceKiller, appearanceTarget);
-=======
->>>>>>> 56c7b58ea5046de5c0a8b51960962f93d8453042
             // 自分で死んだ見た目でも、本当のキル役がいる時は、死んだ本人には自分に殺されたように見せない
             else if (!(info.IsFakeSuicide && !info.IsSuicide && appearanceTarget.TryRpcMurderShowRealKiller(attemptKiller)))
                 appearanceKiller.RpcMurderPlayer(appearanceTarget);
@@ -418,11 +415,7 @@ public static class CustomRoleManager
         //あっ!死ぬ前にどこにいたかだけ教えてね!
         var roomName = attemptTarget.GetShipRoomName();
         targetState.KillRoom = roomName;
-<<<<<<< HEAD
         TownOfHost.Modules.ClientEffects.Death(attemptTarget, attemptKiller, targetState.DeathReason);
-=======
-
->>>>>>> 56c7b58ea5046de5c0a8b51960962f93d8453042
         targetState.SetDead();
         attemptTarget.SetRealKiller(attemptKiller, true);
         killerstate.Is10secKillButton = false;
@@ -990,6 +983,14 @@ public enum CustomRoles
     LonelyWolf,
     Clockworker,
     Abductor,
+    Bloodlust,
+    EvilButtoner,
+    Slugger,
+    Pusher,
+    Cleaner,
+    Destroyer,
+    Gimlet,
+
     //DEBUG only Impostor
     //Madmate
     MadGuardian,
@@ -1253,7 +1254,8 @@ public enum CustomRoles
     Flatfish,
     Lupin,
     Parity,
-
+    Informant,
+    LifeSaver,
     //DEBUG only Neutral
     //HideAndSeek
     HASFox,
@@ -1319,6 +1321,7 @@ public enum CustomRoles
     LastCrewmate,
     Inheritance,
     Symbol,
+    Notice,
     //デバフ
     Berserker,
     BetrayGuesser,
@@ -1364,56 +1367,6 @@ public enum CustomRoles
     AsistingAngel,
     Arsene,
     Jiangshi,
-<<<<<<< HEAD
-    Surviving = 7010,
-    Berserker,
-    ToughGuy,
-    Comorbidity,
-    Murder,
-    BetrayGuesser,
-    Daoshi = 336,
-    // ===== N移植役職 =====
-    Survivor,
-    Mario,
-    Obolus,
-    HydeImp,
-    //===== Y移植役職 =====
-    DarkHide,
-    Greedier,
-    Administer,
-    // ===== 新規追加役職 (2026-10 ユーザー提案)。値は空いている340番から =====
-    Trauma,
-    Surmount,
-    Messenger,
-    Fugitive,
-    MemoryRestorer,
-    ArchVillain,
-    LonelyWolf,
-    Clockworker,
-    Abductor,
-    MadInvisible,
-    MadMagic,
-    Flatfish,
-    Lupin,
-    Catalyst,
-    Conductor,
-    Sender,
-    MadSender,
-    Parity,
-    // ===== 移植役職 (SuperNewRoles / Nebula on the Ship) =====
-    Slugger,
-    Pusher,
-    Cleaner,
-    Destroyer,
-    Gimlet,
-    Informant,
-    LifeSaver,
-    // TownOfHost-K v51.14.33 の新役職。既存の役職の番号を変えないよう、空いている番号を明示する
-    Bloodlust = 330,
-    EvilButtoner = 331,
-    Notice = 1073,
-=======
->>>>>>> 56c7b58ea5046de5c0a8b51960962f93d8453042
 }
 
 public enum CustomRoleTypes

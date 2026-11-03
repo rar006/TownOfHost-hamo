@@ -295,19 +295,13 @@ namespace TownOfHost
                 logger.Info("変身者が死亡しているため変身をキャンセルします");
                 return false;
             }
-
-<<<<<<< HEAD
             if (FirstTurnMeeting.BeforeFirstMeeting)
             {
                 logger.Info("1ターン目の会議の前なので変身をキャンセルします");
                 return false;
             }
 
-            if (instance.Is(CustomRoles.SKMadmate) || instance.Is(CustomRoles.Jackaldoll))
-
-=======
             if (Camouflager.NowUse)
->>>>>>> 56c7b58ea5046de5c0a8b51960962f93d8453042
             {
                 logger.Info("カモフラージュ中のため変身をキャンセルします");
                 return false;

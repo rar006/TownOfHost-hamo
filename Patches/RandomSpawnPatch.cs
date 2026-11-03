@@ -4,10 +4,6 @@ using System.Linq;
 using BepInEx.Unity.IL2CPP.Utils.Collections;
 using HarmonyLib;
 using Hazel;
-<<<<<<< HEAD
-
-=======
->>>>>>> 56c7b58ea5046de5c0a8b51960962f93d8453042
 using TownOfHost.Modules;
 using TownOfHost.Roles.AddOns.Common;
 using TownOfHost.Roles.Core;
@@ -16,12 +12,6 @@ using TownOfHost.Roles.Impostor;
 using TownOfHost.Roles.Neutral;
 using UnityEngine;
 
-
-
-using TownOfHost.Roles.AddOns.Common;
-using TownOfHost.Roles.Core;
-using TownOfHost.Roles.Core.Interfaces;
-using UnityEngine;
 namespace TownOfHost
 
 {

@@ -88,8 +88,10 @@ public sealed class Terrorist : RoleBase
         }
         return IsTaskFinished;
     }
-    public void Win()
+
+    public override void CheckWinner(GameOverReason reason)
     {
+        if (CustomWinnerHolder.WinnerTeam is not CustomWinner.Terrorist) return;
         foreach (var otherPlayer in PlayerCatch.AllAlivePlayerControls)
         {
             if (otherPlayer.Is(CustomRoles.Terrorist))
@@ -102,6 +104,10 @@ public sealed class Terrorist : RoleBase
             playerState.DeathReason = CustomDeathReason.Bombed;
             playerState.SetDead();
         }
+    }
+
+    public void Win()
+    {
         if (CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Terrorist, Player.PlayerId, true))
         {
             CustomWinnerHolder.NeutralWinnerIds.Add(Player.PlayerId);

@@ -119,10 +119,6 @@ public sealed class CharismaStar : RoleBase, IImpostor, IUsePhantomButton, IDoub
         {
             // アビリティクールリセット
             Player.RpcResetAbilityCooldown();
-<<<<<<< HEAD
-
-=======
->>>>>>> 56c7b58ea5046de5c0a8b51960962f93d8453042
         }
     }
 

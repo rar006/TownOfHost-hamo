@@ -225,20 +225,6 @@ public sealed class Arsonist : RoleBase, IKiller, IUsePhantomButton
     {
         if (GameStates.IsInGame && IsDouseDone(Player) && !Optionfire.GetBool())
         {
-            foreach (var pc in PlayerCatch.AllAlivePlayerControls)
-            {
-                if (pc.PlayerId != Player.PlayerId)
-                {
-                    //生存者は焼殺
-                    pc.SetRealKiller(Player);
-                    pc.RpcMurderPlayer(pc);
-                    var state = PlayerState.GetByPlayerId(pc.PlayerId);
-                    state.DeathReason = CustomDeathReason.Torched;
-                    state.SetDead();
-                }
-                else
-                    RPC.PlaySoundRPC(pc.PlayerId, Sounds.KillSound);
-            }
             if (CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Arsonist, Player.PlayerId))
             {
                 CustomWinnerHolder.NeutralWinnerIds.Add(Player.PlayerId);
@@ -307,23 +293,7 @@ public sealed class Arsonist : RoleBase, IKiller, IUsePhantomButton
     {
         if (GameStates.IsInGame && IsDouseDone(Player) && Optionfire.GetBool())
         {
-            var i = 0;
-            foreach (var pc in PlayerCatch.AllAlivePlayerControls)
-            {
-                if (pc.PlayerId != Player.PlayerId)
-                {
-                    i++;
-                    //生存者は焼殺
-                    pc.SetRealKiller(Player);
-                    pc.RpcMurderPlayer(pc);
-                    var state = PlayerState.GetByPlayerId(pc.PlayerId);
-                    state.DeathReason = CustomDeathReason.Torched;
-                    state.SetDead();
-                }
-                else
-                    RPC.PlaySoundRPC(pc.PlayerId, Sounds.KillSound);
-            }
-                        if (CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Arsonist, Player.PlayerId))
+            if (CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Arsonist, Player.PlayerId))
             {
                 CustomWinnerHolder.NeutralWinnerIds.Add(Player.PlayerId);
                 // 能力側で勝者が確定した場合も、終了判定の次回呼び出しを待たず終了する。
@@ -331,12 +301,38 @@ public sealed class Arsonist : RoleBase, IKiller, IUsePhantomButton
             }
             Achievements.RpcCompleteAchievement(Player.PlayerId, 0, achievements[0]);
 
-            if (10 <= i) Achievements.RpcCompleteAchievement(Player.PlayerId, 0, achievements[1]);
             return;
         }
         ResetCooldown = true;
         AdjustKillCooldown = true;
     }
+
+    public override void CheckWinner(GameOverReason reason)
+    {
+        if (CustomWinnerHolder.WinnerTeam is not CustomWinner.Arsonist) return;
+        var i = 0;
+        foreach (var pc in PlayerCatch.AllAlivePlayerControls)
+        {
+            if (pc.PlayerId != Player.PlayerId)
+            {
+                if (pc.Is(CustomRoles.Terrorist) || pc.Is(CustomRoles.Arsonist))
+                {
+                    continue;
+                }
+                i++;
+                //生存者は焼殺
+                pc.SetRealKiller(Player);
+                pc.RpcMurderPlayer(pc);
+                var state = PlayerState.GetByPlayerId(pc.PlayerId);
+                state.DeathReason = CustomDeathReason.Torched;
+                state.SetDead();
+            }
+            else
+                RPC.PlaySoundRPC(pc.PlayerId, Sounds.KillSound);
+        }
+        if (10 <= i) Achievements.RpcCompleteAchievement(Player.PlayerId, 0, achievements[1]);
+    }
+
     public static Dictionary<int, Achievement> achievements = new();
     [Attributes.PluginModuleInitializer]
     public static void Load()
