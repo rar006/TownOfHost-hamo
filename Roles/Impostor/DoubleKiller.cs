@@ -191,7 +191,7 @@ public sealed class DoubleKiller : RoleBase, IImpostor, IUsePhantomButton
                 SendRPC();
             }, 1f, "", true);
         }
-   
+    }
     //念のためRPC送っとく
     void SendRPC()
     {
