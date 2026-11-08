@@ -191,15 +191,7 @@ public sealed class DoubleKiller : RoleBase, IImpostor, IUsePhantomButton
                 SendRPC();
             }, 1f, "", true);
         }
-    }
-    public void OnCheckMurderAsKiller(MurderInfo info)
-    {
-        if (info.GuardPower < 2)
-        {
-            info.DoKill = false;
-            Player.SetKillCooldown(target: info.AttemptTarget);
-        }
-    }
+   
     //念のためRPC送っとく
     void SendRPC()
     {
